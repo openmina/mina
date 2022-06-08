@@ -15,9 +15,6 @@ let
   export = opam-nix.importOpam ../src/opam.export;
   external-packages = pkgs.lib.getAttrs [
     "sodium"
-    "capnp"
-    "rpc_parallel"
-    "async_kernel"
     "base58"
   ] (builtins.mapAttrs (_: pkgs.lib.last) (opam-nix.listRepo external-repo));
 
