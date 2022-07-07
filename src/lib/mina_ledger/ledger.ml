@@ -539,7 +539,17 @@ let%test_unit "tokens test" =
             ]
         ]
     in
-    let token_transfers =
+    let token_burning =
+      mk_forest
+        [ mk_node
+            (mk_party_body Call token_owner Token_id.default 0)
+            [ mk_node
+                (mk_party_body Call token_account1 custom_token_id (-100))
+                []
+            ]
+        ]
+    in
+    let _token_transfers =
       mk_forest
         [ mk_node
             (mk_party_body Call token_owner Token_id.default
@@ -559,6 +569,66 @@ let%test_unit "tokens test" =
             ]
         ]
     in
+    let _mint_token2_parties =
+      let open Parties_builder in
+      mk_forest
+        [ mk_node
+            (mk_party_body Call token_owner Token_id.default
+               (-2 * account_creation_fee) )
+            [ mk_node
+                (mk_party_body Call token_owner custom_token_id 0)
+                [ mk_node
+                    (mk_party_body Call token_account2 custom_token_id 500)
+                    []
+                ]
+            ]
+        ]
+    in
+    let _token_transfer_parties =
+      let open Parties_builder in
+      mk_forest
+        [ mk_node
+            (mk_party_body Call token_owner Token_id.default
+               (-2 * account_creation_fee) )
+            [ mk_node (mk_party_body Call token_owner custom_token_id (-30)) []
+            ; mk_node (mk_party_body Call token_account1 custom_token_id 30) []
+            ]
+        ]
+    in
+    let base_nonce = ref 0L in
+    let log_parties_str name
+        (party_txn : (Party.Body.Simple.t, unit, unit) Parties.Call_forest.t) =
+      let nonce =
+        base_nonce.contents |> Unsigned.UInt32.of_int64
+        |> Mina_numbers.Account_nonce.of_uint32
+      in
+      base_nonce := Signed.Int64.add base_nonce.contents 1L ;
+      let party_str =
+        party_txn
+        |> mk_parties_transaction ~fee:7 ~fee_payer_pk:pk ~fee_payer_nonce:nonce
+        |> Parties.to_json |> Yojson.Safe.to_string
+      in
+      print_endline "--------------------------------------\n" ;
+      print_endline ("\n--------" ^ name ^ "--------") ;
+      print_endline party_str ;
+      print_endline "--------------------------------------\n"
+    in
+    print_endline "\n--------info--------" ;
+    print_endline "Token Owner Account: " ;
+    print_endline (token_owner |> Keypair.to_yojson |> Yojson.Safe.to_string) ;
+
+    print_endline "Token Account 1: " ;
+    print_endline (token_account1 |> Keypair.to_yojson |> Yojson.Safe.to_string) ;
+
+    print_endline "Token Account 2: " ;
+    print_endline (token_account2 |> Keypair.to_yojson |> Yojson.Safe.to_string) ;
+
+    print_endline "Custom Token ID: " ;
+    print_endline
+      (custom_token_id |> Token_id.to_yojson |> Yojson.Safe.to_string) ;
+
+    log_parties_str "token_burning" token_burning ;
+
     let check_token_balance k balance =
       [%test_eq: Currency.Balance.t]
         (ledger_get_exn ledger
@@ -575,9 +645,13 @@ let%test_unit "tokens test" =
     |> ignore ;
     execute_parties_transaction token_minting ;
     check_token_balance token_account1 100 ;
+    execute_parties_transaction token_burning ;
+    check_token_balance token_account1 0
+    (*
     execute_parties_transaction token_transfers ;
     check_token_balance token_account1 65 ;
     check_token_balance token_account2 35
+    *)
   in
   Ledger_inner.with_ledger ~depth ~f:(fun ledger ->
       Init_ledger.init
