@@ -86,7 +86,7 @@ class SimpleZkapp extends SmartContract {
       from: this.address,
       to: recieverAddress,
       amount: amountToSend,
-      accountCreation: true,
+      newTokenAccount: true,
     });
 
     console.log(`Sending ${amountToSend} to ${recieverAddress.toBase58()}`);
@@ -105,6 +105,7 @@ class SimpleZkapp extends SmartContract {
       from: this.address,
       to: recieverAddress,
       amount: amountToSend,
+      newTokenAccount: false,
     });
 
     console.log(`Sending ${amountToSend} to ${recieverAddress.toBase58()}`);
