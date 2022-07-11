@@ -627,8 +627,6 @@ let%test_unit "tokens test" =
     print_endline
       (custom_token_id |> Token_id.to_yojson |> Yojson.Safe.to_string) ;
 
-    log_parties_str "token_burning" token_burning ;
-
     let check_token_balance k balance =
       [%test_eq: Currency.Balance.t]
         (ledger_get_exn ledger
@@ -643,8 +641,10 @@ let%test_unit "tokens test" =
       (Public_key.compress token_owner.public_key)
       Token_id.default
     |> ignore ;
+    log_parties_str "token_minting" token_minting ;
     execute_parties_transaction token_minting ;
     check_token_balance token_account1 100 ;
+    log_parties_str "token_burning" token_burning ;
     execute_parties_transaction token_burning ;
     check_token_balance token_account1 0
     (*

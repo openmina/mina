@@ -1,4 +1,5 @@
 import {
+  Circuit,
   Field,
   declareState,
   declareMethods,
@@ -17,7 +18,7 @@ import {
 } from "snarkyjs";
 
 function sendTransaction(tx) {
-  console.log("DEBUG -- TXN", JSON.stringify(partiesToJson(tx.transaction)));
+  console.log("DEBUG -- TXN\n", JSON.stringify(partiesToJson(tx.transaction)));
   tx.send();
 }
 
@@ -56,59 +57,62 @@ class SimpleZkapp extends SmartContract {
 
     // assert that the caller nonce is 0, and increment the nonce - this way, payout can only happen once
     let callerParty = Party.createUnsigned(callerAddress);
-    // callerParty.account.nonce.assertEquals(UInt32.zero);
+    callerParty.account.nonce.assertEquals(UInt32.zero);
     callerParty.body.incrementNonce = Bool(true);
 
     // pay out half of the zkapp balance to the caller
     let balance = this.account.balance.get();
     this.account.balance.assertEquals(balance);
-
     let halfBalance = balance.div(2);
-    this.transfer(halfBalance, callerParty);
+
+    this.balance.subInPlace(halfBalance);
+    callerParty.balance.addInPlace(halfBalance);
   }
 
-  sendTokenWithAccountCreation(receiver) {
+  mint(receiver, newTokenAccount) {
     let recieverAddress = receiver.toPublicKey();
-    recieverAddress.assertEquals(privilegedAddress);
 
-    // transfer custom tokens to the receiver
-    let balance = this.account.balance.get();
-    this.account.balance.assertEquals(balance);
-    let amountToSend = balance.div(10);
+    this.token.mint({
+      address: recieverAddress,
+      amount: 1_000_000_000,
+      newTokenAccount,
+    });
+
+    console.log(`Minting ${1_000_000_000} to ${recieverAddress.toBase58()}`);
+  }
+
+  burn(receiver, newTokenAccount) {
+    let recieverAddress = receiver.toPublicKey();
+
+    this.token.burn({
+      privateKey: receiver,
+      address: recieverAddress,
+      amount: 100,
+      newTokenAccount,
+    });
+
+    console.log(`Burning ${100} to ${recieverAddress.toBase58()}`);
+  }
+
+  send(sender, receiver, newTokenAccount) {
+    let recieverAddress = receiver.toPublicKey();
+    let senderAddress = sender.toPublicKey();
 
     // Log custom token info
     const customToken = Ledger.customTokenID(this.address);
-    console.log("TOKEN OWNER", this.address.toBase58());
-    console.log("TOKEN ACCOUNT", recieverAddress.toBase58());
-    console.log("CUSTOM TOKEN", customToken);
+    console.log("---TOKEN OWNER", this.address.toBase58());
+    console.log("---CUSTOM TOKEN", customToken);
+    console.log("---TOKEN ACCOUNT1", senderAddress.toBase58());
+    console.log("---TOKEN ACCOUNT2", recieverAddress.toBase58());
 
     this.token.transfer({
-      from: this.address,
-      to: recieverAddress,
-      amount: amountToSend,
-      newTokenAccount: true,
+      from: sender,
+      to: receiver,
+      amount: 100,
+      newTokenAccount,
     });
 
-    console.log(`Sending ${amountToSend} to ${recieverAddress.toBase58()}`);
-  }
-
-  sendTokenWithoutAccountCreation(receiver) {
-    let recieverAddress = receiver.toPublicKey();
-    recieverAddress.assertEquals(privilegedAddress);
-
-    // transfer custom tokens to the receiver
-    let balance = this.account.balance.get();
-    this.account.balance.assertEquals(balance);
-    let amountToSend = balance.div(10);
-
-    this.token.transfer({
-      from: this.address,
-      to: recieverAddress,
-      amount: amountToSend,
-      newTokenAccount: false,
-    });
-
-    console.log(`Sending ${amountToSend} to ${recieverAddress.toBase58()}`);
+    console.log(`Sending ${100} to ${recieverAddress.toBase58()}`);
   }
 }
 // note: this is our non-typescript way of doing what our decorators do
@@ -117,8 +121,9 @@ declareMethods(SimpleZkapp, {
   initialize: [],
   update: [Field],
   payout: [PrivateKey],
-  sendTokenWithAccountCreation: [PrivateKey],
-  sendTokenWithoutAccountCreation: [PrivateKey],
+  send: [PrivateKey, PrivateKey, Bool],
+  mint: [PrivateKey, Bool],
+  burn: [PrivateKey, Bool],
 });
 
 let Local = Mina.LocalBlockchain();
@@ -136,6 +141,9 @@ let zkappAddress = zkappKey.toPublicKey();
 // a special account that is allowed to pull out half of the zkapp balance, once
 let privilegedKey = Local.testAccounts[1].privateKey;
 let privilegedAddress = privilegedKey.toPublicKey();
+
+let privilegedKey1 = Local.testAccounts[2].privateKey;
+let privilegedAddress1 = privilegedKey.toPublicKey();
 
 let initialBalance = 10_000_000_000;
 let initialState = Field(1);
@@ -165,20 +173,25 @@ console.log(`initial balance: ${zkapp.account.balance.get().div(1e9)} MINA`);
 // });
 // sendTransaction(tx);
 
-console.log("token transfer with account creation");
+console.log("----------token minting----------");
 tx = await Local.transaction(feePayer, () => {
-  zkapp.sendTokenWithAccountCreation(privilegedKey);
+  zkapp.mint(privilegedKey, Bool(true));
   zkapp.sign(zkappKey);
 });
-
 sendTransaction(tx);
 
-console.log("token transfer without account creation");
+// console.log("----------token burning----------");
+// tx = await Local.transaction(feePayer, () => {
+//   zkapp.burn(privilegedKey, Bool(false));
+// });
+// tx.sign([zkappKey, privilegedKey]);
+// sendTransaction(tx);
+
+console.log("----------token transfer----------");
 tx = await Local.transaction(feePayer, () => {
-  zkapp.sendTokenWithoutAccountCreation(privilegedKey);
+  zkapp.send(privilegedKey, privilegedKey1, Bool(true));
   zkapp.sign(zkappKey);
 });
-
 sendTransaction(tx);
 
 shutdown();
