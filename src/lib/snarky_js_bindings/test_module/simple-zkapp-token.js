@@ -128,7 +128,6 @@ let tx = await Local.transaction(feePayer, () => {
 });
 tx.send();
 
-console.log("initial state: " + zkapp.x.get());
 console.log(`initial balance: ${zkapp.account.balance.get().div(1e9)} MINA`);
 
 // Log custom token info
@@ -146,6 +145,12 @@ tx = await Local.transaction(feePayer, () => {
 });
 sendTransaction(tx);
 
+console.log(
+  `token_account_1 balance: ${JSON.stringify(
+    Local.getAccount(privilegedAddress, customToken.id).balance.value
+  )} custom tokens`
+);
+
 console.log("----------token burning----------");
 tx = await Local.transaction(feePayer, () => {
   zkapp.burn(privilegedKey, Bool(false));
@@ -154,6 +159,12 @@ tx = await Local.transaction(feePayer, () => {
 tx = tx.sign([privilegedKey]);
 sendTransaction(tx);
 
+console.log(
+  `token_account_1 balance: ${JSON.stringify(
+    Local.getAccount(privilegedAddress, customToken.id).balance.value
+  )} custom tokens`
+);
+
 console.log("----------token transfer----------");
 tx = await Local.transaction(feePayer, () => {
   zkapp.send(privilegedKey, privilegedKey1, Bool(true));
@@ -161,5 +172,17 @@ tx = await Local.transaction(feePayer, () => {
 });
 tx = tx.sign([privilegedKey, privilegedKey1]);
 sendTransaction(tx);
+
+console.log(
+  `token_account_1 balance: ${JSON.stringify(
+    Local.getAccount(privilegedAddress, customToken.id).balance.value
+  )} custom tokens`
+);
+
+console.log(
+  `token_account_2 balance: ${JSON.stringify(
+    Local.getAccount(privilegedAddress1, customToken.id).balance.value
+  )} custom tokens`
+);
 
 shutdown();
