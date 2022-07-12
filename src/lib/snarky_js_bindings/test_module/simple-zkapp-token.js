@@ -50,25 +50,6 @@ class SimpleZkapp extends SmartContract {
     this.x.set(initialState);
   }
 
-  payout(caller) {
-    // check that caller is the privileged account
-    let callerAddress = caller.toPublicKey();
-    callerAddress.assertEquals(privilegedAddress);
-
-    // assert that the caller nonce is 0, and increment the nonce - this way, payout can only happen once
-    let callerParty = Party.createUnsigned(callerAddress);
-    callerParty.account.nonce.assertEquals(UInt32.zero);
-    callerParty.body.incrementNonce = Bool(true);
-
-    // pay out half of the zkapp balance to the caller
-    let balance = this.account.balance.get();
-    this.account.balance.assertEquals(balance);
-    let halfBalance = balance.div(2);
-
-    this.balance.subInPlace(halfBalance);
-    callerParty.balance.addInPlace(halfBalance);
-  }
-
   mint(receiver, newTokenAccount) {
     let recieverAddress = receiver.toPublicKey();
 
@@ -112,7 +93,6 @@ declareState(SimpleZkapp, { x: Field });
 declareMethods(SimpleZkapp, {
   initialize: [],
   update: [Field],
-  payout: [PrivateKey],
   send: [PrivateKey, PrivateKey, Bool],
   mint: [PrivateKey, Bool],
   burn: [PrivateKey, Bool],
@@ -152,26 +132,12 @@ console.log("initial state: " + zkapp.x.get());
 console.log(`initial balance: ${zkapp.account.balance.get().div(1e9)} MINA`);
 
 // Log custom token info
-const customToken = Ledger.customTokenID(zkappAddress);
+const customToken = new Token({ tokenOwner: zkappAddress });
 console.log("---FEE PAYER", feePayer.toPublicKey().toBase58());
 console.log("---TOKEN OWNER", zkappAddress.toBase58());
-console.log("---CUSTOM TOKEN", customToken);
+console.log("---CUSTOM TOKEN", customToken.id);
 console.log("---TOKEN ACCOUNT1", privilegedAddress.toBase58());
 console.log("---TOKEN ACCOUNT2", privilegedAddress1.toBase58());
-
-// console.log("payout");
-// tx = await Local.transaction(feePayer, () => {
-//   zkapp.payout(privilegedKey);
-//   zkapp.sign(zkappKey);
-// });
-// sendTransaction(tx);
-
-// console.log("payout2");
-// tx = await Local.transaction(feePayer, () => {
-//   zkapp.payout(privilegedKey);
-//   zkapp.sign(zkappKey);
-// });
-// sendTransaction(tx);
 
 console.log("----------token minting----------");
 tx = await Local.transaction(feePayer, () => {
