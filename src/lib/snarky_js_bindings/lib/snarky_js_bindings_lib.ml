@@ -2439,8 +2439,15 @@ module Ledger = struct
       (fun () -> failwith "invalid scalar")
       Fn.id
 
-  let account_id pk =
-    Mina_base.Account_id.create (public_key pk) Mina_base.Token_id.default
+  let token_id (token : field_class Js.t) : Mina_base.Token_id.t =
+    token |> of_js_field |> to_unchecked |> Mina_base.Token_id.of_field
+
+  let default_token_id_js =
+    Mina_base.Token_id.default |> Mina_base.Token_id.to_field_unsafe
+    |> to_js_field_unchecked
+
+  let account_id pk token =
+    Mina_base.Account_id.create (public_key pk) (token_id token)
 
   let max_state_size =
     Pickles_types.Nat.to_int Mina_base.Zkapp_state.Max_state_size.n
@@ -2744,7 +2751,7 @@ module Ledger = struct
     @@ Mina_base.Signed_command_memo.create_from_string_exn @@ Js.to_string memo
 
   let add_account_exn (l : L.t) pk (balance : string) =
-    let account_id = account_id pk in
+    let account_id = account_id pk default_token_id_js in
     let bal_u64 = Unsigned.UInt64.of_string balance in
     let balance = Currency.Balance.of_uint64 bal_u64 in
     let a : Mina_base.Account.t =
@@ -2765,8 +2772,9 @@ module Ledger = struct
         add_account_exn l a##.publicKey (Js.to_string a##.balance) ) ;
     new%js ledger_constr l
 
-  let get_account l (pk : public_key) : account Js.optdef =
-    let loc = L.location_of_account l##.value (account_id pk) in
+  let get_account l (pk : public_key) (token : field_class Js.t) :
+      account Js.optdef =
+    let loc = L.location_of_account l##.value (account_id pk token) in
     let account = Option.bind loc ~f:(L.get l##.value) in
     To_js.option To_js.account account
 
