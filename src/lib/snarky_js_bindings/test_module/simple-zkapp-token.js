@@ -136,8 +136,9 @@ tx = await Local.transaction(feePayer, () => {
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${JSON.stringify(
-    Local.getAccount(tokenAccount1, customToken.id).balance.value
+  `tokenAccount1 balance: ${Mina.getBalance(
+    tokenAccount1,
+    customToken.id
   )} custom tokens`
 );
 
@@ -150,9 +151,10 @@ tx = tx.sign([tokenAccount1Key]);
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${
-    Local.getAccount(tokenAccount1, customToken.id).balance.value
-  } custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance(
+    tokenAccount1,
+    customToken.id
+  )} custom tokens`
 );
 
 console.log("----------token transfer----------");
@@ -165,14 +167,16 @@ tx = tx.sign([tokenAccount1Key, tokenAccount2Key]);
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${
-    Local.getAccount(tokenAccount1, customToken.id).balance.value
-  } custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance(
+    tokenAccount1,
+    customToken.id
+  )} custom tokens`
 );
 console.log(
-  `tokenAccount2 balance: ${
-    Local.getAccount(tokenAccount2, customToken.id).balance.value
-  } custom tokens`
+  `tokenAccount2 balance: ${Mina.getBalance(
+    tokenAccount2,
+    customToken.id
+  )} custom tokens`
 );
 
 shutdown();
