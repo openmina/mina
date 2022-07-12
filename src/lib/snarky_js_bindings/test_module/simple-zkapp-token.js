@@ -1,25 +1,24 @@
 import {
-  Circuit,
   Field,
   declareState,
   declareMethods,
   State,
+  PublicKey,
   PrivateKey,
   SmartContract,
   isReady,
   shutdown,
   Mina,
   Permissions,
-  Ledger,
   Party,
   UInt64,
-  Bool,
   partiesToJson,
   Token,
+  getDefaultTokenId,
 } from "snarkyjs";
 
 function sendTransaction(tx) {
-  console.log("DEBUG -- TXN\n", JSON.stringify(partiesToJson(tx.transaction)));
+  //console.log("DEBUG -- TXN\n", JSON.stringify(partiesToJson(tx.transaction)));
   tx.send();
 }
 
@@ -51,39 +50,32 @@ class SimpleZkapp extends SmartContract {
     this.x.set(initialState);
   }
 
-  mint(receiver) {
-    let recieverAddress = receiver.toPublicKey();
-
+  mint(receiverAddress) {
+    const amount = 1_000_000_000;
     this.token().mint({
-      address: recieverAddress,
-      amount: 1_000_000_000,
+      address: receiverAddress,
+      amount,
     });
-
-    console.log(`Minting ${1_000_000_000} to ${recieverAddress.toBase58()}`);
+    console.log(`Minting ${amount} to ${receiverAddress.toBase58()}`);
   }
 
-  burn(receiver) {
-    let recieverAddress = receiver.toPublicKey();
-
+  burn(receiverAddress) {
+    let amount = 1_000_000;
     this.token().burn({
-      address: recieverAddress,
-      amount: 100,
+      address: receiverAddress,
+      amount,
     });
-
-    console.log(`Burning ${100} to ${recieverAddress.toBase58()}`);
+    console.log(`Burning ${amount} to ${receiverAddress.toBase58()}`);
   }
 
-  send(sender, receiver) {
-    let recieverAddress = receiver.toPublicKey();
-    let senderAddress = sender.toPublicKey();
-
+  send(senderAddress, receiverAddress) {
+    let amount = 1_000_000;
     this.token().transfer({
       from: senderAddress,
-      to: recieverAddress,
-      amount: 100,
+      to: receiverAddress,
+      amount,
     });
-
-    console.log(`Sending ${100} to ${recieverAddress.toBase58()}`);
+    console.log(`Sending ${amount} to ${receiverAddress.toBase58()}`);
   }
 }
 // note: this is our non-typescript way of doing what our decorators do
@@ -91,9 +83,9 @@ declareState(SimpleZkapp, { x: Field });
 declareMethods(SimpleZkapp, {
   initialize: [],
   update: [Field],
-  send: [PrivateKey, PrivateKey],
-  mint: [PrivateKey],
-  burn: [PrivateKey],
+  send: [PublicKey, PublicKey],
+  mint: [PublicKey],
+  burn: [PublicKey],
 });
 
 let Local = Mina.LocalBlockchain();
@@ -108,12 +100,11 @@ let zkappKey = PrivateKey.fromBase58(
 );
 let zkappAddress = zkappKey.toPublicKey();
 
-// a special account that is allowed to pull out half of the zkapp balance, once
-let privilegedKey = Local.testAccounts[1].privateKey;
-let privilegedAddress = privilegedKey.toPublicKey();
+let tokenAccount1Key = Local.testAccounts[1].privateKey;
+let tokenAccount1 = tokenAccount1Key.toPublicKey();
 
-let privilegedKey1 = Local.testAccounts[2].privateKey;
-let privilegedAddress1 = privilegedKey1.toPublicKey();
+let tokenAccount2Key = Local.testAccounts[2].privateKey;
+let tokenAccount2 = tokenAccount2Key.toPublicKey();
 
 let initialBalance = 10_000_000_000;
 let initialState = Field(1);
@@ -133,56 +124,55 @@ const customToken = new Token({ tokenOwner: zkappAddress });
 console.log("---FEE PAYER", feePayer.toPublicKey().toBase58());
 console.log("---TOKEN OWNER", zkappAddress.toBase58());
 console.log("---CUSTOM TOKEN", customToken.id);
-console.log("---TOKEN ACCOUNT1", privilegedAddress.toBase58());
-console.log("---TOKEN ACCOUNT2", privilegedAddress1.toBase58());
+console.log("---TOKEN ACCOUNT1", tokenAccount1.toBase58());
+console.log("---TOKEN ACCOUNT2", tokenAccount2.toBase58());
 
 console.log("----------token minting----------");
 tx = await Local.transaction(feePayer, () => {
   Party.fundNewAccount(feePayer);
-  zkapp.mint(privilegedKey);
+  zkapp.mint(tokenAccount1);
   zkapp.sign(zkappKey);
 });
 sendTransaction(tx);
 
 console.log(
-  `token_account_1 balance: ${JSON.stringify(
-    Local.getAccount(privilegedAddress, customToken.id).balance.value
+  `tokenAccount1 balance: ${JSON.stringify(
+    Local.getAccount(tokenAccount1, customToken.id).balance.value
   )} custom tokens`
 );
 
 console.log("----------token burning----------");
 tx = await Local.transaction(feePayer, () => {
-  zkapp.burn(privilegedKey);
+  zkapp.burn(tokenAccount1);
   zkapp.sign(zkappKey);
 });
-tx = tx.sign([privilegedKey]);
+tx = tx.sign([tokenAccount1Key]);
 sendTransaction(tx);
 
 console.log(
-  `token_account_1 balance: ${JSON.stringify(
-    Local.getAccount(privilegedAddress, customToken.id).balance.value
-  )} custom tokens`
+  `tokenAccount1 balance: ${
+    Local.getAccount(tokenAccount1, customToken.id).balance.value
+  } custom tokens`
 );
 
 console.log("----------token transfer----------");
 tx = await Local.transaction(feePayer, () => {
   Party.fundNewAccount(feePayer);
-  zkapp.send(privilegedKey, privilegedKey1);
+  zkapp.send(tokenAccount1, tokenAccount2);
   zkapp.sign(zkappKey);
 });
-tx = tx.sign([privilegedKey, privilegedKey1]);
+tx = tx.sign([tokenAccount1Key, tokenAccount2Key]);
 sendTransaction(tx);
 
 console.log(
-  `token_account_1 balance: ${JSON.stringify(
-    Local.getAccount(privilegedAddress, customToken.id).balance.value
-  )} custom tokens`
+  `tokenAccount1 balance: ${
+    Local.getAccount(tokenAccount1, customToken.id).balance.value
+  } custom tokens`
 );
-
 console.log(
-  `token_account_2 balance: ${JSON.stringify(
-    Local.getAccount(privilegedAddress1, customToken.id).balance.value
-  )} custom tokens`
+  `tokenAccount2 balance: ${
+    Local.getAccount(tokenAccount2, customToken.id).balance.value
+  } custom tokens`
 );
 
 shutdown();
