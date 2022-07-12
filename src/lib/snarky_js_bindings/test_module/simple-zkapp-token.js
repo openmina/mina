@@ -54,7 +54,7 @@ class SimpleZkapp extends SmartContract {
   mint(receiver) {
     let recieverAddress = receiver.toPublicKey();
 
-    this.token.mint({
+    this.token().mint({
       address: recieverAddress,
       amount: 1_000_000_000,
     });
@@ -65,7 +65,7 @@ class SimpleZkapp extends SmartContract {
   burn(receiver) {
     let recieverAddress = receiver.toPublicKey();
 
-    this.token.burn({
+    this.token().burn({
       address: recieverAddress,
       amount: 100,
     });
@@ -77,7 +77,7 @@ class SimpleZkapp extends SmartContract {
     let recieverAddress = receiver.toPublicKey();
     let senderAddress = sender.toPublicKey();
 
-    this.token.transfer({
+    this.token().transfer({
       from: senderAddress,
       to: recieverAddress,
       amount: 100,
