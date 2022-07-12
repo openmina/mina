@@ -70,7 +70,7 @@ class SimpleZkapp extends SmartContract {
 
   send(senderAddress, receiverAddress) {
     let amount = 1_000_000;
-    this.token().transfer({
+    this.token().send({
       from: senderAddress,
       to: receiverAddress,
       amount,
