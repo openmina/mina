@@ -15,6 +15,7 @@ import {
   UInt64,
   Bool,
   partiesToJson,
+  Token,
 } from "snarkyjs";
 
 function sendTransaction(tx) {
@@ -50,31 +51,29 @@ class SimpleZkapp extends SmartContract {
     this.x.set(initialState);
   }
 
-  mint(receiver, newTokenAccount) {
+  mint(receiver) {
     let recieverAddress = receiver.toPublicKey();
 
     this.token.mint({
       address: recieverAddress,
       amount: 1_000_000_000,
-      newTokenAccount,
     });
 
     console.log(`Minting ${1_000_000_000} to ${recieverAddress.toBase58()}`);
   }
 
-  burn(receiver, newTokenAccount) {
+  burn(receiver) {
     let recieverAddress = receiver.toPublicKey();
 
     this.token.burn({
       address: recieverAddress,
       amount: 100,
-      newTokenAccount,
     });
 
     console.log(`Burning ${100} to ${recieverAddress.toBase58()}`);
   }
 
-  send(sender, receiver, newTokenAccount) {
+  send(sender, receiver) {
     let recieverAddress = receiver.toPublicKey();
     let senderAddress = sender.toPublicKey();
 
@@ -82,7 +81,6 @@ class SimpleZkapp extends SmartContract {
       from: senderAddress,
       to: recieverAddress,
       amount: 100,
-      newTokenAccount,
     });
 
     console.log(`Sending ${100} to ${recieverAddress.toBase58()}`);
@@ -93,9 +91,9 @@ declareState(SimpleZkapp, { x: Field });
 declareMethods(SimpleZkapp, {
   initialize: [],
   update: [Field],
-  send: [PrivateKey, PrivateKey, Bool],
-  mint: [PrivateKey, Bool],
-  burn: [PrivateKey, Bool],
+  send: [PrivateKey, PrivateKey],
+  mint: [PrivateKey],
+  burn: [PrivateKey],
 });
 
 let Local = Mina.LocalBlockchain();
@@ -140,7 +138,8 @@ console.log("---TOKEN ACCOUNT2", privilegedAddress1.toBase58());
 
 console.log("----------token minting----------");
 tx = await Local.transaction(feePayer, () => {
-  zkapp.mint(privilegedKey, Bool(true));
+  Party.fundNewAccount(feePayer);
+  zkapp.mint(privilegedKey);
   zkapp.sign(zkappKey);
 });
 sendTransaction(tx);
@@ -153,7 +152,7 @@ console.log(
 
 console.log("----------token burning----------");
 tx = await Local.transaction(feePayer, () => {
-  zkapp.burn(privilegedKey, Bool(false));
+  zkapp.burn(privilegedKey);
   zkapp.sign(zkappKey);
 });
 tx = tx.sign([privilegedKey]);
@@ -167,7 +166,8 @@ console.log(
 
 console.log("----------token transfer----------");
 tx = await Local.transaction(feePayer, () => {
-  zkapp.send(privilegedKey, privilegedKey1, Bool(true));
+  Party.fundNewAccount(feePayer);
+  zkapp.send(privilegedKey, privilegedKey1);
   zkapp.sign(zkappKey);
 });
 tx = tx.sign([privilegedKey, privilegedKey1]);
