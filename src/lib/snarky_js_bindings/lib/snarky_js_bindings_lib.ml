@@ -2309,6 +2309,7 @@ module Ledger = struct
 
   type account =
     < publicKey : group_class Js.t Js.readonly_prop
+    ; tokenId : field_class Js.t Js.readonly_prop
     ; balance : js_uint64 Js.readonly_prop
     ; nonce : js_uint32 Js.readonly_prop
     ; zkapp : zkapp_account Js.readonly_prop >
@@ -2444,7 +2445,7 @@ module Ledger = struct
 
   let default_token_id_js =
     Mina_base.Token_id.default |> Mina_base.Token_id.to_field_unsafe
-    |> to_js_field_unchecked
+    |> Field.constant |> to_js_field
 
   let account_id pk token =
     Mina_base.Account_id.create (public_key pk) (token_id token)
@@ -2521,6 +2522,9 @@ module Ledger = struct
       let x, y = Signature_lib.Public_key.decompress_exn pk in
       to_js_group (Field.constant x) (Field.constant y)
 
+    let token_id (token_id : Mina_base.Token_id.t) =
+      token_id |> Mina_base.Token_id.to_field_unsafe |> field
+
     let private_key (sk : Signature_lib.Private_key.t) = to_js_scalar sk
 
     let signature (sg : Signature_lib.Schnorr.Chunked.Signature.t) =
@@ -2534,6 +2538,8 @@ module Ledger = struct
     let account (a : Mina_base.Account.t) : account =
       object%js
         val publicKey = public_key a.public_key
+
+        val tokenId = token_id a.token_id
 
         val balance = uint64 (Currency.Balance.to_uint64 a.balance)
 
