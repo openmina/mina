@@ -51,7 +51,7 @@ class SimpleZkapp extends SmartContract {
   }
 
   mint(receiverAddress) {
-    const amount = 1_000_000_000;
+    let amount = 1_000_000_000;
     this.token().mint({
       address: receiverAddress,
       amount,
@@ -136,10 +136,10 @@ tx = await Local.transaction(feePayer, () => {
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${Mina.getBalance(
-    tokenAccount1,
-    customToken.id
-  )} custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance({
+    publicKey: tokenAccount1,
+    tokenId: customToken.id,
+  })} custom tokens`
 );
 
 console.log("----------token burning----------");
@@ -151,10 +151,10 @@ tx = tx.sign([tokenAccount1Key]);
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${Mina.getBalance(
-    tokenAccount1,
-    customToken.id
-  )} custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance({
+    publicKey: tokenAccount1,
+    tokenId: customToken.id,
+  })} custom tokens`
 );
 
 console.log("----------token transfer----------");
@@ -167,16 +167,16 @@ tx = tx.sign([tokenAccount1Key, tokenAccount2Key]);
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${Mina.getBalance(
-    tokenAccount1,
-    customToken.id
-  )} custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance({
+    publicKey: tokenAccount1,
+    tokenId: customToken.id,
+  })} custom tokens`
 );
 console.log(
-  `tokenAccount2 balance: ${Mina.getBalance(
-    tokenAccount2,
-    customToken.id
-  )} custom tokens`
+  `tokenAccount2 balance: ${Mina.getBalance({
+    publicKey: tokenAccount2,
+    tokenId: customToken.id,
+  })} custom tokens`
 );
 
 shutdown();
