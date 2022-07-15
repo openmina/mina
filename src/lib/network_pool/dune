@@ -52,6 +52,7 @@
    interruptible
    merkle_ledger
    data_hash_lib
+   ppx_version.runtime
  )
  (preprocessor_deps "../../config.mlh")
  (instrumentation (backend bisect_ppx))

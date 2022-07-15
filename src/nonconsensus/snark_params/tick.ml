@@ -29,7 +29,7 @@ open Snarkette
 module Field = struct
   open Core_kernel
 
-  [%%versioned_asserted
+  [%%versioned
   module Stable = struct
     [@@@no_toplevel_latest_type]
 

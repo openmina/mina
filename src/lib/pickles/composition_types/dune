@@ -18,5 +18,6 @@
    pickles.backend
    pasta
    marlin_plonk_bindings_types
+   ppx_version.runtime
  )
 )

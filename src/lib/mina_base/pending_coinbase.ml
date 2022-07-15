@@ -151,7 +151,7 @@ module Coinbase_stack = struct
 
     module V1 = struct
       module T = struct
-        type t = Field.t [@@deriving sexp, compare, hash, version { asserted }]
+        type t = (Field.t[@version_asserted]) [@@deriving sexp, compare, hash]
       end
 
       include T
@@ -210,7 +210,7 @@ module Stack_hash = struct
 
     module V1 = struct
       module T = struct
-        type t = Field.t [@@deriving sexp, compare, hash, version { asserted }]
+        type t = (Field.t[@version_asserted]) [@@deriving sexp, compare, hash]
       end
 
       include T
@@ -356,7 +356,7 @@ module Hash_builder = struct
 
     module V1 = struct
       module T = struct
-        type t = Field.t [@@deriving sexp, compare, hash, version { asserted }]
+        type t = (Field.t[@version_asserted]) [@@deriving sexp, compare, hash]
       end
 
       include T

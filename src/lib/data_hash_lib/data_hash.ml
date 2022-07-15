@@ -105,43 +105,14 @@ struct
 end
 
 module T0 = struct
-  [%%versioned_asserted
+  [%%versioned
   module Stable = struct
     module V1 = struct
-      type t = Field.t
-      [@@deriving sexp, compare, hash, version { asserted }, bin_io]
+      type t = (Field.t[@version_asserted]) [@@deriving sexp, compare, hash]
 
       let to_latest = Fn.id
     end
-
-    module Tests = struct end
   end]
-
-  module Tests = struct
-    (* these test the stability of the serialization derived from the
-       string representation of Field.t, not the direct serialization of
-       Field.t
-    *)
-
-    let field =
-      Quickcheck.random_value ~seed:(`Deterministic "Data_hash.T0 tests")
-        Field.gen
-
-    [%%if curve_size = 255]
-
-    let%test "Binable from stringable V1" =
-      let known_good_digest = "fa43c8180f9f3cef1cf5767592e964c1" in
-      Ppx_version_runtime.Serialization.check_serialization
-        (module Stable.V1)
-        field known_good_digest
-
-    [%%else]
-
-    let%test "Binable from stringable V1" =
-      failwith "No test for this curve size"
-
-    [%%endif]
-  end
 end
 
 module Make_full_size (B58_data : Data_hash_intf.Data_hash_descriptor) = struct

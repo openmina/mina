@@ -44,6 +44,7 @@
    logproc_lib
    pasta
    gossip_net
+   ppx_version.runtime
 )
  (preprocess
   (pps ppx_version ppx_jane ppx_deriving_yojson ppx_deriving.make))

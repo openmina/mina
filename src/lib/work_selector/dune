@@ -38,6 +38,7 @@
    with_hash
    mina_metrics
    transition_frontier_extensions
+   ppx_version.runtime
    )
  (preprocess
   (pps ppx_coda ppx_version ppx_assert ppx_base ppx_let ppx_deriving.std ppx_deriving_yojson ppx_sexp_conv ppx_bin_prot

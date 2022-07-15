@@ -32,6 +32,7 @@
    non_empty_list
    inline_test_quiet_logs
    mina_block
+   ppx_version.runtime
 )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_jane ppx_coda ppx_version)))

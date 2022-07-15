@@ -46,6 +46,7 @@
    marlin_plonk_bindings_pasta_fq
    marlin_plonk_bindings_pasta_fp
    marlin_plonk_bindings
+   ppx_version.runtime
  )
  (inline_tests)
  (instrumentation (backend bisect_ppx))

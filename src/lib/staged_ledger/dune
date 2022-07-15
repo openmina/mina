@@ -52,6 +52,7 @@
    with_hash
    random_oracle
    pickles.backend
+   ppx_version.runtime
  )
  (preprocessor_deps ../../config.mlh)
  (instrumentation (backend bisect_ppx))

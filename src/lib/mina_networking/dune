@@ -45,6 +45,7 @@
    syncable_ledger
    o1trace
    transition_handler
+   ppx_version.runtime
  )
  (inline_tests)
  (preprocess

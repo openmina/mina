@@ -21,6 +21,7 @@
    mina_metrics
    non_empty_list
    pipe_lib
+   ppx_version.runtime
    state_or_error
  )
  (preprocess
