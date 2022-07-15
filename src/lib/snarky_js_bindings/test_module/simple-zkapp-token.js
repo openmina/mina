@@ -39,7 +39,7 @@ class SimpleZkapp extends SmartContract {
     });
     this.balance.addInPlace(UInt64.fromNumber(initialBalance));
     this.x.set(initialState);
-    this.self.tokenSymbol().set("TEST_TOKEN");
+    this.tokenSymbol.set("TEST_TOKEN");
   }
 
   update(y) {
@@ -187,12 +187,5 @@ console.log(
     tokenId: customToken.id,
   })} custom tokens`
 );
-
-console.log("----------token symbol----------");
-tx = await Local.transaction(feePayer, () => {
-  zkapp.tokenSymbol("SHEKEL");
-  zkapp.sign(zkappKey);
-});
-sendTransaction(tx);
 
 shutdown();
