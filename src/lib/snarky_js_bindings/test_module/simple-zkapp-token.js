@@ -52,7 +52,7 @@ class SimpleZkapp extends SmartContract {
   }
 
   mint(receiverAddress) {
-    let amount = 1_000_000_000;
+    let amount = UInt64.from(1_000_000);
     this.token().mint({
       address: receiverAddress,
       amount,
@@ -61,7 +61,7 @@ class SimpleZkapp extends SmartContract {
   }
 
   burn(receiverAddress) {
-    let amount = 1_000_000;
+    let amount = UInt64.from(1_000);
     this.token().burn({
       address: receiverAddress,
       amount,
@@ -70,7 +70,7 @@ class SimpleZkapp extends SmartContract {
   }
 
   send(senderAddress, receiverAddress) {
-    let amount = 1_000_000;
+    let amount = UInt64.from(1_000);
     this.token().send({
       from: senderAddress,
       to: receiverAddress,
