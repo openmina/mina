@@ -1402,6 +1402,23 @@ let replay_blocks logger =
            "Daemon ready, replayed precomputed blocks. Clients can now connect" ;
          Async.never () ) )
 
+let dump_type_shapes =
+  Command.basic ~summary:"Print serialization shapes of versioned types"
+    (let open Command.Let_syntax in
+    let%map pretty =
+      Core_kernel.Command.Param.flag "--pretty" ~aliases:[ "-pretty" ]
+        Core_kernel.Command.Param.no_arg ~doc:"  Set to output 'pretty' JSON"
+    in
+    fun () ->
+      Ppx_version_runtime.Shapes.iteri ~f:(fun ~key:path ~data:shape ->
+          let open Bin_prot.Shape in
+          let shape_sexp = sexp_of_t shape in
+          let shape =
+            if pretty then Sexp.to_string_hum shape_sexp
+            else Sexp.to_string shape_sexp
+          in
+          Core_kernel.printf "%s, %s\n" path shape ))
+
 [%%if force_updates]
 
 let rec ensure_testnet_id_still_good logger =
@@ -1669,6 +1686,7 @@ let internal_commands logger =
           | None ->
               () ) ;
           Deferred.return ()) )
+  ; ("dump-type-shapes", dump_type_shapes)
   ; ("replay-blocks", replay_blocks logger)
   ]
 

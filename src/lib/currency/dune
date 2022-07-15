@@ -33,6 +33,7 @@
    pickles
    snarky.backendless
    crypto_params
+   ppx_version.runtime
  )
  (preprocessor_deps ../../config.mlh)
  (preprocess

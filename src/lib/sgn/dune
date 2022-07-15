@@ -16,6 +16,7 @@
    sgn_type
    pickles
    snarky.backendless
+   ppx_version.runtime
    )
  (preprocessor_deps ../../config.mlh)
  (preprocess

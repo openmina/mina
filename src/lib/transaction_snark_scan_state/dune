@@ -34,6 +34,7 @@
    genesis_constants
    o1trace
    with_hash
+   ppx_version.runtime
    )
  (preprocessor_deps ../../config.mlh)
  (preprocess

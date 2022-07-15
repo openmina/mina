@@ -13,6 +13,7 @@
    transaction_snark_work
    genesis_constants
    currency
+   ppx_version.runtime
    )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_jane ppx_version ppx_deriving_yojson)))

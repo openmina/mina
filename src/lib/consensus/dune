@@ -68,6 +68,7 @@
    snarky_integer
    bitstring_lib
    pasta
+   ppx_version.runtime
  )
  (preprocessor_deps "../../config.mlh")
  (preprocess

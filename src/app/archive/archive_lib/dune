@@ -54,6 +54,7 @@
    verifier
    quickcheck_lib
    snark_params
+   ppx_version.runtime
  )
  (inline_tests)
  (modes native)

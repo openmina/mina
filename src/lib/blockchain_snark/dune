@@ -32,6 +32,7 @@
    random_oracle
    data_hash_lib
    pasta
+   ppx_version.runtime
    )
  (inline_tests)
  (preprocess

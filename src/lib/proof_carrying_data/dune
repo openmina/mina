@@ -2,6 +2,6 @@
  (name proof_carrying_data)
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_version ppx_jane))
- (libraries core_kernel bin_prot.shape base base.caml sexplib0)
+ (libraries core_kernel bin_prot.shape base base.caml sexplib0 ppx_version.runtime)
  (public_name proof_carrying_data)
 )

@@ -40,5 +40,6 @@
    mina_numbers
    unsigned_extended
    pasta
+   ppx_version.runtime
    )
 )

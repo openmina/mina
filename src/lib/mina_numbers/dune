@@ -31,6 +31,7 @@
    bitstring_lib
    test_util
    snarky_integer
+   ppx_version.runtime
  )
  (preprocessor_deps ../../config.mlh)
  (preprocess

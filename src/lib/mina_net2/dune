@@ -33,6 +33,7 @@
    timeout_lib
    mina_metrics
    o1trace
+   ppx_version.runtime
    )
  (inline_tests)
  (instrumentation (backend bisect_ppx))
