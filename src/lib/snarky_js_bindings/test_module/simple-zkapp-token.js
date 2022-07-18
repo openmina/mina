@@ -126,13 +126,7 @@ const customToken = new Token({ tokenOwner: zkappAddress });
 console.log("---FEE PAYER", feePayer.toPublicKey().toBase58());
 console.log("---TOKEN OWNER", zkappAddress.toBase58());
 console.log("---CUSTOM TOKEN", customToken.id);
-console.log(
-  `---TOKEN SYMBOL ${
-    Mina.getAccount({
-      publicKey: zkappAddress,
-    }).tokenSymbol
-  }`
-);
+console.log(`---TOKEN SYMBOL ${Mina.getAccount(zkappAddress).tokenSymbol}`);
 console.log("---TOKEN ACCOUNT1", tokenAccount1.toBase58());
 console.log("---TOKEN ACCOUNT2", tokenAccount2.toBase58());
 
@@ -145,10 +139,10 @@ tx = await Local.transaction(feePayer, () => {
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${Mina.getBalance({
-    publicKey: tokenAccount1,
-    tokenId: customToken.id,
-  })} custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance(
+    tokenAccount1,
+    customToken.id
+  )} custom tokens`
 );
 
 console.log("----------token burning----------");
@@ -160,10 +154,10 @@ tx = tx.sign([tokenAccount1Key]);
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${Mina.getBalance({
-    publicKey: tokenAccount1,
-    tokenId: customToken.id,
-  })} custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance(
+    tokenAccount1,
+    customToken.id
+  )} custom tokens`
 );
 
 console.log("----------token transfer----------");
@@ -176,16 +170,16 @@ tx = tx.sign([tokenAccount1Key, tokenAccount2Key]);
 sendTransaction(tx);
 
 console.log(
-  `tokenAccount1 balance: ${Mina.getBalance({
-    publicKey: tokenAccount1,
-    tokenId: customToken.id,
-  })} custom tokens`
+  `tokenAccount1 balance: ${Mina.getBalance(
+    tokenAccount1,
+    customToken.id
+  )} custom tokens`
 );
 console.log(
-  `tokenAccount2 balance: ${Mina.getBalance({
-    publicKey: tokenAccount2,
-    tokenId: customToken.id,
-  })} custom tokens`
+  `tokenAccount2 balance: ${Mina.getBalance(
+    tokenAccount2,
+    customToken.id
+  )} custom tokens`
 );
 
 shutdown();
