@@ -34,3 +34,4 @@ require (
 )
 
 replace libp2p_ipc => ../../../libp2p_ipc
+replace github.com/libp2p/go-libp2p => github.com/name-placeholder/go-libp2p v0.15.2-0.20220719150500-7be180309a26
