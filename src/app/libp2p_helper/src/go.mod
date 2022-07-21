@@ -34,4 +34,7 @@ require (
 )
 
 replace libp2p_ipc => ../../../libp2p_ipc
+
 replace github.com/libp2p/go-libp2p => github.com/name-placeholder/go-libp2p v0.15.2-0.20220719150500-7be180309a26
+
+replace github.com/flynn/noise => github.com/name-placeholder/noise v1.0.1-0.20220718180751-beab3a060888
