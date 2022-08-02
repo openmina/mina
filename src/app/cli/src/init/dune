@@ -92,6 +92,7 @@
    group_map
    snark_work_lib
    mina_compile_config
+   hex
  )
  (instrumentation (backend bisect_ppx))
  (preprocessor_deps ../../../../config.mlh
