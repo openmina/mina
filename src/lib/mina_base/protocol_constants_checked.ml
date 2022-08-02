@@ -24,6 +24,11 @@ module Value = struct
       [@@deriving equal, ord, hash, sexp, yojson]
 
       let to_latest = Fn.id
+
+      let bin_read_t bs ~pos_ref =
+        Stdlib.Printf.printf
+          "## Decoding protocol constants checked at pos=%d\n%!" !pos_ref ;
+        try bin_read_t bs ~pos_ref with Failure _ as exn -> raise exn
     end
   end]
 

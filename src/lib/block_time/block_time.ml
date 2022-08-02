@@ -23,6 +23,13 @@ module Time = struct
       end
 
       include Hashable.Make (T)
+
+      let bin_read_t bs ~pos_ref =
+        Stdlib.Printf.printf "## Decoding block time at pos=%d\n%!" !pos_ref ;
+        try bin_read_t bs ~pos_ref
+        with exn ->
+          Stdlib.Printf.printf "!!! failed\n%!" ;
+          raise exn
     end
   end]
 
@@ -149,6 +156,14 @@ module Time = struct
         [@@deriving sexp, compare, equal, hash, yojson]
 
         let to_latest = Fn.id
+
+        let bin_read_t bs ~pos_ref =
+          Stdlib.Printf.printf "## Decoding block time span at pos=%d\n%!"
+            !pos_ref ;
+          try bin_read_t bs ~pos_ref
+          with exn ->
+            Stdlib.Printf.printf "!!! failed\n%!" ;
+            raise exn
       end
     end]
 

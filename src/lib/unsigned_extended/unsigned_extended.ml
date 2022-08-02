@@ -98,6 +98,13 @@ module UInt64 = struct
 
         let of_binable = Unsigned.UInt64.of_int64
       end)
+
+      let bin_read_t bs ~pos_ref =
+        Stdlib.Printf.printf "## Decoding UInt64 at pos=%d\n%!" !pos_ref ;
+        try bin_read_t bs ~pos_ref
+        with exn ->
+          Stdlib.Printf.printf "!!! failed\n%!" ;
+          raise exn
     end
   end]
 
@@ -148,6 +155,13 @@ module UInt32 = struct
 
         let of_binable = Unsigned.UInt32.of_int32
       end)
+
+      let bin_read_t bs ~pos_ref =
+        Stdlib.Printf.printf "## Decoding UInt32 at pos=%d\n%!" !pos_ref ;
+        try bin_read_t bs ~pos_ref
+        with exn ->
+          Stdlib.Printf.printf "!!! failed\n%!" ;
+          raise exn
     end
   end]
 

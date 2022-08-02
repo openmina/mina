@@ -51,6 +51,13 @@ module Stable = struct
 
     include Comparable.Make (T)
     include Hashable.Make_binable (T)
+
+    let bin_read_t bs ~pos_ref =
+      Stdlib.Printf.printf "## Decoding state_hash at pos=%d\n%!" !pos_ref ;
+      try bin_read_t bs ~pos_ref
+      with exn ->
+        Stdlib.Printf.printf "!!! failed\n%!" ;
+        raise exn
   end
 end]
 

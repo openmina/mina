@@ -41,6 +41,14 @@ module Value = struct
       [@@deriving sexp, equal, compare, hash, yojson]
 
       let to_latest = Fn.id
+
+      let bin_read_t bs ~pos_ref =
+        Stdlib.Printf.printf "## Decoding blockchain state at pos=%d\n%!"
+          !pos_ref ;
+        try bin_read_t bs ~pos_ref
+        with exn ->
+          Stdlib.Printf.printf "!!! failed\n%!" ;
+          raise exn
     end
   end]
 end

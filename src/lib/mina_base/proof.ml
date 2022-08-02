@@ -13,6 +13,17 @@ module Stable = struct
     [@@deriving sexp, yojson, compare]
 
     let to_latest = Fn.id
+
+    let bin_read_t bs ~pos_ref =
+      Stdlib.Printf.printf "## Decoding protocol state proof at pos=%d\n%!"
+        !pos_ref ;
+      try
+        let x = bin_read_t bs ~pos_ref in
+        Stdlib.Printf.printf "=== done decoding protocol state proof\n%!" ;
+        x
+      with exn ->
+        Stdlib.Printf.printf "!!! failed\n%!" ;
+        raise exn
   end
 end]
 

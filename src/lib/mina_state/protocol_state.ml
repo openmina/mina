@@ -59,6 +59,17 @@ module Body = struct
         [@@deriving equal, ord, bin_io, hash, sexp, yojson, version]
 
         let to_latest = Fn.id
+
+        let bin_read_t bs ~pos_ref =
+          Stdlib.Printf.printf "## Decoding protocol state body at pos=%d\n%!"
+            !pos_ref ;
+          try
+            let x = bin_read_t bs ~pos_ref in
+            Stdlib.Printf.printf "=== done decoding protocol state body\n%!" ;
+            x
+          with exn ->
+            Stdlib.Printf.printf "!!! failed\n%!" ;
+            raise exn
       end
     end]
   end
