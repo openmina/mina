@@ -28,6 +28,30 @@ let hashes_abstract ~hash_body
       [| (previous_state_hash :> Field.t); (state_body_hash :> Field.t) |]
     |> State_hash.of_hash
   in
+
+  (* let t = previous_state_hash in
+     let sz = Field.bin_size_t t in
+     let buf = Bin_prot.Common.create_buf sz in
+     ignore (Field.bin_write_t buf ~pos:0 t) ;
+     let bytes = Bytes.create sz in
+     ignore (Bin_prot.Common.blit_buf_bytes buf bytes ~len:sz) ;
+     printf "\n\nprevious_state_hash: %s" (bytes |> Bytes.to_string |> Hex.encode) ; *)
+  let t = state_body_hash in
+  let v = Field.sexp_of_t t in
+  printf "\nsexp: %s\n" (Sexp.to_string v) ;
+  printf "\ntostring %s\n" (Field.to_string t) ;
+  printf "\nbits %d\n" (t |> Field.unpack |> List.length) ;
+  t |> Field.unpack |> List.iter ~f:(fun x -> printf "%d" (if x then 1 else 0)) ;
+  printf "\n" ;
+  (* (t |> Field.unpack |> List.fold_left (fun r x -> String.concat r (Bool.to_string x)) "") *)
+  let sz = Field.bin_size_t t in
+  let buf = Bin_prot.Common.create_buf sz in
+  ignore (Field.bin_write_t buf ~pos:0 t) ;
+  let bytes = Bytes.create sz in
+  ignore (Bin_prot.Common.blit_buf_bytes buf bytes ~len:sz) ;
+  printf "\nstate_body_hashSSSSS: %s" (bytes |> Bytes.to_string) ;
+  printf "\nstate_body_hash: %s" (bytes |> Bytes.to_string |> Hex.encode) ;
+
   { State_hash.State_hashes.state_hash; state_body_hash = Some state_body_hash }
 
 module Body = struct
@@ -102,18 +126,16 @@ module Body = struct
       ~var_to_hlist:Poly.to_hlist ~var_of_hlist:Poly.of_hlist
       ~value_to_hlist:Poly.to_hlist ~value_of_hlist:Poly.of_hlist
 
-  let to_input
-      { Poly.genesis_state_hash : State_hash.t
-      ; blockchain_state
-      ; consensus_state
-      ; constants
-      } =
-    Random_oracle.Input.(
-      append
-        (Blockchain_state.to_input blockchain_state)
-        (Consensus.Data.Consensus_state.to_input consensus_state)
-      |> append (field (genesis_state_hash :> Field.t))
-      |> append (Protocol_constants_checked.to_input constants))
+  let to_input { Poly.genesis_state_hash : State_hash.t; constants; _ } =
+    let input = Protocol_constants_checked.to_input constants in
+    printf "\nroinput " ;
+    Random_oracle_input.to_bits input ~unpack:Fn.id
+    |> List.iter ~f:(fun x -> printf "%d" (if x then 1 else 0)) ;
+    printf "\n" ;
+    printf "\n--%s\n" (State_hash.to_base58_check genesis_state_hash) ;
+    (* Blockchain_state.to_input blockchain_state *)
+    (* Consensus.Data.Consensus_state.to_input consensus_state *)
+    Protocol_constants_checked.to_input constants
 
   let var_to_input
       { Poly.genesis_state_hash; blockchain_state; consensus_state; constants }
@@ -158,10 +180,7 @@ module Body = struct
 
   [%%endif]
 
-  let hash s =
-    Random_oracle.hash ~init:Hash_prefix.protocol_state_body
-      (Random_oracle.pack_input (to_input s))
-    |> State_body_hash.of_hash
+  let hash s = Random_oracle.hash (Random_oracle.pack_input (to_input s))
 
   let view (t : Value.t) : Snapp_predicate.Protocol_state.View.t =
     let module C = Consensus.Proof_of_stake.Exported.Consensus_state in

@@ -40,5 +40,6 @@
    mina_numbers
    unsigned_extended
    pasta
+   hex
    )
 )

@@ -74,10 +74,10 @@ let t_of_value (v : value) : Genesis_constants.Protocol.t =
 let to_input (t : value) =
   Random_oracle.Input.bitstrings
     [| T.to_bits t.k
-     ; T.to_bits t.delta
-     ; T.to_bits t.slots_per_epoch
-     ; T.to_bits t.slots_per_sub_window
-     ; Block_time.Bits.to_bits t.genesis_state_timestamp
+       (* ; T.to_bits t.delta
+          ; T.to_bits t.slots_per_epoch
+          ; T.to_bits t.slots_per_sub_window
+          ; Block_time.Bits.to_bits t.genesis_state_timestamp *)
     |]
 
 [%%if defined consensus_mechanism]

@@ -93,6 +93,8 @@
    snark_work_lib
    mina_compile_config
    hex
+   random_oracle_input
+   random_oracle
  )
  (instrumentation (backend bisect_ppx))
  (preprocessor_deps ../../../../config.mlh
