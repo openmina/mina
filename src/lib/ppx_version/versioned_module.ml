@@ -411,8 +411,26 @@ let version_type ~version_option version stri =
               Core_kernel.sprintf "%s:%s.%s" __FILE__ __FUNCTION__
                 [%e estring ptype_name.txt]
             in
-            Ppx_version_runtime.Shapes.register path bin_shape_t]
-      else []
+            Ppx_version_runtime.Shapes.register path (bin_shape_t )]
+      else
+        let rec args xs = match xs with
+          | [] -> [%expr bin_shape_t]
+          | _ :: t -> [%expr [%e (args t)]
+              (Bin_prot.Shape.var
+                 (Bin_prot.Shape.Location.of_string
+                    "src/dummy.ml:0:0")
+                 (Bin_prot.Shape.Vid.of_string "d"))
+          ]
+        in
+        let ptype_args = args ptype_params in
+        [%str
+          let (_ : _) =
+            let path =
+              Core_kernel.sprintf "%s:%s.%s" __FILE__ __FUNCTION__
+                [%e estring ptype_name.txt]
+            in
+            Ppx_version_runtime.Shapes.register path ([%e ptype_args])]
+        (* [] *)
     | _ ->
       []
       (* failwith (Core_kernel.sprintf "Expected single type declaration in structure item %s") *)
