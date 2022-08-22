@@ -1,0 +1,12 @@
+(executable
+ (name decode_interface)
+ (modules decode_interface)
+ (libraries
+   core
+   core_kernel
+   bin_prot
+   ;;
+   mina_block
+   network_pool
+   gossip_net)
+ (modes native object))
