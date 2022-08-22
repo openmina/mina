@@ -198,6 +198,7 @@ let watch t ~timeout_duration ~cached_transition ~valid_cb =
   let transition_with_hash, _ =
     Envelope.Incoming.data (Cached.peek cached_transition)
   in
+  (* TODO: somehow register the parent of the hash so that the download checkpoint can be properly traced to the original hash and not it's parent  *)
   let hash = State_hash.With_state_hashes.state_hash transition_with_hash in
   let parent_hash =
     With_hash.data transition_with_hash
@@ -240,6 +241,7 @@ let watch t ~timeout_duration ~cached_transition ~valid_cb =
   in
   match Hashtbl.find t.collected_transitions parent_hash with
   | None ->
+      (* Parent not found, register self as child, and add empty list of children for self is nothing there already *)
       let remaining_time = cancel_timeout t hash in
       Hashtbl.add_exn t.collected_transitions ~key:parent_hash
         ~data:[ cached_transition ] ;
