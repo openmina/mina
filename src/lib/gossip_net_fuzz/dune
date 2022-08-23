@@ -1,6 +1,10 @@
 (executable
  (name decode_interface)
  (modules decode_interface)
+ ; (flags (:standard
+ ;          -cclib -L/usr/lib/gcc/x86_64-linux-gnu/9/
+ ;          -cclib -L/usr/lib/x86_64-linux-gnu/
+ ;          -cclib -lasmrun))
  (libraries
    core
    core_kernel
@@ -9,4 +13,4 @@
    mina_block
    network_pool
    gossip_net)
- (modes native object))
+ (modes native shared_object))

@@ -18,12 +18,12 @@ let decode_snark_pool_diff msg =
 let decode_tx_pool_diff msg =
   decode msg ~bin_prot:Transaction_pool.Diff_versioned.Stable.V1.bin_t
 
-(* let foo = *)
-(*   printf () "=== importand message from OCaml" *)
+let foo msg =
+  Stdlib.Printf.printf "=== importand message from OCaml %s !!!" msg
 
 let () =
   (* Callback.register "decode_gossip_message" decode_gossip_message; *)
-  (* Callback.register "foo" foo; *)
+  Callback.register "foo" foo;
   Callback.register "decode_external_transition" decode_external_transition;
   Callback.register "decode_snark_pool_diff" decode_snark_pool_diff;
   Callback.register "decode_tx_pool_diff" decode_tx_pool_diff
