@@ -1,0 +1,18 @@
+(executable
+ (name decoder)
+ (libraries
+   core
+   core_kernel
+   bin_prot
+   memcpy
+   ctypes
+   yojson
+   hex
+   ;;
+   mina_block
+   network_pool
+   gossip_net)
+ (preprocess
+  (pps ppx_version ppx_jane ppxlib.metaquot))
+ (instrumentation (backend bisect_ppx))
+ (modes native))
