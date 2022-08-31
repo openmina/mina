@@ -11,7 +11,8 @@
    ;;
    mina_block
    network_pool
-   gossip_net)
+   gossip_net
+   mina_networking)
  (preprocess
   (pps ppx_version ppx_jane ppxlib.metaquot))
  (instrumentation (backend bisect_ppx))

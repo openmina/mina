@@ -45,8 +45,7 @@ let main () =
     try
       let _tx_pool_diff =
         Bin_prot.Utils.bin_read_stream ~read
-          Network_pool.Transaction_pool.Diff_versioned.Stable.V1.bin_reader_t
-        (* Gossip_net.Message.Latest.bin_reader_t *)
+          Mina_networking.Gossip_net.Message.Latest.T.bin_reader_msg
       in
       Printf.printf "ok\n" ; Out_channel.flush stdout
     with
