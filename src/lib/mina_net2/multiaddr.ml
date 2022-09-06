@@ -22,14 +22,14 @@ let to_peer t =
   | _ ->
       None
 
-let valid_as_peer t =
-  match String.split ~on:'/' t with
-  | [ ""; protocol; _; "tcp"; _; "p2p"; _ ]
-    when List.mem [ "ip4"; "ip6"; "dns4"; "dns6" ] protocol ~equal:String.equal
-    ->
-      true
-  | _ ->
-      false
+let valid_as_peer t = not (String.is_empty t)
+(* match String.split ~on:'/' t with
+   | [ ""; protocol; _; "tcp"; _; "p2p"; _ ]
+     when List.mem [ "ip4"; "ip6"; "dns4"; "dns6" ] protocol ~equal:String.equal
+     ->
+       true
+   | _ ->
+       false *)
 
 let of_file_contents contents : t list =
   String.split ~on:'\n' contents

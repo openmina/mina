@@ -44,7 +44,9 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	libp2pmplex "github.com/libp2p/go-libp2p-mplex"
+	direct "github.com/libp2p/go-libp2p-webrtc-direct"
 	mplex "github.com/libp2p/go-mplex"
+	"github.com/pion/webrtc/v3"
 )
 
 const NodeStatusTimeout = 10 * time.Second
@@ -796,16 +798,39 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	for _, net := range knownPrivateIpNets {
 		knownPrivateAddrFilters.AddFilter(net, ma.ActionAccept)
 	}
+	muxer := libp2pmplex.DefaultTransport
+
+	transport := direct.NewTransport(
+		webrtc.Configuration{},
+		new(libp2pmplex.Transport),
+	)
+	// WithSignalConfiguration(star.SignalConfiguration{
+	// 	URLPath: "/socket.io/?EIO=3&transport=websocket",
+	// }).
+	// WithWebRTCConfiguration(webrtc.Configuration{
+	// 	ICEServers: []webrtc.ICEServer{
+	// 		{
+	// 			URLs: []string{
+	// 				"stun:stun.l.google.com:19302",
+	// 				"stun:stun1.l.google.com:19302",
+	// 				"stun:stun2.l.google.com:19302",
+	// 				"stun:stun3.l.google.com:19302",
+	// 				"stun:stun4.l.google.com:19302",
+	// 			},
+	// 		},
+	// 	},
+	// })
 
 	gs := NewCodaGatingState(gatingConfig, knownPrivateAddrFilters)
 	host, err := p2p.New(ctx,
-		p2p.Muxer("/coda/mplex/1.0.0", libp2pmplex.DefaultTransport),
+		p2p.Transport(transport),
+		p2p.Muxer("/coda/mplex/1.0.0", muxer),
 		p2p.Identity(pk),
 		p2p.Peerstore(ps),
 		p2p.DisableRelay(),
 		p2p.ConnectionGater(gs),
 		p2p.ConnectionManager(connManager),
-		p2p.ListenAddrs(listenOn...),
+		// p2p.ListenAddrs(listenOn...),
 		p2p.AddrsFactory(func(as []ma.Multiaddr) []ma.Multiaddr {
 			if externalAddr != nil {
 				as = append(as, externalAddr)

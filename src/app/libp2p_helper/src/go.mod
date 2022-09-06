@@ -23,13 +23,15 @@ require (
 	github.com/libp2p/go-libp2p-peerstore v0.3.0
 	github.com/libp2p/go-libp2p-pubsub v0.5.4
 	github.com/libp2p/go-libp2p-record v0.1.3
+	github.com/libp2p/go-libp2p-webrtc-direct v0.0.0-20220831202157-54ab951137fa
 	github.com/libp2p/go-mplex v0.3.0
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multihash v0.0.15
+	github.com/pion/webrtc/v3 v3.1.43
 	github.com/prometheus/client_golang v1.11.0
 	github.com/shirou/gopsutil/v3 v3.21.11
-	github.com/stretchr/testify v1.7.0
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	github.com/stretchr/testify v1.7.1
+	golang.org/x/crypto v0.0.0-20220516162934-403b01795ae8
 	libp2p_ipc v0.0.0
 )
 
