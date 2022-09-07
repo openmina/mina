@@ -13,7 +13,17 @@ let to_libp2p_ipc = Libp2p_ipc.create_multiaddr
 
 let to_peer t =
   match String.split ~on:'/' t with
-  | [ ""; "ip4"; ip4_str; "tcp"; tcp_str; "p2p"; peer_id ] -> (
+  | [ ""; "ip4"; ip4_str; "tcp"; tcp_str; "p2p"; peer_id ]
+  | [ ""
+    ; "ip4"
+    ; ip4_str
+    ; "tcp"
+    ; tcp_str
+    ; "http"
+    ; "p2p-webrtc-direct"
+    ; "p2p"
+    ; peer_id
+    ] -> (
       try
         let host = Unix.Inet_addr.of_string ip4_str in
         let libp2p_port = Int.of_string tcp_str in
