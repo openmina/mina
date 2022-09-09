@@ -60,6 +60,9 @@ type segment struct {
 type segments [256]*segment
 
 func (ss *segments) get(p peer.ID) *segment {
+	log.Warn(">>", " len(p): ", len(p))
+	log.Warn(">>", " byte(p[len(p)-1]): ", byte(p[len(p)-1]))
+	log.Warn(">>", " ss[byte(p[len(p)-1])]: ", ss[byte(p[len(p)-1])])
 	return ss[byte(p[len(p)-1])]
 }
 
@@ -516,11 +519,13 @@ func (nn *cmNotifee) Connected(n network.Network, c network.Conn) {
 	cm := nn.cm()
 
 	p := c.RemotePeer()
+	log.Warn("//////////////////////////////////////////", p, cm, cm.segments)
 	s := cm.segments.get(p)
 	s.Lock()
 	defer s.Unlock()
 
 	id := c.RemotePeer()
+	log.Warn(s, s.peers, id)
 	pinfo, ok := s.peers[id]
 	if !ok {
 		pinfo = &peerInfo{

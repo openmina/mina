@@ -800,9 +800,15 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	}
 	muxer := libp2pmplex.DefaultTransport
 
+	// cert, err := webrtc.GenerateCertificate(pk)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	transport := direct.NewTransport(
-		webrtc.Configuration{},
-		new(libp2pmplex.Transport),
+		webrtc.Configuration{
+			// Certificates: []webrtc.Certificate{*cert},
+		},
+		muxer,
 	)
 	// WithSignalConfiguration(star.SignalConfiguration{
 	// 	URLPath: "/socket.io/?EIO=3&transport=websocket",

@@ -12,6 +12,7 @@ require (
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/pion/datachannel v1.4.21
 	github.com/pion/webrtc/v3 v3.0.16
+	github.com/multiformats/go-multihash v0.0.14
 )
 
 require (
@@ -29,7 +30,6 @@ require (
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-base32 v0.0.3 // indirect
 	github.com/multiformats/go-base36 v0.1.0 // indirect
-	github.com/multiformats/go-multihash v0.0.14 // indirect
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pion/dtls/v2 v2.0.8 // indirect

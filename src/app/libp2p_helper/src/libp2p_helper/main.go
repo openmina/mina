@@ -108,10 +108,10 @@ func main() {
 	// Messages emitted at lower levels than the given level will not be
 	// emitted.
 	setLogLevel("mplex", "debug")
-	setLogLevel("addrutil", "info")     // Logs every resolve call at debug
-	setLogLevel("net/identify", "info") // Logs every message sent/received at debug
-	setLogLevel("ping", "info")         // Logs every ping timeout at debug
-	setLogLevel("basichost", "info")    // Spammy at debug
+	setLogLevel("addrutil", "info")      // Logs every resolve call at debug
+	setLogLevel("net/identify", "debug") // Logs every message sent/received at debug
+	setLogLevel("ping", "info")          // Logs every ping timeout at debug
+	setLogLevel("basichost", "info")     // Spammy at debug
 	setLogLevel("test-logger", "debug")
 	setLogLevel("blankhost", "debug")
 	setLogLevel("connmgr", "debug")
@@ -137,7 +137,7 @@ func main() {
 	setLogLevel("badger", "debug")
 	setLogLevel("relay", "info") // Log relayed byte counts spammily
 	setLogLevel("routedhost", "debug")
-	setLogLevel("swarm2", "info") // Logs a new stream to each peer when opended at debug
+	setLogLevel("swarm2", "debug") // Logs a new stream to each peer when opended at debug
 	setLogLevel("peerstore/ds", "debug")
 	setLogLevel("mdns", "debug") // Logs each mdns call
 	setLogLevel("reuseport-transport", "debug")
@@ -149,6 +149,7 @@ func main() {
 	go func() {
 		for {
 			msg := <-app.OutChan
+			helperLog.Warn("##main::main>>", " msg: ", msg)
 			bytes, err := msg.Marshal()
 			if err != nil {
 				panic(err)

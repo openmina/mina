@@ -212,6 +212,8 @@ func (s *Swarm) addConn(tc transport.CapableConn, dir network.Direction) (*Conn,
 		addr = tc.RemoteMultiaddr()
 	)
 
+	log.Debug("###swarm::addConn>>", " RemoteMultiaddr: ", addr, " PeerID: ", p)
+
 	// create the Stat object, initializing with the underlying connection Stat if available
 	var stat network.Stat
 	if cs, ok := tc.(network.ConnStat); ok {

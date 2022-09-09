@@ -2,12 +2,14 @@ package libp2pwebrtcdirect
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"math"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 	tpt "github.com/libp2p/go-libp2p-core/transport"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
+	"github.com/multiformats/go-multihash"
 	"github.com/pion/datachannel"
 	"github.com/pion/webrtc/v3"
 )
@@ -34,15 +37,19 @@ func newConnConfig(transport *Transport, maAddr ma.Multiaddr, isServer bool) (*c
 
 	tcpMa := httpMa.Decapsulate(httpma)
 	addr, err := manet.ToNetAddr(tcpMa)
+	log.Warn("##webrtc::conn::newConnConfig>>", " maAddr: ", maAddr, " addr: ", addr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get net addr: %v", err)
 	}
 
+	// id, err := peer.Decode("QmaUEUoLWuDGBNY5FhGumAanKe79mEj5R2CHyAaqE5uCB3")
+	// log.Warn("##webrtc::conn::newConnConfig>>", " id: ", id, " err: ", err)
 	return &connConfig{
 		transport: transport,
 		maAddr:    maAddr,
 		addr:      addr,
 		isServer:  isServer,
+		// remoteID:  id,
 	}, nil
 }
 
@@ -335,8 +342,36 @@ func (c *Conn) LocalPrivateKey() ic.PrivKey {
 
 // RemotePeer returns the peer ID of the remote peer.
 func (c *Conn) RemotePeer() peer.ID {
-	// TODO: Base on WebRTC security?
-	return c.config.remoteID
+	if len(c.config.remoteID) > 0 {
+		return c.config.remoteID
+	}
+
+	// TODO: cache peerid.
+	config := c.peerConnection.GetConfiguration()
+	fingerprints, err := config.Certificates[0].GetFingerprints()
+	if err != nil {
+		log.Error("Failed to get DTLS fingerprints!", " err: ", err)
+		return ""
+	}
+	hex_fingerprint := strings.ReplaceAll(fingerprints[0].Value, ":", "")
+	log.Warn("fingerprints[0].Value: ", hex_fingerprint)
+	raw_fingerprint, err := hex.DecodeString(hex_fingerprint)
+	if err != nil {
+		log.Error("Failed to decode DTLS fingerprint as hex!", " err: ", err)
+		return ""
+	}
+	mh, err := multihash.EncodeName(raw_fingerprint, "sha2")
+	if err != nil {
+		log.Error("Failed to decode DTLS fingerprint as multihash!", " err: ", err)
+		return ""
+	}
+	fingerprint, err := peer.IDFromBytes(mh)
+	if err != nil {
+		log.Error("Failed to decode DTLS fingerprint as `peer.ID`!", " err: ", err)
+		return ""
+	}
+	log.Warn("##webrtc::conn::RemotePeer()>>", " expected PeerIdentity: ", fingerprint, " peer.ID: ", fingerprint)
+	return fingerprint
 }
 
 // RemotePublicKey returns the public key of the remote peer.
