@@ -3,6 +3,7 @@ package codanet
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -800,12 +801,21 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	}
 	muxer := libp2pmplex.DefaultTransport
 
-	// cert, err := webrtc.GenerateCertificate(pk)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	bytes, err := pk.Raw()
+	if err != nil {
+		return nil, err
+	}
+	priv, err := x509.ParseECPrivateKey(bytes)
+	if err != nil {
+		return nil, err
+	}
+	cert, err := webrtc.GenerateCertificate(priv)
+	if err != nil {
+		return nil, err
+	}
 	transport := direct.NewTransport(
 		webrtc.Configuration{
+			Certificates: []webrtc.Certificate{*cert},
 			// Certificates: []webrtc.Certificate{*cert},
 		},
 		muxer,

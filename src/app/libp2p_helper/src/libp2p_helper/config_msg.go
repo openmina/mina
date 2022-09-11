@@ -493,7 +493,7 @@ func fromGenerateKeypairReq(req ipcRpcRequest) (rpcRequest, error) {
 	return GenerateKeypairReq(i), err
 }
 func (msg GenerateKeypairReq) handle(app *app, seqno uint64) *capnp.Message {
-	privk, pubk, err := crypto.GenerateEd25519Key(cryptorand.Reader)
+	privk, pubk, err := crypto.GenerateECDSAKeyPair(cryptorand.Reader)
 	if err != nil {
 		return mkRpcRespError(seqno, badp2p(err))
 	}

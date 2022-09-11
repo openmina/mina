@@ -5,9 +5,9 @@ import (
 	crand "crypto/rand"
 	"errors"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
-	"os"
 
 	ipc "libp2p_ipc"
 
@@ -133,7 +133,7 @@ func TestConfigure(t *testing.T) {
 	dir, err := ioutil.TempDir("", "mina_test_*")
 	require.NoError(t, err)
 
-	key, _, err := crypto.GenerateEd25519Key(crand.Reader)
+	key, _, err := crypto.GenerateECDSAKeyPair(crand.Reader)
 	require.NoError(t, err)
 	keyBytes, err := crypto.MarshalPrivateKey(key)
 	require.NoError(t, err)

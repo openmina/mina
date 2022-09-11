@@ -37,7 +37,7 @@ var testPortMutex sync.Mutex
 
 func newTestKey(t *testing.T) crypto.PrivKey {
 	r := crand.Reader
-	key, _, err := crypto.GenerateEd25519Key(r)
+	key, _, err := crypto.GenerateECDSAKeyPair(r)
 	require.NoError(t, err)
 
 	return key
