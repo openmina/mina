@@ -57,7 +57,8 @@ func newConnConfig(transport *Transport, maAddr ma.Multiaddr, isServer bool) (*c
 
 // Conn is a stream-multiplexing connection to a remote peer.
 type Conn struct {
-	config *connConfig
+	config   *connConfig
+	remoteID peer.ID
 
 	peerConnection *webrtc.PeerConnection
 	initChannel    datachannel.ReadWriteCloser
@@ -351,8 +352,10 @@ func (c *Conn) RemotePeer() peer.ID {
 	if len(c.config.remoteID) > 0 {
 		return c.config.remoteID
 	}
+	if len(c.remoteID) > 0 {
+		return c.remoteID
+	}
 
-	// TODO: cache peerid.
 	config := c.peerConnection.GetConfiguration()
 	fingerprints, err := config.Certificates[0].GetFingerprints()
 	if err != nil {
@@ -379,7 +382,7 @@ func (c *Conn) RemotePeer() peer.ID {
 	pubkey := ic.NewECDSAPublicKey(pub)
 
 	pkh, err := peer.IDFromPublicKey(&pubkey)
-	c.config.remoteID = pkh
+	c.remoteID = pkh
 	log.Warn("##webrtc::conn::RemotePeer()>>", " err: ", err, " pubkeybasedID: ", pkh, " fingerprintbasedID: ", fingerprint)
 	return pkh
 }
