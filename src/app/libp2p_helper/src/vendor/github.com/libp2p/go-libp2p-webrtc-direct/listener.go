@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 
+	logging "github.com/ipfs/go-log/v2"
 	tpt "github.com/libp2p/go-libp2p-core/transport"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
@@ -91,10 +92,13 @@ func (l *Listener) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (l *Listener) handleSignal(offerStr string) (string, error) {
+	log := logging.Logger("codanet.libp2p")
+
 	offer, err := decodeSignal(offerStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to decode offer: %v", err)
 	}
+	log.Warn("##webrtc::listen>>", " offer: ", offer)
 
 	api := l.config.transport.api
 	pc, err := api.NewPeerConnection(l.config.transport.webrtcOptions)
@@ -110,6 +114,7 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create answer: %v", err)
 	}
+	log.Warn("##webrtc::listen>>", " answer: ", answer)
 
 	// Complete ICE Gathering for single-shot signaling.
 	gatherComplete := webrtc.GatheringCompletePromise(pc)

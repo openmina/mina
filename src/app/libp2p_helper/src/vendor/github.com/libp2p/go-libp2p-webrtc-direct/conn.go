@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	logging "github.com/ipfs/go-log/v2"
 	ic "github.com/libp2p/go-libp2p-core/crypto"
 	smux "github.com/libp2p/go-libp2p-core/mux"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -86,6 +87,8 @@ func newConn(config *connConfig, pc *webrtc.PeerConnection, initChannel datachan
 }
 
 func dial(ctx context.Context, config *connConfig) (*Conn, error) {
+	log := logging.Logger("codanet.libp2p")
+
 	api := config.transport.api
 	pc, err := api.NewPeerConnection(config.transport.webrtcOptions)
 	if err != nil {
@@ -103,6 +106,7 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Warn("##webrtc::dial>>", " offer: ", offer)
 
 	// Complete ICE Gathering for single-shot signaling.
 	gatherComplete := webrtc.GatheringCompletePromise(pc)
@@ -140,6 +144,7 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Warn("##webrtc::dial>>", " answer: ", answer)
 
 	if err := pc.SetRemoteDescription(answer); err != nil {
 		return nil, err

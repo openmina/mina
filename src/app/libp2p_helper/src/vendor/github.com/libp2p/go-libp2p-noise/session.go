@@ -9,9 +9,12 @@ import (
 
 	"github.com/flynn/noise"
 
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
+
+var log = logging.Logger("p2p-noise")
 
 type secureSession struct {
 	initiator bool
@@ -39,6 +42,7 @@ type secureSession struct {
 // newSecureSession creates a Noise session over the given insecureConn Conn, using
 // the libp2p identity keypair from the given Transport.
 func newSecureSession(tpt *Transport, ctx context.Context, insecure net.Conn, remote peer.ID, initiator bool) (*secureSession, error) {
+	log.Debug("##noise::newSecureSession>>", " initiator: ", initiator, " remoteID: ", remote)
 	s := &secureSession{
 		insecureConn:   insecure,
 		insecureReader: bufio.NewReader(insecure),
