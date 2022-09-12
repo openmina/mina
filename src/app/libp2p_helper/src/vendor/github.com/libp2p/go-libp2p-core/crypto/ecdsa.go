@@ -43,6 +43,10 @@ var (
 	ECDSACurve = elliptic.P256()
 )
 
+func NewECDSAPublicKey(pub *ecdsa.PublicKey) ECDSAPublicKey {
+	return ECDSAPublicKey{pub}
+}
+
 // GenerateECDSAKeyPair generates a new ecdsa private and public key
 func GenerateECDSAKeyPair(src io.Reader) (PrivKey, PubKey, error) {
 	return GenerateECDSAKeyPairWithCurve(ECDSACurve, src)

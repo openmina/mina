@@ -62,6 +62,10 @@ func NewCertificate(key crypto.PrivateKey, tpl x509.Certificate) (*Certificate, 
 	return &Certificate{privateKey: key, x509Cert: cert, statsID: fmt.Sprintf("certificate-%d", time.Now().UnixNano())}, nil
 }
 
+func (c Certificate) X509Cert() *x509.Certificate {
+	return c.x509Cert
+}
+
 // Equals determines if two certificates are identical by comparing both the
 // secretKeys and x509Certificates.
 func (c Certificate) Equals(o Certificate) bool {

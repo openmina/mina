@@ -2,6 +2,7 @@ package libp2pwebrtcdirect
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -354,7 +355,6 @@ func (c *Conn) RemotePeer() peer.ID {
 		return ""
 	}
 	hex_fingerprint := strings.ReplaceAll(fingerprints[0].Value, ":", "")
-	log.Warn("fingerprints[0].Value: ", hex_fingerprint)
 	raw_fingerprint, err := hex.DecodeString(hex_fingerprint)
 	if err != nil {
 		log.Error("Failed to decode DTLS fingerprint as hex!", " err: ", err)
@@ -370,8 +370,13 @@ func (c *Conn) RemotePeer() peer.ID {
 		log.Error("Failed to decode DTLS fingerprint as `peer.ID`!", " err: ", err)
 		return ""
 	}
-	log.Warn("##webrtc::conn::RemotePeer()>>", " expected PeerIdentity: ", fingerprint, " peer.ID: ", fingerprint)
-	return fingerprint
+	pub := config.Certificates[0].X509Cert().PublicKey.(*ecdsa.PublicKey)
+	pubkey := ic.NewECDSAPublicKey(pub)
+
+	pkh, err := peer.IDFromPublicKey(&pubkey)
+	c.config.remoteID = pkh
+	log.Warn("##webrtc::conn::RemotePeer()>>", " err: ", err, " pubkeybasedID: ", pkh, " fingerprintbasedID: ", fingerprint)
+	return pkh
 }
 
 // RemotePublicKey returns the public key of the remote peer.
