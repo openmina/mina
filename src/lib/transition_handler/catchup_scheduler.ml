@@ -198,13 +198,14 @@ let watch t ~timeout_duration ~cached_transition ~valid_cb =
   let transition_with_hash, _ =
     Envelope.Incoming.data (Cached.peek cached_transition)
   in
-  (* TODO: somehow register the parent of the hash so that the download checkpoint can be properly traced to the original hash and not it's parent  *)
   let hash = State_hash.With_state_hashes.state_hash transition_with_hash in
   let parent_hash =
     With_hash.data transition_with_hash
     |> Mina_block.header |> Header.protocol_state
     |> Mina_state.Protocol_state.previous_state_hash
   in
+  (* Done so that we can associate the download job started during catchup *)
+  Block_tracing.Processing.register_parent ~state_hash:hash ~parent_hash ;
   Option.value_map valid_cb ~default:() ~f:(fun data ->
       match Hashtbl.add t.validation_callbacks ~key:hash ~data with
       | `Ok ->
