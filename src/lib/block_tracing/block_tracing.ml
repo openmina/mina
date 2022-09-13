@@ -236,6 +236,15 @@ module External = struct
 end
 
 module Processing = struct
+  let parent_registry = Hashtbl.create (module Mina_base.State_hash)
+
+  let register_parent ~state_hash ~parent_hash =
+    assert (not (Mina_base.State_hash.equal state_hash parent_hash)) ;
+    ignore @@ Hashtbl.add parent_registry ~data:state_hash ~key:parent_hash
+
+  let get_registered_child parent_hash =
+    Hashtbl.find parent_registry parent_hash
+
   let checkpoint = Registry.checkpoint ~source:`Unknown
 
   let failure state_hash = checkpoint state_hash `Failure

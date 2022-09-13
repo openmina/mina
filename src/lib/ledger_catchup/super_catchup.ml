@@ -675,7 +675,7 @@ let create_node ~downloader t x =
   let node =
     { Node.state; state_hash = h; blockchain_length; attempts; parent; result }
   in
-  (* TODO: is this mapping valid? *)
+  (* TODOX: this mapping is not really valid *)
   let global_slot = Length.to_uint32 blockchain_length in
   Block_tracing.Catchup.checkpoint ~global_slot h `To_download ;
   upon (Ivar.read node.result) (fun _ ->
@@ -1198,9 +1198,15 @@ let run_catchup ~context:(module Context : CONTEXT) ~trust_system ~verifier
                           | Remote peer ->
                               Peer.Set.add acc peer )
                     in
-                    (* FIXME: should not be target_parent_hash but instead it's child *)
-                    (*Block_tracing.Processing.checkpoint target_parent_hash
-                      `Download_ancestry_state_hashes ;*)
+                    ( match
+                        Block_tracing.Processing.get_registered_child
+                          target_parent_hash
+                      with
+                    | None ->
+                        () (* TODO: what to do here? *)
+                    | Some state_hash ->
+                        Block_tracing.Processing.checkpoint state_hash
+                          `Download_ancestry_state_hashes ) ;
                     download_state_hashes t ~logger ~trust_system ~network
                       ~frontier ~downloader ~target_length
                       ~target_hash:target_parent_hash
