@@ -3,14 +3,13 @@ package libp2pwebrtcdirect
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
 	"math"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	tpt "github.com/libp2p/go-libp2p-core/transport"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
-	"github.com/multiformats/go-multihash"
 	"github.com/pion/datachannel"
 	"github.com/pion/webrtc/v3"
 )
@@ -356,34 +354,24 @@ func (c *Conn) RemotePeer() peer.ID {
 		return c.remoteID
 	}
 
-	config := c.peerConnection.GetConfiguration()
-	fingerprints, err := config.Certificates[0].GetFingerprints()
+	dtls := c.peerConnection.DTLS()
+	parsedRemoteCert, err := x509.ParseCertificate(dtls.GetRemoteCertificate())
 	if err != nil {
-		log.Error("Failed to get DTLS fingerprints!", " err: ", err)
+		log.Error("Error when parsing peer DTLS certificate: ", err)
 		return ""
 	}
-	hex_fingerprint := strings.ReplaceAll(fingerprints[0].Value, ":", "")
-	raw_fingerprint, err := hex.DecodeString(hex_fingerprint)
-	if err != nil {
-		log.Error("Failed to decode DTLS fingerprint as hex!", " err: ", err)
-		return ""
-	}
-	mh, err := multihash.EncodeName(raw_fingerprint, "sha2")
-	if err != nil {
-		log.Error("Failed to decode DTLS fingerprint as multihash!", " err: ", err)
-		return ""
-	}
-	fingerprint, err := peer.IDFromBytes(mh)
-	if err != nil {
-		log.Error("Failed to decode DTLS fingerprint as `peer.ID`!", " err: ", err)
-		return ""
-	}
-	pub := config.Certificates[0].X509Cert().PublicKey.(*ecdsa.PublicKey)
+
+	pub := parsedRemoteCert.PublicKey.(*ecdsa.PublicKey)
 	pubkey := ic.NewECDSAPublicKey(pub)
 
 	pkh, err := peer.IDFromPublicKey(&pubkey)
+	if err != nil {
+		log.Error("Error when trying to get `IDFromPublicKey`: ", err)
+		return ""
+	}
+
 	c.remoteID = pkh
-	log.Warn("##webrtc::conn::RemotePeer()>>", " err: ", err, " pubkeybasedID: ", pkh, " fingerprintbasedID: ", fingerprint)
+	log.Warn("##webrtc::conn::RemotePeer()>>", " err: ", err, " pubkeybasedID: ", pkh)
 	return pkh
 }
 

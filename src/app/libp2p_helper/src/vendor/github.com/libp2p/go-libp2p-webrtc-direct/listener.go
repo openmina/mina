@@ -106,6 +106,14 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 		return "", err
 	}
 
+	pc.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
+		switch state {
+		case webrtc.PeerConnectionStateConnected:
+			c := newConn(l.config, pc, nil)
+			l.accept <- c
+		}
+	})
+
 	if err := pc.SetRemoteDescription(offer); err != nil {
 		return "", fmt.Errorf("failed to set remote description: %v", err)
 	}
@@ -128,9 +136,6 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to encode answer: %v", err)
 	}
-
-	c := newConn(l.config, pc, nil)
-	l.accept <- c
 
 	return answerEnc, nil
 }

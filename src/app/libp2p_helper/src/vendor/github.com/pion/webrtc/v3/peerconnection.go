@@ -574,6 +574,10 @@ func (pc *PeerConnection) GetConfiguration() Configuration {
 	return pc.configuration
 }
 
+func (pc *PeerConnection) DTLS() *DTLSTransport {
+	return pc.dtlsTransport
+}
+
 func (pc *PeerConnection) getStatsID() string {
 	pc.mu.RLock()
 	defer pc.mu.RUnlock()
