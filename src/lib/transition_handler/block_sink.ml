@@ -58,7 +58,14 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
           state |> header |> Header.protocol_state |> Protocol_state.hashes)
           .state_hash
       in
-      Block_tracing.External.checkpoint state_hash `External_block_received ;
+      let global_slot =
+        Mina_block.(
+          state |> header |> Header.protocol_state
+          |> Protocol_state.consensus_state
+          |> Consensus.Data.Consensus_state.global_slot_since_genesis)
+      in
+      Block_tracing.External.checkpoint ~global_slot state_hash
+        `External_block_received ;
       let processing_start_time = Block_time.(now time_controller |> to_time) in
       don't_wait_for
         ( match%map Mina_net2.Validation_callback.await cb with

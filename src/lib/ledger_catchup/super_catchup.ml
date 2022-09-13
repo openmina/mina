@@ -660,6 +660,9 @@ let create_node ~downloader t x =
   let node =
     { Node.state; state_hash = h; blockchain_length; attempts; parent; result }
   in
+  (* TODO: is this mapping valid? *)
+  let global_slot = Length.to_uint32 blockchain_length in
+  Block_tracing.Catchup.checkpoint ~global_slot h `To_download ;
   upon (Ivar.read node.result) (fun _ ->
       Downloader.cancel downloader (h, blockchain_length) ) ;
   Transition_frontier.Full_catchup_tree.add_state t.states node ;
