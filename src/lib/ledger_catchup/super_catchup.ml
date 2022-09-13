@@ -648,6 +648,11 @@ let create_node ~downloader t x =
   let state, h, blockchain_length, parent, result =
     match x with
     | `Root root ->
+        let global_slot =
+          Breadcrumb.consensus_state root
+          |> Consensus.Data.Consensus_state.global_slot_since_genesis
+        in
+        Block_tracing.Catchup.complete ~global_slot (Breadcrumb.state_hash root) ;
         ( Node.State.Finished
         , Breadcrumb.state_hash root
         , Breadcrumb.consensus_state root
@@ -655,6 +660,9 @@ let create_node ~downloader t x =
         , Breadcrumb.parent_hash root
         , Ivar.create_full (Ok `Added_to_frontier) )
     | `Hash (h, l, parent) ->
+        (* TODOX: this mapping is not really valid *)
+        let global_slot = Length.to_uint32 l in
+        Block_tracing.Catchup.checkpoint ~global_slot h `To_download ;
         ( Node.State.To_download
             (download "create_node" downloader ~key:(h, l) ~attempts)
         , h
@@ -663,9 +671,19 @@ let create_node ~downloader t x =
         , Ivar.create () )
     | `Initial_validated (b, valid_cb) ->
         let t = (Cached.peek b).Envelope.Incoming.data in
-        ( Node.State.To_verify (b, valid_cb)
-        , Validation.block_with_hash t
+        let state_hash =
+          Validation.block_with_hash t
           |> State_hash.With_state_hashes.state_hash
+        in
+        let global_slot =
+          Validation.block t |> Mina_block.header
+          |> Mina_block.Header.protocol_state
+          |> Mina_state.Protocol_state.consensus_state
+          |> Consensus.Data.Consensus_state.global_slot_since_genesis
+        in
+        Block_tracing.Catchup.checkpoint ~global_slot state_hash `To_verify ;
+        ( Node.State.To_verify (b, valid_cb)
+        , state_hash
         , Validation.block t |> Mina_block.blockchain_length
         , Validation.block t |> Mina_block.header
           |> Mina_block.Header.protocol_state
@@ -675,9 +693,6 @@ let create_node ~downloader t x =
   let node =
     { Node.state; state_hash = h; blockchain_length; attempts; parent; result }
   in
-  (* TODOX: this mapping is not really valid *)
-  let global_slot = Length.to_uint32 blockchain_length in
-  Block_tracing.Catchup.checkpoint ~global_slot h `To_download ;
   upon (Ivar.read node.result) (fun _ ->
       Downloader.cancel downloader (h, blockchain_length) ) ;
   Transition_frontier.Full_catchup_tree.add_state t.states node ;
