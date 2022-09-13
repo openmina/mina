@@ -53,4 +53,6 @@
    unsigned_extended
    with_hash
    ppx_version.runtime
+   ;; viable systems
+   internal_tracing
 ))

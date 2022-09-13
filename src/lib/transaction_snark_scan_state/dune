@@ -43,6 +43,8 @@
    with_hash
    ppx_version.runtime
    mina_wire_types
+   ;; viable systems
+   internal_tracing
  )
  (preprocessor_deps ../../config.mlh)
  (preprocess

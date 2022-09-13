@@ -31,6 +31,8 @@ module type Broadcasted_extension_intf = sig
 
   val reader : t -> view Broadcast_pipe.Reader.t
 
+  val writer : t -> view Broadcast_pipe.Writer.t
+
   val update :
     t -> Full_frontier.t -> Diff.Full.With_mutant.t list -> unit Deferred.t
 end

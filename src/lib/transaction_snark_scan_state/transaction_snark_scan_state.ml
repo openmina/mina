@@ -1334,6 +1334,14 @@ let fill_work_and_enqueue_transactions t transactions work =
     Parallel_scan.update t.scan_state ~completed_jobs:work_list
       ~data:transactions
   in
+  let added_works = List.length work in
+  let merge_jobs_created = List.length work_list in
+  Internal_tracing.Block_tracing.Processing.push_metadata
+    [ ("scan_state_added_works", `Int added_works)
+    ; ("total_proofs", `Int (total_proofs work))
+    ; ("merge_jobs_created", `Int merge_jobs_created)
+    ; ("emitted_proof", `Bool (Option.is_some proof_opt))
+    ] ;
   let%map result_opt, scan_state' =
     Option.value_map
       ~default:
