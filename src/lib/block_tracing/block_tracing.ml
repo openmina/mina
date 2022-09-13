@@ -106,24 +106,30 @@ module Trace = struct
   let block_source_to_yojson = flatten_yojson_variant block_source_to_yojson
 
   (* TODO: add general metadata *)
-  type t = { source : block_source; checkpoints : Entry.t list }
+  type t =
+    { source : block_source
+    ; global_slot : Mina_numbers.Global_slot.t
+    ; checkpoints : Entry.t list
+    }
   [@@deriving to_yojson]
 
-  let empty source = { source; checkpoints = [] }
+  let empty ?(global_slot = Mina_numbers.Global_slot.zero) source =
+    { source; global_slot; checkpoints = [] }
 
   let to_yojson t = to_yojson { t with checkpoints = List.rev t.checkpoints }
 
-  let push ~source entry trace =
+  let push ~source ?global_slot entry trace =
     match trace with
     | None ->
-        { source; checkpoints = [ entry ] }
-    | Some { source; checkpoints = [] } ->
-        { source; checkpoints = [ entry ] }
-    | Some { source; checkpoints = previous :: rest } ->
+        let trace = empty ?global_slot source in
+        { trace with checkpoints = [ entry ] }
+    | Some ({ checkpoints = []; _ } as trace) ->
+        { trace with checkpoints = [ entry ] }
+    | Some ({ checkpoints = previous :: rest; _ } as trace) ->
         let previous =
           { previous with duration = entry.started_at -. previous.started_at }
         in
-        { source; checkpoints = entry :: previous :: rest }
+        { trace with checkpoints = entry :: previous :: rest }
 end
 
 module Registry = struct
@@ -131,7 +137,14 @@ module Registry = struct
 
   type produced_registry = (Mina_numbers.Global_slot.t, Trace.t) Hashtbl.t
 
-  type traces = { traces : string list; produced_traces : string list }
+  type trace_info =
+    { source : Trace.block_source
+    ; global_slot : Mina_numbers.Global_slot.t
+    ; state_hash : string
+    }
+  [@@deriving to_yojson]
+
+  type traces = { traces : trace_info list; produced_traces : trace_info list }
   [@@deriving to_yojson]
 
   let registry : t = Hashtbl.create (module Mina_base.State_hash)
@@ -153,23 +166,34 @@ module Registry = struct
 
   let all_traces () =
     let traces =
-      Hashtbl.keys registry |> List.map ~f:Mina_base.State_hash.to_base58_check
+      Hashtbl.to_alist registry
+      |> List.map ~f:(fun (key, item) ->
+             let state_hash = Mina_base.State_hash.to_base58_check key in
+             let Trace.{ global_slot; source; _ } = item in
+             { state_hash; global_slot; source } )
+      |> List.sort ~compare:(fun a b ->
+             Mina_numbers.Global_slot.compare a.global_slot b.global_slot )
     in
     let produced_traces =
-      Hashtbl.keys produced_registry
-      |> List.map ~f:Mina_numbers.Global_slot.to_string
+      Hashtbl.to_alist produced_registry
+      |> List.map ~f:(fun (_, item) ->
+             let state_hash = "<unknown>" in
+             let Trace.{ global_slot; source; _ } = item in
+             { state_hash; global_slot; source } )
+      |> List.sort ~compare:(fun a b ->
+             Mina_numbers.Global_slot.compare a.global_slot b.global_slot )
     in
     { traces; produced_traces }
 
-  let push_entry ~source block_id entry =
-    Hashtbl.update registry block_id ~f:(Trace.push ~source entry)
+  let push_entry ~source ?global_slot block_id entry =
+    Hashtbl.update registry block_id ~f:(Trace.push ~source ?global_slot entry)
 
-  let checkpoint ~source block_id checkpoint =
-    push_entry ~source block_id (Entry.make checkpoint)
+  let checkpoint ~source ?global_slot block_id checkpoint =
+    push_entry ~source ?global_slot block_id (Entry.make checkpoint)
 
-  let push_produced_entry block_id entry =
-    Hashtbl.update produced_registry block_id
-      ~f:(Trace.push ~source:`Internal entry)
+  let push_produced_entry global_slot entry =
+    Hashtbl.update produced_registry global_slot
+      ~f:(Trace.push ~global_slot ~source:`Internal entry)
 
   let produced_checkpoint slot checkpoint =
     push_produced_entry slot (Entry.make checkpoint)
