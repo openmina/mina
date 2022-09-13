@@ -53,6 +53,12 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
       let%bind () = on_push () in
       Mina_metrics.(Counter.inc_one Network.gossip_messages_received) ;
       let state = Envelope.Incoming.data e in
+      let state_hash =
+        Mina_block.(
+          state |> header |> Header.protocol_state |> Protocol_state.hashes)
+          .state_hash
+      in
+      Block_tracing.External.checkpoint state_hash `External_block_received ;
       let processing_start_time = Block_time.(now time_controller |> to_time) in
       don't_wait_for
         ( match%map Mina_net2.Validation_callback.await cb with
@@ -94,6 +100,7 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
             ~score:1
         with
         | `Capacity_exceeded ->
+            Block_tracing.External.failure state_hash ;
             [%log' warn logger]
               "$sender has sent many blocks. This is very unusual."
               ~metadata:[ ("sender", Envelope.Sender.to_yojson sender) ] ;

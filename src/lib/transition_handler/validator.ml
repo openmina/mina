@@ -16,12 +16,16 @@ let validate_transition ~consensus_constants ~logger ~frontier
   in
   let transition_hash = State_hash.With_state_hashes.state_hash transition in
   let root_breadcrumb = Transition_frontier.root frontier in
+  Block_tracing.External.checkpoint transition_hash
+    `Check_transition_not_in_frontier ;
   let%bind () =
     Option.fold
       (Transition_frontier.find frontier transition_hash)
       ~init:Result.(Ok ())
       ~f:(fun _ _ -> Result.Error (`In_frontier transition_hash))
   in
+  Block_tracing.External.checkpoint transition_hash
+    `Check_transition_not_in_process ;
   let%bind () =
     Option.fold
       (Unprocessed_transition_cache.final_state unprocessed_transition_cache
@@ -29,6 +33,8 @@ let validate_transition ~consensus_constants ~logger ~frontier
       ~init:Result.(Ok ())
       ~f:(fun _ final_state -> Result.Error (`In_process final_state))
   in
+  Block_tracing.External.checkpoint transition_hash
+    `Check_transition_can_be_connected ;
   let%map () =
     Result.ok_if_true
       (Consensus.Hooks.equal_select_status `Take
@@ -43,6 +49,8 @@ let validate_transition ~consensus_constants ~logger ~frontier
             ~candidate:(With_hash.map ~f:Mina_block.consensus_state transition) ) )
       ~error:`Disconnected
   in
+  Block_tracing.External.checkpoint transition_hash
+    `Register_transition_for_processing ;
   (* we expect this to be Ok since we just checked the cache *)
   Unprocessed_transition_cache.register_exn unprocessed_transition_cache
     enveloped_transition
@@ -68,6 +76,8 @@ let run ~logger ~consensus_constants ~trust_system ~time_controller ~frontier
           in
           let transition = With_hash.data transition_with_hash in
           let sender = Envelope.Incoming.sender transition_env in
+          Block_tracing.External.checkpoint transition_hash
+            `Begin_external_block_validation ;
           match
             validate_transition ~consensus_constants ~logger ~frontier
               ~unprocessed_transition_cache transition_env
@@ -92,9 +102,11 @@ let run ~logger ~consensus_constants ~trust_system ~time_controller ~frontier
                 (Core_kernel.Time.diff
                    Block_time.(now time_controller |> to_time)
                    transition_time ) ;
+              Block_tracing.External.complete transition_hash ;
               Writer.write valid_transition_writer
                 (`Block cached_transition, `Valid_cb vc)
           | Error (`In_frontier _) | Error (`In_process _) ->
+              Block_tracing.External.failure transition_hash ;
               Trust_system.record_envelope_sender trust_system logger sender
                 ( Trust_system.Actions.Sent_old_gossip
                 , Some
@@ -103,6 +115,7 @@ let run ~logger ~consensus_constants ~trust_system ~time_controller ~frontier
                       ; ("transition", Mina_block.to_yojson transition)
                       ] ) )
           | Error `Disconnected ->
+              Block_tracing.External.failure transition_hash ;
               Mina_metrics.(Counter.inc_one Rejected_blocks.worse_than_root) ;
               [%log error]
                 ~metadata:

@@ -1203,6 +1203,9 @@ let run_catchup ~logger ~trust_system ~verifier ~network ~frontier ~build_func
                           | Remote peer ->
                               Peer.Set.add acc peer )
                     in
+                    (* FIXME: should not be target_parent_hash but instead it's child *)
+                    (*Block_tracing.Processing.checkpoint target_parent_hash
+                      `Download_ancestry_state_hashes ;*)
                     download_state_hashes t ~logger ~trust_system ~network
                       ~frontier ~downloader ~target_length
                       ~target_hash:target_parent_hash

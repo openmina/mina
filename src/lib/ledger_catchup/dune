@@ -62,4 +62,6 @@
    marlin_plonk_bindings_pasta_fp
    pasta
    mina_net2
+   ;; viable systems
+   block_tracing
 ))

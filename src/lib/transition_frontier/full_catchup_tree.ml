@@ -109,6 +109,26 @@ module Node = struct
     ; blockchain_length: Length.t
     ; parent: State_hash.t
     ; result: ([`Added_to_frontier], Attempt_history.t) Result.t Ivar.t }
+
+  let trace_state_change t = function
+    | State.Finished | State.Root _ ->
+        Block_tracing.Catchup.complete t.state_hash
+    | State.Failed ->
+        Block_tracing.Catchup.failure t.state_hash
+    | State.To_download _ ->
+        Block_tracing.Catchup.checkpoint t.state_hash `To_download
+    | State.To_initial_validate _ ->
+        Block_tracing.Catchup.checkpoint t.state_hash `To_initial_validate
+    | State.To_verify _ ->
+        Block_tracing.Catchup.checkpoint t.state_hash `To_verify
+    | State.Wait_for_parent _ ->
+        Block_tracing.Catchup.checkpoint t.state_hash `Wait_for_parent
+    | State.To_build_breadcrumb _ ->
+        Block_tracing.Catchup.checkpoint t.state_hash `To_build_breadcrumb
+
+  let set_state t s =
+    trace_state_change t s ;
+    t.state <- s
 end
 
 let add_state states (node : Node.t) =
@@ -150,9 +170,7 @@ let tear_down {nodes; states; _} =
   Hashtbl.clear states
 
 let set_state t (node : Node.t) s =
-  remove_state t.states node ;
-  node.state <- s ;
-  add_state t.states node
+  remove_state t.states node ; Node.set_state node s ; add_state t.states node
 
 let finish t (node : Node.t) b =
   let s, r =
@@ -196,25 +214,25 @@ let to_node_status_report =
       ; to_build_breadcrumb = 0
       }
     in
-    Hashtbl.fold t.states ~init ~f:(fun ~key ~data acc -> 
+    Hashtbl.fold t.states ~init ~f:(fun ~key ~data acc ->
       let n = Set.length data in
-      match key with 
-      | Finished -> 
+      match key with
+      | Finished ->
         { acc with finished = n }
-      | Failed -> 
+      | Failed ->
         { acc with failed = n }
-      | To_download -> 
+      | To_download ->
         { acc with to_download = n }
-      | To_initial_validate -> 
+      | To_initial_validate ->
         { acc with to_initial_validate = n }
-      | To_verify -> 
+      | To_verify ->
         { acc with to_verify = n }
-      | Wait_for_parent -> 
+      | Wait_for_parent ->
         { acc with wait_for_parent = n }
-      | To_build_breadcrumb -> 
+      | To_build_breadcrumb ->
         { acc with to_build_breadcrumb = n }
-      | Root -> 
-        acc ) 
+      | Root ->
+        acc )
 
 
 let max_catchup_chain_length (t : t) =

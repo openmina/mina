@@ -1790,6 +1790,8 @@ module T = struct
           [%log info]
             "No locked tokens in the delegator/delegatee account, applying \
              supercharged coinbase" ;
+        Block_tracing.Production.checkpoint
+          `Get_snark_work_for_pending_transactions ;
         let partitions = Scan_state.partition_if_overflowing t.scan_state in
         let work_to_do = Scan_state.work_statements_for_new_diff t.scan_state in
         let completed_works_seq, proof_count =
@@ -1842,6 +1844,7 @@ module T = struct
                   Stop (seq, count) )
             ~finish:Fn.id
         in
+        Block_tracing.Production.checkpoint `Validate_and_apply_transactions ;
         (*Transactions in reverse order for faster removal if there is no space when creating the diff*)
         let valid_on_this_ledger =
           Sequence.fold_until transactions_by_fee ~init:(Sequence.empty, 0)
@@ -1873,6 +1876,7 @@ module T = struct
                   else Continue (seq', count') )
             ~finish:fst
         in
+        Block_tracing.Production.checkpoint `Generate_staged_ledger_diff ;
         let diff, log =
           O1trace.sync_thread "generate_staged_ledger_diff" (fun () ->
               generate ~constraint_constants logger completed_works_seq

@@ -48,6 +48,8 @@
    quickcheck_lib
    protocol_version
    mina_net2
+   ;; viable systems
+   block_tracing
  )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_jane ppx_coda ppx_version ppx_compare ppx_deriving_yojson)))

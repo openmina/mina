@@ -139,7 +139,6 @@ let generate_next_state ~constraint_constants ~previous_protocol_state
       let coinbase_receiver =
         Consensus.Data.Block_data.coinbase_receiver block_data
       in
-
       let diff =
         O1trace.sync_thread "create_staged_ledger_diff" (fun () ->
             let diff =
@@ -174,6 +173,7 @@ let generate_next_state ~constraint_constants ~previous_protocol_state
             | _ ->
                 diff )
       in
+      Block_tracing.Production.checkpoint `Generate_staged_ledger_diff ;
       match%map
         let%bind.Deferred.Result diff = return diff in
         Staged_ledger.apply_diff_unchecked staged_ledger ~constraint_constants
@@ -591,12 +591,15 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
         | None ->
             log_bootstrap_mode () ; Interruptible.return ()
         | Some frontier -> (
+            Block_tracing.Production.begin_block_production
+              (Consensus.Data.Block_data.global_slot block_data) ;
             let open Transition_frontier.Extensions in
             let transition_registry =
               get_extension
                 (Transition_frontier.extensions frontier)
                 Transition_registry
             in
+            Block_tracing.Production.checkpoint `Find_best_tip ;
             let crumb = Transition_frontier.best_tip frontier in
             let crumb =
               let crumb_global_slot_since_genesis =
@@ -653,6 +656,7 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                   ( Header.protocol_state_proof
                   @@ Mina_block.header (With_hash.data previous_transition) )
             in
+            Block_tracing.Production.checkpoint `Get_transactions_from_pool ;
             let transactions =
               Network_pool.Transaction_pool.Resource_pool.transactions ~logger
                 transaction_resource_pool
@@ -711,6 +715,8 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                   (let open Deferred.Let_syntax in
                   let emit_breadcrumb () =
                     let open Deferred.Result.Let_syntax in
+                    Block_tracing.Production.checkpoint
+                      `Produce_state_transition_proof ;
                     let%bind protocol_state_proof =
                       time ~logger ~time_controller
                         "Protocol_state_proof proving time(ms)" (fun () ->
@@ -733,6 +739,8 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                     let previous_state_hash =
                       (Protocol_state.hashes previous_protocol_state).state_hash
                     in
+                    Block_tracing.Production.checkpoint
+                      `Produce_chain_transition_proof ;
                     let delta_block_chain_proof =
                       Transition_chain_prover.prove
                         ~length:
@@ -740,6 +748,8 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                         ~frontier previous_state_hash
                       |> Option.value_exn
                     in
+                    Block_tracing.Production.checkpoint
+                      `Produce_validated_transition ;
                     let%bind transition =
                       let open Result.Let_syntax in
                       Validation.wrap
@@ -779,6 +789,7 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                       |> Deferred.return
                     in
                     let transition_receipt_time = Some (Time.now ()) in
+                    Block_tracing.Production.checkpoint `Build_breadcrumb ;
                     let%bind breadcrumb =
                       time ~logger ~time_controller
                         "Build breadcrumb on produced block" (fun () ->
@@ -814,6 +825,8 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                           Span.to_ms
                           @@ diff (now ())
                           @@ Block_time.to_time scheduled_time)) ;
+                    Block_tracing.Production.checkpoint
+                      `Send_breadcrumb_to_transition_frontier ;
                     let%bind.Async.Deferred () =
                       Strict_pipe.Writer.write transition_writer breadcrumb
                     in
@@ -823,6 +836,7 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                         )
                       ]
                     in
+                    Block_tracing.Production.checkpoint `Wait_for_confirmation ;
                     [%log debug] ~metadata
                       "Waiting for block $state_hash to be inserted into \
                        frontier" ;
@@ -849,6 +863,9 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                       ]
                     >>= function
                     | `Transition_accepted ->
+                        Block_tracing.Production.end_block_production
+                          ~state_hash:protocol_state_hashes.state_hash
+                          `Transition_accepted ;
                         [%log info] ~metadata
                           "Generated transition $state_hash was accepted into \
                            transition frontier" ;
@@ -857,6 +874,8 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                         (* FIXME #3167: this should be fatal, and more
                            importantly, shouldn't happen.
                         *)
+                        Block_tracing.Production.end_block_production
+                          `Transition_accept_timeout ;
                         let msg : (_, unit, string, unit) format4 =
                           "Timed out waiting for generated transition \
                            $state_hash to enter transition frontier. \

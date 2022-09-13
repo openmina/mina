@@ -52,6 +52,8 @@
    with_hash
    random_oracle
    pickles.backend
+   ;; viable systems
+   block_tracing
  )
  (preprocessor_deps ../../config.mlh)
  (instrumentation (backend bisect_ppx))
