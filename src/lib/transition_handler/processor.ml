@@ -116,7 +116,13 @@ let process_transition ~logger ~trust_system ~verifier ~frontier
   in
   let metadata = [ ("state_hash", State_hash.to_yojson transition_hash) ] in
   let state_hash = transition_hash in
-  Block_tracing.Processing.checkpoint state_hash
+  let global_slot =
+    Mina_block.(
+      transition |> header |> Header.protocol_state
+      |> Protocol_state.consensus_state
+      |> Consensus.Data.Consensus_state.global_slot_since_genesis)
+  in
+  Block_tracing.Processing.checkpoint ~source:`External ~global_slot state_hash
     `Begin_external_block_processing ;
   Deferred.map ~f:(Fn.const ())
     (let open Deferred.Result.Let_syntax in

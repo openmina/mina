@@ -149,6 +149,8 @@ module Registry = struct
 
   let registry : t = Hashtbl.create (module Mina_base.State_hash)
 
+  let catchup_registry : t = Hashtbl.create (module Mina_base.State_hash)
+
   let produced_registry : produced_registry =
     Hashtbl.create (module Mina_numbers.Global_slot)
 
@@ -166,7 +168,7 @@ module Registry = struct
 
   let all_traces () =
     let traces =
-      Hashtbl.to_alist registry
+      Hashtbl.to_alist registry @ Hashtbl.to_alist catchup_registry
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
              let Trace.{ global_slot; source; _ } = item in
@@ -190,6 +192,12 @@ module Registry = struct
 
   let checkpoint ~source ?global_slot block_id checkpoint =
     push_entry ~source ?global_slot block_id (Entry.make checkpoint)
+
+  let push_catchup_entry ~source ?global_slot block_id entry =
+    Hashtbl.update registry block_id ~f:(Trace.push ~source ?global_slot entry)
+
+  let catchup_checkpoint ~source ?global_slot block_id checkpoint =
+    push_catchup_entry ~source ?global_slot block_id (Entry.make checkpoint)
 
   let push_produced_entry global_slot entry =
     Hashtbl.update produced_registry global_slot
@@ -245,7 +253,7 @@ module Processing = struct
   let get_registered_child parent_hash =
     Hashtbl.find parent_registry parent_hash
 
-  let checkpoint = Registry.checkpoint ~source:`Unknown
+  let checkpoint ?(source = `Unknown) = Registry.checkpoint ~source
 
   let failure state_hash = checkpoint state_hash `Failure
 
@@ -253,9 +261,11 @@ module Processing = struct
 end
 
 module Catchup = struct
-  let checkpoint = Registry.checkpoint ~source:`Catchup
+  let checkpoint = Registry.catchup_checkpoint ~source:`Catchup
 
-  let failure state_hash = checkpoint state_hash `Failure
+  let failure ?global_slot state_hash =
+    checkpoint ?global_slot state_hash `Failure
 
-  let complete state_hash = checkpoint state_hash `Breadcrumb_integrated
+  let complete ?global_slot state_hash =
+    checkpoint ?global_slot state_hash `Breadcrumb_integrated
 end
