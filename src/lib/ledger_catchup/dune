@@ -64,4 +64,6 @@
    kimchi_backend.pasta
    o1trace
    mina_net2
+   ;; viable systems
+   block_tracing
 ))

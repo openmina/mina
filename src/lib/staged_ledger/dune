@@ -63,6 +63,8 @@
    pickles.backend
    zkapp_command_builder
    ppx_version.runtime
+   ;; viable systems
+   block_tracing
  )
  (preprocessor_deps ../../config.mlh)
  (instrumentation (backend bisect_ppx))
