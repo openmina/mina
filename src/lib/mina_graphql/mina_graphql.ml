@@ -3118,6 +3118,31 @@ module Types = struct
               | None ->
                   t.threshold_met )
         ] )
+
+  module Block_trace = struct
+    let checkpoint : (Mina_lib.t, Block_tracing.Checkpoint.t option) typ =
+      enum "BlockTraceCheckpoint" ~doc:"Block trace checkpoint"
+        ~values:
+          (List.map Block_tracing.Checkpoint.all ~f:(fun checkpoint ->
+               enum_value
+                 ( String.map ~f:Char.uppercase
+                 @@ Block_tracing.Checkpoint.to_string checkpoint )
+                 ~value:checkpoint ) )
+
+    let entry =
+      let open Block_tracing.Trace in
+      obj "BlockTraceEntry" ~fields:(fun _ ->
+          [ field "checkpoint" ~typ:(non_null checkpoint) ~args:[]
+              ~doc:"List index of the party that failed"
+              ~resolve:(fun _ { Entry.checkpoint; _ } -> checkpoint)
+          ; field "started_at" ~typ:(non_null float) ~args:[]
+              ~doc:"Checkpoint timestamp"
+              ~resolve:(fun _ { Entry.started_at; _ } -> started_at)
+          ; field "duration" ~typ:(non_null float) ~args:[]
+              ~doc:"Checkpoint duration"
+              ~resolve:(fun _ { Entry.duration; _ } -> duration)
+          ] )
+  end
 end
 
 module Subscriptions = struct
@@ -4760,6 +4785,42 @@ module Queries = struct
         |> Deferred.Result.map_error ~f:Error.to_string_hum
         >>| Pickles.Verification_key.to_yojson >>| Yojson.Safe.to_basic )
 
+  let get_block_trace =
+    field "blockTrace" ~doc:"Block trace" ~typ:Types.json
+      ~args:Arg.[ arg "block_identifier" ~typ:(non_null string) ]
+      ~resolve:(fun { ctx = _mina; _ } () block ->
+        let trace_rev = Block_tracing.Registry.find_trace_from_string block in
+        Option.map trace_rev ~f:(fun trace ->
+            trace |> Block_tracing.Trace.to_yojson |> Yojson.Safe.to_basic ) )
+
+  let get_block_structured_trace =
+    field "blockStructuredTrace" ~doc:"Block structured trace" ~typ:Types.json
+      ~args:Arg.[ arg "block_identifier" ~typ:(non_null string) ]
+      ~resolve:(fun { ctx = _mina; _ } () block ->
+        let trace_rev = Block_tracing.Registry.find_trace_from_string block in
+        Option.map trace_rev ~f:(fun trace ->
+            let trace = Block_tracing.Structured_trace.of_flat_trace trace in
+            trace |> Block_tracing.Structured_trace.to_yojson
+            |> Yojson.Safe.to_basic ) )
+
+  let list_block_traces =
+    field "blockTraces" ~doc:"Block with traces" ~typ:(non_null Types.json)
+      ~args:Arg.[]
+      ~resolve:(fun { ctx = _mina; _ } () ->
+        let traces = Block_tracing.Registry.all_traces () in
+        Block_tracing.Registry.traces_to_yojson traces |> Yojson.Safe.to_basic
+        )
+
+  let get_block_traces_distribution =
+    field "blockTracesDistribution" ~doc:"Block trace checkpoints distribution"
+      ~typ:(non_null Types.json)
+      ~args:Arg.[] (* TODOX: add parent checkpoint filter *)
+      ~resolve:(fun { ctx = _mina; _ } () ->
+        let open Block_tracing.Distributions in
+        let compare d1 d2 = Float.compare d1.total_time d2.total_time in
+        let distributions = all () |> List.sort ~compare in
+        listing_to_yojson distributions |> Yojson.Safe.to_basic )
+
   let commands =
     [ sync_status
     ; daemon_status
@@ -4793,6 +4854,10 @@ module Queries = struct
     ; runtime_config
     ; thread_graph
     ; blockchain_verification_key
+    ; get_block_trace (* Viable systems *)
+    ; get_block_structured_trace (* Viable systems *)
+    ; list_block_traces (* Viable systems *)
+    ; get_block_traces_distribution (* Viable systems *)
     ]
 end
 

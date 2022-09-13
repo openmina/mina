@@ -268,6 +268,7 @@ module Instance = struct
             ( if ignore_consensus_local_state then `Disabled
             else `Enabled root_ledger )
       in
+      (* TODOX: trace this *)
       Extensions.notify extensions ~frontier ~diffs_with_mutants
       |> Deferred.map ~f:Result.return
     in
@@ -286,6 +287,16 @@ module Instance = struct
                    Error (`Fatal_error (Invalid_genesis_state_hash transition))
                    |> Deferred.return
              in
+             let state_hash =
+               ( With_hash.hash
+               @@ Mina_block.Validation.block_with_hash transition )
+                 .state_hash
+             in
+             let blockchain_length =
+               Mina_block.(blockchain_length (Validation.block transition))
+             in
+             Block_tracing.Reconstruct.checkpoint ~blockchain_length state_hash
+               `Loaded_transition_from_storage ;
              (* we're loading transitions from persistent storage,
                 don't assign a timestamp
              *)
@@ -298,6 +309,7 @@ module Instance = struct
                  ~sender:None ~transition_receipt_time ()
              in
              let%map () = apply_diff Diff.(E (New_node (Full breadcrumb))) in
+             Block_tracing.Reconstruct.complete state_hash ;
              breadcrumb ) )
         ~f:
           (Result.map_error ~f:(function
