@@ -23,6 +23,8 @@
    visualization
    mina_stdlib
    direction
+   ;; viable systems
+   internal_tracing
  )
  (preprocess
   (pps

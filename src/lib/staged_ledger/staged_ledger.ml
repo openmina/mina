@@ -8,6 +8,7 @@ open Mina_base
 open Mina_transaction
 open Currency
 open Signature_lib
+open Internal_tracing
 module Ledger = Mina_ledger.Ledger
 module Sparse_ledger = Mina_ledger.Sparse_ledger
 
@@ -436,6 +437,21 @@ module T = struct
 
   [%%endif]
 
+  let hash_with_checkpoint ~checkpoint
+      { scan_state
+      ; ledger
+      ; constraint_constants = _
+      ; pending_coinbase_collection
+      } : Staged_ledger_hash.t =
+    checkpoint `Hash_new_staged_ledger ;
+    checkpoint `Hash_scan_state ;
+    let scan_state_hash = Scan_state.hash scan_state in
+    checkpoint `Get_merkle_root ;
+    let merkle_root_hash = Ledger.merkle_root ledger in
+    checkpoint `Make_staged_ledger_hash ;
+    Staged_ledger_hash.of_aux_ledger_and_coinbase_hash scan_state_hash
+      merkle_root_hash pending_coinbase_collection
+
   let ledger { ledger; _ } = ledger
 
   let create_exn ~constraint_constants ~ledger : t =
@@ -773,6 +789,9 @@ module T = struct
       scan_state ledger pending_coinbase_collection transactions
       current_state_view state_and_body_hash =
     let open Deferred.Result.Let_syntax in
+    let checkpoint ?metadata cp =
+      Block_tracing.Processing.checkpoint_current ?metadata cp
+    in
     let coinbase_exists txns =
       List.fold_until ~init:false txns
         ~f:(fun acc t ->
@@ -786,7 +805,7 @@ module T = struct
     let { Scan_state.Space_partition.first = slots, _; second } =
       Scan_state.partition_if_overflowing scan_state
     in
-    if List.length transactions > 0 then
+    if List.length transactions > 0 then (
       match second with
       | None ->
           (*Single partition:
@@ -797,11 +816,22 @@ module T = struct
             working_stack pending_coinbase_collection ~is_new_stack
             |> Deferred.return
           in
+          checkpoint
+            ~metadata:[ ("partition", `String "single") ]
+            `Update_ledger_and_get_statements ;
           let%map data, updated_stack, _, first_pass_ledger_end =
             update_ledger_and_get_statements ~constraint_constants ~global_slot
               ledger working_stack (transactions, None) current_state_view
               state_and_body_hash
           in
+          checkpoint `Update_ledger_and_get_statements_done ;
+          checkpoint
+            ~metadata:
+              [ ("is_new_stack", `Bool is_new_stack)
+              ; ("transactions_len", `Int (List.length transactions))
+              ; ("data_len", `Int (List.length data))
+              ]
+            `Update_coinbase_stack_done ;
           ( is_new_stack
           , data
           , Pending_coinbase.Update.Action.Update_one
@@ -824,12 +854,16 @@ module T = struct
             |> Deferred.return
           in
           let txns_for_partition2 = List.drop transactions slots in
+          checkpoint
+            ~metadata:[ ("partition", `String "left") ]
+            `Update_ledger_and_get_statements ;
           let%map data, updated_stack1, updated_stack2, first_pass_ledger_end =
             update_ledger_and_get_statements ~constraint_constants ~global_slot
               ledger working_stack1
               (txns_for_partition1, Some txns_for_partition2)
               current_state_view state_and_body_hash
           in
+          checkpoint `Update_ledger_and_get_statements_done ;
           let second_has_data = List.length txns_for_partition2 > 0 in
           let pending_coinbase_action, stack_update =
             match (coinbase_in_first_partition, second_has_data) with
@@ -850,19 +884,32 @@ module T = struct
                 (* a diff consists of only non-coinbase transactions. This is currently not possible because a diff will have a coinbase at the very least, so don't update anything?*)
                 (Update_none, `Update_none)
           in
+          checkpoint
+            ~metadata:
+              [ ("is_new_stack", `Bool false)
+              ; ( "coinbase_in_first_partition"
+                , `Bool coinbase_in_first_partition )
+              ; ("second_has_data", `Bool second_has_data)
+              ; ( "txns_for_partition1_len"
+                , `Int (List.length txns_for_partition1) )
+              ; ( "txns_for_partition2_len"
+                , `Int (List.length txns_for_partition2) )
+              ]
+            `Update_coinbase_stack_done ;
           ( false
           , data
           , pending_coinbase_action
           , stack_update
-          , `First_pass_ledger_end first_pass_ledger_end )
-    else
+          , `First_pass_ledger_end first_pass_ledger_end ) )
+    else (
+      checkpoint `Update_coinbase_stack_done ;
       Deferred.return
         (Ok
            ( false
            , []
            , Pending_coinbase.Update.Action.Update_none
            , `Update_none
-           , `First_pass_ledger_end (Ledger.merkle_root ledger) ) )
+           , `First_pass_ledger_end (Ledger.merkle_root ledger) ) ) )
 
   (*update the pending_coinbase tree with the updated/new stack and delete the oldest stack if a proof was emitted*)
   let update_pending_coinbase_collection ~depth pending_coinbase_collection
@@ -931,6 +978,9 @@ module T = struct
       ~global_slot t pre_diff_info ~current_state_view ~state_and_body_hash
       ~log_prefix =
     let open Deferred.Result.Let_syntax in
+    let checkpoint ?metadata cp =
+      Block_tracing.Processing.checkpoint_current ?metadata cp
+    in
     let max_throughput =
       Int.pow 2 t.constraint_constants.transaction_capacity_log_2
     in
@@ -942,6 +992,17 @@ module T = struct
     let new_mask = Ledger.Mask.create ~depth:(Ledger.depth t.ledger) () in
     let new_ledger = Ledger.register_mask t.ledger new_mask in
     let transactions, works, commands_count, coinbases = pre_diff_info in
+    checkpoint
+      ~metadata:
+        [ ("transactions", `Int (List.length transactions))
+        ; ("works", `Int (List.length works))
+        ; ("commands_count", `Int commands_count)
+        ; ("coinbases", `Int (List.length coinbases))
+        ; ("spots_available", `Int spots_available)
+        ; ("proofs_waiting", `Int proofs_waiting)
+        ; ("max_throughput", `Int max_throughput)
+        ]
+      `Update_coinbase_stack ;
     let%bind ( is_new_stack
              , data
              , stack_update_in_snark
@@ -955,6 +1016,14 @@ module T = struct
     let slots = List.length data in
     let work_count = List.length works in
     let required_pairs = Scan_state.work_statements_for_new_diff t.scan_state in
+    checkpoint
+      ~metadata:
+        [ ("required_pairs", `Int (List.length required_pairs))
+        ; ("work_count", `Int work_count)
+        ; ("slots", `Int slots)
+        ; ("free_space", `Int (Scan_state.free_space t.scan_state))
+        ]
+      `Check_for_sufficient_snark_work ;
     let%bind () =
       O1trace.thread "check_for_sufficient_snark_work" (fun () ->
           let required = List.length required_pairs in
@@ -971,7 +1040,9 @@ module T = struct
                     slots required work_count ) )
           else Deferred.Result.return () )
     in
+    checkpoint `Check_zero_fee_excess ;
     let%bind () = Deferred.return (check_zero_fee_excess t.scan_state data) in
+    checkpoint `Fill_work_and_enqueue_transactions ;
     let%bind res_opt, scan_state' =
       O1trace.thread "fill_work_and_enqueue_transactions" (fun () ->
           let r =
@@ -999,6 +1070,7 @@ module T = struct
           Deferred.return (to_staged_ledger_or_error r) )
     in
     let%bind () = yield_result () in
+    checkpoint `Update_pending_coinbase_collection ;
     let%bind updated_pending_coinbase_collection' =
       O1trace.thread "update_pending_coinbase_collection" (fun () ->
           update_pending_coinbase_collection
@@ -1019,7 +1091,8 @@ module T = struct
     let%bind () = yield_result () in
     let%map () =
       if skip_verification || List.is_empty data then Deferred.return (Ok ())
-      else
+      else (
+        checkpoint `Verify_scan_state_after_apply ;
         O1trace.thread "verify_scan_state_after_apply" (fun () ->
             Deferred.(
               verify_scan_state_after_apply ~constraint_constants
@@ -1029,7 +1102,7 @@ module T = struct
                      (Ledger.merkle_root new_ledger) )
                 ~pending_coinbase_stack:latest_pending_coinbase_stack
                 scan_state'
-              >>| to_staged_ledger_or_error) )
+              >>| to_staged_ledger_or_error) ) )
     in
     [%log debug]
       ~metadata:
@@ -1052,7 +1125,7 @@ module T = struct
       ; pending_coinbase_collection = updated_pending_coinbase_collection'
       }
     in
-    ( `Hash_after_applying (hash new_staged_ledger)
+    ( `Hash_after_applying (hash_with_checkpoint ~checkpoint new_staged_ledger)
     , `Ledger_proof res_opt
     , `Staged_ledger new_staged_ledger
     , `Pending_coinbase_update
@@ -1126,8 +1199,12 @@ module T = struct
           | Some `All | Some `Proofs ->
               return ()
           | None ->
+              Block_tracing.Processing.checkpoint_current
+                ~metadata:[ ("work_count", `Int (List.length work)) ]
+                `Check_completed_works ;
               check_completed_works ~logger ~verifier t.scan_state work )
     in
+    Block_tracing.Processing.checkpoint_current `Prediff ;
     let%bind prediff =
       Pre_diff_info.get witness ~constraint_constants ~coinbase_receiver
         ~supercharge_coinbase
@@ -1138,6 +1215,7 @@ module T = struct
                   Staged_ledger_error.Pre_diff error ) )
     in
     let apply_diff_start_time = Core.Time.now () in
+    Block_tracing.Processing.checkpoint_current `Apply_diff ;
     let%map ((_, _, `Staged_ledger new_staged_ledger, _) as res) =
       apply_diff
         ~skip_verification:
@@ -1147,6 +1225,7 @@ module T = struct
         ~logger ~current_state_view ~state_and_body_hash
         ~log_prefix:"apply_diff"
     in
+    Block_tracing.Processing.checkpoint_current `Diff_applied ;
     [%log debug]
       ~metadata:
         [ ( "time_elapsed"
@@ -1710,6 +1789,7 @@ module T = struct
         in
         check_constraints_and_update ~constraint_constants init_resources log )
 
+  (* TODOZ: trace internals here *)
   let generate ~constraint_constants logger cw_seq ts_seq ~receiver
       ~is_coinbase_receiver_new ~supercharge_coinbase
       (partitions : Scan_state.Space_partition.t) =
@@ -1773,6 +1853,7 @@ module T = struct
       has_no_commands res && Resources.coinbase_added res = 0
     in
     (*Partitioning explained in PR #687 *)
+    (* TODOZ: trace one_prediff and second_pre_diff calls *)
     match partitions.second with
     | None ->
         let res, log =
@@ -1891,6 +1972,8 @@ module T = struct
               [%log info]
                 "No locked tokens in the delegator/delegatee account, applying \
                  supercharged coinbase" ;
+            Block_tracing.Production.checkpoint
+              `Get_snark_work_for_pending_transactions ;
             let partitions = Scan_state.partition_if_overflowing t.scan_state in
             let work_to_do =
               Scan_state.work_statements_for_new_diff t.scan_state
@@ -1933,6 +2016,13 @@ module T = struct
                             ]
                           !"Staged_ledger_diff creation: Snark fee $snark_fee \
                             insufficient to create the snark worker account" ;
+                        Block_tracing.Production.push_global_metadata
+                          [ ("interrupt_get_completed_work_at", `Int count)
+                          ; ( "interrupt_get_completed_work_reason"
+                            , `String
+                                "Snark fee insufficient to create snark worker \
+                                 account" )
+                          ] ;
                         Stop (seq, count) )
                   | None ->
                       [%log debug]
@@ -1944,9 +2034,19 @@ module T = struct
                           ]
                         !"Staged_ledger_diff creation: No snark work found for \
                           $statement" ;
+                      Block_tracing.Production.push_global_metadata
+                        [ ("interrupt_get_completed_work_at", `Int count)
+                        ; ( "interrupt_get_completed_work_reason"
+                          , `String "Snark work for statement not found" )
+                        ] ;
                       Stop (seq, count) )
                 ~finish:Fn.id
             in
+            Block_tracing.Production.push_metadata
+              [ ("work_to_do_count", `Int (List.length work_to_do))
+              ; ("proof_count", `Int proof_count)
+              ] ;
+            Block_tracing.Production.checkpoint `Validate_and_apply_transactions ;
             (*Transactions in reverse order for faster removal if there is no space when creating the diff*)
             let valid_on_this_ledger, invalid_on_this_ledger =
               Sequence.fold_until transactions_by_fee
@@ -1979,12 +2079,21 @@ module T = struct
                       else Continue (valid_seq', invalid_txns, count') )
                 ~finish:(fun (valid, invalid, _) -> (valid, invalid))
             in
+            Block_tracing.Production.checkpoint `Generate_staged_ledger_diff ;
             let diff, log =
               O1trace.sync_thread "generate_staged_ledger_diff" (fun () ->
                   generate ~constraint_constants logger completed_works_seq
                     valid_on_this_ledger ~receiver:coinbase_receiver
                     ~is_coinbase_receiver_new ~supercharge_coinbase partitions )
             in
+            let summaries = List.map ~f:fst log in
+            Block_tracing.Production.push_global_metadata
+              [ ("proof_count", `Int proof_count)
+              ; ("txn_count", `Int (Sequence.length valid_on_this_ledger))
+              ; ("diff_log", Diff_creation_log.summary_list_to_yojson summaries)
+              ] ;
+            Block_tracing.Production.checkpoint
+              `Generate_staged_ledger_diff_done ;
             let%map diff =
               (* Fill in the statuses for commands. *)
               with_ledger_mask t.ledger ~f:(fun status_ledger ->

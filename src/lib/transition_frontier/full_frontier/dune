@@ -33,6 +33,8 @@
    staged_ledger_diff
    mina_numbers
    debug_assert
+   ;; viable systems
+   internal_tracing
    ; for tests
    async
    async_kernel

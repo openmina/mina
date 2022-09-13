@@ -48,4 +48,6 @@
    ledger_catchup
    data_hash_lib
    mina_wire_types
+   ;; viable systems
+   internal_tracing
 ))

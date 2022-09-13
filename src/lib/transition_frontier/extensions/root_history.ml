@@ -1,6 +1,7 @@
 open Core_kernel
 open Mina_base
 open Frontier_base
+open Internal_tracing
 module Queue = Hash_queue.Make (State_hash)
 
 module T = struct
@@ -65,6 +66,9 @@ module T = struct
       List.exists diffs_with_mutants ~f:(function
         (* TODO: send full diffs to extensions to avoid extra lookups in frontier *)
         | E (Root_transitioned { new_root; _ }, _) ->
+            Storage_tracing.Frontier_extensions.record `Root_transitioned
+              `Root_history
+            @@ fun () ->
             Full_frontier.find_exn frontier
               (Root_data.Limited.hashes new_root).state_hash
             |> Root_data.Historical.of_breadcrumb |> enqueue root_history ;
