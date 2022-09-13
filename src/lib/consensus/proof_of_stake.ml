@@ -3529,6 +3529,7 @@ module Make_str (A : Wire_types.Concrete) = struct
                (Global_slot.of_slot_number ~constants block_data.global_slot) )
             (Global_slot.to_epoch_and_slot global_slot)
 
+      (* TODOZ: trace this and inner calls *)
       let generate_transition
           ~(previous_protocol_state : Protocol_state.Value.t) ~blockchain_state
           ~current_time ~(block_data : Block_data.t) ~supercharge_coinbase

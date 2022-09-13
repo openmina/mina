@@ -23,6 +23,8 @@
    mina_state
    staged_ledger
    mina_wire_types
+   ;; viable systems
+   internal_tracing
    )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_jane ppx_mina ppx_version)))

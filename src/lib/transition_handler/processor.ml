@@ -16,6 +16,7 @@ open Mina_state
 open Cache_lib
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 module type CONTEXT = sig
   val logger : Logger.t
@@ -60,6 +61,8 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
           |> State_hash.to_yojson )
       ]
     (Option.value_map valid_cb ~default:"without" ~f:(const "with")) ;
+  let state_hash = Transition_frontier.Breadcrumb.state_hash breadcrumb in
+  Block_tracing.Processing.checkpoint state_hash `Add_and_finalize ;
   let%map () =
     if only_if_present then (
       let parent_hash = Transition_frontier.Breadcrumb.parent_hash breadcrumb in
@@ -67,6 +70,8 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       | Some _ ->
           Transition_frontier.add_breadcrumb_exn frontier breadcrumb
       | None ->
+          Block_tracing.Processing.checkpoint state_hash
+            `Parent_breadcrumb_not_found ;
           [%log warn]
             !"When trying to add breadcrumb, its parent had been removed from \
               transition frontier: %{sexp: State_hash.t}"
@@ -91,6 +96,7 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       in
       Mina_metrics.Block_latency.Inclusion_time.update
         (Block_time.Span.to_time_span time_elapsed) ) ;
+  Block_tracing.Processing.checkpoint state_hash `Add_and_finalize_done ;
   Writer.write processed_transition_writer
     (`Transition transition, `Source source, `Valid_cb valid_cb) ;
   Catchup_scheduler.notify catchup_scheduler
@@ -119,8 +125,14 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
     (State_hash.With_state_hashes.state_hash t, With_hash.data t)
   in
   let metadata = [ ("state_hash", State_hash.to_yojson transition_hash) ] in
+  let state_hash = transition_hash in
+  let blockchain_length = Mina_block.blockchain_length transition in
+  Block_tracing.Processing.checkpoint ~source:`External ~blockchain_length
+    state_hash `Begin_external_block_processing ;
   Deferred.map ~f:(Fn.const ())
     (let open Deferred.Result.Let_syntax in
+    Block_tracing.Processing.checkpoint state_hash
+      `Validate_frontier_dependencies ;
     let%bind mostly_validated_transition =
       let open Deferred.Let_syntax in
       match
@@ -137,6 +149,8 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
       | Ok t ->
           return (Ok t)
       | Error `Not_selected_over_frontier_root ->
+          Block_tracing.Processing.failure
+            ~reason:"Not_selected_over_frontier_root" state_hash ;
           let%map () =
             Trust_system.record_envelope_sender trust_system logger sender
               ( Trust_system.Actions.Gossiped_invalid_transition
@@ -150,6 +164,8 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
           in
           Error ()
       | Error `Already_in_frontier ->
+          Block_tracing.Processing.failure ~reason:"Already_in_frontier"
+            state_hash ;
           [%log warn] ~metadata
             "Refusing to process the transition with hash $state_hash because \
              is is already in the transition frontier" ;
@@ -158,6 +174,7 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
           in
           return (Error ())
       | Error `Parent_missing_from_frontier -> (
+          Block_tracing.Processing.checkpoint state_hash `Schedule_catchup ;
           let _, validation =
             Cached.peek cached_initially_validated_transition
             |> Envelope.Incoming.data
@@ -187,6 +204,7 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
       Protocol_state.previous_state_hash
         (Header.protocol_state @@ Mina_block.header transition)
     in
+    Block_tracing.Processing.checkpoint state_hash `Find_parent_breadcrumb ;
     let parent_breadcrumb = Transition_frontier.find_exn frontier parent_hash in
     let%bind breadcrumb =
       cached_transform_deferred_result cached_initially_validated_transition
@@ -199,6 +217,9 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
         ~transform_result:(function
           | Error (`Invalid_staged_ledger_hash error)
           | Error (`Invalid_staged_ledger_diff error) ->
+              Block_tracing.Processing.failure
+                ~reason:(Error.to_string_hum error)
+                state_hash ;
               [%log error]
                 ~metadata:
                   (metadata @ [ ("error", Error_json.error_to_yojson error) ])
@@ -206,6 +227,7 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
                  processor: $error" ;
               Deferred.return (Error ())
           | Error (`Fatal_error exn) ->
+              Block_tracing.Processing.failure ~reason:"Fatal error" state_hash ;
               raise exn
           | Ok breadcrumb ->
               Deferred.return (Ok breadcrumb) )
@@ -213,7 +235,11 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
     Mina_metrics.(
       Counter.inc_one
         Transition_frontier_controller.breadcrumbs_built_by_processor) ;
-    Deferred.map ~f:Result.return
+    Deferred.map
+      ~f:(fun result ->
+        (* TODOX: this could result in failure *)
+        Block_tracing.Processing.complete state_hash ;
+        Result.return result )
       (add_and_finalize ~logger ~frontier ~catchup_scheduler
          ~processed_transition_writer ~only_if_present:false ~time_controller
          ~source:`Gossip breadcrumb ~precomputed_values ~valid_cb ))
@@ -294,8 +320,17 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                             (* It could be the case that by the time we try and
                                * add the breadcrumb, it's no longer relevant when
                                * we're catching up *) ~f:(fun (b, valid_cb) ->
-                              add_and_finalize ~logger ~only_if_present:true
-                                ~source:`Catchup ~valid_cb b ) )
+                              let state_hash =
+                                Frontier_base.Breadcrumb.state_hash
+                                  (Cached.peek b)
+                              in
+                              Deferred.map
+                                ~f:(fun result ->
+                                  (* TODOX: this could result in failure *)
+                                  Block_tracing.Processing.complete state_hash ;
+                                  result )
+                                (add_and_finalize ~logger ~only_if_present:true
+                                   ~source:`Catchup ~valid_cb b ) ) )
                     with
                   | Ok () ->
                       ()
@@ -321,6 +356,13 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                   | `Catchup_scheduler ->
                       () )
               | `Local_breadcrumb breadcrumb ->
+                  let state_hash =
+                    Transition_frontier.Breadcrumb.validated_transition
+                      (Cached.peek breadcrumb)
+                    |> Mina_block.Validated.state_hash
+                  in
+                  Block_tracing.Processing.checkpoint state_hash
+                    `Begin_local_block_processing ;
                   let transition_time =
                     Transition_frontier.Breadcrumb.validated_transition
                       (Cached.peek breadcrumb)
@@ -340,8 +382,11 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                         ~source:`Internal breadcrumb ~valid_cb:None
                     with
                     | Ok () ->
+                        Block_tracing.Processing.complete state_hash ;
                         ()
                     | Error err ->
+                        Block_tracing.Processing.failure
+                          ~reason:(Error.to_string_hum err) state_hash ;
                         [%log error]
                           ~metadata:
                             [ ("error", Error_json.error_to_yojson err) ]

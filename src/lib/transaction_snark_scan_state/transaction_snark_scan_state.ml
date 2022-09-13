@@ -813,9 +813,17 @@ let fill_work_and_enqueue_transactions t transactions work =
   in
   let old_proof = Parallel_scan.last_emitted_value t in
   let%bind work_list = fill_in_transaction_snark_work t work in
+  let added_works = List.length work in
+  let merge_jobs_created = List.length work_list in
   let%bind proof_opt, updated_scan_state =
     Parallel_scan.update t ~completed_jobs:work_list ~data:transactions
   in
+  Internal_tracing.Block_tracing.Processing.push_metadata
+    (Printf.sprintf
+       "scan_state_added_works=%d, total_proofs=%d, merge_jobs_created=%d, \
+        emitted_proof=%b"
+       added_works (total_proofs work) merge_jobs_created
+       (Option.is_some proof_opt) ) ;
   let%map result_opt =
     Option.value_map ~default:(Ok None) proof_opt
       ~f:(fun ((proof, _), txns_with_witnesses) ->

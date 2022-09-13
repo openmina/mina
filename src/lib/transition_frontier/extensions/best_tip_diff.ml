@@ -1,6 +1,7 @@
 open Core_kernel
 open Mina_base
 open Frontier_base
+open Internal_tracing
 
 module T = struct
   type t = { logger : Logger.t; best_tip_diff_logger : Logger.t }
@@ -76,6 +77,9 @@ module T = struct
           (fun ( ({ new_commands; removed_commands; reorg_best_tip = _ } as acc)
                , should_broadcast ) -> function
             | E (Best_tip_changed new_best_tip, old_best_tip_hash) ->
+                Storage_tracing.Frontier_extensions.record `Best_tip_changed
+                  `Best_tip_diff
+                @@ fun () ->
                 let new_best_tip_breadcrumb =
                   Full_frontier.find_exn frontier new_best_tip
                 in
