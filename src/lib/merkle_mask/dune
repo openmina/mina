@@ -23,6 +23,8 @@
    visualization
    non_empty_list
    direction
+   ;; viable systems
+   internal_tracing
  )
  (preprocess
   (pps

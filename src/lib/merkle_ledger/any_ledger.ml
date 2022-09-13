@@ -14,6 +14,7 @@
  * *)
 
 open Core_kernel
+open Internal_tracing
 
 module type S = sig
   type key
@@ -115,12 +116,22 @@ module Make_base (Inputs : Inputs_intf) :
 
     let remove_accounts_exn (T ((module Base), t)) = Base.remove_accounts_exn t
 
+    let remove_accounts_exn =
+      Storage_tracing.wrap2 ~op:`Remove_accounts remove_accounts_exn
+
     let merkle_path_at_index_exn (T ((module Base), t)) =
       Base.merkle_path_at_index_exn t
 
+    let merkle_path_at_index_exn =
+      Storage_tracing.wrap2 ~op:`Merkle_path_at_index merkle_path_at_index_exn
+
     let merkle_path (T ((module Base), t)) = Base.merkle_path t
 
+    let merkle_path = Storage_tracing.wrap2 ~op:`Merkle_path merkle_path
+
     let merkle_root (T ((module Base), t)) = Base.merkle_root t
+
+    let merkle_root = Storage_tracing.wrap1 ~op:`Merkle_root merkle_root
 
     let index_of_account_exn (T ((module Base), t)) =
       Base.index_of_account_exn t
@@ -133,9 +144,15 @@ module Make_base (Inputs : Inputs_intf) :
 
     let set (T ((module Base), t)) = Base.set t
 
+    let set = Storage_tracing.wrap3 ~op:`Set_account set
+
     let get (T ((module Base), t)) = Base.get t
 
+    let get = Storage_tracing.wrap2 ~op:`Get_account get
+
     let get_batch (T ((module Base), t)) = Base.get_batch t
+
+    let get_batch = Storage_tracing.wrap2 ~op:`Get_accounts_batch get_batch
 
     let get_uuid (T ((module Base), t)) = Base.get_uuid t
 
@@ -147,6 +164,9 @@ module Make_base (Inputs : Inputs_intf) :
 
     let get_or_create_account (T ((module Base), t)) =
       Base.get_or_create_account t
+
+    let get_or_create_account =
+      Storage_tracing.wrap3 ~op:`Get_or_create_account get_or_create_account
 
     let location_of_account (T ((module Base), t)) = Base.location_of_account t
 
@@ -193,6 +213,9 @@ module Make_base (Inputs : Inputs_intf) :
 
     let merkle_path_at_addr_exn (T ((module Base), t)) =
       Base.merkle_path_at_addr_exn t
+
+    let merkle_path_at_addr_exn =
+      Storage_tracing.wrap2 ~op:`Merkle_path_at_addr merkle_path_at_addr_exn
 
     let num_accounts (T ((module Base), t)) = Base.num_accounts t
 

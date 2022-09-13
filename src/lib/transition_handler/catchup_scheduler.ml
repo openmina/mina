@@ -20,6 +20,7 @@ open Mina_base
 open Mina_block
 open Network_peer
 open Mina_net2
+open Internal_tracing
 
 type t =
   { logger : Logger.t
@@ -204,6 +205,8 @@ let watch t ~timeout_duration ~cached_transition ~valid_cb =
     |> Mina_block.header |> Header.protocol_state
     |> Mina_state.Protocol_state.previous_state_hash
   in
+  (* Done so that we can associate the download job started during catchup *)
+  Block_tracing.Processing.register_parent ~state_hash:hash ~parent_hash ;
   Option.value_map valid_cb ~default:() ~f:(fun data ->
       match Hashtbl.add t.validation_callbacks ~key:hash ~data with
       | `Ok ->
@@ -240,6 +243,7 @@ let watch t ~timeout_duration ~cached_transition ~valid_cb =
   in
   match Hashtbl.find t.collected_transitions parent_hash with
   | None ->
+      (* Parent not found, register self as child, and add empty list of children for self is nothing there already *)
       let remaining_time = cancel_timeout t hash in
       Hashtbl.add_exn t.collected_transitions ~key:parent_hash
         ~data:[ cached_transition ] ;

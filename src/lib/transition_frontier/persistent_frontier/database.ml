@@ -3,6 +3,7 @@ open Core
 open Mina_base
 open Mina_block
 open Frontier_base
+open Internal_tracing
 
 (* TODO: cache state body hashes in db to avoid re-hashing on load (#10293) *)
 
@@ -335,6 +336,14 @@ let add t ~transition =
       Batch.set batch ~key:(Arcs hash) ~data:[] ;
       Batch.set batch ~key:(Arcs parent_hash) ~data:(hash :: parent_arcs) )
 
+let add t ~transition =
+  let open Storage_tracing in
+  let start = now () in
+  let result = add t ~transition in
+  let duration = now () -. start in
+  record `Add_transition_in_db duration ;
+  result
+
 let move_root t ~new_root ~garbage =
   let open Root_data.Limited in
   let%bind () =
@@ -361,6 +370,14 @@ let move_root t ~new_root ~garbage =
           Batch.remove batch ~key:(Arcs node_hash) ) ) ;
   old_root_hash
 
+let move_root t ~new_root ~garbage =
+  let open Storage_tracing in
+  let start = now () in
+  let result = move_root t ~new_root ~garbage in
+  let duration = now () -. start in
+  record `Move_root_in_db duration ;
+  result
+
 let get_transition t hash =
   let%map transition =
     get t.db ~key:(Transition hash) ~error:(`Not_found (`Transition hash))
@@ -381,25 +398,42 @@ let get_transition t hash =
     ~delta_block_chain_proof:(Non_empty_list.singleton parent_hash)
     (`This_block_is_trusted_to_be_safe block)
 
+let get_transition =
+  Storage_tracing.wrap2 ~op:`Get_transition_in_db get_transition
+
 let get_arcs t hash = get t.db ~key:(Arcs hash) ~error:(`Not_found (`Arcs hash))
 
+let get_arcs = Storage_tracing.wrap2 ~op:`Get_transition_in_db get_arcs
+
 let get_root t = get t.db ~key:Root ~error:(`Not_found `Root)
+
+let get_root = Storage_tracing.wrap1 ~op:`Get_root_in_db get_root
 
 let get_protocol_states_for_root_scan_state t =
   get t.db ~key:Protocol_states_for_root_scan_state
     ~error:(`Not_found `Protocol_states_for_root_scan_state)
 
+let get_protocol_states_for_root_scan_state =
+  Storage_tracing.wrap1 ~op:`Get_protocol_states_for_root_scan_state_in_db
+    get_protocol_states_for_root_scan_state
+
 let get_root_hash t =
   let%map root = get_root t in
   Root_data.Minimal.hash root
 
+let get_root_hash = Storage_tracing.wrap1 ~op:`Get_root_hash_in_db get_root_hash
+
 let get_best_tip t = get t.db ~key:Best_tip ~error:(`Not_found `Best_tip)
+
+let get_best_tip = Storage_tracing.wrap1 ~op:`Get_best_tip_in_db get_best_tip
 
 let set_best_tip t hash =
   let%map old_best_tip_hash = get_best_tip t in
   (* no need to batch because we only do one operation *)
   set t.db ~key:Best_tip ~data:hash ;
   old_best_tip_hash
+
+let set_best_tip = Storage_tracing.wrap2 ~op:`Set_best_tip_in_db set_best_tip
 
 let rec crawl_successors t hash ~init ~f =
   let open Deferred.Result.Let_syntax in
@@ -411,3 +445,11 @@ let rec crawl_successors t hash ~init ~f =
           ~f:(Result.map_error ~f:(fun err -> `Crawl_error err))
       in
       crawl_successors t succ_hash ~init:init' ~f )
+
+let crawl_successors t hash ~init ~f =
+  let open Storage_tracing in
+  let start = now () in
+  let result = crawl_successors t hash ~init ~f in
+  let duration = now () -. start in
+  record `Crawl_successors_in_db duration ;
+  result

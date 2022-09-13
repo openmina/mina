@@ -1,0 +1,21 @@
+(library
+ (name internal_tracing)
+ (public_name internal_tracing)
+ (library_flags -linkall)
+ (inline_tests)
+ (libraries
+  ;; opam libraries
+  base.base_internalhash_types
+  core
+  core_kernel
+  sexplib0
+  yojson
+  async_kernel
+  ;; local libraries
+  mina_base
+  mina_numbers)
+ (preprocess
+  (pps ppx_jane ppx_deriving_yojson))
+ (instrumentation
+  (backend bisect_ppx))
+ (synopsis "Block tracing"))

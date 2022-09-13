@@ -10,6 +10,7 @@ open Core_kernel
 open Mina_base
 open Mina_state
 open Consensus.Data
+open Internal_tracing
 include Validation_types
 
 module type CONTEXT = sig
@@ -466,6 +467,7 @@ let validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
   let block = With_hash.data t in
   let header = Block.header block in
   let protocol_state = Header.protocol_state header in
+  Block_tracing.Processing.checkpoint_current `Validate_staged_ledger_diff ;
   let blockchain_state = Protocol_state.blockchain_state protocol_state in
   let consensus_state = Protocol_state.consensus_state protocol_state in
   let body = Block.body block in

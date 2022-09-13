@@ -3534,6 +3534,8 @@ module Make_str (A : Wire_types.Concrete) = struct
           ~current_time ~(block_data : Block_data.t) ~supercharge_coinbase
           ~snarked_ledger_hash ~genesis_ledger_hash ~supply_increase ~logger
           ~constraint_constants =
+        Internal_tracing.Block_tracing.Production.checkpoint
+          `Generate_transition ;
         let previous_consensus_state =
           Protocol_state.consensus_state previous_protocol_state
         in
@@ -3556,6 +3558,8 @@ module Make_str (A : Wire_types.Concrete) = struct
         let block_creator =
           block_data.stake_proof.producer_public_key |> Public_key.compress
         in
+        Internal_tracing.Block_tracing.Production.checkpoint
+          `Consensus_state_update ;
         let consensus_state =
           Or_error.ok_exn
             (Consensus_state.update ~constants ~previous_consensus_state
@@ -3568,6 +3572,8 @@ module Make_str (A : Wire_types.Concrete) = struct
                ~coinbase_receiver:block_data.stake_proof.coinbase_receiver_pk
                ~supercharge_coinbase )
         in
+        Internal_tracing.Block_tracing.Production.checkpoint
+          `Consensus_state_update_done ;
         let genesis_state_hash =
           Protocol_state.genesis_state_hash
             ~state_hash:(Some previous_protocol_state_hash)
@@ -3579,6 +3585,8 @@ module Make_str (A : Wire_types.Concrete) = struct
             ~blockchain_state ~consensus_state
             ~constants:(Protocol_state.constants previous_protocol_state)
         in
+        Internal_tracing.Block_tracing.Production.checkpoint
+          `Generate_transition_done ;
         (protocol_state, consensus_transition)
 
       include struct
