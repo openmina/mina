@@ -4,6 +4,7 @@ open Async_kernel
 open Pipe_lib.Strict_pipe
 open Mina_base
 open Mina_state
+open Internal_tracing
 
 type block_or_header =
   [ `Block of Mina_block.t Envelope.Incoming.t
@@ -70,6 +71,13 @@ let push sink (b_or_h, `Time_received tm, `Topic_and_vc (topic, cb)) =
         | `Header h_env ->
             (Envelope.Incoming.sender h_env, Envelope.Incoming.data h_env)
       in
+      let state_hash =
+        (header |> Mina_block.Header.protocol_state |> Protocol_state.hashes)
+          .state_hash
+      in
+      let blockchain_length = Mina_block.Header.blockchain_length header in
+      Block_tracing.External.checkpoint ~blockchain_length state_hash
+        `External_block_received ;
       don't_wait_for
         ( match%map Mina_net2.Validation_callback.await cb with
         | Some `Accept ->
@@ -115,6 +123,8 @@ let push sink (b_or_h, `Time_received tm, `Topic_and_vc (topic, cb)) =
           Rate_limiter.add rate_limiter sender ~now:(Time.now ()) ~score:1
         with
         | `Capacity_exceeded ->
+            Block_tracing.External.failure ~reason:"Capacity_exceeded"
+              state_hash ;
             [%log warn] "$sender has sent many blocks. This is very unusual."
               ~metadata:[ ("sender", Envelope.Sender.to_yojson sender) ] ;
             Mina_net2.Validation_callback.fire_if_not_already_fired cb `Reject ;

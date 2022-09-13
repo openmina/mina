@@ -80,6 +80,8 @@
    mina_wire_types
    mina_block
    perf_histograms
+   ;; viable systems
+   internal_tracing
  )
  (preprocessor_deps "../../config.mlh")
  (instrumentation (backend bisect_ppx))

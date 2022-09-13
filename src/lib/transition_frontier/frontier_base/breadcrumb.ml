@@ -4,6 +4,7 @@ open Mina_base
 open Mina_state
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 module T = struct
   let id = "breadcrumb"
@@ -65,6 +66,23 @@ T.
 
 include Allocation_functor.Make.Sexp (T)
 
+let compute_block_trace_metadata transition_with_validation =
+  let header =
+    Mina_block.header @@ Mina_block.Validation.block transition_with_validation
+  in
+  let cs =
+    header |> Mina_block.Header.protocol_state
+    |> Mina_state.Protocol_state.consensus_state
+  in
+  let open Consensus.Data.Consensus_state in
+  [ ( "global_slot"
+    , Mina_numbers.Global_slot.to_yojson @@ global_slot_since_genesis cs )
+  ; ("slot", Unsigned_extended.UInt32.to_yojson @@ curr_slot cs)
+  ; ("creator", Account.key_to_yojson @@ block_creator cs)
+  ; ("winner", Account.key_to_yojson @@ block_stake_winner cs)
+  ; ("coinbase_receiver", Account.key_to_yojson @@ coinbase_receiver cs)
+  ]
+
 let build_no_reporting ?skip_staged_ledger_verification ~logger
     ~precomputed_values ~verifier ~parent
     ~transition:(transition_with_validation : Mina_block.almost_valid_block)
@@ -73,6 +91,7 @@ let build_no_reporting ?skip_staged_ledger_verification ~logger
       ( `Just_emitted_a_proof just_emitted_a_proof
       , `Block_with_validation fully_valid_block
       , `Staged_ledger transitioned_staged_ledger ) =
+    Block_tracing.Processing.checkpoint_current `Create_breadcrumb ;
     create
       ~validated_transition:(Mina_block.Validated.lift fully_valid_block)
       ~staged_ledger:transitioned_staged_ledger ~just_emitted_a_proof
@@ -92,6 +111,16 @@ let build_no_reporting ?skip_staged_ledger_verification ~logger
 
 let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
     ~trust_system ~parent ~transition ~senders ~transition_receipt_time () =
+  let state_hash =
+    (With_hash.hash @@ Mina_block.Validation.block_with_hash transition)
+      .state_hash
+  in
+  Block_tracing.Processing.with_state_hash (Some state_hash)
+  @@ fun () ->
+  Block_tracing.Processing.checkpoint_current `Build_breadcrumb ;
+  let metadata = compute_block_trace_metadata transition in
+  Block_tracing.Processing.push_global_metadata metadata ;
+  Block_tracing.Production.push_global_metadata metadata ;
   match%bind
     build_no_reporting ?skip_staged_ledger_verification ~logger
       ~precomputed_values ~verifier ~parent ~transition ~transition_receipt_time

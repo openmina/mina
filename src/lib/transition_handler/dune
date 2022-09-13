@@ -54,6 +54,8 @@
    kimchi_backend.pasta.basic
    mina_networking
    unix_timestamp
+   ;; viable systems
+   internal_tracing
    )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_mina ppx_version ppx_jane)))

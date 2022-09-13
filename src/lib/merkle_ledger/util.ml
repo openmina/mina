@@ -1,4 +1,5 @@
 open Core_kernel
+open Internal_tracing
 
 module type Inputs_intf = sig
   module Location : Location_intf.S
@@ -194,6 +195,8 @@ end = struct
     @@ List.map locations_and_accounts ~f:(fun (location, account) ->
            ( Inputs.location_of_hash_addr (Inputs.Location.to_path_exn location)
            , Inputs.Hash.hash_account account ) )
+
+  let set_batch = Storage_tracing.wrap2 ~op:`Set_accounts_batch set_batch
 
   let set_batch_accounts t addresses_and_accounts =
     set_batch t

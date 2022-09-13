@@ -52,4 +52,6 @@
    snarky.backendless
    unsigned_extended
    ppx_version.runtime
+   ;; viable systems
+   internal_tracing
 ))

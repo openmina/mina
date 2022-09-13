@@ -6,6 +6,7 @@ open Mina_state
 open Signature_lib
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 type validation_error =
   [ `Invalid_time_received of [ `Too_early | `Too_late of int64 ]
@@ -15,6 +16,7 @@ type validation_error =
   | `Verifier_error of Error.t
   | `Mismatched_protocol_version
   | `Invalid_protocol_version ]
+[@@deriving sexp_of]
 
 let handle_validation_error ~logger ~rejected_blocks_logger ~time_received
     ~trust_system ~sender ~header_with_hash ~delta (error : validation_error) =
@@ -246,6 +248,20 @@ let run ~logger ~trust_system ~verifier ~transition_reader
              , `Time_received time_received
              , `Topic_and_vc (topic, valid_cb) )
            ->
+          let state_hash =
+            let header =
+              match b_or_h with
+              | `Block b_env ->
+                  Mina_block.header (Envelope.Incoming.data b_env)
+              | `Header h_env ->
+                  Envelope.Incoming.data h_env
+            in
+            (header |> Header.protocol_state |> Protocol_state.hashes)
+              .state_hash
+          in
+          Block_tracing.External.with_state_hash (Some state_hash)
+          @@ fun () ->
+          Block_tracing.External.checkpoint_current `Initial_validation ;
           if Ivar.is_full initialization_finish_signal then (
             let header, sender =
               match b_or_h with
@@ -283,12 +299,23 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                       @@ wrap_header header_hashed )
                     >>= Fn.compose Intr.return
                           (validate_genesis_protocol_state ~genesis_state_hash)
-                    >>= Fn.compose Intr.lift
-                          (validate_single_proof ~verifier ~genesis_state_hash)
+                    >>= Fn.compose Intr.lift (fun proof ->
+                            Block_tracing.External.checkpoint_current
+                              ~metadata:[ ("count", `Int 1) ]
+                              `Validate_proofs ;
+                            let%map.Deferred.Result result =
+                              validate_single_proof ~verifier
+                                ~genesis_state_hash proof
+                            in
+                            Block_tracing.External.checkpoint_current
+                              `Done_validating_proofs ;
+                            result )
                     >>= Fn.compose Intr.return validate_delta_block_chain
                     >>= Fn.compose Intr.return validate_protocol_versions)
                 with
                 | Ok verified_transition ->
+                    Block_tracing.External.checkpoint_current
+                      `Initial_validation_complete ;
                     let b_or_h' =
                       match b_or_h with
                       | `Block b_env ->
@@ -315,6 +342,11 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                       , time_received ) ;
                     Intr.return ()
                 | Error error ->
+                    Block_tracing.External.failure
+                      ~reason:
+                        ( "Failed initial validation: "
+                        ^ Sexp.to_string ([%sexp_of: validation_error] error) )
+                      state_hash ;
                     Mina_net2.Validation_callback.fire_if_not_already_fired
                       valid_cb `Reject ;
                     Intr.lift
@@ -333,6 +365,8 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                   (header |> Header.protocol_state |> Protocol_state.hashes)
                     .state_hash
                 in
+                Block_tracing.External.failure
+                  ~reason:"Validation callback expired" state_hash ;
                 let metadata =
                   [ ("state_hash", State_hash.to_yojson state_hash)
                   ; ( "time_received"
@@ -344,4 +378,7 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                 in
                 [%log error] ~metadata
                   "Dropping blocks because libp2p validation expired" )
-          else Deferred.unit ) )
+          else (
+            Block_tracing.External.failure_current
+              ~reason:"Node still initializing" ;
+            Deferred.unit ) ) )

@@ -3,6 +3,7 @@ open Async_kernel
 open Pipe_lib
 open Network_peer
 open Mina_numbers
+open Internal_tracing
 
 module type CONTEXT = sig
   val logger : Logger.t
@@ -102,6 +103,7 @@ let start_transition_frontier_controller ~context:(module Context : CONTEXT)
     ~collected_transitions ?transition_writer_ref ~frontier_w frontier =
   let open Context in
   [%str_log info] Starting_transition_frontier_controller ;
+  Storage_tracing.Distributions.bootstrap_complete () ;
   let ( transition_frontier_controller_reader
       , transition_frontier_controller_writer ) =
     let name = "transition frontier controller pipe" in

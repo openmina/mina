@@ -1,6 +1,7 @@
 open Core_kernel
 open Mina_base
 open Frontier_base
+open Internal_tracing
 
 (* WARNING: don't use this code until @nholland has landed a PR that
    synchronize the read/write of transition frontier
@@ -51,12 +52,17 @@ module T = struct
     let open Diff.Full.With_mutant in
     List.iter diffs_with_mutants ~f:(function
       | E (New_node (Full breadcrumb), _) ->
+          Storage_tracing.Frontier_extensions.record `New_node `Ledger_table
+          @@ fun () ->
           let ledger =
             Staged_ledger.ledger @@ Breadcrumb.staged_ledger breadcrumb
           in
           let ledger_hash = Mina_ledger.Ledger.merkle_root ledger in
           add_entry t ~ledger_hash ~ledger
       | E (Root_transitioned transition, _) -> (
+          Storage_tracing.Frontier_extensions.record `Root_transitioned
+            `Ledger_table
+          @@ fun () ->
           match transition.garbage with
           | Full nodes ->
               let open Mina_state in

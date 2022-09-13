@@ -5,6 +5,7 @@ open Mina_base
 open Mina_state
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 module type CONTEXT = sig
   val logger : Logger.t
@@ -31,8 +32,10 @@ let verify_header_is_relevant ~context:(module Context : CONTEXT) ~frontier
   let get_consensus_constants h =
     Header.protocol_state h |> Protocol_state.consensus_state
   in
+  Block_tracing.External.checkpoint_current `Validate_transition ;
   let root_breadcrumb = Transition_frontier.root frontier in
   let open Result.Let_syntax in
+  Block_tracing.External.checkpoint_current `Check_transition_not_in_frontier ;
   let%bind () =
     Option.fold
       (Transition_frontier.find frontier transition_hash)
@@ -67,6 +70,7 @@ let verify_transition_is_relevant ~context:(module Context : CONTEXT) ~frontier
       ~context:(module Context)
       ~frontier header_with_hash
   in
+  Block_tracing.External.checkpoint_current `Register_transition_for_processing ;
   (* we expect this to be Ok since we just checked the cache *)
   Unprocessed_transition_cache.register_exn unprocessed_transition_cache env
 
@@ -101,6 +105,8 @@ let record_transition_is_irrelevant ~logger ~trust_system ~senders ~error
   let header = With_hash.data header_with_hash in
   match error with
   | `In_frontier _ | `In_process _ ->
+      Block_tracing.External.failure ~reason:"In_frontier or In_process"
+        transition_hash ;
       (* Send_old_gossip isn't necessary true, there is a possibility of race condition when the
          process retrieved the transition via catchup mechanism slightly before the gossip reached *)
       Deferred.List.iter senders ~f:(fun sender ->
@@ -112,6 +118,7 @@ let record_transition_is_irrelevant ~logger ~trust_system ~senders ~error
                   ; ("header", Mina_block.Header.to_yojson header)
                   ] ) ) )
   | `Disconnected ->
+      Block_tracing.External.failure ~reason:"Disconnected" transition_hash ;
       Mina_metrics.(Counter.inc_one Rejected_blocks.worse_than_root) ;
       [%log error]
         ~metadata:
@@ -174,6 +181,9 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
             | `Header h ->
                 Mina_block.Validation.header_with_hash h
           in
+          let transition_hash = (With_hash.hash header_with_hash).state_hash in
+          Block_tracing.External.with_state_hash (Some transition_hash)
+          @@ fun () ->
           match
             verify_transition_or_header_is_relevant
               ~context:(module Context)
@@ -184,6 +194,7 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
                 record_transition_is_relevant ~logger ~trust_system ~senders
                   ~time_controller header_with_hash
               in
+              Block_tracing.External.complete transition_hash ;
               Writer.write valid_transition_writer (b_or_h', `Gossip_map gd_map)
           | Error error ->
               record_transition_is_irrelevant ~logger ~trust_system ~senders

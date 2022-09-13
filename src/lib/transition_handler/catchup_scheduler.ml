@@ -19,6 +19,7 @@ open Otp_lib
 open Mina_base
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 type t =
   { logger : Logger.t
@@ -264,9 +265,12 @@ let watch t ~timeout_duration ~cached_transition ~gd_map =
   let transition_with_hash, _ = Cached.peek cached_transition in
   let hash = State_hash.With_state_hashes.state_hash transition_with_hash in
   let parent_hash = get_parent_hash transition_with_hash in
+  (* Done so that we can associate the download job started during catchup *)
+  Block_tracing.Processing.register_parent ~state_hash:hash ~parent_hash ;
   register_validation_callbacks ~hash ~gd_map t ;
   match Hashtbl.find t.collected_transitions parent_hash with
   | None ->
+      (* Parent not found, register self as child, and add empty list of children for self is nothing there already *)
       let remaining_time = cancel_timeout t hash in
       Hashtbl.add_exn t.collected_transitions ~key:parent_hash
         ~data:[ cached_transition ] ;

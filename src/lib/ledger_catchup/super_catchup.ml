@@ -7,6 +7,7 @@ open Pipe_lib
 open Mina_numbers
 open Mina_base
 open Network_peer
+open Internal_tracing
 
 module type CONTEXT = sig
   val logger : Logger.t
@@ -175,6 +176,9 @@ let verify_transition ~context:(module Context : CONTEXT) ~trust_system
   let open Deferred.Let_syntax in
   match cached_initially_validated_transition_result with
   | Ok x ->
+      Block_tracing.External.complete
+        ( Mina_block.Validation.block_with_hash transition_with_hash
+        |> State_hash.With_state_hashes.state_hash ) ;
       [%log trace]
         ~metadata:[ ("state_hash", state_hash) ]
         "initial_validate: validation is successful" ;
@@ -663,6 +667,11 @@ let create_node ~downloader t x =
   let state, h, blockchain_length, parent, result =
     match x with
     | `Root root ->
+        let blockchain_length =
+          Breadcrumb.block root |> Mina_block.blockchain_length
+        in
+        Block_tracing.Catchup.complete ~blockchain_length
+          (Breadcrumb.state_hash root) ;
         ( Node.State.Finished
         , Breadcrumb.state_hash root
         , Breadcrumb.consensus_state root
@@ -670,6 +679,7 @@ let create_node ~downloader t x =
         , Breadcrumb.parent_hash root
         , Ivar.create_full (Ok `Added_to_frontier) )
     | `Hash (h, l, parent) ->
+        Block_tracing.Catchup.checkpoint ~blockchain_length:l h `To_download ;
         ( Node.State.To_download
             (download "create_node" downloader ~key:(h, l) ~attempts)
         , h
@@ -678,9 +688,17 @@ let create_node ~downloader t x =
         , Ivar.create () )
     | `Initial_validated (b, gm) ->
         let t = Cached.peek b in
-        ( Node.State.To_verify (b, gm)
-        , Mina_block.Validation.block_with_hash t
+        let state_hash =
+          Mina_block.Validation.block_with_hash t
           |> State_hash.With_state_hashes.state_hash
+        in
+        let blockchain_length =
+          Mina_block.Validation.block t |> Mina_block.blockchain_length
+        in
+        Block_tracing.Catchup.checkpoint ~blockchain_length state_hash
+          `To_verify ;
+        ( Node.State.To_verify (b, gm)
+        , state_hash
         , Mina_block.Validation.block t |> Mina_block.blockchain_length
         , Mina_block.Validation.block t
           |> Mina_block.header |> Mina_block.Header.protocol_state
@@ -1225,6 +1243,15 @@ let run_catchup ~context:(module Context : CONTEXT) ~trust_system ~verifier
                                 | Remote peer ->
                                     Fn.flip Peer.Set.add peer ) ) )
                     in
+                    ( match
+                        Block_tracing.Processing.get_registered_child
+                          target_parent_hash
+                      with
+                    | None ->
+                        () (* TODO: what to do here? *)
+                    | Some state_hash ->
+                        Block_tracing.Processing.checkpoint state_hash
+                          `Download_ancestry_state_hashes ) ;
                     download_state_hashes t ~logger ~trust_system ~network
                       ~frontier ~downloader ~target_length
                       ~target_hash:target_parent_hash
