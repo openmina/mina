@@ -863,7 +863,12 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                       ]
                     >>= function
                     | `Transition_accepted ->
+                        let blockchain_length =
+                          Breadcrumb.block breadcrumb
+                          |> Mina_block.blockchain_length
+                        in
                         Block_tracing.Production.end_block_production
+                          ~blockchain_length
                           ~state_hash:protocol_state_hashes.state_hash
                           `Transition_accepted ;
                         [%log info] ~metadata
@@ -874,8 +879,12 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                         (* FIXME #3167: this should be fatal, and more
                            importantly, shouldn't happen.
                         *)
+                        let blockchain_length =
+                          Breadcrumb.block breadcrumb
+                          |> Mina_block.blockchain_length
+                        in
                         Block_tracing.Production.end_block_production
-                          `Transition_accept_timeout ;
+                          ~blockchain_length `Transition_accept_timeout ;
                         let msg : (_, unit, string, unit) format4 =
                           "Timed out waiting for generated transition \
                            $state_hash to enter transition frontier. \
