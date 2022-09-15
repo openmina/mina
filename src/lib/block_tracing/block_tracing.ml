@@ -154,7 +154,39 @@ module Registry = struct
   let produced_registry : produced_registry =
     Hashtbl.create (module Mina_numbers.Global_slot)
 
-  let find_trace state_hash = Hashtbl.find registry state_hash
+  let postprocess_checkpoints trace =
+    let next_timestamp = ref (List.hd_exn trace).Entry.started_at in
+    List.map trace ~f:(fun entry ->
+        let ended_at = !next_timestamp in
+        next_timestamp := entry.started_at ;
+        { entry with duration = ended_at -. entry.started_at } )
+
+  let merge_traces regular catchup =
+    let open Trace in
+    (* TODO handle more cases, this assumes catchup + regular always means that the
+       source was catchup, but there are race conditions *)
+    let checkpoints = regular.checkpoints @ catchup.checkpoints in
+    let checkpoints =
+      List.sort checkpoints ~compare:(fun l r ->
+          Float.compare l.started_at r.started_at )
+    in
+    let checkpoints = postprocess_checkpoints checkpoints in
+    { source = catchup.source; global_slot = regular.global_slot; checkpoints }
+
+  let find_trace state_hash =
+    match
+      ( Hashtbl.find registry state_hash
+      , Hashtbl.find catchup_registry state_hash )
+    with
+    | None, None ->
+        None
+    | Some regular, None ->
+        Some regular
+    | None, Some catchup ->
+        Some catchup
+    | Some regular, Some catchup ->
+        let merged = merge_traces regular catchup in
+        Some merged
 
   let find_produced_trace slot = Hashtbl.find produced_registry slot
 
@@ -194,7 +226,8 @@ module Registry = struct
     push_entry ~source ?global_slot block_id (Entry.make checkpoint)
 
   let push_catchup_entry ~source ?global_slot block_id entry =
-    Hashtbl.update registry block_id ~f:(Trace.push ~source ?global_slot entry)
+    Hashtbl.update catchup_registry block_id
+      ~f:(Trace.push ~source ?global_slot entry)
 
   let catchup_checkpoint ~source ?global_slot block_id checkpoint =
     push_catchup_entry ~source ?global_slot block_id (Entry.make checkpoint)
