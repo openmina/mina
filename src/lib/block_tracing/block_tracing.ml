@@ -108,20 +108,20 @@ module Trace = struct
   (* TODO: add general metadata *)
   type t =
     { source : block_source
-    ; global_slot : Mina_numbers.Global_slot.t
+    ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
     ; checkpoints : Entry.t list
     }
   [@@deriving to_yojson]
 
-  let empty ?(global_slot = Mina_numbers.Global_slot.zero) source =
-    { source; global_slot; checkpoints = [] }
+  let empty ?(blockchain_length = Mina_numbers.Length.zero) source =
+    { source; blockchain_length; checkpoints = [] }
 
   let to_yojson t = to_yojson { t with checkpoints = List.rev t.checkpoints }
 
-  let push ~source ?global_slot entry trace =
+  let push ~source ?blockchain_length entry trace =
     match trace with
     | None ->
-        let trace = empty ?global_slot source in
+        let trace = empty ?blockchain_length source in
         { trace with checkpoints = [ entry ] }
     | Some ({ checkpoints = []; _ } as trace) ->
         { trace with checkpoints = [ entry ] }
@@ -139,7 +139,7 @@ module Registry = struct
 
   type trace_info =
     { source : Trace.block_source
-    ; global_slot : Mina_numbers.Global_slot.t
+    ; blockchain_length : Mina_numbers.Length.t
     ; state_hash : string
     }
   [@@deriving to_yojson]
@@ -171,7 +171,10 @@ module Registry = struct
           Float.compare l.started_at r.started_at )
     in
     let checkpoints = postprocess_checkpoints checkpoints in
-    { source = catchup.source; global_slot = regular.global_slot; checkpoints }
+    { source = catchup.source
+    ; blockchain_length = regular.blockchain_length
+    ; checkpoints
+    }
 
   let find_trace state_hash =
     match
@@ -203,38 +206,41 @@ module Registry = struct
       Hashtbl.to_alist registry @ Hashtbl.to_alist catchup_registry
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
-             let Trace.{ global_slot; source; _ } = item in
-             { state_hash; global_slot; source } )
+             let Trace.{ blockchain_length; source; _ } = item in
+             { state_hash; blockchain_length; source } )
       |> List.sort ~compare:(fun a b ->
-             Mina_numbers.Global_slot.compare a.global_slot b.global_slot )
+             Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
     in
     let produced_traces =
       Hashtbl.to_alist produced_registry
       |> List.map ~f:(fun (_, item) ->
              let state_hash = "<unknown>" in
-             let Trace.{ global_slot; source; _ } = item in
-             { state_hash; global_slot; source } )
+             let Trace.{ blockchain_length; source; _ } = item in
+             { state_hash; blockchain_length; source } )
       |> List.sort ~compare:(fun a b ->
-             Mina_numbers.Global_slot.compare a.global_slot b.global_slot )
+             Mina_numbers.Global_slot.compare a.blockchain_length
+               b.blockchain_length )
     in
     { traces; produced_traces }
 
-  let push_entry ~source ?global_slot block_id entry =
-    Hashtbl.update registry block_id ~f:(Trace.push ~source ?global_slot entry)
+  let push_entry ~source ?blockchain_length block_id entry =
+    Hashtbl.update registry block_id
+      ~f:(Trace.push ~source ?blockchain_length entry)
 
-  let checkpoint ~source ?global_slot block_id checkpoint =
-    push_entry ~source ?global_slot block_id (Entry.make checkpoint)
+  let checkpoint ~source ?blockchain_length block_id checkpoint =
+    push_entry ~source ?blockchain_length block_id (Entry.make checkpoint)
 
-  let push_catchup_entry ~source ?global_slot block_id entry =
+  let push_catchup_entry ~source ?blockchain_length block_id entry =
     Hashtbl.update catchup_registry block_id
-      ~f:(Trace.push ~source ?global_slot entry)
+      ~f:(Trace.push ~source ?blockchain_length entry)
 
-  let catchup_checkpoint ~source ?global_slot block_id checkpoint =
-    push_catchup_entry ~source ?global_slot block_id (Entry.make checkpoint)
+  let catchup_checkpoint ~source ?blockchain_length block_id checkpoint =
+    push_catchup_entry ~source ?blockchain_length block_id
+      (Entry.make checkpoint)
 
-  let push_produced_entry global_slot entry =
-    Hashtbl.update produced_registry global_slot
-      ~f:(Trace.push ~global_slot ~source:`Internal entry)
+  let push_produced_entry slot entry =
+    Hashtbl.update produced_registry slot
+      ~f:(Trace.push ~blockchain_length:slot ~source:`Internal entry)
 
   let produced_checkpoint slot checkpoint =
     push_produced_entry slot (Entry.make checkpoint)
@@ -251,7 +257,7 @@ module Production = struct
     current_producer_block_id := slot ;
     checkpoint `Begin_block_production
 
-  let end_block_production ?state_hash at_checkpoint =
+  let end_block_production ?state_hash ~blockchain_length at_checkpoint =
     checkpoint at_checkpoint ;
     let id = !current_producer_block_id in
     let trace =
@@ -263,6 +269,7 @@ module Production = struct
        pipeline can continue it *)
     Option.iter state_hash ~f:(fun state_hash ->
         Hashtbl.remove Registry.produced_registry id ;
+        let trace = { trace with blockchain_length } in
         Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace) ) ;
     ()
 end
@@ -296,9 +303,9 @@ end
 module Catchup = struct
   let checkpoint = Registry.catchup_checkpoint ~source:`Catchup
 
-  let failure ?global_slot state_hash =
-    checkpoint ?global_slot state_hash `Failure
+  let failure ?blockchain_length state_hash =
+    checkpoint ?blockchain_length state_hash `Failure
 
-  let complete ?global_slot state_hash =
-    checkpoint ?global_slot state_hash `Breadcrumb_integrated
+  let complete ?blockchain_length state_hash =
+    checkpoint ?blockchain_length state_hash `Breadcrumb_integrated
 end
