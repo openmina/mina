@@ -139,7 +139,7 @@ module Registry = struct
 
   type trace_info =
     { source : Trace.block_source
-    ; blockchain_length : Mina_numbers.Length.t
+    ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
     ; state_hash : string
     }
   [@@deriving to_yojson]
