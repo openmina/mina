@@ -168,7 +168,8 @@ module Registry = struct
     let checkpoints = regular.checkpoints @ catchup.checkpoints in
     let checkpoints =
       List.sort checkpoints ~compare:(fun l r ->
-          Float.compare l.started_at r.started_at )
+          (* Sorted from newest to oldest *)
+          Float.compare r.started_at l.started_at )
     in
     let checkpoints = postprocess_checkpoints checkpoints in
     { source = catchup.source
