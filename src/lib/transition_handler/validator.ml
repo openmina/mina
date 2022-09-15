@@ -16,7 +16,11 @@ let validate_transition ~consensus_constants ~logger ~frontier
   in
   let transition_hash = State_hash.With_state_hashes.state_hash transition in
   let root_breadcrumb = Transition_frontier.root frontier in
-  Block_tracing.External.checkpoint transition_hash
+  let blockchain_length =
+    Envelope.Incoming.data enveloped_transition
+    |> Mina_block.Validation.block |> Mina_block.blockchain_length
+  in
+  Block_tracing.External.checkpoint ~blockchain_length transition_hash
     `Check_transition_not_in_frontier ;
   let%bind () =
     Option.fold
