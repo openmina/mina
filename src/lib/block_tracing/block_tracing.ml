@@ -202,13 +202,25 @@ module Registry = struct
         try find_produced_trace (Mina_numbers.Global_slot.of_string key)
         with _ -> None )
 
+  (* TODO: cleanup this and find a better way *)
   let all_traces () =
     let traces =
-      Hashtbl.to_alist registry @ Hashtbl.to_alist catchup_registry
+      Hashtbl.to_alist registry
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
              let Trace.{ blockchain_length; source; _ } = item in
              { state_hash; blockchain_length; source } )
+    in
+    let catchup_traces =
+      Hashtbl.to_alist catchup_registry
+      |> List.filter ~f:(fun (s, _) -> Option.is_none (Hashtbl.find registry s))
+      |> List.map ~f:(fun (key, item) ->
+             let state_hash = Mina_base.State_hash.to_base58_check key in
+             let Trace.{ blockchain_length; source; _ } = item in
+             { state_hash; blockchain_length; source } )
+    in
+    let traces =
+      traces @ catchup_traces
       |> List.sort ~compare:(fun a b ->
              Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
     in
