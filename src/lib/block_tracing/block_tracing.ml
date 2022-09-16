@@ -144,6 +144,7 @@ module Registry = struct
     { source : Trace.block_source
     ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
     ; state_hash : string
+    ; status : Trace.status
     }
   [@@deriving to_yojson]
 
@@ -208,20 +209,21 @@ module Registry = struct
 
   (* TODO: cleanup this and find a better way *)
   let all_traces () =
-    let traces =
-      Hashtbl.to_alist registry
-      |> List.map ~f:(fun (key, item) ->
-             let state_hash = Mina_base.State_hash.to_base58_check key in
-             let Trace.{ blockchain_length; source; _ } = item in
-             { state_hash; blockchain_length; source } )
-    in
     let catchup_traces =
       Hashtbl.to_alist catchup_registry
-      |> List.filter ~f:(fun (s, _) -> Option.is_none (Hashtbl.find registry s))
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
-             let Trace.{ blockchain_length; source; _ } = item in
-             { state_hash; blockchain_length; source } )
+             let Trace.{ blockchain_length; source; status; _ } = item in
+             { state_hash; blockchain_length; source; status } )
+    in
+    let traces =
+      Hashtbl.to_alist registry
+      |> List.filter ~f:(fun (s, _) ->
+             Option.is_none (Hashtbl.find catchup_registry s) )
+      |> List.map ~f:(fun (key, item) ->
+             let state_hash = Mina_base.State_hash.to_base58_check key in
+             let Trace.{ blockchain_length; source; status; _ } = item in
+             { state_hash; blockchain_length; source; status } )
     in
     let traces =
       traces @ catchup_traces
@@ -232,8 +234,8 @@ module Registry = struct
       Hashtbl.to_alist produced_registry
       |> List.map ~f:(fun (_, item) ->
              let state_hash = "<unknown>" in
-             let Trace.{ blockchain_length; source; _ } = item in
-             { state_hash; blockchain_length; source } )
+             let Trace.{ blockchain_length; source; status; _ } = item in
+             { state_hash; blockchain_length; source; status } )
       |> List.sort ~compare:(fun a b ->
              Mina_numbers.Global_slot.compare a.blockchain_length
                b.blockchain_length )
