@@ -103,6 +103,8 @@ module Trace = struct
   type block_source = [ `External | `Internal | `Catchup | `Unknown ]
   [@@deriving to_yojson]
 
+  type status = [ `Pending | `Failure | `Success ] [@@deriving to_yojson]
+
   let block_source_to_yojson = flatten_yojson_variant block_source_to_yojson
 
   (* TODO: add general metadata *)
@@ -110,26 +112,27 @@ module Trace = struct
     { source : block_source
     ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
     ; checkpoints : Entry.t list
+    ; status : status
     }
   [@@deriving to_yojson]
 
   let empty ?(blockchain_length = Mina_numbers.Length.zero) source =
-    { source; blockchain_length; checkpoints = [] }
+    { source; blockchain_length; checkpoints = []; status = `Pending }
 
   let to_yojson t = to_yojson { t with checkpoints = List.rev t.checkpoints }
 
-  let push ~source ?blockchain_length entry trace =
+  let push ~status ~source ?blockchain_length entry trace =
     match trace with
     | None ->
         let trace = empty ?blockchain_length source in
-        { trace with checkpoints = [ entry ] }
+        { trace with checkpoints = [ entry ]; status }
     | Some ({ checkpoints = []; _ } as trace) ->
-        { trace with checkpoints = [ entry ] }
+        { trace with checkpoints = [ entry ]; status }
     | Some ({ checkpoints = previous :: rest; _ } as trace) ->
         let previous =
           { previous with duration = entry.started_at -. previous.started_at }
         in
-        { trace with checkpoints = entry :: previous :: rest }
+        { trace with checkpoints = entry :: previous :: rest; status }
 end
 
 module Registry = struct
@@ -175,6 +178,7 @@ module Registry = struct
     { source = catchup.source
     ; blockchain_length = regular.blockchain_length
     ; checkpoints
+    ; status = catchup.status
     }
 
   let find_trace state_hash =
@@ -236,27 +240,30 @@ module Registry = struct
     in
     { traces; produced_traces }
 
-  let push_entry ~source ?blockchain_length block_id entry =
+  let push_entry ~status ~source ?blockchain_length block_id entry =
     Hashtbl.update registry block_id
-      ~f:(Trace.push ~source ?blockchain_length entry)
+      ~f:(Trace.push ~status ~source ?blockchain_length entry)
 
-  let checkpoint ~source ?blockchain_length block_id checkpoint =
-    push_entry ~source ?blockchain_length block_id (Entry.make checkpoint)
-
-  let push_catchup_entry ~source ?blockchain_length block_id entry =
-    Hashtbl.update catchup_registry block_id
-      ~f:(Trace.push ~source ?blockchain_length entry)
-
-  let catchup_checkpoint ~source ?blockchain_length block_id checkpoint =
-    push_catchup_entry ~source ?blockchain_length block_id
+  let checkpoint ?(status = `Pending) ~source ?blockchain_length block_id
+      checkpoint =
+    push_entry ~status ~source ?blockchain_length block_id
       (Entry.make checkpoint)
 
-  let push_produced_entry slot entry =
-    Hashtbl.update produced_registry slot
-      ~f:(Trace.push ~blockchain_length:slot ~source:`Internal entry)
+  let push_catchup_entry ~status ~source ?blockchain_length block_id entry =
+    Hashtbl.update catchup_registry block_id
+      ~f:(Trace.push ~status ~source ?blockchain_length entry)
 
-  let produced_checkpoint slot checkpoint =
-    push_produced_entry slot (Entry.make checkpoint)
+  let catchup_checkpoint ?(status = `Pending) ~source ?blockchain_length
+      block_id checkpoint =
+    push_catchup_entry ~status ~source ?blockchain_length block_id
+      (Entry.make checkpoint)
+
+  let push_produced_entry ~status slot entry =
+    Hashtbl.update produced_registry slot
+      ~f:(Trace.push ~status ~blockchain_length:slot ~source:`Internal entry)
+
+  let produced_checkpoint ?(status = `Pending) slot checkpoint =
+    push_produced_entry ~status slot (Entry.make checkpoint)
 end
 
 module Production = struct
@@ -282,7 +289,7 @@ module Production = struct
        pipeline can continue it *)
     Option.iter state_hash ~f:(fun state_hash ->
         Hashtbl.remove Registry.produced_registry id ;
-        let trace = { trace with blockchain_length } in
+        let trace = { trace with blockchain_length; status = `Success } in
         Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace) ) ;
     ()
 end
@@ -290,10 +297,10 @@ end
 module External = struct
   let checkpoint = Registry.checkpoint ~source:`External
 
-  let failure state_hash = checkpoint state_hash `Failure
+  let failure state_hash = checkpoint ~status:`Failure state_hash `Failure
 
   let complete state_hash =
-    checkpoint state_hash `Complete_external_block_validation
+    checkpoint ~status:`Success state_hash `Complete_external_block_validation
 end
 
 module Processing = struct
@@ -308,17 +315,19 @@ module Processing = struct
 
   let checkpoint ?(source = `Unknown) = Registry.checkpoint ~source
 
-  let failure state_hash = checkpoint state_hash `Failure
+  let failure state_hash = checkpoint ~status:`Failure state_hash `Failure
 
-  let complete state_hash = checkpoint state_hash `Breadcrumb_integrated
+  let complete state_hash =
+    checkpoint ~status:`Success state_hash `Breadcrumb_integrated
 end
 
 module Catchup = struct
   let checkpoint = Registry.catchup_checkpoint ~source:`Catchup
 
   let failure ?blockchain_length state_hash =
-    checkpoint ?blockchain_length state_hash `Failure
+    checkpoint ~status:`Failure ?blockchain_length state_hash `Failure
 
   let complete ?blockchain_length state_hash =
-    checkpoint ?blockchain_length state_hash `Breadcrumb_integrated
+    checkpoint ~status:`Success ?blockchain_length state_hash
+      `Breadcrumb_integrated
 end
