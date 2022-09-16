@@ -107,6 +107,8 @@ module Trace = struct
 
   let block_source_to_yojson = flatten_yojson_variant block_source_to_yojson
 
+  let status_to_yojson = flatten_yojson_variant status_to_yojson
+
   (* TODO: add general metadata *)
   type t =
     { source : block_source
