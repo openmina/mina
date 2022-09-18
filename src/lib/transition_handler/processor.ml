@@ -61,6 +61,7 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       ]
     (Option.value_map valid_cb ~default:"without" ~f:(const "with")) ;
   let state_hash = Transition_frontier.Breadcrumb.state_hash breadcrumb in
+  Block_tracing.Processing.checkpoint state_hash `Add_and_finalize ;
   let%map () =
     if only_if_present then (
       let parent_hash = Transition_frontier.Breadcrumb.parent_hash breadcrumb in
@@ -150,7 +151,8 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
       | Ok t ->
           return (Ok t)
       | Error `Not_selected_over_frontier_root ->
-          Block_tracing.Processing.failure state_hash ;
+          Block_tracing.Processing.failure
+            ~reason:"Not_selected_over_frontier_root" state_hash ;
           let%map () =
             Trust_system.record_envelope_sender trust_system logger sender
               ( Trust_system.Actions.Gossiped_invalid_transition
@@ -164,7 +166,8 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
           in
           Error ()
       | Error `Already_in_frontier ->
-          Block_tracing.Processing.failure state_hash ;
+          Block_tracing.Processing.failure ~reason:"Already_in_frontier"
+            state_hash ;
           [%log warn] ~metadata
             "Refusing to process the transition with hash $state_hash because \
              is is already in the transition frontier" ;
@@ -217,6 +220,9 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
         ~transform_result:(function
           | Error (`Invalid_staged_ledger_hash error)
           | Error (`Invalid_staged_ledger_diff error) ->
+              Block_tracing.Processing.failure
+                ~reason:(Error.to_string_hum error)
+                state_hash ;
               [%log error]
                 ~metadata:
                   (metadata @ [ ("error", Error_json.error_to_yojson error) ])
@@ -224,6 +230,7 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
                  processor: $error" ;
               Deferred.return (Error ())
           | Error (`Fatal_error exn) ->
+              Block_tracing.Processing.failure ~reason:"Fatal error" state_hash ;
               raise exn
           | Ok breadcrumb ->
               Deferred.return (Ok breadcrumb) )
@@ -231,7 +238,6 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
     Mina_metrics.(
       Counter.inc_one
         Transition_frontier_controller.breadcrumbs_built_by_processor) ;
-    Block_tracing.Processing.checkpoint state_hash `Add_and_finalize ;
     Deferred.map
       ~f:(fun result ->
         Block_tracing.Processing.complete state_hash ;
@@ -363,8 +369,6 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                     (Core_kernel.Time.diff
                        Block_time.(now time_controller |> to_time_exn)
                        transition_time ) ;
-                  Block_tracing.Processing.checkpoint state_hash
-                    `Add_and_finalize ;
                   let%map () =
                     match%map
                       add_and_finalize ~logger ~only_if_present:false
@@ -374,7 +378,8 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                         Block_tracing.Processing.complete state_hash ;
                         ()
                     | Error err ->
-                        Block_tracing.Processing.failure state_hash ;
+                        Block_tracing.Processing.failure
+                          ~reason:(Error.to_string_hum err) state_hash ;
                         [%log error]
                           ~metadata:
                             [ ("error", Error_json.error_to_yojson err) ]

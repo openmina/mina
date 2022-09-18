@@ -126,7 +126,8 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
               Writer.write valid_transition_writer
                 (`Block cached_transition, `Valid_cb vc)
           | Error (`In_frontier _) | Error (`In_process _) ->
-              Block_tracing.External.failure transition_hash ;
+              Block_tracing.External.failure ~reason:"In_frontier or In_process"
+                transition_hash ;
               Trust_system.record_envelope_sender trust_system logger sender
                 ( Trust_system.Actions.Sent_old_gossip
                 , Some
@@ -135,7 +136,8 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
                       ; ("transition", Mina_block.to_yojson transition)
                       ] ) )
           | Error `Disconnected ->
-              Block_tracing.External.failure transition_hash ;
+              Block_tracing.External.failure ~reason:"Disconnected"
+                transition_hash ;
               Mina_metrics.(Counter.inc_one Rejected_blocks.worse_than_root) ;
               [%log error]
                 ~metadata:

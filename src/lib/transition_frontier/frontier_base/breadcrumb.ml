@@ -71,6 +71,13 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
     ~sender ~transition_receipt_time () =
   O1trace.thread "build_breadcrumb" (fun () ->
       let open Deferred.Let_syntax in
+      let state_hash =
+        ( With_hash.hash
+        @@ Mina_block.Validation.block_with_hash transition_with_validation )
+          .state_hash
+      in
+      Block_tracing.Processing.checkpoint state_hash
+        `Validate_staged_ledger_diff ;
       match%bind
         Validation.validate_staged_ledger_diff ?skip_staged_ledger_verification
           ~logger ~precomputed_values ~verifier
@@ -84,6 +91,7 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
           ( `Just_emitted_a_proof just_emitted_a_proof
           , `Block_with_validation fully_valid_block
           , `Staged_ledger transitioned_staged_ledger ) ->
+          Block_tracing.Processing.checkpoint state_hash `Create_breadcrumb ;
           Deferred.Result.return
             (create
                ~validated_transition:
