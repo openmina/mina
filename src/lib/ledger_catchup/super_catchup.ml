@@ -857,6 +857,7 @@ let setup_state_machine_runner ~t ~verifier ~downloader ~logger
               (Option.value_map valid_cb ~default:"without" ~f:(const "with")) ;
             let start_time = Time.now () in
             let iv = Cached.peek tv in
+            (* TODOX: trace these verify calls *)
             (* TODO: Set up job to invalidate tv on catchup_breadcrumbs_writer closing *)
             match%bind
               step

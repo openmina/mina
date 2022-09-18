@@ -347,6 +347,7 @@ let add_breadcrumb_exn t breadcrumb =
     (Applying_diffs {diffs= List.map ~f:Diff.Full.E.to_yojson diffs}) ;
   Block_tracing.Processing.checkpoint state_hash `Apply_diffs ;
   Catchup_tree.apply_diffs t.catchup_tree diffs ;
+  Block_tracing.Processing.checkpoint state_hash `Diffs_applied ;
   let (`New_root_and_diffs_with_mutants
         (new_root_identifier, diffs_with_mutants)) =
     (* Root DB moves here *)
@@ -386,7 +387,6 @@ let add_breadcrumb_exn t breadcrumb =
   let lite_diffs =
     List.map diffs ~f:Diff.(fun (Full.E.E diff) -> Lite.E.E (to_lite diff))
   in
-  Block_tracing.Processing.checkpoint state_hash `Synchronize_frontier ;
   let%bind sync_result =
     (* Diffs get put into a buffer here. They're processed asynchronously, except for root transitions *)
     Persistent_frontier.Instance.notify_sync t.persistent_frontier_instance

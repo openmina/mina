@@ -62,7 +62,7 @@ module Checkpoint = struct
     | `Add_breadcrumb_to_frontier
     | `Calculate_diffs
     | `Apply_diffs
-    | `Synchronize_frontier
+    | `Diffs_applied
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
     | `Download_ancestry_state_hashes
