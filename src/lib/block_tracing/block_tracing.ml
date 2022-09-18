@@ -62,7 +62,7 @@ module Checkpoint = struct
     | `Add_breadcrumb_to_frontier
     | `Calculate_diffs
     | `Apply_diffs
-    | `Synchronize_frontier
+    | `Diffs_applied
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
     | `Download_ancestry_state_hashes
@@ -127,7 +127,7 @@ module Trace = struct
   (* TODO: add general metadata *)
   type t =
     { source : block_source
-    ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
+    ; blockchain_length : Mina_numbers.Length.t
     ; checkpoints : Entry.t list
     ; status : status
     }
@@ -159,7 +159,7 @@ module Registry = struct
 
   type trace_info =
     { source : Trace.block_source
-    ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
+    ; blockchain_length : Mina_numbers.Length.t
     ; state_hash : string
     ; status : Trace.status
     }
@@ -254,8 +254,7 @@ module Registry = struct
              let Trace.{ blockchain_length; source; status; _ } = item in
              { state_hash; blockchain_length; source; status } )
       |> List.sort ~compare:(fun a b ->
-             Mina_numbers.Global_slot.compare a.blockchain_length
-               b.blockchain_length )
+             Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
     in
     { traces; produced_traces }
 
@@ -278,8 +277,12 @@ module Registry = struct
       (Entry.make ?metadata checkpoint)
 
   let push_produced_entry ~status slot entry =
+    (* FIXME: not a valid conversion *)
+    let blockchain_length =
+      Mina_numbers.Length.of_int @@ Mina_numbers.Global_slot.to_int slot
+    in
     Hashtbl.update produced_registry slot
-      ~f:(Trace.push ~status ~blockchain_length:slot ~source:`Internal entry)
+      ~f:(Trace.push ~status ~blockchain_length ~source:`Internal entry)
 
   let produced_checkpoint ?(status = `Pending) ?metadata slot checkpoint =
     push_produced_entry ~status slot (Entry.make ?metadata checkpoint)
