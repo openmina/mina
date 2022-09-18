@@ -61,8 +61,11 @@ module Checkpoint = struct
     | `Breadcrumb_integrated
     | `Add_breadcrumb_to_frontier
     | `Calculate_diffs
-    | `Apply_diffs
-    | `Diffs_applied
+    | `Apply_catchup_tree_diffs
+    | `Apply_full_frontier_diffs
+    | `Full_frontier_diffs_applied
+    | `Synchronize_persistent_frontier
+    | `Persistent_frontier_synchronized
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
     | `Download_ancestry_state_hashes
@@ -79,6 +82,7 @@ module Checkpoint = struct
     | `To_verify
     | `Wait_for_parent
     | `To_build_breadcrumb
+    | `Catchup_job_finished
     | (* TODO: replace with specific failures? *)
       `Failure ]
   [@@deriving to_yojson, enumerate]
@@ -350,5 +354,5 @@ module Catchup = struct
 
   let complete ?blockchain_length state_hash =
     checkpoint ~status:`Success ?blockchain_length state_hash
-      `Breadcrumb_integrated
+      `Catchup_job_finished
 end
