@@ -31,6 +31,10 @@ module Checkpoint = struct
 
   type external_block_validation_checkpoint =
     [ `External_block_received
+    | `Begin_initial_validation
+    | `Validate_proofs
+    | `Done_validating_proofs
+    | `Initial_validation_complete
     | `Begin_external_block_validation
     | `Check_transition_not_in_frontier
     | `Check_transition_not_in_process
@@ -50,9 +54,15 @@ module Checkpoint = struct
     | `Validate_frontier_dependencies
     | `Validate_frontier_dependencies_success
     | `Find_parent_breadcrumb
+    | `Build_breadcrumb
+    | `Validate_staged_ledger_diff
+    | `Create_breadcrumb
     | `Add_and_finalize
     | `Breadcrumb_integrated
     | `Add_breadcrumb_to_frontier
+    | `Calculate_diffs
+    | `Apply_diffs
+    | `Synchronize_frontier
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
     | `Download_ancestry_state_hashes
@@ -89,14 +99,19 @@ end
 
 module Entry = struct
   (* TODO: add checkpoint metadata *)
-  type t = { checkpoint : Checkpoint.t; started_at : float; duration : float }
+  type t =
+    { checkpoint : Checkpoint.t
+    ; started_at : float
+    ; duration : float
+    ; metadata : string
+    }
   [@@deriving to_yojson]
 
-  let make checkpoint =
+  let make ?(metadata = "") checkpoint =
     let started_at = Unix.gettimeofday () in
     (* Duration will be adjusted during post-processing *)
     let duration = 0.0 in
-    { checkpoint; started_at; duration }
+    { checkpoint; started_at; duration; metadata }
 end
 
 module Trace = struct
@@ -248,26 +263,26 @@ module Registry = struct
     Hashtbl.update registry block_id
       ~f:(Trace.push ~status ~source ?blockchain_length entry)
 
-  let checkpoint ?(status = `Pending) ~source ?blockchain_length block_id
-      checkpoint =
+  let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
+      block_id checkpoint =
     push_entry ~status ~source ?blockchain_length block_id
-      (Entry.make checkpoint)
+      (Entry.make ?metadata checkpoint)
 
   let push_catchup_entry ~status ~source ?blockchain_length block_id entry =
     Hashtbl.update catchup_registry block_id
       ~f:(Trace.push ~status ~source ?blockchain_length entry)
 
-  let catchup_checkpoint ?(status = `Pending) ~source ?blockchain_length
-      block_id checkpoint =
+  let catchup_checkpoint ?(status = `Pending) ?metadata ~source
+      ?blockchain_length block_id checkpoint =
     push_catchup_entry ~status ~source ?blockchain_length block_id
-      (Entry.make checkpoint)
+      (Entry.make ?metadata checkpoint)
 
   let push_produced_entry ~status slot entry =
     Hashtbl.update produced_registry slot
       ~f:(Trace.push ~status ~blockchain_length:slot ~source:`Internal entry)
 
-  let produced_checkpoint ?(status = `Pending) slot checkpoint =
-    push_produced_entry ~status slot (Entry.make checkpoint)
+  let produced_checkpoint ?(status = `Pending) ?metadata slot checkpoint =
+    push_produced_entry ~status slot (Entry.make ?metadata checkpoint)
 end
 
 module Production = struct
@@ -301,7 +316,8 @@ end
 module External = struct
   let checkpoint = Registry.checkpoint ~source:`External
 
-  let failure state_hash = checkpoint ~status:`Failure state_hash `Failure
+  let failure ~reason state_hash =
+    checkpoint ~metadata:reason ~status:`Failure state_hash `Failure
 
   let complete state_hash =
     checkpoint ~status:`Success state_hash `Complete_external_block_validation
@@ -319,7 +335,8 @@ module Processing = struct
 
   let checkpoint ?(source = `Unknown) = Registry.checkpoint ~source
 
-  let failure state_hash = checkpoint ~status:`Failure state_hash `Failure
+  let failure ~reason state_hash =
+    checkpoint ~metadata:reason ~status:`Failure state_hash `Failure
 
   let complete state_hash =
     checkpoint ~status:`Success state_hash `Breadcrumb_integrated

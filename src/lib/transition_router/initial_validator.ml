@@ -251,6 +251,13 @@ let run ~logger ~trust_system ~verifier ~transition_reader
              , `Time_received time_received
              , `Valid_cb valid_cb )
            ->
+          let state_hash =
+            ( Envelope.Incoming.data transition_env
+            |> Mina_block.header |> Header.protocol_state
+            |> Protocol_state.hashes )
+              .state_hash
+          in
+          Block_tracing.External.checkpoint state_hash `Begin_initial_validation ;
           if Ivar.is_full initialization_finish_signal then (
             let blockchain_length =
               Envelope.Incoming.data transition_env
@@ -281,6 +288,7 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                 in
                 match%bind
                   let open Interruptible.Result.Let_syntax in
+                  (* TODOX: checkpoints for these steps? *)
                   Validation.(
                     wrap transition_with_hash
                     |> defer
@@ -290,12 +298,23 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                           (validate_genesis_protocol_state ~genesis_state_hash)
                     >>= (fun x ->
                           Interruptible.uninterruptible
-                            (validate_proofs ~verifier ~genesis_state_hash [ x ])
-                          >>| List.hd_exn )
+                            (let proofs = [ x ] in
+                             Block_tracing.External.checkpoint
+                               ~metadata:
+                                 (Printf.sprintf "count=%d" (List.length proofs))
+                               state_hash `Validate_proofs ;
+                             validate_proofs ~verifier ~genesis_state_hash
+                               proofs )
+                          >>| fun result ->
+                          Block_tracing.External.checkpoint state_hash
+                            `Done_validating_proofs ;
+                          List.hd_exn result )
                     >>= defer validate_delta_block_chain
                     >>= defer validate_protocol_versions)
                 with
                 | Ok verified_transition ->
+                    Block_tracing.External.checkpoint state_hash
+                      `Initial_validation_complete ;
                     Writer.write valid_transition_writer
                       ( `Block
                           (Envelope.Incoming.wrap ~data:verified_transition
@@ -310,6 +329,9 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                       , time_received ) ;
                     return ()
                 | Error error ->
+                    (* TODOX: use `error` to add more details *)
+                    Block_tracing.External.failure
+                      ~reason:"Failed initial validation" state_hash ;
                     Mina_net2.Validation_callback.fire_if_not_already_fired
                       valid_cb `Reject ;
                     Interruptible.uninterruptible
@@ -330,6 +352,8 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                   |> Protocol_state.hashes )
                     .state_hash
                 in
+                Block_tracing.External.failure
+                  ~reason:"Validation callback expired" state_hash ;
                 let metadata =
                   [ ("state_hash", State_hash.to_yojson state_hash)
                   ; ( "time_received"
@@ -341,4 +365,4 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                 in
                 [%log error] ~metadata
                   "Dropping blocks because libp2p validation expired" )
-          else Deferred.unit ) )
+          else (* TODOX: failure because not ready *) Deferred.unit ) )

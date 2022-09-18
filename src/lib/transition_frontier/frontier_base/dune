@@ -45,6 +45,8 @@
    transaction_snark
    non_empty_list
    coda_genesis_proof
+   ;; viable systems
+   block_tracing
    )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_jane ppx_coda ppx_version ppx_deriving.std ppx_deriving_yojson)))

@@ -21,7 +21,7 @@ let max_catchup_chunk_length = 20
 let global_max_length (genesis_constants : Genesis_constants.t) =
   genesis_constants.protocol.k
 
-let rejected_blocks = Queue.create () 
+let rejected_blocks = Queue.create ()
 
 let validated_blocks = Queue.create ()
 
@@ -331,6 +331,8 @@ let root_snarked_ledger {persistent_root_instance; _} =
 
 let add_breadcrumb_exn t breadcrumb =
   let open Deferred.Let_syntax in
+  let state_hash = Breadcrumb.state_hash breadcrumb in
+  Block_tracing.Processing.checkpoint state_hash `Calculate_diffs ;
   let diffs = Full_frontier.calculate_diffs t.full_frontier breadcrumb in
   [%log' trace t.logger]
     ~metadata:
@@ -343,6 +345,7 @@ let add_breadcrumb_exn t breadcrumb =
     "PRE: ($state_hash, $n)" ;
   [%str_log' trace t.logger]
     (Applying_diffs {diffs= List.map ~f:Diff.Full.E.to_yojson diffs}) ;
+  Block_tracing.Processing.checkpoint state_hash `Apply_diffs ;
   Catchup_tree.apply_diffs t.catchup_tree diffs ;
   let (`New_root_and_diffs_with_mutants
         (new_root_identifier, diffs_with_mutants)) =
@@ -375,7 +378,7 @@ let add_breadcrumb_exn t breadcrumb =
           , `List
               (List.map user_cmds
                  ~f:(With_status.to_yojson User_command.Valid.to_yojson)) );
-                 
+
           ( "state_hash"
           , State_hash.to_yojson
             (Breadcrumb.state_hash breadcrumb)
@@ -383,6 +386,7 @@ let add_breadcrumb_exn t breadcrumb =
   let lite_diffs =
     List.map diffs ~f:Diff.(fun (Full.E.E diff) -> Lite.E.E (to_lite diff))
   in
+  Block_tracing.Processing.checkpoint state_hash `Synchronize_frontier ;
   let%bind sync_result =
     (* Diffs get put into a buffer here. They're processed asynchronously, except for root transitions *)
     Persistent_frontier.Instance.notify_sync t.persistent_frontier_instance

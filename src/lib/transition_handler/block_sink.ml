@@ -102,7 +102,8 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
             ~score:1
         with
         | `Capacity_exceeded ->
-            Block_tracing.External.failure state_hash ;
+            Block_tracing.External.failure ~reason:"Capacity_exceeded"
+              state_hash ;
             [%log' warn logger]
               "$sender has sent many blocks. This is very unusual."
               ~metadata:[ ("sender", Envelope.Sender.to_yojson sender) ] ;

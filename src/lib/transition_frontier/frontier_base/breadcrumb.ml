@@ -69,6 +69,10 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values
     ~transition_receipt_time () =
   O1trace.thread "build_breadcrumb" (fun () ->
       let open Deferred.Let_syntax in
+      let state_hash = (With_hash.hash @@
+          Mina_block.Validation.block_with_hash transition_with_validation
+        ).state_hash in
+      Block_tracing.Processing.checkpoint state_hash `Validate_staged_ledger_diff ;
       match%bind
         Validation
         .validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
@@ -84,6 +88,7 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values
           ( `Just_emitted_a_proof just_emitted_a_proof
           , `Block_with_validation fully_valid_block
           , `Staged_ledger transitioned_staged_ledger ) ->
+            Block_tracing.Processing.checkpoint state_hash `Create_breadcrumb ;
             Deferred.Result.return
                (create ~validated_transition:(Mina_block.Validated.lift fully_valid_block)
                   ~staged_ledger:transitioned_staged_ledger
@@ -207,7 +212,7 @@ type display =
 [@@deriving yojson]
 
 let display t =
-  let protocol_state = 
+  let protocol_state =
     t
     |> block
     |> Mina_block.header
