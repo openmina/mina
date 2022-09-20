@@ -60,6 +60,13 @@ module Checkpoint = struct
     | `Check_completed_works
     | `Prediff
     | `Apply_diff
+    | `Update_coinbase_stack
+    | `Check_for_sufficient_snark_work
+    | `Check_zero_fee_excess
+    | `Fill_work_and_enqueue_transactions
+    | `Update_pending_coinbase_collection
+    | `Verify_scan_state_after_apply
+    | `Hash_new_staged_ledger
     | `Diff_applied
     | `Create_breadcrumb
     | `Add_and_finalize
