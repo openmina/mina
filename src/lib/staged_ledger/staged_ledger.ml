@@ -1067,6 +1067,8 @@ module T = struct
         ~logger ~current_state_view ~state_and_body_hash
         ~log_prefix:"apply_diff"
     in
+    Option.iter state_hash ~f:(fun state_hash ->
+        Block_tracing.Processing.checkpoint state_hash `Diff_applied ) ;
     [%log debug]
       ~metadata:
         [ ( "time_elapsed"
