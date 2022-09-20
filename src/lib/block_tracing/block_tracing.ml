@@ -56,6 +56,10 @@ module Checkpoint = struct
     | `Find_parent_breadcrumb
     | `Build_breadcrumb
     | `Validate_staged_ledger_diff
+    | `Apply_staged_ledger_diff
+    | `Check_completed_works
+    | `Prediff
+    | `Apply_diff
     | `Create_breadcrumb
     | `Add_and_finalize
     | `Breadcrumb_integrated
@@ -128,7 +132,8 @@ module Trace = struct
 
   let status_to_yojson = flatten_yojson_variant status_to_yojson
 
-  (* TODO: add general metadata *)
+  (* TODOX: add general metadata *)
+  (* TODOX: add total time *)
   type t =
     { source : block_source
     ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
@@ -161,6 +166,7 @@ module Registry = struct
 
   type produced_registry = (Mina_numbers.Global_slot.t, Trace.t) Hashtbl.t
 
+  (* TODOX: add total time *)
   type trace_info =
     { source : Trace.block_source
     ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]

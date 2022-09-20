@@ -43,4 +43,6 @@
    genesis_constants
    transaction_snark_work
    coda_genesis_proof
+   ;; viable systems
+   block_tracing
 ))
