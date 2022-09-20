@@ -10,6 +10,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -55,8 +56,9 @@ func newConnConfig(transport *Transport, maAddr ma.Multiaddr, isServer bool) (*c
 
 // Conn is a stream-multiplexing connection to a remote peer.
 type Conn struct {
-	config   *connConfig
-	remoteID peer.ID
+	config       *connConfig
+	remoteID     peer.ID
+	remotePubKey ic.PubKey
 
 	peerConnection *webrtc.PeerConnection
 	initChannel    datachannel.ReadWriteCloser
@@ -115,7 +117,12 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 	}
 	<-gatherComplete
 
-	offerEnc, err := encodeSignal(*pc.LocalDescription())
+	offerSignal, err := CreateSignal(config, pc.LocalDescription(), config.remoteID)
+	if err != nil {
+		return nil, err
+	}
+
+	offerEnc, err := encodeSignal(offerSignal)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +146,7 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 		return nil, err
 	}
 
-	answer, err := decodeSignal(string(answerEnc))
+	answer, err := decodeSDP(string(answerEnc))
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +364,8 @@ func (c *Conn) RemotePeer() peer.ID {
 	dtls := c.peerConnection.DTLS()
 	parsedRemoteCert, err := x509.ParseCertificate(dtls.GetRemoteCertificate())
 	if err != nil {
-		log.Error("Error when parsing peer DTLS certificate: ", err)
+		log.Error("Error when parsing peer DTLS certificate!", " Err: ", err, " cert: ", dtls.GetRemoteCertificate())
+		debug.PrintStack()
 		return ""
 	}
 
@@ -378,7 +386,7 @@ func (c *Conn) RemotePeer() peer.ID {
 // RemotePublicKey returns the public key of the remote peer.
 func (c *Conn) RemotePublicKey() ic.PubKey {
 	// TODO: Base on WebRTC security?
-	return nil
+	return c.remotePubKey
 }
 
 // LocalMultiaddr returns the local Multiaddr associated

@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	ic "github.com/libp2p/go-libp2p-core/crypto"
 	smux "github.com/libp2p/go-libp2p-core/mux"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	tpt "github.com/libp2p/go-libp2p-core/transport"
 	ma "github.com/multiformats/go-multiaddr"
 	mafmt "github.com/multiformats/go-multiaddr-fmt"
+	multibase "github.com/multiformats/go-multibase"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -17,12 +19,14 @@ type Transport struct {
 	webrtcOptions webrtc.Configuration
 	muxer         smux.Multiplexer
 	localID       peer.ID
+	localPrivKey  ic.PrivKey
+	localPubKey   ic.PubKey
 	api           *webrtc.API
 }
 
 // NewTransport creates a WebRTC transport that signals over a direct HTTP connection.
 // It is currently required to provide a muxer.
-func NewTransport(webrtcOptions webrtc.Configuration, muxer smux.Multiplexer) *Transport {
+func NewTransport(webrtcOptions webrtc.Configuration, muxer smux.Multiplexer, localPrivKey ic.PrivKey, localPubKey ic.PubKey) *Transport {
 	s := webrtc.SettingEngine{}
 	// Use Detach data channels mode
 	s.DetachDataChannels()
@@ -32,8 +36,18 @@ func NewTransport(webrtcOptions webrtc.Configuration, muxer smux.Multiplexer) *T
 		webrtcOptions: webrtcOptions,
 		muxer:         muxer, // TODO: Make the muxer optional
 		localID:       peer.ID("1"),
+		localPrivKey:  localPrivKey,
+		localPubKey:   localPubKey,
 		api:           api,
 	}
+}
+
+func (t *Transport) LocalPubKeyAsProtobufBs58() (string, error) {
+	bytes, err := ic.MarshalPublicKey(t.localPubKey)
+	if err != nil {
+		return "", err
+	}
+	return multibase.Encode(multibase.Base58BTC, bytes)
 }
 
 // CanDial returns true if this transport believes it can dial the given

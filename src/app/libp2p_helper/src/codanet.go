@@ -813,12 +813,15 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	if err != nil {
 		return nil, err
 	}
+
 	transport := direct.NewTransport(
 		webrtc.Configuration{
 			Certificates: []webrtc.Certificate{*cert},
 			// Certificates: []webrtc.Certificate{*cert},
 		},
 		muxer,
+		pk,
+		pk.GetPublic(),
 	)
 	// WithSignalConfiguration(star.SignalConfiguration{
 	// 	URLPath: "/socket.io/?EIO=3&transport=websocket",

@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	logging "github.com/ipfs/go-log/v2"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 	tpt "github.com/libp2p/go-libp2p-core/transport"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
@@ -94,10 +95,24 @@ func (l *Listener) handler(w http.ResponseWriter, r *http.Request) {
 func (l *Listener) handleSignal(offerStr string) (string, error) {
 	log := logging.Logger("codanet.libp2p")
 
-	offer, err := decodeSignal(offerStr)
+	offerSignal, err := decodeSignal(offerStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to decode offer: %v", err)
 	}
+	offer, err := decodeSDP(offerStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode offer sdp: %v", err)
+	}
+
+	remotePubKey, err := offerSignal.RemotePubKey()
+	if err != nil {
+		return "", err
+	}
+	remoteID, err := peer.IDFromPublicKey(remotePubKey)
+	if err != nil {
+		return "", err
+	}
+
 	log.Warn("##webrtc::listen>>", " offer: ", offer)
 
 	api := l.config.transport.api
@@ -110,6 +125,8 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 		switch state {
 		case webrtc.PeerConnectionStateConnected:
 			c := newConn(l.config, pc, nil)
+			c.remoteID = remoteID
+			c.remotePubKey = remotePubKey
 			l.accept <- c
 		}
 	})
@@ -132,7 +149,11 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 	}
 	<-gatherComplete
 
-	answerEnc, err := encodeSignal(*pc.LocalDescription())
+	signal, err := CreateSignal(l.config, pc.LocalDescription(), remoteID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create signal: %v", err)
+	}
+	answerEnc, err := encodeSignal(signal)
 	if err != nil {
 		return "", fmt.Errorf("failed to encode answer: %v", err)
 	}
