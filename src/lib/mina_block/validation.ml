@@ -472,6 +472,7 @@ let validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
       ~verifier parent_staged_ledger staged_ledger_diff
       ~current_state_view:
         Mina_state.Protocol_state.(Body.view @@ body parent_protocol_state)
+      ~state_hash
       ~state_and_body_hash:
         (let body_hash =
            Protocol_state.(Body.hash @@ body parent_protocol_state)
