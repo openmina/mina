@@ -1061,7 +1061,17 @@ module T = struct
     let open Deferred.Result.Let_syntax in
     let work = Staged_ledger_diff.completed_works witness in
     Option.iter state_hash ~f:(fun state_hash ->
-        Block_tracing.Processing.checkpoint state_hash `Check_completed_works ) ;
+        let metadata =
+          match skip_verification with
+          | Some `All ->
+              "skip_verification=All"
+          | Some `Proofs ->
+              "skip_verification=Proofs"
+          | None ->
+              ""
+        in
+        Block_tracing.Processing.checkpoint ~metadata state_hash
+          `Check_completed_works ) ;
     let%bind () =
       O1trace.thread "check_completed_works" (fun () ->
           match skip_verification with
