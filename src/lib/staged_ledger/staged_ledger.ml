@@ -867,6 +867,7 @@ module T = struct
 
   let apply_diff ?(skip_verification = false) ~logger ~constraint_constants t
       pre_diff_info ~current_state_view ~state_and_body_hash ~log_prefix =
+    (* TODOX: checkpoints *)
     let open Deferred.Result.Let_syntax in
     let max_throughput =
       Int.pow 2 t.constraint_constants.transaction_capacity_log_2
@@ -1049,6 +1050,8 @@ module T = struct
       ~state_and_body_hash ~coinbase_receiver ~supercharge_coinbase =
     let open Deferred.Result.Let_syntax in
     let work = Staged_ledger_diff.completed_works witness in
+    let state_hash = fst state_and_body_hash in
+    Block_tracing.Processing.checkpoint state_hash `Check_completed_works ;
     let%bind () =
       O1trace.thread "check_completed_works" (fun () ->
           match skip_verification with
@@ -1057,6 +1060,7 @@ module T = struct
           | None ->
               check_completed_works ~logger ~verifier t.scan_state work )
     in
+    Block_tracing.Processing.checkpoint state_hash `Prediff ;
     let%bind prediff =
       Pre_diff_info.get witness ~constraint_constants ~coinbase_receiver
         ~supercharge_coinbase
@@ -1067,6 +1071,7 @@ module T = struct
                   Staged_ledger_error.Pre_diff error ) )
     in
     let apply_diff_start_time = Core.Time.now () in
+    Block_tracing.Processing.checkpoint state_hash `Apply_diff ;
     let%map ((_, _, `Staged_ledger new_staged_ledger, _) as res) =
       apply_diff
         ~skip_verification:
