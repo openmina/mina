@@ -60,6 +60,7 @@ module Checkpoint = struct
     | `Check_completed_works
     | `Prediff
     | `Apply_diff
+    | `Diff_applied
     | `Create_breadcrumb
     | `Add_and_finalize
     | `Breadcrumb_integrated
