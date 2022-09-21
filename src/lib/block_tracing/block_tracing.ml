@@ -232,8 +232,28 @@ module Structured_trace = struct
   let has_children entry =
     not (List.is_empty (checkpoint_children entry.Entry.checkpoint))
 
+  let postprocess_checkpoints checkpoints =
+    match checkpoints with
+    | [] ->
+        []
+    | trace ->
+        let next_timestamp = ref (List.hd_exn trace).Entry.started_at in
+        List.map trace ~f:(fun entry ->
+            let ended_at = !next_timestamp in
+            next_timestamp := entry.started_at ;
+            { entry with duration = ended_at -. entry.started_at } )
+
+  let postprocess_entry_checkpoints entry =
+    match entry.Entry.checkpoints with
+    | [] ->
+        entry
+    | checkpoints ->
+        let checkpoints = postprocess_checkpoints checkpoints in
+        { entry with checkpoints }
+
   let merge_into_parent parent entry =
-    let checkpoints = entry :: parent.Entry.checkpoints in
+    let entry' = postprocess_entry_checkpoints entry in
+    let checkpoints = entry' :: parent.Entry.checkpoints in
     { parent with checkpoints }
 
   let rec collapse_pending_stack_with_children entry acc stack =
@@ -244,7 +264,8 @@ module Structured_trace = struct
         let parent' = merge_into_parent parent child in
         collapse_pending_stack_with_children entry acc (parent' :: rest)
     | [ sibling ] ->
-        (sibling :: acc, [ entry ])
+        let sibling' = postprocess_entry_checkpoints sibling in
+        (sibling' :: acc, [ entry ])
     | [] ->
         (acc, [ entry ])
 
@@ -257,13 +278,14 @@ module Structured_trace = struct
         let parent' = merge_into_parent parent child in
         collapse_pending_stack_simple entry acc (parent' :: rest)
     | [ sibling ] ->
-        (entry :: sibling :: acc, [])
+        let sibling' = postprocess_entry_checkpoints sibling in
+        (entry :: sibling' :: acc, [])
     | [] ->
         (entry :: acc, [])
 
   let structure_checkpoints checkpoints =
     let checkpoints = List.rev_map ~f:Entry.of_flat_entry checkpoints in
-    fst
+    postprocess_checkpoints @@ fst
     @@ List.fold checkpoints ~init:([], []) ~f:(fun (accum, stack) entry ->
            if has_children entry then
              collapse_pending_stack_with_children entry accum stack
