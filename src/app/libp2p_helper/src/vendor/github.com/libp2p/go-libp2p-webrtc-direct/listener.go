@@ -94,6 +94,7 @@ func (l *Listener) handler(w http.ResponseWriter, r *http.Request) {
 func (l *Listener) handleSignal(offerStr string) (string, error) {
 	log := logging.Logger("codanet.libp2p")
 
+	// TODO(zura): validate signal
 	offerSignal, err := decodeSignal(offerStr)
 	if err != nil {
 		return "", fmt.Errorf("failed to decode offer: %v", err)
@@ -120,25 +121,20 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 		return "", err
 	}
 
-	pc.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
-		switch state {
-		case webrtc.PeerConnectionStateConnected:
-			pc.OnDataChannel(func(dc *webrtc.DataChannel) {
-				dc.OnOpen(func() {
-					// TODO(zura): do we need the detach?
-					detachedDc, err := dc.Detach()
-					log.Warn("##webrtc::listen>>", " datachannel")
-					if err != nil {
-						log.Warn("##webrtc::listen>>", " datachannel detach error: ", err)
-						return
-					}
-					c := newConn(l.config, pc, detachedDc)
-					c.remoteID = remoteID
-					c.remotePubKey = remotePubKey
-					l.accept <- c
-				})
-			})
-		}
+	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
+		dc.OnOpen(func() {
+			// TODO(zura): do we need the detach?
+			detachedDc, err := dc.Detach()
+			log.Warn("##webrtc::listen>>", " datachannel")
+			if err != nil {
+				log.Warn("##webrtc::listen>>", " datachannel detach error: ", err)
+				return
+			}
+			c := newConn(l.config, pc, detachedDc)
+			c.remoteID = remoteID
+			c.remotePubKey = remotePubKey
+			l.accept <- c
+		})
 	})
 
 	if err := pc.SetRemoteDescription(offer); err != nil {

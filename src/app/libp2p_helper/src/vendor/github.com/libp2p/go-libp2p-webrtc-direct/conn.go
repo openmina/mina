@@ -63,8 +63,6 @@ type Conn struct {
 	peerConnection *webrtc.PeerConnection
 	initChannel    datachannel.ReadWriteCloser
 
-	accept chan chan detachResult
-
 	buf      []byte
 	bufStart int
 	bufEnd   int
@@ -75,15 +73,8 @@ func newConn(config *connConfig, pc *webrtc.PeerConnection, initChannel datachan
 		config:         config,
 		peerConnection: pc,
 		initChannel:    initChannel,
-		accept:         make(chan chan detachResult),
 		buf:            make([]byte, dcBufSize),
 	}
-
-	pc.OnDataChannel(func(dc *webrtc.DataChannel) {
-		// We have to detach in OnDataChannel
-		detachRes := detachChannel(dc)
-		conn.accept <- detachRes
-	})
 
 	return conn
 }
@@ -101,8 +92,6 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	detachRes := detachChannel(dc)
 
 	offer, err := pc.CreateOffer(nil)
 	if err != nil {
@@ -135,15 +124,35 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 
 	req = req.WithContext(ctx)
 
-	var client = &http.Client{}
-	resp, err := client.Do(req)
+	answerEnc, err := func() ([]byte, error) {
+		var client = &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		answerEnc, err := io.ReadAll(resp.Body)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		return answerEnc, nil
+	}()
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	answerEnc, err := io.ReadAll(resp.Body)
-	if err != nil && err != io.EOF {
+	// TODO(zura): validate
+	answerSignal, err := decodeSignal(string(answerEnc))
+	if err != nil {
+		return nil, err
+	}
+	remotePubKey, err := answerSignal.RemotePubKey()
+	if err != nil {
+		return nil, err
+	}
+	remoteID, err := peer.IDFromPublicKey(remotePubKey)
+	if err != nil {
 		return nil, err
 	}
 
@@ -157,32 +166,24 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 		return nil, err
 	}
 
-	select {
-	case res := <-detachRes:
-		if res.err != nil {
-			return nil, res.err
-		}
-		return newConn(config, pc, res.dc), nil
-
-	case <-ctx.Done():
-		return newConn(config, pc, nil), ctx.Err()
-	}
-}
-
-type detachResult struct {
-	dc  datachannel.ReadWriteCloser
-	err error
-}
-
-func detachChannel(dc *webrtc.DataChannel) chan detachResult {
-	onOpenRes := make(chan detachResult)
+	var connectErr error = nil
+	connected := make(chan *Conn)
+	defer close(connected)
 	dc.OnOpen(func() {
-		// Detach the data channel
-		raw, err := dc.Detach()
-		onOpenRes <- detachResult{raw, err}
+		detachedDc, err := dc.Detach()
+		log.Warn("##webrtc::listen>>", " datachannel")
+		if err != nil {
+			log.Warn("##webrtc::listen>>", " datachannel detach error: ", err)
+			connectErr = err
+			connected <- nil
+			return
+		}
+		c := newConn(config, pc, detachedDc)
+		c.remoteID = remoteID
+		c.remotePubKey = remotePubKey
+		connected <- c
 	})
-
-	return onOpenRes
+	return <-connected, connectErr
 }
 
 // Close closes the stream muxer and the the underlying net.Conn.
@@ -196,9 +197,6 @@ func (c *Conn) Close() error {
 		err = c.peerConnection.Close()
 	}
 	c.peerConnection = nil
-
-	// TODO(zura)
-	// close(c.accept)
 
 	return err
 }
@@ -228,16 +226,6 @@ func (c *Conn) checkInitChannel() datachannel.ReadWriteCloser {
 	}
 
 	return nil
-}
-
-func (c *Conn) awaitAccept() (datachannel.ReadWriteCloser, error) {
-	detachRes, ok := <-c.accept
-	if !ok {
-		return nil, errors.New("Conn closed")
-	}
-
-	res := <-detachRes
-	return res.dc, res.err
 }
 
 // LocalPeer returns our peer ID
