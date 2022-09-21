@@ -238,7 +238,7 @@ module Structured_trace = struct
         []
     | trace ->
         let next_timestamp = ref (List.hd_exn trace).Entry.started_at in
-        List.map trace ~f:(fun entry ->
+        List.rev_map trace ~f:(fun entry ->
             let ended_at = !next_timestamp in
             next_timestamp := entry.started_at ;
             { entry with duration = ended_at -. entry.started_at } )
