@@ -22,9 +22,8 @@ module Checkpoint = struct
     | `Wait_for_confirmation
     | `Transition_accepted
     | `Transition_accept_timeout
-    | (* TODO: replace with specific failures? *)
-      `Failure ]
-  [@@deriving to_yojson, enumerate]
+    | `Failure ]
+  [@@deriving to_yojson, enumerate, equal]
 
   let block_production_checkpoint_to_yojson =
     flatten_yojson_variant block_production_checkpoint_to_yojson
@@ -41,9 +40,8 @@ module Checkpoint = struct
     | `Check_transition_can_be_connected
     | `Register_transition_for_processing
     | `Complete_external_block_validation
-    | (* TODO: replace with specific failures? *)
-      `Failure ]
-  [@@deriving to_yojson, enumerate]
+    | `Failure ]
+  [@@deriving to_yojson, enumerate, equal]
 
   let external_block_validation_checkpoint_to_yojson =
     flatten_yojson_variant external_block_validation_checkpoint_to_yojson
@@ -84,9 +82,8 @@ module Checkpoint = struct
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
     | `Download_ancestry_state_hashes
-    | (* TODO: replace with specific failures? *)
-      `Failure ]
-  [@@deriving to_yojson, enumerate]
+    | `Failure ]
+  [@@deriving to_yojson, enumerate, equal]
 
   let block_processing_checkpoint_to_yojson =
     flatten_yojson_variant block_processing_checkpoint_to_yojson
@@ -98,9 +95,8 @@ module Checkpoint = struct
     | `Wait_for_parent
     | `To_build_breadcrumb
     | `Catchup_job_finished
-    | (* TODO: replace with specific failures? *)
-      `Failure ]
-  [@@deriving to_yojson, enumerate]
+    | `Failure ]
+  [@@deriving to_yojson, enumerate, equal]
 
   let catchup_checkpoint_to_yojson =
     flatten_yojson_variant catchup_checkpoint_to_yojson
@@ -110,30 +106,29 @@ module Checkpoint = struct
     | external_block_validation_checkpoint
     | block_processing_checkpoint
     | catchup_checkpoint ]
-  [@@deriving to_yojson, enumerate]
+  [@@deriving to_yojson, enumerate, equal]
 
   let to_string (c : t) =
     match to_yojson c with `String name -> name | _ -> assert false
 end
 
-module Entry = struct
-  (* TODO: add checkpoint metadata *)
-  type t =
-    { checkpoint : Checkpoint.t
-    ; started_at : float
-    ; duration : float
-    ; metadata : string
-    }
-  [@@deriving to_yojson]
-
-  let make ?(metadata = "") checkpoint =
-    let started_at = Unix.gettimeofday () in
-    (* Duration will be adjusted during post-processing *)
-    let duration = 0.0 in
-    { checkpoint; started_at; duration; metadata }
-end
-
 module Trace = struct
+  module Entry = struct
+    type t =
+      { checkpoint : Checkpoint.t
+      ; started_at : float
+      ; duration : float
+      ; metadata : string
+      }
+    [@@deriving to_yojson]
+
+    let make ?(metadata = "") checkpoint =
+      let started_at = Unix.gettimeofday () in
+      (* Duration will be adjusted during post-processing *)
+      let duration = 0.0 in
+      { checkpoint; started_at; duration; metadata }
+  end
+
   type block_source = [ `External | `Internal | `Catchup | `Unknown ]
   [@@deriving to_yojson]
 
@@ -172,6 +167,117 @@ module Trace = struct
         { trace with checkpoints = entry :: previous :: rest; status }
 end
 
+module Structured_trace = struct
+  module Entry = struct
+    type t =
+      { checkpoint : Checkpoint.t
+      ; started_at : float
+      ; duration : float
+      ; metadata : string
+      ; checkpoints : t list
+      }
+    [@@deriving to_yojson]
+
+    let of_flat_entry entry =
+      let { Trace.Entry.checkpoint; started_at; duration; metadata } = entry in
+      { checkpoint; started_at; duration; metadata; checkpoints = [] }
+  end
+
+  type section = { title : string; checkpoints : Entry.t list }
+  [@@deriving to_yojson]
+
+  type t =
+    { source : Trace.block_source
+    ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
+    ; sections : section list
+    ; status : Trace.status
+    }
+  [@@deriving to_yojson]
+
+  let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
+    match c with
+    | `Apply_staged_ledger_diff ->
+        [ `Check_completed_works; `Prediff; `Apply_diff; `Diff_applied ]
+    | `Check_completed_works ->
+        []
+    | `Apply_diff ->
+        [ `Update_coinbase_stack
+        ; `Check_for_sufficient_snark_work
+        ; `Check_zero_fee_excess
+        ; `Fill_work_and_enqueue_transactions
+        ; `Update_pending_coinbase_collection
+        ; `Verify_scan_state_after_apply
+        ; `Hash_new_staged_ledger
+        ; `Hash_scan_state
+        ; `Get_merkle_root
+        ; `Make_staged_ledger_hash
+        ]
+    | `Add_and_finalize ->
+        [ `Add_breadcrumb_to_frontier ]
+    | `Add_breadcrumb_to_frontier ->
+        [ `Calculate_diffs
+        ; `Apply_catchup_tree_diffs
+        ; `Apply_full_frontier_diffs
+        ; `Full_frontier_diffs_applied
+        ; `Synchronize_persistent_frontier
+        ; `Persistent_frontier_synchronized
+        ]
+    | _ ->
+        []
+
+  let is_parent_of parent entry =
+    let children = checkpoint_children parent.Entry.checkpoint in
+    List.mem children entry.Entry.checkpoint ~equal:Checkpoint.equal
+
+  let has_children entry =
+    not (List.is_empty (checkpoint_children entry.Entry.checkpoint))
+
+  let merge_into_parent parent entry =
+    let checkpoints = entry :: parent.Entry.checkpoints in
+    { parent with checkpoints }
+
+  let rec collapse_pending_stack_with_children entry acc stack =
+    match stack with
+    | parent :: _ as stack when is_parent_of parent entry ->
+        (acc, entry :: stack)
+    | child :: parent :: rest ->
+        let parent' = merge_into_parent parent child in
+        collapse_pending_stack_with_children entry acc (parent' :: rest)
+    | [ sibling ] ->
+        (sibling :: acc, [ entry ])
+    | [] ->
+        (acc, [ entry ])
+
+  let rec collapse_pending_stack_simple entry acc stack =
+    match stack with
+    | parent :: rest when is_parent_of parent entry ->
+        let parent' = merge_into_parent parent entry in
+        (acc, parent' :: rest)
+    | child :: parent :: rest ->
+        let parent' = merge_into_parent parent child in
+        collapse_pending_stack_simple entry acc (parent' :: rest)
+    | [ sibling ] ->
+        (entry :: sibling :: acc, [])
+    | [] ->
+        (entry :: acc, [])
+
+  let structure_checkpoints checkpoints =
+    let checkpoints = List.rev_map ~f:Entry.of_flat_entry checkpoints in
+    fst
+    @@ List.fold checkpoints ~init:([], []) ~f:(fun (accum, stack) entry ->
+           if has_children entry then
+             collapse_pending_stack_with_children entry accum stack
+           else collapse_pending_stack_simple entry accum stack )
+
+  let of_flat_trace trace =
+    let { Trace.source; blockchain_length; status; checkpoints } = trace in
+    let checkpoints = structure_checkpoints checkpoints in
+    (* TODOX: complete sections *)
+    let section = { title = "All"; checkpoints } in
+    let sections = [ section ] in
+    { source; blockchain_length; sections; status }
+end
+
 module Registry = struct
   type t = (Mina_base.State_hash.t, Trace.t) Hashtbl.t
 
@@ -197,7 +303,7 @@ module Registry = struct
     Hashtbl.create (module Mina_numbers.Global_slot)
 
   let postprocess_checkpoints trace =
-    let next_timestamp = ref (List.hd_exn trace).Entry.started_at in
+    let next_timestamp = ref (List.hd_exn trace).Trace.Entry.started_at in
     List.map trace ~f:(fun entry ->
         let ended_at = !next_timestamp in
         next_timestamp := entry.started_at ;
@@ -286,7 +392,7 @@ module Registry = struct
   let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
       block_id checkpoint =
     push_entry ~status ~source ?blockchain_length block_id
-      (Entry.make ?metadata checkpoint)
+      (Trace.Entry.make ?metadata checkpoint)
 
   let push_catchup_entry ~status ~source ?blockchain_length block_id entry =
     Hashtbl.update catchup_registry block_id
@@ -295,7 +401,7 @@ module Registry = struct
   let catchup_checkpoint ?(status = `Pending) ?metadata ~source
       ?blockchain_length block_id checkpoint =
     push_catchup_entry ~status ~source ?blockchain_length block_id
-      (Entry.make ?metadata checkpoint)
+      (Trace.Entry.make ?metadata checkpoint)
 
   let push_produced_entry ~status slot entry =
     (* FIXME: not a valid conversion *)
@@ -306,7 +412,7 @@ module Registry = struct
       ~f:(Trace.push ~status ~blockchain_length ~source:`Internal entry)
 
   let produced_checkpoint ?(status = `Pending) ?metadata slot checkpoint =
-    push_produced_entry ~status slot (Entry.make ?metadata checkpoint)
+    push_produced_entry ~status slot (Trace.Entry.make ?metadata checkpoint)
 end
 
 module Production = struct
