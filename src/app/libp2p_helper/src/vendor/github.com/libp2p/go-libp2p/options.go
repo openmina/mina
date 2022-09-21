@@ -86,6 +86,15 @@ var NoSecurity Option = func(cfg *Config) error {
 	return nil
 }
 
+// Transport is already secure.
+var InherentlySecure Option = func(cfg *Config) error {
+	if len(cfg.SecurityTransports) > 0 {
+		return fmt.Errorf("cannot use security transports with an inherently secure libp2p configuration")
+	}
+	cfg.InherentlySecure = true
+	return nil
+}
+
 // Muxer configures libp2p to use the given stream multiplexer (or stream
 // multiplexer constructor).
 //

@@ -9,7 +9,6 @@ import (
 
 	logging "github.com/ipfs/go-log/v2"
 	peer "github.com/libp2p/go-libp2p-core/peer"
-	tpt "github.com/libp2p/go-libp2p-core/transport"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/pion/webrtc/v3"
@@ -124,10 +123,21 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 	pc.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
 		switch state {
 		case webrtc.PeerConnectionStateConnected:
-			c := newConn(l.config, pc, nil)
-			c.remoteID = remoteID
-			c.remotePubKey = remotePubKey
-			l.accept <- c
+			pc.OnDataChannel(func(dc *webrtc.DataChannel) {
+				dc.OnOpen(func() {
+					// TODO(zura): do we need the detach?
+					detachedDc, err := dc.Detach()
+					log.Warn("##webrtc::listen>>", " datachannel")
+					if err != nil {
+						log.Warn("##webrtc::listen>>", " datachannel detach error: ", err)
+						return
+					}
+					c := newConn(l.config, pc, detachedDc)
+					c.remoteID = remoteID
+					c.remotePubKey = remotePubKey
+					l.accept <- c
+				})
+			})
 		}
 	})
 
@@ -162,7 +172,7 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 }
 
 // Accept waits for and returns the next connection to the listener.
-func (l *Listener) Accept() (tpt.CapableConn, error) {
+func (l *Listener) Accept() (manet.Conn, error) {
 	conn, ok := <-l.accept
 	if !ok {
 		return nil, errors.New("Listener closed")

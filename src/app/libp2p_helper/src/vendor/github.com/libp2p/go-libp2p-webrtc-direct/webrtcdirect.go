@@ -13,7 +13,9 @@ var webrtcma, _ = ma.NewMultiaddr("/p2p-webrtc-direct")
 var httpma, _ = ma.NewMultiaddr("/http")
 
 var _ tpt.Transport = &Transport{}
-var _ tpt.CapableConn = &Conn{}
-var _ tpt.Listener = &Listener{}
+
+// var _ tpt.CapableConn = &Conn{}
+
+// var _ tpt.Listener = &Listener{}
 
 var _ smux.MuxedStream = &Stream{}

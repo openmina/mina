@@ -71,6 +71,7 @@ type Config struct {
 	Muxers             []MsMuxC
 	SecurityTransports []MsSecC
 	Insecure           bool
+	InherentlySecure   bool
 	PSK                pnet.PSK
 
 	RelayCustom bool
@@ -146,9 +147,13 @@ func (cfg *Config) addTransports(ctx context.Context, h host.Host) (err error) {
 	if cfg.Insecure {
 		upgrader.Secure = makeInsecureTransport(h.ID(), cfg.PeerKey)
 	} else {
-		upgrader.Secure, err = makeSecurityMuxer(h, cfg.SecurityTransports)
-		if err != nil {
-			return err
+		if !cfg.InherentlySecure {
+			upgrader.Secure, err = makeSecurityMuxer(h, cfg.SecurityTransports)
+			if err != nil {
+				return err
+			}
+		} else {
+			upgrader.InherentlySecure = true
 		}
 	}
 

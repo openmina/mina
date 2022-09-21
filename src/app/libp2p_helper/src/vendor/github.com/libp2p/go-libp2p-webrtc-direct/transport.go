@@ -8,6 +8,7 @@ import (
 	smux "github.com/libp2p/go-libp2p-core/mux"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	tpt "github.com/libp2p/go-libp2p-core/transport"
+	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
 	ma "github.com/multiformats/go-multiaddr"
 	mafmt "github.com/multiformats/go-multiaddr-fmt"
 	multibase "github.com/multiformats/go-multibase"
@@ -22,6 +23,7 @@ type Transport struct {
 	localPrivKey  ic.PrivKey
 	localPubKey   ic.PubKey
 	api           *webrtc.API
+	Upgrader      *tptu.Upgrader
 }
 
 // NewTransport creates a WebRTC transport that signals over a direct HTTP connection.
@@ -40,6 +42,11 @@ func NewTransport(webrtcOptions webrtc.Configuration, muxer smux.Multiplexer, lo
 		localPubKey:   localPubKey,
 		api:           api,
 	}
+}
+
+func (t *Transport) WithUpgrader(upgrader *tptu.Upgrader) *Transport {
+	t.Upgrader = upgrader
+	return t
 }
 
 func (t *Transport) LocalPubKeyAsProtobufBs58() (string, error) {
@@ -74,7 +81,7 @@ func (t *Transport) Dial(ctx context.Context, raddr ma.Multiaddr, p peer.ID) (tp
 		return nil, fmt.Errorf("failed to create connection: %v", err)
 	}
 
-	return conn, nil
+	return t.Upgrader.UpgradeOutbound(ctx, t, conn, p)
 }
 
 // Listen listens on the given multiaddr.
@@ -93,7 +100,7 @@ func (t *Transport) Listen(laddr ma.Multiaddr) (tpt.Listener, error) {
 		return nil, fmt.Errorf("failed to listen: %v", err)
 	}
 
-	return l, nil
+	return t.Upgrader.UpgradeListener(t, l), nil
 }
 
 // Protocols returns the list of terminal protocols this transport can dial.

@@ -782,6 +782,7 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	rendezvousString := fmt.Sprintf("/coda/0.0.1/%s", networkID)
 
 	pnetKey := blake2b.Sum256([]byte(rendezvousString))
+	_ = pnetKey
 
 	// custom validator to omit the ipns validation.
 	rv := customValidator{Base: record.NamespacedValidator{"pk": record.PublicKeyValidator{}}}
@@ -842,7 +843,9 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 
 	gs := NewCodaGatingState(gatingConfig, knownPrivateAddrFilters)
 	host, err := p2p.New(ctx,
-		p2p.Transport(transport),
+		p2p.Transport(transport.WithUpgrader),
+		// Encryption is handled by WebRTC itself (DTLS).
+		p2p.InherentlySecure,
 		p2p.Muxer("/coda/mplex/1.0.0", muxer),
 		p2p.Identity(pk),
 		p2p.Peerstore(ps),
@@ -873,7 +876,7 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 				return kad, err
 			})),
 		p2p.UserAgent("github.com/codaprotocol/coda/tree/master/src/app/libp2p_helper"),
-		p2p.PrivateNetwork(pnetKey[:]),
+		// p2p.PrivateNetwork(pnetKey[:]),
 		p2p.BandwidthReporter(bandwidthCounter),
 	)
 

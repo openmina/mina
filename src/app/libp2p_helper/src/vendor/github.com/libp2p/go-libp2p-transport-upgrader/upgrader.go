@@ -13,7 +13,7 @@ import (
 	ipnet "github.com/libp2p/go-libp2p-core/pnet"
 	"github.com/libp2p/go-libp2p-core/sec"
 	"github.com/libp2p/go-libp2p-core/transport"
-	"github.com/libp2p/go-libp2p-pnet"
+	pnet "github.com/libp2p/go-libp2p-pnet"
 	manet "github.com/multiformats/go-multiaddr/net"
 )
 
@@ -27,10 +27,11 @@ var AcceptQueueLength = 16
 // Upgrader is a multistream upgrader that can upgrade an underlying connection
 // to a full transport connection (secure and multiplexed).
 type Upgrader struct {
-	PSK       ipnet.PSK
-	Secure    sec.SecureMuxer
-	Muxer     mux.Multiplexer
-	ConnGater connmgr.ConnectionGater
+	PSK              ipnet.PSK
+	InherentlySecure bool
+	Secure           sec.SecureMuxer
+	Muxer            mux.Multiplexer
+	ConnGater        connmgr.ConnectionGater
 }
 
 // UpgradeListener upgrades the passed multiaddr-net listener into a full libp2p-transport listener.
@@ -83,7 +84,7 @@ func (u *Upgrader) upgrade(ctx context.Context, t transport.Transport, maconn ma
 		return nil, ipnet.ErrNotInPrivateNetwork
 	}
 
-	sconn, server, err := u.setupSecurity(ctx, conn, p)
+	sconn, server, err := u.setupSecurity(ctx, conn, p, u.InherentlySecure)
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("failed to negotiate security protocol: %s", err)
@@ -115,7 +116,10 @@ func (u *Upgrader) upgrade(ctx context.Context, t transport.Transport, maconn ma
 	return tc, nil
 }
 
-func (u *Upgrader) setupSecurity(ctx context.Context, conn net.Conn, p peer.ID) (sec.SecureConn, bool, error) {
+func (u *Upgrader) setupSecurity(ctx context.Context, conn net.Conn, p peer.ID, inherentlySecure bool) (sec.SecureConn, bool, error) {
+	if inherentlySecure {
+		return conn.(sec.SecureConn), p == "", nil
+	}
 	if p == "" {
 		return u.Secure.SecureInbound(ctx, conn)
 	}
