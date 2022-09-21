@@ -2812,7 +2812,7 @@ module Types = struct
                  ~value:checkpoint ) )
 
     let entry =
-      let open Block_tracing in
+      let open Block_tracing.Trace in
       obj "BlockTraceEntry" ~fields:(fun _ ->
           [ field "checkpoint" ~typ:(non_null checkpoint) ~args:[]
               ~doc:"List index of the party that failed"
@@ -4359,6 +4359,16 @@ module Queries = struct
         Option.map trace_rev ~f:(fun trace ->
             trace |> Block_tracing.Trace.to_yojson |> Yojson.Safe.to_basic ) )
 
+  let get_block_structured_trace =
+    field "blockStructuredTrace" ~doc:"Block structured trace" ~typ:Types.json
+      ~args:Arg.[ arg "block_identifier" ~typ:(non_null string) ]
+      ~resolve:(fun { ctx = _mina; _ } () block ->
+        let trace_rev = Block_tracing.Registry.find_trace_from_string block in
+        Option.map trace_rev ~f:(fun trace ->
+            let trace = Block_tracing.Structured_trace.of_flat_trace trace in
+            trace |> Block_tracing.Structured_trace.to_yojson
+            |> Yojson.Safe.to_basic ) )
+
   let list_block_traces =
     field "blockTraces" ~doc:"Block with traces" ~typ:(non_null Types.json)
       ~args:Arg.[]
@@ -4399,6 +4409,7 @@ module Queries = struct
     ; runtime_config
     ; thread_graph (* Viable systems *)
     ; get_block_trace
+    ; get_block_structured_trace
     ; list_block_traces
     ]
 end
