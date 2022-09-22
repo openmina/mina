@@ -67,8 +67,6 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       let parent_hash = Transition_frontier.Breadcrumb.parent_hash breadcrumb in
       match Transition_frontier.find frontier parent_hash with
       | Some _ ->
-          Block_tracing.Processing.checkpoint state_hash
-            `Add_breadcrumb_to_frontier ;
           Transition_frontier.add_breadcrumb_exn frontier breadcrumb
       | None ->
           Block_tracing.Processing.checkpoint state_hash
@@ -78,9 +76,7 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
               transition frontier: %{sexp: State_hash.t}"
             parent_hash ;
           Deferred.unit )
-    else (
-      Block_tracing.Processing.checkpoint state_hash `Add_breadcrumb_to_frontier ;
-      Transition_frontier.add_breadcrumb_exn frontier breadcrumb )
+    else Transition_frontier.add_breadcrumb_exn frontier breadcrumb
   in
   ( match source with
   | `Internal ->
