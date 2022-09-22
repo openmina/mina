@@ -306,7 +306,7 @@ module Registry = struct
   (* TODOX: add total time *)
   type trace_info =
     { source : Trace.block_source
-    ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
+    ; blockchain_length : Mina_numbers.Length.t
     ; state_hash : string
     ; status : Trace.status
     }
