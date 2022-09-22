@@ -79,6 +79,7 @@ module Checkpoint = struct
     | `Full_frontier_diffs_applied
     | `Synchronize_persistent_frontier
     | `Persistent_frontier_synchronized
+    | `Add_breadcrumb_to_frontier_done
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
     | `Download_ancestry_state_hashes
@@ -197,7 +198,7 @@ module Structured_trace = struct
   let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
     match c with
     | `Apply_staged_ledger_diff ->
-        [ `Check_completed_works; `Prediff; `Apply_diff; `Diff_applied ]
+        [ `Check_completed_works; `Prediff; `Apply_diff ]
     | `Check_completed_works ->
         []
     | `Apply_diff ->
@@ -211,9 +212,10 @@ module Structured_trace = struct
         ; `Hash_scan_state
         ; `Get_merkle_root
         ; `Make_staged_ledger_hash
+        ; `Diff_applied
         ]
     | `Add_and_finalize ->
-        [ `Add_breadcrumb_to_frontier ]
+        [ `Add_breadcrumb_to_frontier; `Add_breadcrumb_to_frontier_done ]
     | `Add_breadcrumb_to_frontier ->
         [ `Calculate_diffs
         ; `Apply_catchup_tree_diffs
@@ -236,20 +238,16 @@ module Structured_trace = struct
     match checkpoints with
     | [] ->
         []
-    | trace ->
-        let next_timestamp = ref (List.hd_exn trace).Entry.started_at in
-        List.rev_map trace ~f:(fun entry ->
+    | first :: _ as checkpoints ->
+        let next_timestamp = ref first.Entry.started_at in
+        List.rev_map checkpoints ~f:(fun entry ->
             let ended_at = !next_timestamp in
             next_timestamp := entry.started_at ;
             { entry with duration = ended_at -. entry.started_at } )
 
   let postprocess_entry_checkpoints entry =
-    match entry.Entry.checkpoints with
-    | [] ->
-        entry
-    | checkpoints ->
-        let checkpoints = postprocess_checkpoints checkpoints in
-        { entry with checkpoints }
+    let checkpoints = postprocess_checkpoints entry.Entry.checkpoints in
+    { entry with checkpoints }
 
   let merge_into_parent parent entry =
     let entry' = postprocess_entry_checkpoints entry in

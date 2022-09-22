@@ -332,6 +332,7 @@ let root_snarked_ledger {persistent_root_instance; _} =
 let add_breadcrumb_exn t breadcrumb =
   let open Deferred.Let_syntax in
   let state_hash = Breadcrumb.state_hash breadcrumb in
+  Block_tracing.Processing.checkpoint state_hash `Add_breadcrumb_to_frontier ;
   Block_tracing.Processing.checkpoint state_hash `Calculate_diffs ;
   let diffs = Full_frontier.calculate_diffs t.full_frontier breadcrumb in
   [%log' trace t.logger]
@@ -402,6 +403,7 @@ let add_breadcrumb_exn t breadcrumb =
             has not been performed correctly" )
   |> Result.ok_exn ;
   Block_tracing.Processing.checkpoint state_hash `Persistent_frontier_synchronized ;
+  Block_tracing.Processing.checkpoint state_hash `Add_breadcrumb_to_frontier_done ;
   Extensions.notify t.extensions ~frontier:t.full_frontier ~diffs_with_mutants
 
 (* proxy full frontier functions *)
