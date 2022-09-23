@@ -319,12 +319,12 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                             (* It could be the case that by the time we try and
                                * add the breadcrumb, it's no longer relevant when
                                * we're catching up *) ~f:(fun (b, valid_cb) ->
+                              let state_hash =
+                                Frontier_base.Breadcrumb.state_hash
+                                  (Cached.peek b)
+                              in
                               Deferred.map
                                 ~f:(fun result ->
-                                  let state_hash =
-                                    Frontier_base.Breadcrumb.state_hash
-                                      (Cached.peek b)
-                                  in
                                   (* TODOX: this could result in failure *)
                                   Block_tracing.Processing.complete state_hash ;
                                   result )
