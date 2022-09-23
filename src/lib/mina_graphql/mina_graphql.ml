@@ -4382,9 +4382,10 @@ module Queries = struct
       ~typ:(non_null Types.json)
       ~args:Arg.[] (* TODOX: add parent checkpoint filter *)
       ~resolve:(fun { ctx = _mina; _ } () ->
-        let distributions = Block_tracing.Distributions.all () in
-        Block_tracing.Distributions.listing_to_yojson distributions
-        |> Yojson.Safe.to_basic )
+        let open Block_tracing.Distributions in
+        let compare d1 d2 = Float.compare d1.total_time d2.total_time in
+        let distributions = all () |> List.sort ~compare in
+        listing_to_yojson distributions |> Yojson.Safe.to_basic )
 
   let commands =
     [ sync_status
@@ -4420,6 +4421,7 @@ module Queries = struct
     ; get_block_trace
     ; get_block_structured_trace
     ; list_block_traces
+    ; get_block_traces_distribution
     ]
 end
 
