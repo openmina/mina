@@ -4377,6 +4377,15 @@ module Queries = struct
         Block_tracing.Registry.traces_to_yojson traces |> Yojson.Safe.to_basic
         )
 
+  let get_block_traces_distribution =
+    field "blockTracesDistribution" ~doc:"Block trace checkpoints distribution"
+      ~typ:(non_null Types.json)
+      ~args:Arg.[] (* TODOX: add parent checkpoint filter *)
+      ~resolve:(fun { ctx = _mina; _ } () ->
+        let distributions = Block_tracing.Distributions.all () in
+        Block_tracing.Distributions.listing_to_yojson distributions
+        |> Yojson.Safe.to_basic )
+
   let commands =
     [ sync_status
     ; daemon_status
