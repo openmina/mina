@@ -226,6 +226,7 @@ let process_transition ~logger ~trust_system ~verifier ~frontier
         Transition_frontier_controller.breadcrumbs_built_by_processor) ;
     Deferred.map
       ~f:(fun result ->
+        (* TODOX: this could result in failure *)
         Block_tracing.Processing.complete state_hash ;
         Result.return result )
       (add_and_finalize ~logger ~frontier ~catchup_scheduler
@@ -306,8 +307,17 @@ let run ~logger ~(precomputed_values : Precomputed_values.t) ~verifier
                             (* It could be the case that by the time we try and
                                * add the breadcrumb, it's no longer relevant when
                                * we're catching up *) ~f:(fun (b, valid_cb) ->
-                              add_and_finalize ~logger ~only_if_present:true
-                                ~source:`Catchup ~valid_cb b ) )
+                              Deferred.map
+                                ~f:(fun result ->
+                                  let state_hash =
+                                    Frontier_base.Breadcrumb.state_hash
+                                      (Cached.peek b)
+                                  in
+                                  (* TODOX: this could result in failure *)
+                                  Block_tracing.Processing.complete state_hash ;
+                                  result )
+                                (add_and_finalize ~logger ~only_if_present:true
+                                   ~source:`Catchup ~valid_cb b ) ) )
                     with
                   | Ok () ->
                       ()
