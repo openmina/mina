@@ -23,7 +23,7 @@ module Checkpoint = struct
     | `Transition_accepted
     | `Transition_accept_timeout
     | `Failure ]
-  [@@deriving to_yojson, enumerate, equal]
+  [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let block_production_checkpoint_to_yojson =
     flatten_yojson_variant block_production_checkpoint_to_yojson
@@ -41,7 +41,7 @@ module Checkpoint = struct
     | `Register_transition_for_processing
     | `Complete_external_block_validation
     | `Failure ]
-  [@@deriving to_yojson, enumerate, equal]
+  [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let external_block_validation_checkpoint_to_yojson =
     flatten_yojson_variant external_block_validation_checkpoint_to_yojson
@@ -84,7 +84,7 @@ module Checkpoint = struct
     | `Schedule_catchup
     | `Download_ancestry_state_hashes
     | `Failure ]
-  [@@deriving to_yojson, enumerate, equal]
+  [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let block_processing_checkpoint_to_yojson =
     flatten_yojson_variant block_processing_checkpoint_to_yojson
@@ -97,7 +97,7 @@ module Checkpoint = struct
     | `To_build_breadcrumb
     | `Catchup_job_finished
     | `Failure ]
-  [@@deriving to_yojson, enumerate, equal]
+  [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let catchup_checkpoint_to_yojson =
     flatten_yojson_variant catchup_checkpoint_to_yojson
@@ -107,7 +107,7 @@ module Checkpoint = struct
     | external_block_validation_checkpoint
     | block_processing_checkpoint
     | catchup_checkpoint ]
-  [@@deriving to_yojson, enumerate, equal]
+  [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let to_string (c : t) =
     match to_yojson c with `String name -> name | _ -> assert false
@@ -198,7 +198,7 @@ module Structured_trace = struct
   let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
     match c with
     | `Apply_staged_ledger_diff ->
-        [ `Check_completed_works; `Prediff; `Apply_diff ]
+        [ `Check_completed_works; `Prediff; `Apply_diff; `Diff_applied ]
     | `Check_completed_works ->
         []
     | `Apply_diff ->
@@ -212,7 +212,6 @@ module Structured_trace = struct
         ; `Hash_scan_state
         ; `Get_merkle_root
         ; `Make_staged_ledger_hash
-        ; `Diff_applied
         ]
     | `Add_and_finalize ->
         [ `Add_breadcrumb_to_frontier; `Add_breadcrumb_to_frontier_done ]
@@ -296,6 +295,105 @@ module Structured_trace = struct
     let section = { title = "All"; checkpoints } in
     let sections = [ section ] in
     { source; blockchain_length; sections; status }
+end
+
+module Distributions = struct
+  type range_info =
+    { mutable count : int
+    ; mutable mean_time : float [@key "meanTime"]
+    ; mutable max_time : float [@key "maxTime"]
+    ; mutable total_time : float [@key "totalTime"]
+    }
+  [@@deriving to_yojson]
+
+  type t =
+    { checkpoint : Checkpoint.t
+    ; mutable total_time : float [@key "totalTime"]
+    ; one_to_ten_us : range_info [@key "oneToTenUs"]
+    ; ten_to_hundred_us : range_info [@key "tenToOneHundredUs"]
+    ; one_hundred_us_to_one_ms : range_info [@key "oneHundredUsToOneMs"]
+    ; one_to_ten_ms : range_info [@key "oneToTenMs"]
+    ; ten_to_one_hundred_ms : range_info [@key "tenToOneHundredMs"]
+    ; one_hundred_ms_to_one_s : range_info [@key "oneHundredMsToOneS"]
+    ; one_to_ten_s : range_info [@key "oneToTenS"]
+    ; ten_to_one_hundred_s : range_info [@key "tenToOneHundredS"]
+    ; one_hundred_s : range_info [@key "oneHundredS"]
+    }
+  [@@deriving to_yojson]
+
+  type listing = t list [@@deriving to_yojson]
+
+  type store = (Checkpoint.t, t) Hashtbl.t
+
+  let store : store = Hashtbl.create (module Checkpoint)
+
+  let empty_range_info () =
+    { count = 0; mean_time = 0.0; max_time = 0.0; total_time = 0.0 }
+
+  let empty_checkpoint_entry checkpoint =
+    { checkpoint
+    ; total_time = 0.0
+    ; one_to_ten_us = empty_range_info ()
+    ; ten_to_hundred_us = empty_range_info ()
+    ; one_hundred_us_to_one_ms = empty_range_info ()
+    ; one_to_ten_ms = empty_range_info ()
+    ; ten_to_one_hundred_ms = empty_range_info ()
+    ; one_hundred_ms_to_one_s = empty_range_info ()
+    ; one_to_ten_s = empty_range_info ()
+    ; ten_to_one_hundred_s = empty_range_info ()
+    ; one_hundred_s = empty_range_info ()
+    }
+
+  let ten_us = 0.00001
+
+  let one_hundred_us = 0.0001
+
+  let one_ms = 0.001
+
+  let ten_ms = 0.01
+
+  let one_hundred_ms = 0.1
+
+  let one_s = 1.0
+
+  let ten_s = 10.0
+
+  let one_hundred_s = 100.0
+
+  let range_for_duration record duration =
+    let open Float in
+    if duration < ten_us then record.one_to_ten_us
+    else if duration < one_hundred_us then record.ten_to_one_hundred_ms
+    else if duration < one_ms then record.one_hundred_us_to_one_ms
+    else if duration < ten_ms then record.one_to_ten_ms
+    else if duration < one_hundred_ms then record.ten_to_one_hundred_ms
+    else if duration < one_s then record.one_hundred_ms_to_one_s
+    else if duration < ten_s then record.one_to_ten_s
+    else if duration < one_hundred_s then record.ten_to_one_hundred_s
+    else record.one_hundred_s
+
+  let rec integrate_entry entry =
+    let { Structured_trace.Entry.checkpoint; duration; _ } = entry in
+    let record =
+      Hashtbl.find_or_add store checkpoint ~default:(fun () ->
+          empty_checkpoint_entry checkpoint )
+    in
+    let range = range_for_duration record duration in
+    record.total_time <- record.total_time +. duration ;
+    range.count <- range.count + 1 ;
+    range.total_time <- range.total_time +. duration ;
+    range.max_time <- Float.max range.max_time duration ;
+    let f_count = Float.of_int range.count in
+    range.mean_time <-
+      range.mean_time +. ((duration -. range.mean_time) /. f_count) ;
+    List.iter entry.checkpoints ~f:integrate_entry ;
+    ()
+
+  let integrate_trace (trace : Structured_trace.t) =
+    List.iter trace.sections ~f:(fun section ->
+        List.iter section.checkpoints ~f:integrate_entry )
+
+  let all () = Hashtbl.data store
 end
 
 module Registry = struct
@@ -486,10 +584,15 @@ module Processing = struct
   let checkpoint ?(source = `Unknown) = Registry.checkpoint ~source
 
   let failure ~reason state_hash =
+    (* TODOX: compute structured version and save it *)
     checkpoint ~metadata:reason ~status:`Failure state_hash `Failure
 
   let complete state_hash =
-    checkpoint ~status:`Success state_hash `Breadcrumb_integrated
+    (* TODOX: compute structured version and save it *)
+    checkpoint ~status:`Success state_hash `Breadcrumb_integrated ;
+    let trace_rev = Registry.find_trace state_hash |> Option.value_exn in
+    let structured_trace = Structured_trace.of_flat_trace trace_rev in
+    Distributions.integrate_trace structured_trace
 end
 
 module Catchup = struct
