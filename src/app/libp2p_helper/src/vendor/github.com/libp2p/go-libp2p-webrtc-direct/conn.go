@@ -215,19 +215,6 @@ func (c *Conn) getPC() (*webrtc.PeerConnection, error) {
 	return c.peerConnection, nil
 }
 
-func (c *Conn) checkInitChannel() datachannel.ReadWriteCloser {
-	// Since a WebRTC offer can't be empty the offering side will have
-	// an initial data channel opened. We return it here, the first time
-	// OpenStream is called.
-	if c.initChannel != nil {
-		ch := c.initChannel
-		c.initChannel = nil
-		return ch
-	}
-
-	return nil
-}
-
 // LocalPeer returns our peer ID
 func (c *Conn) LocalPeer() peer.ID {
 	// TODO: Base on WebRTC security?
@@ -307,6 +294,12 @@ func (c *Conn) Transport() tpt.Transport {
 func (w *Conn) Read(p []byte) (int, error) {
 	var err error
 
+	// TODO(zura): find out if its supposed to be sometimes nil
+	if w.initChannel == nil {
+		w.Close()
+		return 0, errors.New("connection is closed")
+	}
+
 	if w.bufEnd == 0 {
 		n := 0
 		n, err = w.initChannel.Read(w.buf)
@@ -331,6 +324,11 @@ func (w *Conn) Read(p []byte) (int, error) {
 
 func (w *Conn) Write(p []byte) (n int, err error) {
 	log.Warn("DC.Write: ", p, " str: ", string(p))
+	// TODO(zura): find out if its supposed to be sometimes nil
+	if w.initChannel == nil {
+		w.Close()
+		return 0, errors.New("connection is closed")
+	}
 	if len(p) > dcBufSize {
 		return w.initChannel.Write(p[:dcBufSize])
 	}
