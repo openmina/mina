@@ -460,6 +460,8 @@ let add_breadcrumb_exn t breadcrumb =
   Block_tracing.Processing.checkpoint state_hash
     `Add_breadcrumb_to_frontier_done ;
   Extensions.notify t.extensions ~frontier:t.full_frontier ~diffs_with_mutants
+    Block_tracing.Processing.checkpoint state_hash
+    `Add_breadcrumb_to_frontier_done
 
 (* proxy full frontier functions *)
 include struct
