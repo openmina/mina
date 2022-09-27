@@ -74,6 +74,7 @@ module Checkpoint = struct
     | `Diff_applied
     | `Create_breadcrumb
     | `Add_and_finalize
+    | `Add_and_finalize_done
     | `Breadcrumb_integrated
     | `Add_breadcrumb_to_frontier
     | `Calculate_diffs
@@ -82,6 +83,7 @@ module Checkpoint = struct
     | `Full_frontier_diffs_applied
     | `Synchronize_persistent_frontier
     | `Persistent_frontier_synchronized
+    | `Notify_frontier_extensions
     | `Add_breadcrumb_to_frontier_done
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
@@ -233,6 +235,7 @@ module Structured_trace = struct
         ; `Full_frontier_diffs_applied
         ; `Synchronize_persistent_frontier
         ; `Persistent_frontier_synchronized
+        ; `Notify_frontier_extensions
         ]
     | _ ->
         []
@@ -244,6 +247,9 @@ module Structured_trace = struct
   let has_children entry =
     not (List.is_empty (checkpoint_children entry.Entry.checkpoint))
 
+  (* TODOX: instead of processing checkpoints at the same level here
+     process the flat trace using information about parent/children relationship
+     to skip children when finding the end *)
   let postprocess_checkpoints checkpoints =
     match checkpoints with
     | [] ->

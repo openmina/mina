@@ -85,6 +85,7 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       in
       Mina_metrics.Block_latency.Inclusion_time.update
         (Block_time.Span.to_time_span time_elapsed) ) ;
+  Block_tracing.Processing.checkpoint state_hash `Add_and_finalize_done ;
   Writer.write processed_transition_writer
     (`Transition transition, `Source source, `Valid_cb valid_cb) ;
   Catchup_scheduler.notify catchup_scheduler
