@@ -459,8 +459,12 @@ let add_breadcrumb_exn t breadcrumb =
     `Persistent_frontier_synchronized ;
   Block_tracing.Processing.checkpoint state_hash
     `Add_breadcrumb_to_frontier_done ;
-  Extensions.notify t.extensions ~frontier:t.full_frontier ~diffs_with_mutants
-    Block_tracing.Processing.checkpoint state_hash
+  let%map () =
+    Extensions.notify t.extensions ~frontier:t.full_frontier ~diffs_with_mutants
+  in
+  Block_tracing.Processing.checkpoint state_hash
+    `Notify_frontier_extensions_done ;
+  Block_tracing.Processing.checkpoint state_hash
     `Add_breadcrumb_to_frontier_done
 
 (* proxy full frontier functions *)

@@ -84,6 +84,7 @@ module Checkpoint = struct
     | `Synchronize_persistent_frontier
     | `Persistent_frontier_synchronized
     | `Notify_frontier_extensions
+    | `Notify_frontier_extensions_done
     | `Add_breadcrumb_to_frontier_done
     | `Parent_breadcrumb_not_found
     | `Schedule_catchup
@@ -237,6 +238,7 @@ module Structured_trace = struct
         ; `Synchronize_persistent_frontier
         ; `Persistent_frontier_synchronized
         ; `Notify_frontier_extensions
+        ; `Notify_frontier_extensions_done
         ]
     | _ ->
         []
