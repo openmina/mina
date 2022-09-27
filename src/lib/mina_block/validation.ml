@@ -453,15 +453,15 @@ let validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
     Fn.compose Ledger_proof.statement_target Ledger_proof.statement
   in
   let block = With_hash.data t in
+  let { State_hash.State_hashes.state_hash; _ } =
+    block |> Block.header |> Header.protocol_state |> Protocol_state.hashes
+  in
+  Block_tracing.Processing.checkpoint state_hash `Validate_staged_ledger_diff ;
   let protocol_state = block |> Block.header |> Header.protocol_state in
   let blockchain_state = Protocol_state.blockchain_state protocol_state in
   let consensus_state = Protocol_state.consensus_state protocol_state in
   let staged_ledger_diff = block |> Block.body |> Body.staged_ledger_diff in
   let apply_start_time = Core.Time.now () in
-  let { State_hash.State_hashes.state_hash; _ } =
-    block |> Block.header |> Header.protocol_state |> Protocol_state.hashes
-  in
-  Block_tracing.Processing.checkpoint state_hash `Apply_staged_ledger_diff ;
   let%bind ( `Hash_after_applying staged_ledger_hash
            , `Ledger_proof proof_opt
            , `Staged_ledger transitioned_staged_ledger

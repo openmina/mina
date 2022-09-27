@@ -34,16 +34,16 @@ module Checkpoint = struct
 
   type external_block_validation_checkpoint =
     [ `External_block_received
-    | `Begin_initial_validation
+    | `Initial_validation
     | `Validate_proofs
     | `Done_validating_proofs
     | `Initial_validation_complete
-    | `Begin_external_block_validation
+    | `Validate_transition
     | `Check_transition_not_in_frontier
     | `Check_transition_not_in_process
     | `Check_transition_can_be_connected
     | `Register_transition_for_processing
-    | `Complete_external_block_validation
+    | `Validate_transition_complete
     | `Failure ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
@@ -58,7 +58,6 @@ module Checkpoint = struct
     | `Find_parent_breadcrumb
     | `Build_breadcrumb
     | `Validate_staged_ledger_diff
-    | `Apply_staged_ledger_diff
     | `Check_completed_works
     | `Prediff
     | `Apply_diff
@@ -201,7 +200,15 @@ module Structured_trace = struct
 
   let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
     match c with
-    | `Apply_staged_ledger_diff ->
+    | `Initial_validation ->
+        [ `Validate_proofs; `Done_validating_proofs ]
+    | `Validate_transition ->
+        [ `Check_transition_not_in_frontier
+        ; `Check_transition_not_in_process
+        ; `Check_transition_can_be_connected
+        ; `Register_transition_for_processing
+        ]
+    | `Validate_staged_ledger_diff ->
         [ `Check_completed_works; `Prediff; `Apply_diff; `Diff_applied ]
     | `Check_completed_works ->
         []
@@ -604,7 +611,7 @@ module External = struct
     checkpoint ~metadata:reason ~status:`Failure state_hash `Failure
 
   let complete state_hash =
-    checkpoint ~status:`Success state_hash `Complete_external_block_validation
+    checkpoint ~status:`Success state_hash `Validate_transition_complete
 end
 
 module Processing = struct

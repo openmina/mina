@@ -381,7 +381,6 @@ module T = struct
       ; constraint_constants = _
       ; pending_coinbase_collection
       } : Staged_ledger_hash.t =
-    (* TODOX: split hashing for checkpoints *)
     Staged_ledger_hash.of_aux_ledger_and_coinbase_hash
       (Scan_state.hash scan_state)
       (Ledger.merkle_root ledger)

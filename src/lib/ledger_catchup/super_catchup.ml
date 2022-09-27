@@ -149,6 +149,9 @@ let verify_transition ~logger ~consensus_constants ~trust_system ~frontier
   let open Deferred.Let_syntax in
   match cached_initially_validated_transition_result with
   | Ok x ->
+      Block_tracing.External.complete
+        ( Validation.block_with_hash transition_with_hash
+        |> State_hash.With_state_hashes.state_hash ) ;
       [%log trace]
         ~metadata:[ ("state_hash", state_hash) ]
         "initial_validate: validation is successful" ;
