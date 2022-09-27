@@ -51,7 +51,8 @@ module Checkpoint = struct
     flatten_yojson_variant external_block_validation_checkpoint_to_yojson
 
   type block_processing_checkpoint =
-    [ `Begin_local_block_processing
+    [ `Loaded_transition_from_storage
+    | `Begin_local_block_processing
     | `Begin_external_block_processing
     | `Validate_frontier_dependencies
     | `Validate_frontier_dependencies_success
@@ -96,8 +97,7 @@ module Checkpoint = struct
     flatten_yojson_variant block_processing_checkpoint_to_yojson
 
   type catchup_checkpoint =
-    [ `Loaded_transition_from_storage
-    | `To_download
+    [ `To_download
     | `To_initial_validate
     | `To_verify
     | `Wait_for_parent
@@ -137,7 +137,8 @@ module Trace = struct
       { checkpoint; started_at; duration; metadata }
   end
 
-  type block_source = [ `External | `Internal | `Catchup | `Unknown ]
+  type block_source =
+    [ `External | `Internal | `Catchup | `Reconstruct | `Unknown ]
   [@@deriving to_yojson]
 
   type status = [ `Pending | `Failure | `Success ] [@@deriving to_yojson]
@@ -357,6 +358,8 @@ module Distributions = struct
 
   let catchup_store : store = Hashtbl.create (module Checkpoint)
 
+  let reconstruct_store : store = Hashtbl.create (module Checkpoint)
+
   let unknown_store : store = Hashtbl.create (module Checkpoint)
 
   let source_store = function
@@ -366,6 +369,8 @@ module Distributions = struct
         produced_store
     | `External ->
         external_store
+    | `Reconstruct ->
+        reconstruct_store
     | `Unknown ->
         unknown_store
 
@@ -661,4 +666,12 @@ module Catchup = struct
   let complete ?blockchain_length state_hash =
     checkpoint ~status:`Success ?blockchain_length state_hash
       `Catchup_job_finished
+end
+
+module Reconstruct = struct
+  let checkpoint = Registry.checkpoint ~source:`Reconstruct
+
+  let failure = Processing.failure
+
+  let complete = Processing.complete
 end
