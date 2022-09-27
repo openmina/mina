@@ -297,8 +297,7 @@ module Instance = struct
                  ~sender:None ~transition_receipt_time ()
              in
              let%map () = apply_diff Diff.(E (New_node (Full breadcrumb))) in
-             Block_tracing.Processing.complete state_hash ;
-             Block_tracing.Catchup.complete state_hash ;
+             Block_tracing.Reconstruct.complete state_hash ;
              breadcrumb ))
         ~f:
           (Result.map_error ~f:(function
