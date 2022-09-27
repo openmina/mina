@@ -466,6 +466,10 @@ let validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
   let block = With_hash.data t in
   let header = Block.header block in
   let protocol_state = Header.protocol_state header in
+  let { State_hash.State_hashes.state_hash; _ } =
+    protocol_state |> Protocol_state.hashes
+  in
+  Block_tracing.Processing.checkpoint state_hash `Validate_staged_ledger_diff ;
   let blockchain_state = Protocol_state.blockchain_state protocol_state in
   let consensus_state = Protocol_state.consensus_state protocol_state in
   let body = Block.body block in
@@ -477,10 +481,6 @@ let validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
       Deferred.Result.return ()
     else Deferred.Result.fail `Invalid_body_reference
   in
-  let { State_hash.State_hashes.state_hash; _ } =
-    block |> Block.header |> Header.protocol_state |> Protocol_state.hashes
-  in
-  Block_tracing.Processing.checkpoint state_hash `Apply_staged_ledger_diff ;
   let%bind.Deferred.Result ( `Hash_after_applying staged_ledger_hash
                            , `Ledger_proof proof_opt
                            , `Staged_ledger transitioned_staged_ledger

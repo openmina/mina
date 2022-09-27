@@ -257,7 +257,7 @@ let run ~logger ~trust_system ~verifier ~transition_reader
             |> Protocol_state.hashes )
               .state_hash
           in
-          Block_tracing.External.checkpoint state_hash `Begin_initial_validation ;
+          Block_tracing.External.checkpoint state_hash `Initial_validation ;
           if Ivar.is_full initialization_finish_signal then (
             let blockchain_length =
               Envelope.Incoming.data transition_env

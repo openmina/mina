@@ -32,6 +32,7 @@ let validate_transition ~context:(module Context : CONTEXT) ~frontier
     |> Mina_block.Validation.block_with_hash
   in
   let transition_hash = State_hash.With_state_hashes.state_hash transition in
+  Block_tracing.External.checkpoint transition_hash `Validate_transition ;
   let root_breadcrumb = Transition_frontier.root frontier in
   let blockchain_length =
     Envelope.Incoming.data enveloped_transition
@@ -95,8 +96,6 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
           in
           let transition = With_hash.data transition_with_hash in
           let sender = Envelope.Incoming.sender transition_env in
-          Block_tracing.External.checkpoint transition_hash
-            `Begin_external_block_validation ;
           match
             validate_transition
               ~context:(module Context)
