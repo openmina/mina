@@ -95,7 +95,8 @@ module Checkpoint = struct
     flatten_yojson_variant block_processing_checkpoint_to_yojson
 
   type catchup_checkpoint =
-    [ `To_download
+    [ `Loaded_transition_from_storage
+    | `To_download
     | `To_initial_validate
     | `To_verify
     | `Wait_for_parent

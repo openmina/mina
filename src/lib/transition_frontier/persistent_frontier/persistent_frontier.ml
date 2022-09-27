@@ -240,7 +240,7 @@ module Instance = struct
       Full_frontier.create ~logger:t.factory.logger
         ~time_controller:t.factory.time_controller
         ~root_data:
-          { transition= 
+          { transition=
        External_transition.Validated.lift root_transition
           ; staged_ledger= root_staged_ledger
           ; protocol_states= List.map protocol_states ~f:(With_hash.of_data ~hash_data:Protocol_state.hashes) }
@@ -278,6 +278,11 @@ module Instance = struct
                    Error (`Fatal_error (Invalid_genesis_state_hash transition))
                    |> Deferred.return
              in
+             let state_hash = (With_hash.hash @@
+               Mina_block.Validation.block_with_hash transition
+             ).state_hash in
+             let blockchain_length = Mina_block.(blockchain_length (Validation.block transition)) in
+             Block_tracing.Catchup.checkpoint ~blockchain_length state_hash `Loaded_transition_from_storage ;
              (* we're loading transitions from persistent storage,
                 don't assign a timestamp
              *)

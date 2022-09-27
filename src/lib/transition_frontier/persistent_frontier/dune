@@ -39,6 +39,8 @@
    with_hash
    debug_assert
    non_empty_list
+   ;; viable systems
+   block_tracing
    )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_coda ppx_version ppx_jane ppx_compare ppx_bin_prot ppx_deriving_yojson)))
