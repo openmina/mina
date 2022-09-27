@@ -1059,24 +1059,18 @@ module T = struct
       ~state_and_body_hash ~coinbase_receiver ~supercharge_coinbase =
     let open Deferred.Result.Let_syntax in
     let work = Staged_ledger_diff.completed_works witness in
-    Option.iter state_hash ~f:(fun state_hash ->
-        let metadata =
-          match skip_verification with
-          | Some `All ->
-              "skip_verification=All"
-          | Some `Proofs ->
-              "skip_verification=Proofs"
-          | None ->
-              ""
-        in
-        Block_tracing.Processing.checkpoint ~metadata state_hash
-          `Check_completed_works ) ;
     let%bind () =
       O1trace.thread "check_completed_works" (fun () ->
           match skip_verification with
           | Some `All | Some `Proofs ->
               return ()
           | None ->
+              Option.iter state_hash ~f:(fun state_hash ->
+                  let metadata =
+                    "work_count=" ^ Int.to_string (List.length work)
+                  in
+                  Block_tracing.Processing.checkpoint ~metadata state_hash
+                    `Check_completed_works ) ;
               check_completed_works ~logger ~verifier t.scan_state work )
     in
     Option.iter state_hash ~f:(fun state_hash ->
