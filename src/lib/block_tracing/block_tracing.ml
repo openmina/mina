@@ -4,6 +4,10 @@ let flatten_yojson_variant f v =
   match f v with `List [ tag ] -> tag | _ -> assert false
 
 module Checkpoint = struct
+  (* TODO: define order *)
+  (* TODO: define structure *)
+  (* TODO: define wait/computation *)
+  (* TODO: descriptions *)
   type block_production_checkpoint =
     [ `Begin_block_production
     | `Find_best_tip
@@ -105,8 +109,8 @@ module Checkpoint = struct
   type t =
     [ block_production_checkpoint
     | external_block_validation_checkpoint
-    | block_processing_checkpoint
-    | catchup_checkpoint ]
+    | catchup_checkpoint
+    | block_processing_checkpoint ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let to_string (c : t) =
@@ -306,8 +310,10 @@ module Distributions = struct
     }
   [@@deriving to_yojson]
 
+  (* TODO: add count *)
   type t =
     { checkpoint : Checkpoint.t
+    ; mutable count : int
     ; mutable total_time : float [@key "totalTime"]
     ; one_to_ten_us : range_info [@key "oneToTenUs"]
     ; ten_to_hundred_us : range_info [@key "tenToOneHundredUs"]
@@ -325,13 +331,32 @@ module Distributions = struct
 
   type store = (Checkpoint.t, t) Hashtbl.t
 
-  let store : store = Hashtbl.create (module Checkpoint)
+  let all_store : store = Hashtbl.create (module Checkpoint)
+
+  let produced_store : store = Hashtbl.create (module Checkpoint)
+
+  let external_store : store = Hashtbl.create (module Checkpoint)
+
+  let catchup_store : store = Hashtbl.create (module Checkpoint)
+
+  let unknown_store : store = Hashtbl.create (module Checkpoint)
+
+  let source_store = function
+    | `Catchup ->
+        catchup_store
+    | `Internal ->
+        produced_store
+    | `External ->
+        external_store
+    | `Unknown ->
+        unknown_store
 
   let empty_range_info () =
     { count = 0; mean_time = 0.0; max_time = 0.0; total_time = 0.0 }
 
   let empty_checkpoint_entry checkpoint =
     { checkpoint
+    ; count = 0
     ; total_time = 0.0
     ; one_to_ten_us = empty_range_info ()
     ; ten_to_hundred_us = empty_range_info ()
@@ -372,13 +397,14 @@ module Distributions = struct
     else if duration < one_hundred_s then record.ten_to_one_hundred_s
     else record.one_hundred_s
 
-  let rec integrate_entry entry =
+  let rec integrate_entry ~store entry =
     let { Structured_trace.Entry.checkpoint; duration; _ } = entry in
     let record =
       Hashtbl.find_or_add store checkpoint ~default:(fun () ->
           empty_checkpoint_entry checkpoint )
     in
     let range = range_for_duration record duration in
+    record.count <- record.count + 1 ;
     record.total_time <- record.total_time +. duration ;
     range.count <- range.count + 1 ;
     range.total_time <- range.total_time +. duration ;
@@ -386,14 +412,18 @@ module Distributions = struct
     let f_count = Float.of_int range.count in
     range.mean_time <-
       range.mean_time +. ((duration -. range.mean_time) /. f_count) ;
-    List.iter entry.checkpoints ~f:integrate_entry ;
+    List.iter entry.checkpoints ~f:(integrate_entry ~store) ;
     ()
 
   let integrate_trace (trace : Structured_trace.t) =
+    let source_store = source_store trace.source in
     List.iter trace.sections ~f:(fun section ->
-        List.iter section.checkpoints ~f:integrate_entry )
+        List.iter section.checkpoints ~f:(integrate_entry ~store:all_store) ;
+        List.iter section.checkpoints ~f:(integrate_entry ~store:source_store) )
 
-  let all () = Hashtbl.data store
+  let all () = Hashtbl.data all_store
+
+  let by_source source = Hashtbl.data (source_store source)
 end
 
 module Registry = struct
@@ -431,7 +461,16 @@ module Registry = struct
     let open Trace in
     (* TODO handle more cases, this assumes catchup + regular always means that the
        source was catchup, but there are race conditions *)
-    let checkpoints = regular.checkpoints @ catchup.checkpoints in
+    (* These checkpoints add noise to the final trace, get rid of them *)
+    let catchup_checkpoints =
+      List.filter catchup.checkpoints ~f:(fun entry ->
+          match entry.checkpoint with
+          | `To_verify | `To_build_breadcrumb | `Catchup_job_finished ->
+              false
+          | _ ->
+              true )
+    in
+    let checkpoints = regular.checkpoints @ catchup_checkpoints in
     let checkpoints =
       List.sort checkpoints ~compare:(fun l r ->
           (* Sorted from newest to oldest *)

@@ -789,7 +789,6 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                       |> Deferred.return
                     in
                     let transition_receipt_time = Some (Time.now ()) in
-                    Block_tracing.Production.checkpoint `Build_breadcrumb ;
                     let%bind breadcrumb =
                       time ~logger ~time_controller
                         "Build breadcrumb on produced block" (fun () ->

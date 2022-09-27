@@ -194,7 +194,6 @@ let process_transition ~logger ~trust_system ~verifier ~frontier
     in
     Block_tracing.Processing.checkpoint state_hash `Find_parent_breadcrumb ;
     let parent_breadcrumb = Transition_frontier.find_exn frontier parent_hash in
-    Block_tracing.Processing.checkpoint state_hash `Build_breadcrumb ;
     let%bind breadcrumb =
       cached_transform_deferred_result cached_initially_validated_transition
         ~transform_cached:(fun _ ->
