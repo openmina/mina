@@ -848,7 +848,6 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                       |> Deferred.return
                     in
                     let transition_receipt_time = Some (Time.now ()) in
-                    Block_tracing.Production.checkpoint `Build_breadcrumb ;
                     let%bind breadcrumb =
                       time ~logger ~time_controller
                         "Build breadcrumb on produced block" (fun () ->
