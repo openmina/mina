@@ -268,6 +268,7 @@ module Instance = struct
             ( if ignore_consensus_local_state then `Disabled
             else `Enabled root_ledger )
       in
+      (* TODOX: trace this *)
       Extensions.notify extensions ~frontier ~diffs_with_mutants
       |> Deferred.map ~f:Result.return
     in
@@ -308,6 +309,7 @@ module Instance = struct
                  ~sender:None ~transition_receipt_time ()
              in
              let%map () = apply_diff Diff.(E (New_node (Full breadcrumb))) in
+             Block_tracing.Processing.complete state_hash ;
              breadcrumb ) )
         ~f:
           (Result.map_error ~f:(function

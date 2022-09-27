@@ -212,6 +212,8 @@ module Structured_trace = struct
         ; `Check_transition_can_be_connected
         ; `Register_transition_for_processing
         ]
+    | `Build_breadcrumb ->
+        [ `Validate_staged_ledger_diff; `Create_breadcrumb ]
     | `Validate_staged_ledger_diff ->
         [ `Check_completed_works; `Prediff; `Apply_diff; `Diff_applied ]
     | `Check_completed_works ->
