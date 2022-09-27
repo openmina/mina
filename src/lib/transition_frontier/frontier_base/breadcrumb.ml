@@ -77,8 +77,6 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
   Block_tracing.Processing.checkpoint state_hash `Build_breadcrumb ;
   O1trace.thread "build_breadcrumb" (fun () ->
       let open Deferred.Let_syntax in
-      Block_tracing.Processing.checkpoint state_hash
-        `Validate_staged_ledger_diff ;
       match%bind
         Validation.validate_staged_ledger_diff ?skip_staged_ledger_verification
           ~logger ~precomputed_values ~verifier
