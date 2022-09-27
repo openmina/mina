@@ -286,6 +286,16 @@ module Instance = struct
                    Error (`Fatal_error (Invalid_genesis_state_hash transition))
                    |> Deferred.return
              in
+             let state_hash =
+               ( With_hash.hash
+               @@ Mina_block.Validation.block_with_hash transition )
+                 .state_hash
+             in
+             let blockchain_length =
+               Mina_block.(blockchain_length (Validation.block transition))
+             in
+             Block_tracing.Catchup.checkpoint ~blockchain_length state_hash
+               `Loaded_transition_from_storage ;
              (* we're loading transitions from persistent storage,
                 don't assign a timestamp
              *)
