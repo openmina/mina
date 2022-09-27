@@ -295,7 +295,7 @@ module Instance = struct
              let blockchain_length =
                Mina_block.(blockchain_length (Validation.block transition))
              in
-             Block_tracing.Catchup.checkpoint ~blockchain_length state_hash
+             Block_tracing.Reconstruct.checkpoint ~blockchain_length state_hash
                `Loaded_transition_from_storage ;
              (* we're loading transitions from persistent storage,
                 don't assign a timestamp
