@@ -335,7 +335,7 @@ module Distributions = struct
     ; mutable count : int
     ; mutable total_time : float [@key "totalTime"]
     ; one_to_ten_us : range_info [@key "oneToTenUs"]
-    ; ten_to_hundred_us : range_info [@key "tenToOneHundredUs"]
+    ; ten_to_one_hundred_us : range_info [@key "tenToOneHundredUs"]
     ; one_hundred_us_to_one_ms : range_info [@key "oneHundredUsToOneMs"]
     ; one_to_ten_ms : range_info [@key "oneToTenMs"]
     ; ten_to_one_hundred_ms : range_info [@key "tenToOneHundredMs"]
@@ -382,7 +382,7 @@ module Distributions = struct
     ; count = 0
     ; total_time = 0.0
     ; one_to_ten_us = empty_range_info ()
-    ; ten_to_hundred_us = empty_range_info ()
+    ; ten_to_one_hundred_us = empty_range_info ()
     ; one_hundred_us_to_one_ms = empty_range_info ()
     ; one_to_ten_ms = empty_range_info ()
     ; ten_to_one_hundred_ms = empty_range_info ()
@@ -411,7 +411,7 @@ module Distributions = struct
   let range_for_duration record duration =
     let open Float in
     if duration < ten_us then record.one_to_ten_us
-    else if duration < one_hundred_us then record.ten_to_one_hundred_ms
+    else if duration < one_hundred_us then record.ten_to_one_hundred_us
     else if duration < one_ms then record.one_hundred_us_to_one_ms
     else if duration < ten_ms then record.one_to_ten_ms
     else if duration < one_hundred_ms then record.ten_to_one_hundred_ms
