@@ -186,8 +186,9 @@ module Worker_state = struct
                   Consensus.Data.Vrf.check
                     ~constraint_constants:config.constraint_constants
                     ~global_slot ~seed:epoch_data.epoch_seed
-                    ~get_delegators:
-                      (Public_key.Compressed.Table.find delegatee_table)
+                    ~get_delegators:(fun _ ->
+                      Public_key.Compressed.Table.to_alist delegatee_table
+                      |> List.hd |> Option.map ~f:snd )
                     ~producer_private_key:keypair.private_key
                     ~producer_public_key:public_key_compressed ~total_stake
                     ~logger

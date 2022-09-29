@@ -857,8 +857,10 @@ module Data = struct
                 ] ;
             Mina_metrics.Counter.inc_one Mina_metrics.Consensus.vrf_evaluations ;
             if
-              Threshold.is_satisfied ~my_stake:account.balance ~total_stake
-                truncated_vrf_result
+              (* TODOX: always assume this is true when in simulation mode *)
+              true
+              || Threshold.is_satisfied ~my_stake:account.balance ~total_stake
+                   truncated_vrf_result
             then
               let string_of_blake2 =
                 Blake2.(Fn.compose to_raw_string digest_string)
