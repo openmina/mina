@@ -72,7 +72,7 @@ func (u *Upgrader) upgrade(ctx context.Context, t transport.Transport, maconn ma
 	}
 
 	var conn net.Conn = maconn
-	if u.PSK != nil {
+	if u.PSK != nil && !u.InherentlySecure {
 		pconn, err := pnet.NewProtectedConn(u.PSK, conn)
 		if err != nil {
 			conn.Close()

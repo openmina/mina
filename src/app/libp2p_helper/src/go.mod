@@ -20,12 +20,13 @@ require (
 	github.com/libp2p/go-libp2p-kad-dht v0.13.1
 	github.com/libp2p/go-libp2p-kbucket v0.4.7
 	github.com/libp2p/go-libp2p-mplex v0.4.1
-	github.com/libp2p/go-libp2p-noise v0.2.2
 	github.com/libp2p/go-libp2p-peerstore v0.3.0
 	github.com/libp2p/go-libp2p-pubsub v0.5.4
 	github.com/libp2p/go-libp2p-record v0.1.3
+	github.com/libp2p/go-libp2p-transport-upgrader v0.4.6
 	github.com/libp2p/go-libp2p-webrtc-direct v0.0.0-20220831202157-54ab951137fa
 	github.com/libp2p/go-mplex v0.3.0
+	github.com/libp2p/go-tcp-transport v0.2.8
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multihash v0.0.15
 	github.com/pion/webrtc/v3 v3.1.43

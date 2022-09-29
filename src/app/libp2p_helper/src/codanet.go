@@ -32,14 +32,17 @@ import (
 	peerstore "github.com/libp2p/go-libp2p-core/peerstore"
 	protocol "github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/libp2p/go-libp2p-core/routing"
+	tpt "github.com/libp2p/go-libp2p-core/transport"
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-kad-dht/dual"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
+	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
 	p2pconfig "github.com/libp2p/go-libp2p/config"
 	mdns "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
+	tcp "github.com/libp2p/go-tcp-transport"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"golang.org/x/crypto/blake2b"
@@ -843,6 +846,14 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 
 	gs := NewCodaGatingState(gatingConfig, knownPrivateAddrFilters)
 	host, err := p2p.New(ctx,
+		p2p.Transport(func(origUpgrader *tptu.Upgrader) tpt.Transport {
+			upgrader := **&origUpgrader
+			upgrader.PSK = pnetKey[:]
+			upgrader.InherentlySecure = false
+			// Secure           sec.SecureMuxer
+			// Muxer            mux.Multiplexer
+			return tcp.NewTCPTransport(&upgrader)
+		}),
 		p2p.Transport(transport.WithUpgrader),
 		// Encryption is handled by WebRTC itself (DTLS).
 		p2p.InherentlySecure,
