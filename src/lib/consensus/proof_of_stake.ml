@@ -3210,6 +3210,9 @@ module Hooks = struct
         slot_diff
     in
     let delegatee_table = epoch_snapshot.delegatee_table in
+    [%log info] "### Snapshot: $snapshot"
+      ~metadata:
+        [ ("snapshot", Data.Local_state.Snapshot.to_yojson epoch_snapshot) ] ;
     ( Epoch_data_for_vrf.
         { epoch_ledger = epoch_data.ledger
         ; epoch_seed = epoch_data.seed
