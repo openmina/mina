@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net"
 	"net/http"
 	"runtime/debug"
@@ -23,7 +22,9 @@ import (
 	"github.com/pion/webrtc/v3"
 )
 
-const dcBufSize = math.MaxUint16
+// 16 KB, optimal data channel message size.
+// More in: https://tensorworks.com.au/blog/webrtc-stream-limits-investigation/
+const dcBufSize = 16 * 1024
 
 type connConfig struct {
 	transport *Transport
@@ -323,15 +324,16 @@ func (w *Conn) Read(p []byte) (int, error) {
 }
 
 func (w *Conn) Write(p []byte) (n int, err error) {
-	log.Warn("DC.Write: ", p, " str: ", string(p))
 	// TODO(zura): find out if its supposed to be sometimes nil
 	if w.initChannel == nil {
 		w.Close()
 		return 0, errors.New("connection is closed")
 	}
 	if len(p) > dcBufSize {
+		log.Warn("DC.Write: ", p[:dcBufSize], " str: ", string(p[:dcBufSize]))
 		return w.initChannel.Write(p[:dcBufSize])
 	}
+	log.Warn("DC.Write: ", p, " str: ", string(p))
 	return w.initChannel.Write(p)
 }
 
