@@ -704,11 +704,12 @@ module Data = struct
           (Public_key.Compressed.Checked.Assert.equal block_stake_winner
              account.public_key )
       in
-      let%bind () =
-        [%with_label "Block creator matches delegate pk"]
-          (Public_key.Compressed.Checked.Assert.equal block_creator
-             account.delegate )
-      in
+      ignore block_creator ;
+      (*let%bind () =
+          [%with_label "Block creator matches delegate pk"]
+            (Public_key.Compressed.Checked.Assert.equal block_creator
+               account.delegate )
+        in*)
       let%bind delegate =
         [%with_label "Decompress delegate pk"]
           (Public_key.decompress_var account.delegate)
@@ -737,11 +738,12 @@ module Data = struct
             ~ledger:epoch_ledger.hash ~block_stake_winner ~block_creator
             ~message:{ Message.global_slot; seed; delegator = winner_addr }
         in
-        let my_stake = winner_account.balance in
+        let _my_stake = winner_account.balance in
         let%bind truncated_result = Output.Checked.truncate result in
         let%map satisifed =
-          Threshold.Checked.is_satisfied ~my_stake
-            ~total_stake:epoch_ledger.total_currency truncated_result
+          make_checked (fun () -> Boolean.true_)
+          (*Threshold.Checked.is_satisfied ~my_stake
+            ~total_stake:epoch_ledger.total_currency truncated_result *)
         in
         (satisifed, result, truncated_result, winner_account)
     end
