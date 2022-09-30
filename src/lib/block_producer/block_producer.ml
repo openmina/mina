@@ -826,9 +826,10 @@ let run ~logger ~vrf_evaluator ~prover ~verifier ~trust_system
                           @@ Block_time.to_time scheduled_time)) ;
                     Block_tracing.Production.checkpoint
                       `Send_breadcrumb_to_transition_frontier ;
-                    let%bind.Async.Deferred () =
-                      Strict_pipe.Writer.write transition_writer breadcrumb
-                    in
+                    ignore transition_writer ;
+                    (*let%bind.Async.Deferred () =
+                        Strict_pipe.Writer.write transition_writer breadcrumb
+                      in*)
                     let metadata =
                       [ ( "state_hash"
                         , State_hash.to_yojson protocol_state_hashes.state_hash
