@@ -67,7 +67,7 @@ let with_handler k w ?handler =
         transition consensus data is valid
         new consensus state is a function of the old consensus state
 *)
-let%snarkydef step ~(logger : Logger.t)
+let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
     ~(proof_level : Genesis_constants.Proof_level.t)
     ~(constraint_constants : Genesis_constants.Constraint_constants.t)
     Hlist.HlistId.
@@ -93,7 +93,7 @@ let%snarkydef step ~(logger : Logger.t)
   in
   let%bind `Success updated_consensus_state, consensus_state =
     with_label __LOC__
-      (Consensus_state_hooks.next_state_checked ~constraint_constants
+      (Consensus_state_hooks.next_state_checked ~cheat ~constraint_constants
          ~prev_state:previous_state ~prev_state_hash:previous_state_hash
          transition txn_snark.supply_increase )
   in
@@ -290,8 +290,8 @@ let check w ?handler ~proof_level ~constraint_constants txn_snark new_state_hash
           exists Transaction_snark.Statement.With_sok.typ
             ~compute:(As_prover.return txn_snark)
         in
-        step ~proof_level ~constraint_constants ~logger:(Logger.create ())
-          [ prev; txn_snark ] curr ) )
+        step ~cheat:true ~proof_level ~constraint_constants
+          ~logger:(Logger.create ()) [ prev; txn_snark ] curr ) )
     ()
 
 let rule ~proof_level ~constraint_constants transaction_snark self :
@@ -302,8 +302,8 @@ let rule ~proof_level ~constraint_constants transaction_snark self :
       (fun [ x1; x2 ] x ->
         let b1, b2 =
           Run.run_checked
-            (step ~proof_level ~constraint_constants ~logger:(Logger.create ())
-               [ x1; x2 ] x )
+            (step ~cheat:true ~proof_level ~constraint_constants
+               ~logger:(Logger.create ()) [ x1; x2 ] x )
         in
         [ b1; b2 ] )
   ; main_value =

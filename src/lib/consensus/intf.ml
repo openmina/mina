@@ -236,7 +236,8 @@ module type State_hooks = sig
    * a given consensus state and snark transition.
   *)
   val next_state_checked :
-       constraint_constants:Genesis_constants.Constraint_constants.t
+       ?cheat:bool
+    -> constraint_constants:Genesis_constants.Constraint_constants.t
     -> prev_state:protocol_state_var
     -> prev_state_hash:Mina_base.State_hash.var
     -> snark_transition_var

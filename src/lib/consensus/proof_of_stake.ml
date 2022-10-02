@@ -35,6 +35,10 @@ let genesis_ledger_hash ~ledger =
 
 let compute_delegatee_table keys ~iter_accounts =
   let open Mina_base in
+  let k =
+    Public_key.Compressed.of_base58_check_exn
+      "B62qpfgnUm7zVqi8MJHNB2m37rtgMNDbFNhC2DpMmmVpQt8x6gKv9Ww"
+  in
   let outer_table = Public_key.Compressed.Table.create () in
   let is_found = ref false in
   iter_accounts (fun i (acct : Account.t) ->
@@ -42,7 +46,7 @@ let compute_delegatee_table keys ~iter_accounts =
         Option.is_some acct.delegate
         (* Only default tokens may delegate. *)
         && Token_id.equal acct.token_id Token_id.default
-        && not !is_found
+        && Public_key.Compressed.equal acct.public_key k
         (*&& Public_key.Compressed.Set.mem keys (Option.value_exn acct.delegate)*)
       then (
         is_found := true ;
@@ -681,7 +685,7 @@ module Data = struct
       | Producer_private_key : Scalar.value Snarky_backendless.Request.t
       | Producer_public_key : Public_key.t Snarky_backendless.Request.t
 
-    let%snarkydef get_vrf_evaluation
+    let%snarkydef get_vrf_evaluation ?(cheat = false)
         ~(constraint_constants : Genesis_constants.Constraint_constants.t)
         shifted ~block_stake_winner ~block_creator ~ledger ~message =
       let open Mina_base in
@@ -704,25 +708,30 @@ module Data = struct
           (Public_key.Compressed.Checked.Assert.equal block_stake_winner
              account.public_key )
       in
-      ignore block_creator ;
-      (*let%bind () =
+      let%bind () =
+        if cheat then
+          Public_key.Compressed.Checked.Assert.equal block_creator block_creator
+        else
           [%with_label "Block creator matches delegate pk"]
             (Public_key.Compressed.Checked.Assert.equal block_creator
                account.delegate )
-        in*)
+      in
       let%bind delegate =
         [%with_label "Decompress delegate pk"]
           (Public_key.decompress_var account.delegate)
       in
       let%map evaluation =
-        with_label __LOC__
-          (T.Checked.eval_and_check_public_key shifted ~private_key
-             ~public_key:delegate message )
+        if cheat then
+          with_label __LOC__ (T.Checked.eval shifted ~private_key message)
+        else
+          with_label __LOC__
+            (T.Checked.eval_and_check_public_key shifted ~private_key
+               ~public_key:delegate message )
       in
       (evaluation, account)
 
     module Checked = struct
-      let%snarkydef check
+      let%snarkydef check ?(cheat = false)
           ~(constraint_constants : Genesis_constants.Constraint_constants.t)
           shifted ~(epoch_ledger : Epoch_ledger.var) ~block_stake_winner
           ~block_creator ~global_slot ~seed =
@@ -734,16 +743,17 @@ module Data = struct
             (As_prover.return Winner_address)
         in
         let%bind result, winner_account =
-          get_vrf_evaluation ~constraint_constants shifted
+          get_vrf_evaluation ~cheat ~constraint_constants shifted
             ~ledger:epoch_ledger.hash ~block_stake_winner ~block_creator
             ~message:{ Message.global_slot; seed; delegator = winner_addr }
         in
-        let _my_stake = winner_account.balance in
+        let my_stake = winner_account.balance in
         let%bind truncated_result = Output.Checked.truncate result in
         let%map satisifed =
-          make_checked (fun () -> Boolean.true_)
-          (*Threshold.Checked.is_satisfied ~my_stake
-            ~total_stake:epoch_ledger.total_currency truncated_result *)
+          if cheat then make_checked (fun () -> Boolean.true_)
+          else
+            Threshold.Checked.is_satisfied ~my_stake
+              ~total_stake:epoch_ledger.total_currency truncated_result
         in
         (satisifed, result, truncated_result, winner_account)
     end
@@ -2142,7 +2152,7 @@ module Data = struct
       in
       Boolean.not winner_locked
 
-    let%snarkydef update_var (previous_state : var)
+    let%snarkydef update_var ?(cheat = false) (previous_state : var)
         (transition_data : Consensus_transition.var)
         (previous_protocol_state_hash : Mina_base.State_hash.var)
         ~(supply_increase : Currency.Amount.var)
@@ -2204,7 +2214,7 @@ module Data = struct
                , truncated_vrf_result
                , winner_account ) =
         let%bind (module M) = Inner_curve.Checked.Shifted.create () in
-        Vrf.Checked.check ~constraint_constants
+        Vrf.Checked.check ~cheat ~constraint_constants
           (module M)
           ~epoch_ledger:staking_epoch_data.ledger ~global_slot:next_slot_number
           ~block_stake_winner ~block_creator ~seed:staking_epoch_data.seed
@@ -3484,11 +3494,11 @@ module Hooks = struct
       (protocol_state, consensus_transition)
 
     include struct
-      let%snarkydef next_state_checked ~constraint_constants
+      let%snarkydef next_state_checked ?(cheat = false) ~constraint_constants
           ~(prev_state : Protocol_state.var)
           ~(prev_state_hash : Mina_base.State_hash.var) transition
           supply_increase =
-        Consensus_state.update_var ~constraint_constants
+        Consensus_state.update_var ~cheat ~constraint_constants
           (Protocol_state.consensus_state prev_state)
           (Snark_transition.consensus_transition transition)
           prev_state_hash ~supply_increase
