@@ -330,8 +330,8 @@ module Threshold = struct
     Bignum.(lhs <= rhs)
 
   module Checked = struct
-    let is_satisfied ~my_stake ~total_stake (vrf_output : Output.Truncated.var)
-        =
+    let is_satisfied ?(cheat = false) ~my_stake ~total_stake
+        (vrf_output : Output.Truncated.var) =
       let open Currency in
       let open Snark_params.Tick in
       let open Snarky_integer in
@@ -348,10 +348,13 @@ module Threshold = struct
           in
           let vrf_output = Array.to_list (vrf_output :> Boolean.var array) in
           let lhs = c_bias vrf_output in
-          Floating_point.(
-            le ~m
-              (of_bits ~m lhs ~precision:Output.Truncated.length_in_bits)
-              rhs) )
+          let ret =
+            Floating_point.(
+              le ~m
+                (of_bits ~m lhs ~precision:Output.Truncated.length_in_bits)
+                rhs)
+          in
+          if cheat then Boolean.true_ else ret )
   end
 end
 

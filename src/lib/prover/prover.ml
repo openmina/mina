@@ -115,6 +115,7 @@ module Worker_state = struct
                    (next_state : Protocol_state.Value.t)
                    (block : Snark_transition.value) (t : Ledger_proof.t option)
                    state_for_handler pending_coinbase =
+                 [%log info] "Calling B.step" ;
                  let%map.Async.Deferred res =
                    Deferred.Or_error.try_with ~here:[%here] (fun () ->
                        let t = ledger_proof_opt chain next_state t in
@@ -143,7 +144,9 @@ module Worker_state = struct
                        "Prover threw an error while extending block: $error" ) ;
                  res
 
-               let verify state proof = B.Proof.verify [ (state, proof) ]
+               let verify state proof =
+                 [%log info] "Calling B.Proof.verify" ;
+                 B.Proof.verify [ (state, proof) ]
              end : S )
          | Check ->
              ( module struct

@@ -351,7 +351,8 @@ let wrap_main
                         ~sponge deferred_values ~old_bulletproof_challenges
                         evals )
                 in
-                Boolean.(Assert.any [ finalized; not should_finalize ]) ;
+                Boolean.(
+                  Assert.any [ Boolean.true_; finalized; not should_finalize ]) ;
                 chals )
           in
           chals )

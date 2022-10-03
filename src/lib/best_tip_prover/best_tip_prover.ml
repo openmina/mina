@@ -101,8 +101,8 @@ module Make (Inputs : Inputs_intf) :
     | Ok block ->
         Ok block
     | Error err ->
-        Or_error.error_string
-          ( match err with
+        let s =
+          match err with
           | `Invalid_genesis_protocol_state ->
               "invalid genesis state"
           | `Invalid_protocol_version | `Mismatched_protocol_version ->
@@ -110,7 +110,10 @@ module Make (Inputs : Inputs_intf) :
           | `Invalid_proof ->
               "invalid proof"
           | `Verifier_error e ->
-              Printf.sprintf "verifier error: %s" (Error.to_string_hum e) )
+              Printf.sprintf "verifier error: %s" (Error.to_string_hum e)
+        in
+        Printf.printf "@@@@ error: %s\n%!" s ;
+        Or_error.error_string s
 
   let verify ~verifier ~genesis_constants ~precomputed_values
       { Proof_carrying_data.data = best_tip; proof = merkle_list, root } =
@@ -158,6 +161,7 @@ module Make (Inputs : Inputs_intf) :
                 "Peer should have given a valid merkle list proof for their \
                  best tip" ) )
     in
+    Printf.printf "@@@@ Validating best tip proof\n%!" ;
     let%map root, best_tip =
       Deferred.Or_error.both
         (validate_proof ~genesis_state_hash ~verifier root_transition_with_hash)

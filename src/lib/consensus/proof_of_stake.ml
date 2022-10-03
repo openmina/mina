@@ -750,10 +750,8 @@ module Data = struct
         let my_stake = winner_account.balance in
         let%bind truncated_result = Output.Checked.truncate result in
         let%map satisifed =
-          if cheat then make_checked (fun () -> Boolean.true_)
-          else
-            Threshold.Checked.is_satisfied ~my_stake
-              ~total_stake:epoch_ledger.total_currency truncated_result
+          Threshold.Checked.is_satisfied ~cheat ~my_stake
+            ~total_stake:epoch_ledger.total_currency truncated_result
         in
         (satisifed, result, truncated_result, winner_account)
     end

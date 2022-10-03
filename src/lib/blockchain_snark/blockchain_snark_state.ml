@@ -91,6 +91,7 @@ let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
     in
     (t, body)
   in
+  [%log info] "next_state_checked" ;
   let%bind `Success updated_consensus_state, consensus_state =
     with_label __LOC__
       (Consensus_state_hooks.next_state_checked ~cheat ~constraint_constants
@@ -111,6 +112,7 @@ let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
       previous_state
   in
   let%bind new_state, is_base_case =
+    [%log info] "Prococol_state.create_var" ;
     let t =
       Protocol_state.create_var ~previous_state_hash ~genesis_state_hash
         ~blockchain_state:(Snark_transition.blockchain_state transition)
@@ -182,6 +184,7 @@ let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
       let%bind () =
         Fee_excess.(assert_equal_checked (var_of_t zero) txn_snark.fee_excess)
       in
+      [%log info] "all" ;
       all
         [ Frozen_ledger_hash.equal_var txn_snark.source (lh previous_state)
         ; Frozen_ledger_hash.equal_var txn_snark.target (lh new_state)
@@ -199,6 +202,7 @@ let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
         ]
       >>= Boolean.all
     in
+    [%log info] "nothing_changed" ;
     let%bind nothing_changed =
       let%bind next_available_token_didn't_change =
         Token_id.Checked.equal txn_snark.next_available_token_after

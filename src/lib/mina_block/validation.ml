@@ -338,7 +338,11 @@ let validate_proofs ~verifier ~genesis_state_hash tvs =
         Ok
           (List.map tvs ~f:(fun (t, validation) ->
                (t, Unsafe.set_valid_proof validation) ) )
-      else Error `Invalid_proof
+      else
+        Ok
+          (List.map tvs ~f:(fun (t, validation) ->
+               (t, Unsafe.set_valid_proof validation) ) )
+        (*Error `Invalid_proof*)
   | Error e ->
       Error (`Verifier_error e)
 
