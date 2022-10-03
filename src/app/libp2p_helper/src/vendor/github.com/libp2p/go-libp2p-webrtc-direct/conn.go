@@ -24,7 +24,9 @@ import (
 
 // 16 KB, optimal data channel message size.
 // More in: https://tensorworks.com.au/blog/webrtc-stream-limits-investigation/
-const dcBufSize = 16 * 1024
+// TMP(zura)
+// const dcBufSize = 16 * 1024
+const dcBufSize = 4 * 1024
 
 type connConfig struct {
 	transport *Transport
@@ -323,7 +325,7 @@ func (w *Conn) Read(p []byte) (int, error) {
 	return n, err
 }
 
-func (w *Conn) Write(p []byte) (n int, err error) {
+func (w *Conn) write(p []byte) (n int, err error) {
 	// TODO(zura): find out if its supposed to be sometimes nil
 	if w.initChannel == nil {
 		w.Close()
@@ -331,10 +333,24 @@ func (w *Conn) Write(p []byte) (n int, err error) {
 	}
 	if len(p) > dcBufSize {
 		log.Warn("DC.Write: ", p[:dcBufSize], " str: ", string(p[:dcBufSize]))
-		return w.initChannel.Write(p[:dcBufSize])
+
+		n, err := w.initChannel.Write(p[:dcBufSize])
+		if err != nil {
+			return 0, err
+		}
+		if n == dcBufSize {
+			nextn, err := w.write(p[dcBufSize:])
+			return n + nextn, err
+		}
+		return n, nil
 	}
 	log.Warn("DC.Write: ", p, " str: ", string(p))
 	return w.initChannel.Write(p)
+}
+
+func (w *Conn) Write(p []byte) (n int, err error) {
+	log.Warn("DC.WriteFULLMESSAGE: ", p, " str: ", string(p))
+	return w.write(p)
 }
 
 func (w *Conn) SetDeadline(t time.Time) error {
