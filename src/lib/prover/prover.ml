@@ -135,9 +135,12 @@ module Worker_state = struct
                            ]
                            next_state
                        in
+                       [%log info]
+                         "Calling B.step Blockchain_snark.Blockchain.create" ;
                        Blockchain_snark.Blockchain.create ~state:next_state
                          ~proof )
                  in
+                 [%log info] "Calling B.step DONE" ;
                  Or_error.iter_error res ~f:(fun e ->
                      [%log error]
                        ~metadata:[ ("error", Error_json.error_to_yojson e) ]

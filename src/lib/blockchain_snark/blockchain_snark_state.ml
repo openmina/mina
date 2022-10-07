@@ -26,8 +26,10 @@ let blockchain_handler on_unhandled { Witness.prev_state; transition } =
     let k x = respond (Provide x) in
     match request with
     | Prev_state ->
+        Printf.printf "blockchain_handler -> Prev_state\n%!" ;
         k prev_state
     | Transition ->
+        Printf.printf "blockchain_handler -> Transition\n%!" ;
         k transition
     | _ ->
         on_unhandled r
@@ -101,6 +103,7 @@ let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
   let supercharge_coinbase =
     Consensus.Data.Consensus_state.supercharge_coinbase_var consensus_state
   in
+  [%log info] "next_state_checked DONE" ;
   let prev_pending_coinbase_root =
     previous_state |> Protocol_state.blockchain_state
     |> Blockchain_state.staged_ledger_hash
@@ -230,6 +233,7 @@ let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
     let%bind result =
       Boolean.all [ updated_consensus_state; correct_coinbase_status ]
     in
+    [%log info] "as_prover code" ;
     let%map () =
       as_prover
         As_prover.(
@@ -262,6 +266,7 @@ let%snarkydef step ?(cheat = false) ~(logger : Logger.t)
     in
     (transaction_snark_should_verifiy, result)
   in
+  [%log info] "as_prover code DONE" ;
   let txn_snark_should_verify =
     match proof_level with
     | Check | None ->
@@ -294,8 +299,8 @@ let check w ?handler ~proof_level ~constraint_constants txn_snark new_state_hash
           exists Transaction_snark.Statement.With_sok.typ
             ~compute:(As_prover.return txn_snark)
         in
-        step ~cheat:true ~proof_level ~constraint_constants
-          ~logger:(Logger.create ()) [ prev; txn_snark ] curr ) )
+        step ~proof_level ~constraint_constants ~logger:(Logger.create ())
+          [ prev; txn_snark ] curr ) )
     ()
 
 let rule ~proof_level ~constraint_constants transaction_snark self :
@@ -304,14 +309,17 @@ let rule ~proof_level ~constraint_constants transaction_snark self :
   ; prevs = [ self; transaction_snark ]
   ; main =
       (fun [ x1; x2 ] x ->
+        Printf.printf "rule -> Run.run_checked\n%!" ;
         let b1, b2 =
           Run.run_checked
             (step ~cheat:true ~proof_level ~constraint_constants
                ~logger:(Logger.create ()) [ x1; x2 ] x )
         in
+        Printf.printf "rule -> Run.run_checked DONE\n%!" ;
         [ b1; b2 ] )
   ; main_value =
       (fun [ prev; (txn : Transaction_snark.Statement.With_sok.t) ] curr ->
+        Printf.printf "rule -> main_value\n%!" ;
         let lh t =
           Protocol_state.blockchain_state t
           |> Blockchain_state.snarked_ledger_hash

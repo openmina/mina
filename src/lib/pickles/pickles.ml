@@ -696,7 +696,9 @@ module Make (A : Statement_var_intf) (A_value : Statement_value_intf) = struct
         let (module Requests) = b.requests in
         let _, prev_vars_length = b.branching in
         let step handler prevs next_state =
+          Printf.printf "#-- %s -- step\n%!" (Time.now () |> Time.to_string) ;
           let wrap_vk = Lazy.force wrap_vk in
+          Printf.printf "#-- %s -- S.f\n%!" (Time.now () |> Time.to_string) ;
           S.f ?handler branch_data next_state ~prevs_length:prev_vars_length
             ~self ~step_domains ~self_dlog_plonk_index:wrap_vk.commitments
             (Impls.Step.Keypair.pk (fst (Lazy.force step_pk)))
@@ -722,9 +724,13 @@ module Make (A : Statement_var_intf) (A_value : Statement_value_intf) = struct
             in
             M.f prevs
           in
+          Printf.printf "#-- %s -- proof = step\n%!"
+            (Time.now () |> Time.to_string) ;
           let%bind.Deferred proof =
             step handler ~maxes:(module Maxes) prevs next_state
           in
+          Printf.printf "#-- %s -- proof = step DONE\n%!"
+            (Time.now () |> Time.to_string) ;
           let proof =
             { proof with
               statement =
@@ -736,6 +742,8 @@ module Make (A : Statement_var_intf) (A_value : Statement_value_intf) = struct
                 }
             }
           in
+          Printf.printf "#-- %s -- proof = Wrap.wrap\n%!"
+            (Time.now () |> Time.to_string) ;
           let%map.Deferred proof =
             Wrap.wrap ~max_branching:Max_branching.n full_signature.maxes
               wrap_requests ~dlog_plonk_index:wrap_vk.commitments wrap_main
@@ -744,6 +752,8 @@ module Make (A : Statement_var_intf) (A_value : Statement_value_intf) = struct
               (Impls.Wrap.Keypair.pk (fst (Lazy.force wrap_pk)))
               proof
           in
+          Printf.printf "#-- %s -- proof = Wrap.wrap DONE \n%!"
+            (Time.now () |> Time.to_string) ;
           Proof.T
             { proof with
               statement =
@@ -766,6 +776,7 @@ module Make (A : Statement_var_intf) (A_value : Statement_value_intf) = struct
              , (max_branching, max_branching) Proof.t Deferred.t )
              H3_2.T(Prover).t =
        fun bs ks ->
+        Printf.printf "#-- %s -- go\n%!" (Time.now () |> Time.to_string) ;
         match (bs, ks) with
         | [], [] ->
             []

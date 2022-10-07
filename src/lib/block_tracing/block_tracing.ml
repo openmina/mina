@@ -618,7 +618,7 @@ module Production = struct
         Hashtbl.set Registry.produced_registry ~key:id
           ~data:{ trace with blockchain_length; status = `Success }
     | Some state_hash ->
-        Hashtbl.remove Registry.produced_registry id ;
+        (*Hashtbl.remove Registry.produced_registry id ;*)
         let trace = { trace with blockchain_length; status = `Success } in
         Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace)
 end
