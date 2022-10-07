@@ -595,8 +595,9 @@ end
 module Production = struct
   let current_producer_block_id = ref Mina_numbers.Global_slot.zero
 
-  let checkpoint (checkpoint : Checkpoint.block_production_checkpoint) =
-    Registry.produced_checkpoint !current_producer_block_id
+  let checkpoint ?metadata (checkpoint : Checkpoint.block_production_checkpoint)
+      =
+    Registry.produced_checkpoint ?metadata !current_producer_block_id
       (checkpoint :> Checkpoint.t)
 
   let begin_block_production slot =
