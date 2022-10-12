@@ -595,8 +595,9 @@ end
 module Production = struct
   let current_producer_block_id = ref Mina_numbers.Global_slot.zero
 
-  let checkpoint (checkpoint : Checkpoint.block_production_checkpoint) =
-    Registry.produced_checkpoint !current_producer_block_id
+  let checkpoint ?metadata (checkpoint : Checkpoint.block_production_checkpoint)
+      =
+    Registry.produced_checkpoint ?metadata !current_producer_block_id
       (checkpoint :> Checkpoint.t)
 
   let begin_block_production slot =
@@ -610,14 +611,17 @@ module Production = struct
       Option.value ~default:(Trace.empty `Internal)
       @@ Registry.find_produced_trace id
     in
-    (* At this point we know the hash of the produced block, so we get rid of the
+    (* At this point we may know the hash of the produced block, so we get rid of the
        produced trace and register a trace for the state hash so that the next
        pipeline can continue it *)
-    Option.iter state_hash ~f:(fun state_hash ->
+    match state_hash with
+    | None ->
+        Hashtbl.set Registry.produced_registry ~key:id
+          ~data:{ trace with blockchain_length; status = `Success }
+    | Some state_hash ->
         Hashtbl.remove Registry.produced_registry id ;
         let trace = { trace with blockchain_length; status = `Success } in
-        Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace) ) ;
-    ()
+        Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace)
 end
 
 module External = struct
