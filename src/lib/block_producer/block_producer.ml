@@ -739,6 +739,11 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
             | Some
                 (protocol_state, internal_transition, pending_coinbase_witness)
               ->
+                let diff =
+                  Internal_transition.staged_ledger_diff internal_transition
+                in
+                let commands = Staged_ledger_diff.commands diff in
+                let transactions_count = List.length commands in
                 let protocol_state_hashes =
                   Protocol_state.hashes protocol_state
                 in
@@ -777,6 +782,9 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                   let emit_breadcrumb () =
                     let open Deferred.Result.Let_syntax in
                     Block_tracing.Production.checkpoint
+                      ~metadata:
+                        (Stdlib.Printf.sprintf "transactions_count=%d"
+                           transactions_count )
                       `Produce_state_transition_proof ;
                     let%bind protocol_state_proof =
                       time ~logger ~time_controller
