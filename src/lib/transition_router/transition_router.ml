@@ -76,6 +76,7 @@ let start_transition_frontier_controller ~context:(module Context : CONTEXT)
     ~transition_reader_ref ~transition_writer_ref ~frontier_w frontier =
   let open Context in
   [%str_log info] Starting_transition_frontier_controller ;
+  Storage_tracing.Distributions.bootstrap_complete () ;
   let ( transition_frontier_controller_reader
       , transition_frontier_controller_writer ) =
     let name = "transition frontier controller pipe" in

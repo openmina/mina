@@ -4812,15 +4812,26 @@ module Queries = struct
         let distributions = all () |> List.sort ~compare in
         listing_to_yojson distributions |> Yojson.Safe.to_basic )
 
-  let get_storage_traces_distribution =
-    field "storageTracesDistribution"
+  let get_storage_traces_distribution_bootstrap =
+    field "storageTracesDistributionBootstrap"
       ~doc:"Storage trace checkpoints distribution" ~typ:(non_null Types.json)
       ~args:Arg.[]
       ~resolve:(fun { ctx = _mina; _ } () ->
         let open Storage_tracing.Distributions in
         (* sorted in reverse *)
         let compare d1 d2 = Float.compare d2.total_time d1.total_time in
-        let distributions = all () |> List.sort ~compare in
+        let distributions = bootstrap_all () |> List.sort ~compare in
+        listing_to_yojson distributions |> Yojson.Safe.to_basic )
+
+  let get_storage_traces_distribution_frontier =
+    field "storageTracesDistributionFrontier"
+      ~doc:"Storage trace checkpoints distribution" ~typ:(non_null Types.json)
+      ~args:Arg.[]
+      ~resolve:(fun { ctx = _mina; _ } () ->
+        let open Storage_tracing.Distributions in
+        (* sorted in reverse *)
+        let compare d1 d2 = Float.compare d2.total_time d1.total_time in
+        let distributions = frontier_all () |> List.sort ~compare in
         listing_to_yojson distributions |> Yojson.Safe.to_basic )
 
   let commands =
@@ -4860,7 +4871,8 @@ module Queries = struct
     ; get_block_structured_trace (* Viable systems *)
     ; list_block_traces (* Viable systems *)
     ; get_block_traces_distribution (* Viable systems *)
-    ; get_storage_traces_distribution (* Viable systems *)
+    ; get_storage_traces_distribution_bootstrap (* Viable systems *)
+    ; get_storage_traces_distribution_frontier (* Viable systems *)
     ]
 end
 
