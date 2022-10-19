@@ -228,6 +228,9 @@ module Make (Inputs : Inputs_intf.S) = struct
       in
       fixup_merkle_path t parent_merkle_path address
 
+    let merkle_path_at_addr_exn =
+      Storage_tracing.wrap2 ~op:`Merkle_path_at_addr merkle_path_at_addr_exn
+
     let merkle_path_at_index_exn t index =
       assert_is_attached t ;
       let address = Addr.of_int_exn ~ledger_depth:t.depth index in
@@ -235,6 +238,9 @@ module Make (Inputs : Inputs_intf.S) = struct
         Base.merkle_path_at_addr_exn (get_parent t) address
       in
       fixup_merkle_path t parent_merkle_path address
+
+    let merkle_path_at_index_exn =
+      Storage_tracing.wrap2 ~op:`Merkle_path_at_index merkle_path_at_index_exn
 
     let merkle_path t location =
       assert_is_attached t ;
@@ -273,6 +279,8 @@ module Make (Inputs : Inputs_intf.S) = struct
           hash
       | None ->
           Base.merkle_root (get_parent t)
+
+    let merkle_root = Storage_tracing.wrap1 ~op:`Merkle_root merkle_root
 
     let remove_account_and_update_hashes t location =
       assert_is_attached t ;
@@ -408,6 +416,8 @@ module Make (Inputs : Inputs_intf.S) = struct
       ; current_location = t.current_location
       ; depth = t.depth
       }
+
+    let copy = Storage_tracing.wrap1 ~op:`Copy_mask copy
 
     let last_filled t =
       assert_is_attached t ;
@@ -602,6 +612,9 @@ module Make (Inputs : Inputs_intf.S) = struct
       List.iter rev_sorted_mask_locations
         ~f:(remove_account_and_update_hashes t)
 
+    let remove_accounts_exn =
+      Storage_tracing.wrap2 ~op:`Remove_accounts remove_accounts_exn
+
     (* Destroy intentionally does not commit before destroying
        as sometimes this is desired behavior *)
     let close t =
@@ -774,6 +787,9 @@ module Make (Inputs : Inputs_intf.S) = struct
                   Ok (`Added, location) ) )
       | Some location ->
           Ok (`Existed, location)
+
+    let get_or_create_account =
+      Storage_tracing.wrap3 ~op:`Get_or_create_account get_or_create_account
 
     let sexp_of_location = Location.sexp_of_t
 
