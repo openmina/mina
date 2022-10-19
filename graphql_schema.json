@@ -14106,7 +14106,23 @@
               "deprecationReason": null
             },
             {
-              "name": "storageTracesDistribution",
+              "name": "storageTracesDistributionBootstrap",
+              "description": "Storage trace checkpoints distribution",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "JSON",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "storageTracesDistributionFrontier",
               "description": "Storage trace checkpoints distribution",
               "args": [],
               "type": {

@@ -50,4 +50,5 @@
    mina_wire_types
    ;; viable systems
    block_tracing
+   storage_tracing
 ))

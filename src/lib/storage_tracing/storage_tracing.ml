@@ -76,7 +76,13 @@ module Distributions = struct
 
   type store = (Operation.t, t) Hashtbl.t
 
-  let store : store = Hashtbl.create (module Operation)
+  let bootstrap_store : store = Hashtbl.create (module Operation)
+
+  let frontier_store : store = Hashtbl.create (module Operation)
+
+  let store : store ref = ref bootstrap_store
+
+  let bootstrap_complete () = store := frontier_store
 
   let empty_range_info () =
     { count = 0; mean_time = 0.0; max_time = 0.0; total_time = 0.0 }
@@ -126,7 +132,7 @@ module Distributions = struct
 
   let record operation duration =
     let record =
-      Hashtbl.find_or_add store operation ~default:(fun () ->
+      Hashtbl.find_or_add !store operation ~default:(fun () ->
           empty_operation_entry operation )
     in
     let range = range_for_duration record duration in
@@ -140,27 +146,55 @@ module Distributions = struct
       range.mean_time +. ((duration -. range.mean_time) /. f_count) ;
     ()
 
-  let all () = Hashtbl.data store
+  let frontier_all () = Hashtbl.data frontier_store
+
+  let bootstrap_all () = Hashtbl.data bootstrap_store
 end
 
 let record operation duration = Distributions.record operation duration
 
 let now () = Unix.gettimeofday ()
 
-let wrap1 ~op f arg =
-  let start = now () in
-  let result = f arg in
-  let duration = now () -. start in
-  record op duration ; result
+let recursing_flags = Hashtbl.create (module Operation)
 
-let wrap2 ~op f arg1 arg2 =
-  let start = now () in
-  let result = f arg1 arg2 in
-  let duration = now () -. start in
-  record op duration ; result
+let recursing_flag_for_op op =
+  Hashtbl.find_or_add recursing_flags op ~default:(fun () -> ref false)
 
-let wrap3 ~op f arg1 arg2 arg3 =
-  let start = now () in
-  let result = f arg1 arg2 arg3 in
-  let duration = now () -. start in
-  record op duration ; result
+let wrap1 ~op f =
+  let recursing = recursing_flag_for_op op in
+  fun arg ->
+    if !recursing then f arg
+    else (
+      recursing := true ;
+      let start = now () in
+      let result = f arg in
+      let duration = now () -. start in
+      recursing := false ;
+      record op duration ;
+      result )
+
+let wrap2 ~op f =
+  let recursing = recursing_flag_for_op op in
+  fun arg1 arg2 ->
+    if !recursing then f arg1 arg2
+    else (
+      recursing := true ;
+      let start = now () in
+      let result = f arg1 arg2 in
+      let duration = now () -. start in
+      recursing := false ;
+      record op duration ;
+      result )
+
+let wrap3 ~op f =
+  let recursing = recursing_flag_for_op op in
+  fun arg1 arg2 arg3 ->
+    if !recursing then f arg1 arg2 arg3
+    else (
+      recursing := true ;
+      let start = now () in
+      let result = f arg1 arg2 arg3 in
+      let duration = now () -. start in
+      recursing := false ;
+      record op duration ;
+      result )
