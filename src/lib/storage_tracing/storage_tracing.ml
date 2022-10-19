@@ -18,6 +18,8 @@ module Operation = struct
 
   let persistent_to_yojson = flatten_yojson_variant persistent_to_yojson
 
+  (* TODO: trace get_or_create_account case where a new account needs to
+     be created using `Create_new_account *)
   type ledger =
     [ `Create_new_account
     | `Remove_accounts
@@ -27,8 +29,13 @@ module Operation = struct
     | `Get_accounts_batch
     | `Merkle_path
     | `Commit_mask
+    | `Copy_mask
     | `Hash_account
-    | `Hash_merge ]
+    | `Hash_merge
+    | `Merkle_root
+    | `Merkle_path_at_addr
+    | `Merkle_path_at_index
+    | `Get_or_create_account ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let ledger_to_yojson = flatten_yojson_variant ledger_to_yojson
