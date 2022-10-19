@@ -4818,7 +4818,8 @@ module Queries = struct
       ~args:Arg.[]
       ~resolve:(fun { ctx = _mina; _ } () ->
         let open Storage_tracing.Distributions in
-        let compare d1 d2 = Float.compare d1.total_time d2.total_time in
+        (* sorted in reverse *)
+        let compare d1 d2 = Float.compare d2.total_time d1.total_time in
         let distributions = all () |> List.sort ~compare in
         listing_to_yojson distributions |> Yojson.Safe.to_basic )
 
