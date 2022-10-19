@@ -329,7 +329,6 @@ module Distributions = struct
     }
   [@@deriving to_yojson]
 
-  (* TODO: add count *)
   type t =
     { checkpoint : Checkpoint.t
     ; mutable count : int

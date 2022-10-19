@@ -195,6 +195,8 @@ end = struct
            ( Inputs.location_of_hash_addr (Inputs.Location.to_path_exn location)
            , Inputs.Hash.hash_account account ) )
 
+  let set_batch = Storage_tracing.wrap2 ~op:`Set_accounts_batch set_batch
+
   let set_batch_accounts t addresses_and_accounts =
     set_batch t
     @@ List.map addresses_and_accounts ~f:(fun (addr, account) ->
