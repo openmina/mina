@@ -4821,6 +4821,16 @@ module Queries = struct
         let distributions = all () |> List.sort ~compare in
         listing_to_yojson distributions |> Yojson.Safe.to_basic )
 
+  let get_storage_traces_distribution =
+    field "storageTracesDistribution"
+      ~doc:"Storage trace checkpoints distribution" ~typ:(non_null Types.json)
+      ~args:Arg.[]
+      ~resolve:(fun { ctx = _mina; _ } () ->
+        let open Storage_tracing.Distributions in
+        let compare d1 d2 = Float.compare d1.total_time d2.total_time in
+        let distributions = all () |> List.sort ~compare in
+        listing_to_yojson distributions |> Yojson.Safe.to_basic )
+
   let commands =
     [ sync_status
     ; daemon_status
@@ -4858,6 +4868,7 @@ module Queries = struct
     ; get_block_structured_trace (* Viable systems *)
     ; list_block_traces (* Viable systems *)
     ; get_block_traces_distribution (* Viable systems *)
+    ; get_storage_traces_distribution (* Viable systems *)
     ]
 end
 

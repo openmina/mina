@@ -177,6 +177,8 @@ module Make (Inputs : Inputs_intf.S) = struct
       | None ->
           Base.get (get_parent t) location
 
+    let get = Storage_tracing.wrap2 ~op:`Get_account get
+
     let get_batch t locations =
       assert_is_attached t ;
       let found_accounts, leftover_locations =
@@ -188,6 +190,8 @@ module Make (Inputs : Inputs_intf.S) = struct
                 Either.second location )
       in
       found_accounts @ Base.get_batch (get_parent t) leftover_locations
+
+    let get_batch = Storage_tracing.wrap2 ~op:`Get_accounts_batch get_batch
 
     (* fixup_merkle_path patches a Merkle path reported by the parent,
        overriding with hashes which are stored in the mask *)
@@ -237,6 +241,8 @@ module Make (Inputs : Inputs_intf.S) = struct
       let address = Location.to_path_exn location in
       let parent_merkle_path = Base.merkle_path (get_parent t) location in
       fixup_merkle_path t parent_merkle_path address
+
+    let merkle_path = Storage_tracing.wrap2 ~op:`Merkle_path merkle_path
 
     (* given a Merkle path corresponding to a starting address, calculate
        addresses and hashes for each node affected by the starting hash; that is,
@@ -320,6 +326,8 @@ module Make (Inputs : Inputs_intf.S) = struct
       List.iter addresses_and_hashes ~f:(fun (addr, hash) ->
           self_set_hash t addr hash )
 
+    let set = Storage_tracing.wrap3 ~op:`Set_account set
+
     (* if the mask's parent sets an account, we can prune an entry in the mask
        if the account in the parent is the same in the mask *)
     let parent_set_notify t account =
@@ -385,6 +393,8 @@ module Make (Inputs : Inputs_intf.S) = struct
             ~message:"Merkle root of the mask should delegate to the parent now"
             ~expect:(merkle_root t)
             (Base.merkle_root (get_parent t)) )
+
+    let commit = Storage_tracing.wrap1 ~op:`Commit_mask commit
 
     (* copy tables in t; use same parent *)
     let copy t =

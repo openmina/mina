@@ -54,7 +54,16 @@ module Ledger_inner = struct
 
         let merge = Ledger_hash.merge
 
+        let merge ~height h1 h2 =
+          let start = Storage_tracing.now () in
+          let result = merge ~height h1 h2 in
+          let duration = Storage_tracing.now () -. start in
+          Storage_tracing.record `Hash_merge duration ;
+          result
+
         let hash_account = Fn.compose Ledger_hash.of_digest Account.digest
+
+        let hash_account = Storage_tracing.wrap1 ~op:`Hash_account hash_account
 
         let empty_account = Ledger_hash.of_digest Account.empty_digest
       end
