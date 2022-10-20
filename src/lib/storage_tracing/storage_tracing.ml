@@ -5,15 +5,16 @@ let flatten_yojson_variant f v =
 
 module Operation = struct
   type persistent =
-    [ `Get_transition
-    | `Get_beest_tip
-    | `Get_protocol_states_for_root_scan_state
-    | `Get_root_hash
-    | `Get_root
-    | `Get_arcs
-    | `Add_transition
-    | `Move_root
-    | `Set_best_tip ]
+    [ `Crawl_successors_in_db
+    | `Get_transition_in_db
+    | `Get_best_tip_in_db
+    | `Get_protocol_states_for_root_scan_state_in_db
+    | `Get_root_hash_in_db
+    | `Get_root_in_db
+    | `Get_arcs_in_db
+    | `Add_transition_in_db
+    | `Move_root_in_db
+    | `Set_best_tip_in_db ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
   let persistent_to_yojson = flatten_yojson_variant persistent_to_yojson
