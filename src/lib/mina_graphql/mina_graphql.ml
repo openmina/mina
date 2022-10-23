@@ -4834,6 +4834,18 @@ module Queries = struct
         let distributions = frontier_all () |> List.sort ~compare in
         listing_to_yojson distributions |> Yojson.Safe.to_basic )
 
+  let get_storage_frontier_extensions_distribution =
+    field "storageFrontierExtensionsDistribution"
+      ~doc:"Storage frontier extensions checkpoints distribution"
+      ~typ:(non_null Types.json)
+      ~args:Arg.[]
+      ~resolve:(fun { ctx = _mina; _ } () ->
+        let open Storage_tracing.Frontier_extensions in
+        (* sorted in reverse *)
+        let compare d1 d2 = Float.compare d2.total_time d1.total_time in
+        let distributions = all () |> List.sort ~compare in
+        listing_to_yojson distributions |> Yojson.Safe.to_basic )
+
   let commands =
     [ sync_status
     ; daemon_status
@@ -4873,6 +4885,7 @@ module Queries = struct
     ; get_block_traces_distribution (* Viable systems *)
     ; get_storage_traces_distribution_bootstrap (* Viable systems *)
     ; get_storage_traces_distribution_frontier (* Viable systems *)
+    ; get_storage_frontier_extensions_distribution (* Viable systems *)
     ]
 end
 

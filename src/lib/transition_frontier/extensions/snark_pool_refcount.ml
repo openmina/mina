@@ -92,6 +92,9 @@ module T = struct
       List.fold diffs_with_mutants ~init:{ num_removed = 0; is_added = false }
         ~f:(fun { num_removed; is_added } -> function
         | E (New_node (Full breadcrumb), _) ->
+            Storage_tracing.Frontier_extensions.record `New_node
+              `Snark_pool_refcount
+            @@ fun () ->
             let scan_state =
               Breadcrumb.staged_ledger breadcrumb |> Staged_ledger.scan_state
             in
@@ -102,6 +105,9 @@ module T = struct
         | E
             ( Root_transitioned { new_root = _; garbage = Full garbage_nodes; _ }
             , _ ) ->
+            Storage_tracing.Frontier_extensions.record `Root_transitioned
+              `Snark_pool_refcount
+            @@ fun () ->
             let open Diff.Node_list in
             let extra_num_removed =
               List.fold garbage_nodes ~init:0 ~f:(fun acc node ->
@@ -116,6 +122,9 @@ module T = struct
             in
             { num_removed = num_removed + extra_num_removed; is_added }
         | E (Best_tip_changed new_best_tip_hash, _) ->
+            Storage_tracing.Frontier_extensions.record `Best_tip_changed
+              `Snark_pool_refcount
+            @@ fun () ->
             let rec update_best_tip_table blocks_remaining state_hash =
               match Full_frontier.find frontier state_hash with
               | None ->

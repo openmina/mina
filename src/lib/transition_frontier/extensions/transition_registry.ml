@@ -32,6 +32,9 @@ module T = struct
   let handle_diffs transition_registry _ diffs_with_mutants =
     List.iter diffs_with_mutants ~f:(function
       | Diff.Full.With_mutant.E (New_node (Full breadcrumb), _) ->
+          Storage_tracing.Frontier_extensions.record `New_node
+            `Transition_registry
+          @@ fun () ->
           notify transition_registry (Breadcrumb.state_hash breadcrumb)
       | _ ->
           () ) ;
