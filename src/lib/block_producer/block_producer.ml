@@ -5,6 +5,7 @@ open Mina_base
 open Mina_transaction
 open Mina_state
 open Mina_block
+open Internal_tracing
 
 module type CONTEXT = sig
   val logger : Logger.t

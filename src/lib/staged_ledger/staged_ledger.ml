@@ -8,6 +8,7 @@ open Mina_base
 open Mina_transaction
 open Currency
 open Signature_lib
+open Internal_tracing
 module Ledger = Mina_ledger.Ledger
 module Sparse_ledger = Mina_ledger.Sparse_ledger
 

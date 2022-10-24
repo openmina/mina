@@ -1,5 +1,6 @@
 open Core_kernel
 open Mina_base
+open Internal_tracing
 
 module Hash = struct
   include Ledger_hash.Stable.V1

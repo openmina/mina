@@ -1,5 +1,6 @@
 open Core_kernel
 open Frontier_base
+open Internal_tracing
 module Work = Transaction_snark_work.Statement
 
 module T = struct

@@ -4,6 +4,7 @@ open Mina_base
 open Mina_state
 open Mina_block
 open Frontier_base
+open Internal_tracing
 module Database = Database
 
 module type CONTEXT = sig

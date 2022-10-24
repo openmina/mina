@@ -4,6 +4,7 @@ open Pipe_lib
 open Mina_block
 open Network_peer
 open Mina_numbers
+open Internal_tracing
 
 module type CONTEXT = sig
   val logger : Logger.t

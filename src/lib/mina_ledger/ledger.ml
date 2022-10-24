@@ -2,6 +2,7 @@ open Core
 open Signature_lib
 open Merkle_ledger
 open Mina_base
+open Internal_tracing
 
 module Ledger_inner = struct
   module Location_at_depth : Merkle_ledger.Location_intf.S =

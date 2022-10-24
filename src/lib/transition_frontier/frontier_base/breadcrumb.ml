@@ -4,6 +4,7 @@ open Mina_base
 open Mina_state
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 module T = struct
   let id = "breadcrumb"

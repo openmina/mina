@@ -1,4 +1,5 @@
 open Core_kernel
+open Internal_tracing
 
 module type Inputs_intf = sig
   module Location : Location_intf.S

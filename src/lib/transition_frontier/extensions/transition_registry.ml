@@ -2,6 +2,7 @@ open Async_kernel
 open Core_kernel
 open Mina_base
 open Frontier_base
+open Internal_tracing
 
 module T = struct
   type t = unit Ivar.t list State_hash.Table.t

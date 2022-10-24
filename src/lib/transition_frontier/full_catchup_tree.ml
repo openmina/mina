@@ -4,6 +4,7 @@ open Cache_lib
 open Mina_base
 open Network_peer
 open Mina_numbers
+open Internal_tracing
 
 module Attempt_history = struct
   module Attempt = struct

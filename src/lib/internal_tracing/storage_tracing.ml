@@ -1,8 +1,5 @@
 open Core
 
-let flatten_yojson_variant f v =
-  match f v with `List [ tag ] -> tag | _ -> assert false
-
 module Operation = struct
   type persistent =
     [ `Crawl_successors_in_db
@@ -17,7 +14,7 @@ module Operation = struct
     | `Set_best_tip_in_db ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
-  let persistent_to_yojson = flatten_yojson_variant persistent_to_yojson
+  let persistent_to_yojson = Util.flatten_yojson_variant persistent_to_yojson
 
   (* TODO: trace get_or_create_account case where a new account needs to
      be created using `Create_new_account *)
@@ -39,7 +36,7 @@ module Operation = struct
     | `Get_or_create_account ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
-  let ledger_to_yojson = flatten_yojson_variant ledger_to_yojson
+  let ledger_to_yojson = Util.flatten_yojson_variant ledger_to_yojson
 
   type t = [ persistent | ledger ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
@@ -226,12 +223,12 @@ module Frontier_extensions = struct
     | `Transition_registry ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
-  let extension_to_yojson = flatten_yojson_variant extension_to_yojson
+  let extension_to_yojson = Util.flatten_yojson_variant extension_to_yojson
 
   type event = [ `New_node | `Root_transitioned | `Best_tip_changed ]
   [@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
 
-  let event_to_yojson = flatten_yojson_variant event_to_yojson
+  let event_to_yojson = Util.flatten_yojson_variant event_to_yojson
 
   module Operation = struct
     type t = event * extension

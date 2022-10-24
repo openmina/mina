@@ -4,6 +4,7 @@ open Async
 open Pipe_lib.Strict_pipe
 open Mina_base
 open Mina_state
+open Internal_tracing
 
 type stream_msg =
   [ `Transition of Mina_block.t Envelope.Incoming.t ]

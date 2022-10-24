@@ -53,7 +53,7 @@
    kimchi_backend.pasta
    kimchi_backend.pasta.basic
    ;; viable systems
-   block_tracing
+   internal_tracing
    )
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_mina ppx_version ppx_jane)))

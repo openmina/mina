@@ -3,6 +3,7 @@ open Core
 open Mina_base
 open Mina_block
 open Frontier_base
+open Internal_tracing
 
 (* TODO: cache state body hashes in db to avoid re-hashing on load (#10293) *)
 

@@ -53,5 +53,5 @@
    unsigned_extended
    ppx_version.runtime
    ;; viable systems
-   storage_tracing
+   internal_tracing
 ))

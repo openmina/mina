@@ -2,6 +2,7 @@
    RFC 0004 and docs/specs/merkle_tree.md *)
 
 open Core
+open Internal_tracing
 
 (* builds a Merkle tree mask; it's a Merkle tree, with some additional
    operations *)

@@ -10,6 +10,7 @@ open Core_kernel
 open Mina_base
 open Mina_state
 open Consensus.Data
+open Internal_tracing
 include Validation_types
 
 module type CONTEXT = sig

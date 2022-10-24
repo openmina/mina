@@ -1,6 +1,7 @@
 open Core_kernel
 open Mina_base
 open Frontier_base
+open Internal_tracing
 
 module T = struct
   type t = { logger : Logger.t; best_tip_diff_logger : Logger.t }
