@@ -6,6 +6,7 @@ open Mina_state
 open Signature_lib
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 type validation_error =
   [ `Invalid_time_received of [ `Too_early | `Too_late of int64 ]

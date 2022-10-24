@@ -1,6 +1,7 @@
 open Core_kernel
 open Mina_base
 open Frontier_base
+open Internal_tracing
 
 (* WARNING: don't use this code until @nholland has landed a PR that
    synchronize the read/write of transition frontier

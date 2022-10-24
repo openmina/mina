@@ -66,7 +66,7 @@
    ppx_version.runtime
    mina_wire_types
    ;; viable systems
-   block_tracing
+   internal_tracing
  )
  (preprocessor_deps ../../config.mlh)
  (instrumentation (backend bisect_ppx))

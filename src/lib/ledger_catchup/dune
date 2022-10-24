@@ -66,5 +66,5 @@
    o1trace
    mina_net2
    ;; viable systems
-   block_tracing
+   internal_tracing
 ))

@@ -8,6 +8,7 @@ open Mina_numbers
 open Mina_base
 open Mina_block
 open Network_peer
+open Internal_tracing
 
 module type CONTEXT = sig
   val logger : Logger.t

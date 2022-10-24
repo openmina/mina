@@ -14,6 +14,7 @@
  * *)
 
 open Core_kernel
+open Internal_tracing
 
 module type S = sig
   type key

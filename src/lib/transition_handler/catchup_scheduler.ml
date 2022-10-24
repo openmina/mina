@@ -20,6 +20,7 @@ open Mina_base
 open Mina_block
 open Network_peer
 open Mina_net2
+open Internal_tracing
 
 type t =
   { logger : Logger.t

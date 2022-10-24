@@ -24,7 +24,7 @@
    non_empty_list
    direction
    ;; viable systems
-   storage_tracing
+   internal_tracing
  )
  (preprocess
   (pps

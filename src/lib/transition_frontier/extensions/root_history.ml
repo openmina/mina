@@ -1,6 +1,7 @@
 open Core_kernel
 open Mina_base
 open Frontier_base
+open Internal_tracing
 module Queue = Hash_queue.Make (State_hash)
 
 module T = struct

@@ -6,6 +6,7 @@ open Core
 
 open Async_kernel
 open Mina_base
+open Internal_tracing
 module Ledger = Mina_ledger.Ledger
 include Frontier_base
 module Full_frontier = Full_frontier

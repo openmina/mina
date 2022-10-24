@@ -1,6 +1,6 @@
 (library
- (name block_tracing)
- (public_name block_tracing)
+ (name internal_tracing)
+ (public_name internal_tracing)
  (library_flags -linkall)
  (inline_tests)
  (libraries
