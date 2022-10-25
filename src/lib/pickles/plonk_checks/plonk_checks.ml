@@ -461,7 +461,8 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
 
   (** Computes the list of scalars used in the linearization. *)
   let derive_plonk (type t) ?(with_label = fun _ (f : unit -> t) -> f ())
-      (module F : Field_intf with type t = t) ~(env : t Scalars.Env.t) ~shift =
+      (module F : Field_intf with type t = t) ~(env : t Scalars.Env.t)
+      ?print_sexp_of_fields ~shift =
     let _ = with_label in
     let open F in
     fun ({ alpha
@@ -504,6 +505,15 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
                 Some { joint_combiner } )
         ; feature_flags = actual_feature_flags
         }
+      in
+      ( match print_sexp_of_fields with
+      | Some print_sexp_of_fields ->
+          print_sexp_of_fields before_map_fields __LOC__
+      | None ->
+          () ) ;
+      In_circuit.map_fields
+        ~f:(Shifted_value.of_field (module F) ~shift)
+        before_map_fields
 
   (** Check that computed proof scalars match the expected ones,
     using the native field.

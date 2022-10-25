@@ -4,6 +4,23 @@ open Hlist
 open Common
 open Import
 
+let full_cached_domains =
+  [ Domains.{ h = Pow_2_roots_of_unity 15 }
+  ; Domains.{ h = Pow_2_roots_of_unity 15 }
+  ; Domains.{ h = Pow_2_roots_of_unity 15 }
+  ; Domains.{ h = Pow_2_roots_of_unity 14 }
+  ; Domains.{ h = Pow_2_roots_of_unity 15 }
+  ; Domains.{ h = Pow_2_roots_of_unity 16 }
+  ]
+
+let cached_domains = ref full_cached_domains
+
+let pop_cached_domain () =
+  let domain = List.hd_exn !cached_domains in
+  cached_domains := List.tl_exn !cached_domains ;
+  if List.is_empty !cached_domains then cached_domains := full_cached_domains ;
+  domain
+
 (* The data obtained from "compiling" an inductive rule into a circuit. *)
 type ( 'a_var
      , 'a_value
@@ -151,21 +168,26 @@ let create
   in
   Timer.clock __LOC__ ;
   let own_domains =
-    let main =
-      step
-        ~step_domains:
-          (Vector.init branches ~f:(fun _ -> Fix_domains.rough_domains))
-    in
-    let etyp =
-      Impls.Step.input ~proofs_verified:max_proofs_verified
-        ~wrap_rounds:Backend.Tock.Rounds.n ~feature_flags
-      (* TODO *)
-    in
-    Fix_domains.domains
-      (module Impls.Step)
-      (T (Snarky_backendless.Typ.unit (), Fn.id, Fn.id))
-      etyp main
+    if false then pop_cached_domain ()
+    else
+      let main =
+        step
+          ~step_domains:
+            (Vector.init branches ~f:(fun _ -> Fix_domains.rough_domains))
+      in
+      let etyp =
+        Impls.Step.input ~proofs_verified:max_proofs_verified
+          ~wrap_rounds:Backend.Tock.Rounds.n ~feature_flags
+        (* TODO *)
+      in
+      Fix_domains.domains
+        (module Impls.Step)
+        (T (Snarky_backendless.Typ.unit (), Fn.id, Fn.id))
+        etyp main
   in
+  ( if true then
+    let ys = Domains.to_yojson own_domains |> Yojson.Safe.to_string in
+    printf "@@@@ Domains: %s\n%!" ys ) ;
   Timer.clock __LOC__ ;
   T
     { proofs_verified = (self_width, proofs_verified)

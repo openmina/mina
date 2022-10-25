@@ -27,7 +27,7 @@ module Make_str (A : Wire_types.Concrete) = struct
         ; current_protocol_version : Protocol_version.Stable.V1.t
         ; proposed_protocol_version_opt : Protocol_version.Stable.V1.t option
         }
-      [@@deriving fields, sexp, to_yojson]
+      [@@deriving fields, sexp, yojson]
 
       let to_latest = Fn.id
 
@@ -104,6 +104,7 @@ module Make_str (A : Wire_types.Concrete) = struct
     , create
     , sexp_of_t
     , t_of_sexp
+    , of_yojson
     , to_yojson )]
 
   type protocol_version_status =
