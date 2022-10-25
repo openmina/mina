@@ -25,6 +25,8 @@ module type S = sig
     type t
 
     val to_field_elements : t -> field array
+
+    val sexp_of_t : t -> Sexp.t
   end
 
   module type Statement_var_intf =
@@ -365,6 +367,7 @@ module type S = sig
       to each inductive rule. *)
   val compile_promise :
        ?self:('var, 'value, 'max_proofs_verified, 'branches) Tag.t
+    -> ?sexp_of_app_state:('value -> Sexp.t)
     -> ?cache:Key_cache.Spec.t list
     -> ?proof_cache:Proof_cache.t
     -> ?disk_keys:
@@ -420,6 +423,7 @@ module type S = sig
       to each inductive rule. *)
   val compile :
        ?self:('var, 'value, 'max_proofs_verified, 'branches) Tag.t
+    -> ?sexp_of_app_state:('value -> Sexp.t)
     -> ?cache:Key_cache.Spec.t list
     -> ?proof_cache:Proof_cache.t
     -> ?disk_keys:

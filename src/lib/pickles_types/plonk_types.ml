@@ -551,7 +551,7 @@ module Evals = struct
       ; range_check_lookup_selector : ('f, 'bool) Opt.t
       ; foreign_field_mul_lookup_selector : ('f, 'bool) Opt.t
       }
-    [@@deriving hlist, fields]
+    [@@deriving hlist, fields, sexp]
 
     let map (type bool a b)
         ({ w

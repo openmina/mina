@@ -18,9 +18,82 @@ module Instance = struct
         -> t
 end
 
+(* TODO: Just stick this in plonk_checks.ml *)
+module Plonk_checks = struct
+  include Plonk_checks
+  module Type1 =
+    Plonk_checks.Make (Shifted_value.Type1) (Plonk_checks.Scalars.Tick)
+  module Type2 =
+    Plonk_checks.Make (Shifted_value.Type2) (Plonk_checks.Scalars.Tock)
+end
+
+module Vec2 = Vector.With_length (Nat.N2)
+module Vec15 = Vector.With_length (Nat.N15)
+module Vec16 = Vector.With_length (Nat.N16)
+
+type 'app_state reduced_messages_for_next_step =
+  ( 'app_state
+  , Tock.Curve.Affine.t Vec2.t
+  , Tick.Field.t Vec16.t Vec2.t )
+  Reduced_messages_for_next_proof_over_same_field.Step.t
+[@@deriving sexp]
+
+type reduced_messages_for_next_wrap =
+  ( Tock.Inner_curve.Affine.t
+  , Reduced_messages_for_next_proof_over_same_field.Wrap.Challenges_vector.t
+    Vec15.t )
+  Types.Wrap.Proof_state.Messages_for_next_wrap_proof.t
+[@@deriving sexp]
+
 let verify_heterogenous (ts : Instance.t list) =
   let module Plonk = Types.Wrap.Proof_state.Deferred_values.Plonk in
   let module Tick_field = Backend.Tick.Field in
+  let module Debug = struct
+    let debugging = ref true
+
+    let shifted_tick_field_as_int = ref false
+
+    let value label ~loc ~sexp =
+      if !debugging then
+        Stdlib.Printf.printf "##### %s sexp @ %s:\n%s\n%!" label loc
+          (Sexp.to_string_hum sexp)
+
+    let checkpoint label ~loc =
+      if !debugging then Stdlib.Printf.printf "***** %s @ %s\n%!" label loc
+
+    let sexp_of_scalar_challenge sexp_of_inner sc =
+      sexp_of_inner sc.Kimchi_types.inner
+
+    let sexp_of_constant_scallar_challenge =
+      sexp_of_scalar_challenge Challenge.Constant.sexp_of_t
+
+    let sexp_of_plonk =
+      Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
+        sexp_of_constant_scallar_challenge Bool.sexp_of_t
+
+    let sexp_of_shifted_tick_field =
+      let sexp_of_tick_as_int tf =
+        tf |> Tick.Field.to_bigint |> Pasta_bindings.BigInt256.to_string
+        |> String.sexp_of_t
+      in
+      Shifted_value.Type1.sexp_of_t
+        ( if !shifted_tick_field_as_int then sexp_of_tick_as_int
+        else Tick.Field.sexp_of_t )
+
+    let sexp_of_reduced_messages_for_next_wrap x =
+      sexp_of_reduced_messages_for_next_wrap (Obj.magic (Obj.repr x))
+
+    let sexp_of_messages_for_next_step_proof sexp_of_app_state =
+      sexp_of_reduced_messages_for_next_step sexp_of_app_state
+
+    let sexp_of_messages_for_next_step_proof sexp_of_app_state x =
+      sexp_of_messages_for_next_step_proof sexp_of_app_state
+        (Obj.magic (Obj.repr x))
+
+    let sexp_of_bulletproof_challenges =
+      Step_bp_vec.sexp_of_t
+        (Bulletproof_challenge.sexp_of_t sexp_of_constant_scallar_challenge)
+  end in
   let logger = Internal_tracing_context_logger.get () in
   [%log internal] "Verify_heterogenous"
     ~metadata:[ ("count", `Int (List.length ts)) ] ;
@@ -45,7 +118,7 @@ let verify_heterogenous (ts : Instance.t list) =
       ~f:(fun
            (T
              ( _max_proofs_verified
-             , _statement
+             , (module A_value)
              , key
              , _app_state
              , T
@@ -80,6 +153,17 @@ let verify_heterogenous (ts : Instance.t list) =
               ~feature_flags:proof_state.deferred_values.plonk.feature_flags
               evals.evals.evals ) ;
         Timer.start __LOC__ ;
+        let sexp_of_statement =
+          let open Debug in
+          Types.Wrap.Statement.sexp_of_t sexp_of_plonk
+            sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
+            sexp_of_reduced_messages_for_next_wrap
+            Types.Digest.Constant.sexp_of_t
+            (sexp_of_messages_for_next_step_proof A_value.sexp_of_t)
+            sexp_of_bulletproof_challenges Branch_data.sexp_of_t
+        in
+        let sexp = sexp_of_statement statement in
+        Debug.value "statement" ~sexp ~loc:__LOC__ ;
         let open Types.Wrap.Proof_state in
         let step_domain =
           Branch_data.domain proof_state.deferred_values.branch_data
@@ -133,13 +217,7 @@ let verify_heterogenous (ts : Instance.t list) =
   let open Promise.Let_syntax in
   [%log internal] "Accumulator_check" ;
   let%bind accumulator_check =
-    Ipa.Step.accumulator_check
-      (List.map ts ~f:(fun (T (_, _, _, _, T t)) ->
-           ( t.statement.proof_state.messages_for_next_wrap_proof
-               .challenge_polynomial_commitment
-           , Ipa.Step.compute_challenges
-               t.statement.proof_state.deferred_values.bulletproof_challenges ) )
-      )
+    Ipa.Step.accumulator_check accumulator_check_inputs
   in
   [%log internal] "Accumulator_check_done" ;
   Common.time "batch_step_dlog_check" (fun () ->

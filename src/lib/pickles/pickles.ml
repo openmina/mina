@@ -248,6 +248,8 @@ module Make_str (_ : Wire_types.Concrete) = struct
           let to_field_elements =
             let (Typ typ) = typ in
             fun x -> fst (typ.value_to_fields x)
+
+          let sexp_of_t _ = Sexp.Atom "<opaque>"
         end : Intf.Statement_value
           with type t = t )
       in
@@ -289,7 +291,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
   let compile_with_wrap_main_override_promise =
     Compile.compile_with_wrap_main_override_promise
 
-  let compile_promise ?self ?cache ?proof_cache ?disk_keys
+  let compile_promise ?self ?sexp_of_app_state:_ ?cache ?proof_cache ?disk_keys
       ?return_early_digest_exception ?override_wrap_domain ~public_input
       ~auxiliary_typ ~branches ~max_proofs_verified ~name ~constraint_constants
       ~choices () =
@@ -298,7 +300,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
       ~auxiliary_typ ~branches ~max_proofs_verified ~name ~constraint_constants
       ~choices ()
 
-  let compile ?self ?cache ?proof_cache ?disk_keys ?override_wrap_domain
+  let compile ?self ?sexp_of_app_state:_ ?cache ?proof_cache ?disk_keys ?override_wrap_domain
       ~public_input ~auxiliary_typ ~branches ~max_proofs_verified ~name
       ~constraint_constants ~choices () =
     let self, cache_handle, proof_module, provers =
@@ -1054,6 +1056,8 @@ module Make_str (_ : Wire_types.Concrete) = struct
         type t = unit
 
         let to_field_elements () = [||]
+
+        let sexp_of_t = sexp_of_opaque
       end
 
       module A = Statement
