@@ -14,7 +14,7 @@
    async
    core
    extlib
-   rocks
+   ;;rocks
    core_kernel
    base.caml
    base.base_internalhash_types

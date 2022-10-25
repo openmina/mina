@@ -19,12 +19,43 @@ module Static = Ctypes_static
 
 module C(F: Cstubs.Types.TYPE) = struct
 
-  module Generichash = struct
+  module Gen_hash(M: sig
+    val scope : string
+    val primitive : string
+  end) = struct
     type state
     let state : state Static.structure F.typ =
-      F.structure "crypto_generichash_blake2b_state"
+      F.structure ("crypto_"^M.scope^"_"^M.primitive^"_state")
 
     let () = F.seal state
   end
 
+  module Generichash = Gen_hash(struct
+    let scope = "generichash"
+    let primitive = "blake2b"
+  end)
+
+  module Hmac_sha256 = Gen_hash(struct
+    let scope = "auth"
+    let primitive = "hmacsha256"
+  end)
+
+  module Hmac_sha512 = Gen_hash(struct
+    let scope = "auth"
+    let primitive = "hmacsha512"
+  end)
+
+  module Hmac_sha512256 = struct
+    include Hmac_sha512
+    let state = F.typedef state "crypto_auth_hmacsha512256_state"
+  end
+
+  module One_time_auth = struct
+    include Gen_hash(struct
+      let scope = "onetimeauth"
+      let primitive = "poly1305"
+    end)
+    let state : state Static.structure F.typ =
+      F.typedef state "crypto_onetimeauth_state"
+  end
 end

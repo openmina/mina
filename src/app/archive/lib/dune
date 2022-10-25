@@ -75,6 +75,6 @@
    ppx_version.runtime
  )
  (inline_tests)
- (modes native)
+ (modes byte native)
  (instrumentation (backend bisect_ppx))
  (preprocess (pps ppx_mina ppx_version ppx_jane ppx_custom_printf h_list.ppx)))

@@ -9,7 +9,7 @@
    base.caml
    core.uuid
    core_kernel
-   rocks
+   ;;rocks
    core
    core_kernel.uuid
    sexplib0

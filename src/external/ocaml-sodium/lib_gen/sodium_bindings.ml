@@ -230,8 +230,10 @@ module C(F: Cstubs.FOREIGN) = struct
   end
 
   module Gen_auth(M: sig
+    type state
     val scope     : string
     val primitive : string
+    val state     : state structure typ
   end) = struct
     let primitive = M.primitive
     let prefix    = "crypto_"^M.scope^"_"^primitive
@@ -240,18 +242,47 @@ module C(F: Cstubs.FOREIGN) = struct
     let keybytes      = F.foreign (prefix^"_keybytes") sz_query_type
     let bytes         = F.foreign (prefix^"_bytes")    sz_query_type
 
+    let final         = F.(foreign (prefix^"_final")
+                                  (ptr M.state @-> ocaml_bytes @-> returning int))
+
     module Make(T: Sodium_storage.S) = struct
       let auth_fn_type  = F.(ocaml_bytes @-> T.ctype @-> ullong
                            @-> ocaml_bytes @-> returning int)
 
       let auth          = F.foreign (prefix)           auth_fn_type
       let auth_verify   = F.foreign (prefix^"_verify") auth_fn_type
+      let update        = F.(foreign (prefix^"_update")
+                                    (ptr M.state @-> T.ctype @-> ullong @-> returning int))
     end
   end
 
-  module Hash = struct
-    let primitive = "sha512"
-    let prefix    = "crypto_hash_"^primitive
+  module Gen_auth_sha2(M: sig
+    type state
+    val scope     : string
+    val primitive : string
+    val state     : state structure typ
+  end) = struct
+    include Gen_auth(M)
+    let init = F.(foreign (prefix^"_init")
+                         (ptr M.state @-> ocaml_bytes @-> size_t @-> returning int))
+  end
+
+  module Gen_onetimeauth(M: sig
+    type state
+    val scope     : string
+    val primitive : string
+    val state     : state structure typ
+  end) = struct
+    include Gen_auth(M)
+    let init = F.(foreign (prefix^"_init")
+                         (ptr M.state @-> ocaml_bytes @-> returning int))
+  end
+
+  module Hash (M: sig
+      val primitive : string
+    end) = struct
+    let primitive = M.primitive
+    let prefix    = "crypto_hash_" ^ primitive
 
     let sz_query_type = F.(void @-> returning size_t)
     let hashbytes     = F.foreign (prefix^"_bytes") sz_query_type

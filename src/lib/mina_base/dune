@@ -4,6 +4,7 @@
  (inline_tests)
  (library_flags -linkall)
  (flags -w -22)
+ (c_library_flags (-lsodium -lrocksdb))
  (libraries
    ;; opam libraries
    async_kernel
