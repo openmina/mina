@@ -93,9 +93,11 @@ module Step = struct
                 Key_cache.Sync.read cache s_p (Lazy.force k_p) )
           with
         | Ok (pk, dirty) ->
+            if false then printf "### PK Found in cache\n%!" ;
             Common.time "step keypair create" (fun () ->
                 (Keypair.create ~pk ~vk:(Backend.Tick.Keypair.vk pk), dirty) )
         | Error _e ->
+            printf "### PF NOT Found in cache\n%!" ;
             let r =
               Common.time "stepkeygen" (fun () ->
                   constraint_system ~input_typ:typ ~return_typ main
@@ -115,8 +117,10 @@ module Step = struct
                Key_cache.Sync.read cache s_v k_v )
          with
          | Ok (vk, _) ->
+             if false then printf "### VK Found in cache\n%!" ;
              (vk, `Cache_hit)
          | Error _e ->
+             printf "### VF NOT Found in cache\n%!" ;
              let pk, c = Lazy.force pk in
              let vk = Keypair.vk pk in
              ignore (Key_cache.Sync.write cache s_v k_v vk : unit Or_error.t) ;

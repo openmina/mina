@@ -683,8 +683,11 @@ module Make_str (_ : Wire_types.Concrete) = struct
       let (wrap_pk, wrap_vk), disk_key =
         let open Impls.Wrap in
         let (T (typ, conv, _conv_inv)) = input () in
+        Timer.clock __LOC__ ;
         let main x () : unit = wrap_main (conv x) in
-        let () = if true then log_wrap main typ name self.id in
+        Timer.clock __LOC__ ;
+        let () = if false then log_wrap main typ name self.id in
+        Timer.clock __LOC__ ;
         let self_id = Type_equal.Id.uid self.id in
         let disk_key_prover =
           lazy
@@ -700,6 +703,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
                  cs_hash
              , cs ) )
         in
+        Timer.clock __LOC__ ;
         let disk_key_verifier =
           match disk_keys with
           | None ->
@@ -714,6 +718,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
           | Some (_, (_id, header, digest)) ->
               Lazy.return (self_id, header, digest)
         in
+        Timer.clock __LOC__ ;
         let r =
           Common.time "wrap read or generate " (fun () ->
               Cache.Wrap.read_or_generate (* Due to Wrap_hack *)
@@ -742,6 +747,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
         | Input_and_output (input_typ, output_typ) ->
             Impls.Step.Typ.(input_typ * output_typ)
       in
+      Timer.clock __LOC__ ;
       let provers =
         let module Z = H4.Zip (Branch_data) (E04 (Impls.Step.Keypair)) in
         let f :
