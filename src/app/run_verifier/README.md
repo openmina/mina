@@ -1,5 +1,9 @@
 # Verifier compatible with `ocamldebug`
 
+This is a minimal script for verifying a block proof. The code in this branch is slightly modified to avoid the use of threads (which `ocamldebug` cannot handle), and to produce a workable bytecode version (`ocamldebug` needs a bytecode program, it cannot handle native code).
+
+The instructions here assume that we are in the `run_verifier_app` branch.
+
 ## Instructions
 
 This assumes that the regular setup described [in the wiki](https://github.com/name-placeholder/mina-wiki/tree/master/build_and_run_mina_cli) has been completed.
