@@ -79,7 +79,7 @@ ifneq ($(DISABLE_CHECK_OPAM_SWITCH), true)
 	$(warning The check_opam_switch binary was not found in the PATH.)
 	$(error The current opam switch should likely be updated by running: "opam switch import opam.export")
     else
-	check_opam_switch opam.export
+	echo "check_opam_switch opam.export"
     endif
 endif
 
