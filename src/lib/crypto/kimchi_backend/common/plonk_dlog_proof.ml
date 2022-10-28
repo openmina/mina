@@ -110,7 +110,7 @@ module type Inputs_intf = sig
 
     val verify : Verifier_index.t -> t -> bool
 
-    val batch_verify : Verifier_index.t array -> t array -> bool Promise.t
+    val batch_verify : Verifier_index.t array -> t array -> bool
   end
 end
 

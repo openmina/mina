@@ -15,7 +15,7 @@ type ledger_proof = Ledger_proof.Prod.t
 module Worker_state = struct
   module type S = sig
     val verify_blockchain_snarks :
-      (Protocol_state.Value.t * Proof.t) list -> bool Deferred.t
+      (Protocol_state.Value.t * Proof.t) list -> bool
 
     val verify_commands :
          Mina_base.User_command.Verifiable.t list
@@ -30,7 +30,7 @@ module Worker_state = struct
          Deferred.t
 
     val verify_transaction_snarks :
-      (Transaction_snark.t * Sok_message.t) list -> bool Deferred.t
+      (Transaction_snark.t * Sok_message.t) list -> bool
 
     val get_blockchain_verification_key : unit -> Pickles.Verification_key.t
   end
@@ -82,22 +82,23 @@ module Worker_state = struct
                    | `Missing_verification_key _ ->
                        [] )
                in
-               let%map all_verified =
+               let all_verified =
                  Pickles.Side_loaded.verify ~typ:Zkapp_statement.typ to_verify
                in
-               List.map cs ~f:(function
-                 | `Valid c ->
-                     `Valid c
-                 | `Valid_assuming (c, xs) ->
-                     if all_verified then `Valid c else `Valid_assuming xs
-                 | `Invalid_keys keys ->
-                     `Invalid_keys keys
-                 | `Invalid_signature keys ->
-                     `Invalid_signature keys
-                 | `Invalid_proof ->
-                     `Invalid_proof
-                 | `Missing_verification_key keys ->
-                     `Missing_verification_key keys )
+               Deferred.return
+               @@ List.map cs ~f:(function
+                    | `Valid c ->
+                        `Valid c
+                    | `Valid_assuming (c, xs) ->
+                        if all_verified then `Valid c else `Valid_assuming xs
+                    | `Invalid_keys keys ->
+                        `Invalid_keys keys
+                    | `Invalid_signature keys ->
+                        `Invalid_signature keys
+                    | `Invalid_proof ->
+                        `Invalid_proof
+                    | `Missing_verification_key keys ->
+                        `Missing_verification_key keys )
 
              let verify_blockchain_snarks = B.Proof.verify
 
@@ -136,9 +137,9 @@ module Worker_state = struct
                        `Missing_verification_key keys )
                |> Deferred.return
 
-             let verify_blockchain_snarks _ = Deferred.return true
+             let verify_blockchain_snarks _ = true
 
-             let verify_transaction_snarks _ = Deferred.return true
+             let verify_transaction_snarks _ = true
 
              let vk =
                lazy
@@ -202,14 +203,15 @@ module Worker = struct
     struct
       let verify_blockchains (w : Worker_state.t) (chains : Blockchain.t list) =
         let (module M) = Worker_state.get w in
-        M.verify_blockchain_snarks
-          (List.map chains ~f:(fun snark ->
-               ( Blockchain_snark.Blockchain.state snark
-               , Blockchain_snark.Blockchain.proof snark ) ) )
+        Deferred.return
+        @@ M.verify_blockchain_snarks
+             (List.map chains ~f:(fun snark ->
+                  ( Blockchain_snark.Blockchain.state snark
+                  , Blockchain_snark.Blockchain.proof snark ) ) )
 
       let verify_transaction_snarks (w : Worker_state.t) ts =
         let (module M) = Worker_state.get w in
-        M.verify_transaction_snarks ts
+        Deferred.return @@ M.verify_transaction_snarks ts
 
       let verify_commands (w : Worker_state.t) ts =
         let (module M) = Worker_state.get w in

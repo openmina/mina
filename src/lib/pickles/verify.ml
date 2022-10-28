@@ -255,7 +255,7 @@ let verify_heterogenous (ts : Instance.t list) =
   in
   let open Backend.Tock.Proof in
   let open Promise.Let_syntax in
-  let%bind accumulator_check =
+  let accumulator_check =
     Ipa.Step.accumulator_check
       (List.map ts ~f:(fun (T (_, _, _, _, T t)) ->
            ( t.statement.proof_state.messages_for_next_wrap_proof
@@ -266,7 +266,8 @@ let verify_heterogenous (ts : Instance.t list) =
   in
   Common.time "batch_step_dlog_check" (fun () ->
       check (lazy "batch_step_dlog_check", accumulator_check) ) ;
-  let%map dlog_check =
+  (* TODOX: can it be done without promise?*)
+  let dlog_check =
     batch_verify
       (List.map2_exn ts in_circuit_plonks
          ~f:(fun

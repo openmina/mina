@@ -192,10 +192,9 @@ module Ipa = struct
             Or_infinity.Finite comm )
       in
       let urs = Backend.Tick.Keypair.load_urs () in
-      Promise.run_in_thread (fun () ->
-          Kimchi_bindings.Protocol.SRS.Fp.batch_accumulator_check urs
-            (Array.map comms ~f:or_infinite_conv)
-            chals )
+      Kimchi_bindings.Protocol.SRS.Fp.batch_accumulator_check urs
+        (Array.map comms ~f:or_infinite_conv)
+        chals
   end
 end
 

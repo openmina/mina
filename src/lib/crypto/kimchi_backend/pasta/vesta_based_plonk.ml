@@ -84,8 +84,7 @@ module Proof = Plonk_dlog_proof.Make (struct
 
     include Kimchi_bindings.Protocol.Proof.Fp
 
-    let batch_verify vks ts =
-      Promise.run_in_thread (fun () -> batch_verify vks ts)
+    let batch_verify vks ts = batch_verify vks ts
 
     let create_aux ~f:create (pk : Keypair.t) primary auxiliary prev_chals
         prev_comms =
