@@ -1,6 +1,6 @@
 # Verifier compatible with `ocamldebug`
 
-This is a minimal script for verifying a block proof. The code in this branch is slightly modified to avoid the use of threads (which `ocamldebug` cannot handle), and to produce a workable bytecode version (`ocamldebug` needs a bytecode program, it cannot handle native code).
+This is a minimal script for verifying a block proof. The code in this branch is modified to avoid the use of threads (which `ocamldebug` cannot handle), async code (which makes code-stepping more complicated), and to produce a workable bytecode version (`ocamldebug` needs a bytecode program, it cannot handle native code).
 
 The instructions here assume that we are in the `run_verifier_app` branch.
 

@@ -7,7 +7,6 @@ open Mina_base
 open Mina_state
 
 let run () =
-  let open Deferred.Let_syntax in
   let proof_level = Genesis_constants.Proof_level.compiled in
   let constraint_constants = Genesis_constants.Constraint_constants.compiled in
   Stdlib.Printf.printf "Compiling transaction snark module...\n%!" ;
@@ -50,26 +49,25 @@ let run () =
         ( Blockchain_snark.Blockchain.state snark
         , Blockchain_snark.Blockchain.proof snark ) )
   in
-  let verify : (Protocol_state.Value.t * Proof.t) list -> bool Deferred.t =
+  let verify : (Protocol_state.Value.t * Proof.t) list -> bool =
     B.Proof.verify
   in
   Stdlib.Printf.printf "Calling verifier.\n%!" ;
   let before_time = Unix.gettimeofday () in
   Stdlib.Printf.printf "Breakpoint before calling verify: break @ %s %d\n%!"
     __MODULE__ __LINE__ ;
-  let%bind result = verify x in
+  let result = verify x in
   let after_time = Unix.gettimeofday () in
   Stdlib.Printf.printf "Verification time: %fs\n%!" (after_time -. before_time) ;
   match result with
   | true ->
       Stdlib.Printf.printf "Proofs verified successfully" ;
-      exit 0
+      ()
   | false ->
       Stdlib.Printf.printf "Proofs failed to verify" ;
-      exit 1
+      Stdlib.exit 1
 
 let () =
   Random.self_init () ;
   Stdlib.Printf.printf "Starting verifier\n%!" ;
-  let _deferred = run () in
-  never_returns (Scheduler.go ())
+  run ()
