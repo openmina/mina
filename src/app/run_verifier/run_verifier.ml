@@ -5,17 +5,8 @@ open Async
 open Blockchain_snark
 open Mina_base
 open Mina_state
-(*open Mina_base
-  open Cli_lib
-  open Signature_lib
-  open Init*)
-(*module YJ = Yojson.Safe*)
 
 let run () =
-  let _logger = Logger.create () in
-  let conf_dir = "/tmp/test" in
-  (*Mina_lib.Conf_dir.compute_conf_dir None in*)
-  let%bind () = File_system.create_dir conf_dir in
   let open Deferred.Let_syntax in
   let proof_level = Genesis_constants.Proof_level.compiled in
   let constraint_constants = Genesis_constants.Constraint_constants.compiled in
@@ -42,15 +33,7 @@ let run () =
   Stdlib.Printf.printf "Blockchain snark module creation time: %fs\n%!"
     (after_time -. before_time) ;
   Stdlib.Printf.printf "Input JSON:\n%!" ;
-  let%map input_line =
-    if true then Deferred.return (Stdlib.input_line Stdlib.stdin)
-    else
-      match%map Reader.read_line (Lazy.force Reader.stdin) with
-      | `Ok input_line ->
-          input_line
-      | `Eof ->
-          failwith "early EOF while reading json"
-  in
+  let input_line = Stdlib.input_line Stdlib.stdin in
   Stdlib.Printf.printf "Parsing.\n%!" ;
   let input =
     match
@@ -72,6 +55,8 @@ let run () =
   in
   Stdlib.Printf.printf "Calling verifier.\n%!" ;
   let before_time = Unix.gettimeofday () in
+  Stdlib.Printf.printf "Breakpoint before calling verify: break @ %s %d\n%!"
+    __MODULE__ __LINE__ ;
   let%bind result = verify x in
   let after_time = Unix.gettimeofday () in
   Stdlib.Printf.printf "Verification time: %fs\n%!" (after_time -. before_time) ;
@@ -86,5 +71,5 @@ let run () =
 let () =
   Random.self_init () ;
   Stdlib.Printf.printf "Starting verifier\n%!" ;
-  ignore @@ run () ;
+  let _deferred = run () in
   never_returns (Scheduler.go ())

@@ -57,6 +57,7 @@ Blockchain snark module creation time: 13.786125s
 Input JSON:
 Parsing.
 Calling verifier.
+Breakpoint before calling verify: break @ Dune__exe__Run_verifier 58
 Verification time: 2.901198s
 Proofs verified successfully
 ```
@@ -69,7 +70,7 @@ Finally, we will run the verifier program inside `ocamldebug` (manual [here](htt
 > ocamldebug ./_build/default/src/app/run_verifier/run_verifier.bc
         OCaml Debugger version 4.14.0
 
-(ocd) set bigstep 1318010000
+(ocd) set checkpoints off
 (ocd) set arguments < ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
 (ocd) run
 Loading program... done.
@@ -82,12 +83,48 @@ Blockchain snark module creation time: 135.773009s
 Input JSON:
 Parsing.
 Calling verifier.
+Breakpoint before calling verify: break @ Dune__exe__Run_verifier 58
 Verification time: 29.296549s
 Proofs verified successfullyTime: 2126817752
 Program exit.
 (ocd)
 ```
 
-The `set bigstep 1318010000` command tells `ocamldebug` to not take snapshots too often (which are used for backwards debugging), this speeds up the execution considerably.
+The `set checkpoints off` command tells `ocamldebug` to not take snapshots (which are used for backwards debugging), this speeds up the execution considerably.
 The `set arguments < ...` command sets the stdin input.
 Finally, `run` executes the program.
+
+To set a breakpoint before the verification function is called, we just have to issue the command printed by the program. After we reach the breakpoint, checkpoints can be enabled again with `set checkpoints on`. This will slow the execution, but allow the debugger to step backwards too.
+
+```
+> ocamldebug ./_build/default/src/app/run_verifier/run_verifier.bc
+        OCaml Debugger version 4.14.0
+
+(ocd) set checkpoints off
+(ocd) set arguments < ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
+(ocd) break @ Dune__exe__Run_verifier 58
+Loading program... done.
+Breakpoint 1 at 0:19805800: file src/app/run_verifier/run_verifier.ml, line 57, characters 21-41
+(ocd) run
+Starting verifier
+Compiling transaction snark module...
+Transaction_snark.system: 2.009m
+Transaction snark module creation time: 120.512652s
+Compiling blockchain snark module...
+Blockchain snark module creation time: 158.718545s
+Input JSON:
+Parsing.
+Calling verifier.
+Time: 1890738907 - pc: 0:19805808 - module Dune__exe__Run_verifier
+Breakpoint: 1
+58   <|b|>Stdlib.Printf.printf "Breakpoint before calling verify: break @ %s %d\n%!" __MODULE__ __LINE__;
+(ocd) set checkpoints on
+(ocd) step
+Time: 1890738908 - pc: 0:234308 - module Stdlib__Printf
+31 let printf fmt = <|b|>fprintf stdout fmt
+(ocd) step
+Time: 1890738909 - pc: 0:234556 - module Stdlib__Printf
+27 let fprintf oc fmt = <|b|>kfprintf ignore oc fmt
+(ocd)
+```
+
