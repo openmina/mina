@@ -13,6 +13,8 @@ Also that the data from [this repository](https://github.com/name-placeholder/mi
 ```
 # Setup opam env
 eval $(opam env)
+# Optional step to add support for ocamldebug to VScode
+opam pin add earlybird git@github.com:nojb/ocamlearlybird.git\#414
 # Build the bytecode program
 env DUNE_PROFILE=devnet dune build src/app/run_verifier/run_verifier.bc
 # Build the native program
@@ -128,3 +130,42 @@ Time: 1890738909 - pc: 0:234556 - module Stdlib__Printf
 (ocd)
 ```
 
+## VScode ocamldebug integration
+
+First, install a fork of the extension backend by pinning it:
+
+```
+opam pin add ocamlearlybird https://github.com/nojb/ocamlearlybird.git\#414
+```
+
+Then install the forked extension:
+
+```
+code --install-extension src/app/run_verifier/ocamlearlybird-1.2.0.vsix
+```
+
+And finally, add this VSCode [debugger configuration](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations):
+
+```
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "run_verifier",
+            "type": "ocamlearlybird",
+            "request": "launch",
+            "stopOnEntry": true,
+            "console": "integratedTerminal",
+            "program": "${workspaceFolder}/_build/default/src/app/run_verifier/run_verifier.bc",
+            "onlyDebugGlob": "<${workspaceFolder}/**/*>",
+            "yieldSteps": 1024,
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "OPAM_SWITCH_PREFIX": "${workspaceFolder}/_opam",
+                "CAML_LD_LIBRARY_PATH": "${workspaceFolder}/_opam/lib/stublibs:${workspaceFolder}/_opam/lib/ocaml/stublibs:${workspaceFolder}/_opam/lib/ocaml"
+
+            }
+        }
+    ]
+}
+```
