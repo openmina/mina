@@ -10,6 +10,12 @@ This assumes that the regular setup described [in the wiki](https://github.com/n
 
 Also that the data from [this repository](https://github.com/name-placeholder/mina-block-verifier-poc) is available (we use the block json data as input)
 
+First, we need to copy the dynamically linked library containing the kimchi code and bindings so that the bytecode program can pick it up (native is linked statically):
+
+```
+cp ./_build/cargo_kimchi_bindgen/debug/libwires_15_stubs.so src/lib/crypto/kimchi_bindings/stubs/dllwires_15_stubs.so
+```
+
 ```
 # Setup opam env
 eval $(opam env)
@@ -28,16 +34,10 @@ _build/default/src/app/run_verifier/run_verifier.exe # native
 _build/default/src/app/run_verifier/run_verifier.bc  # bytecode
 ```
 
-Next, we need to copy the dynamically linked library containing the kimchi code and bindings so that the bytecode program can pick it up (native is linked statically):
-
-```
-cp ./_build/cargo_kimchi_bindgen/debug/libwires_15_stubs.so src/lib/crypto/kimchi_bindings/stubs/dllwires_15_stubs.so
-```
-
 We are going to first run the native program to produce the cached files so that when we run the bytecode version inside `ocamldebug` it runs faster.
 
 ```
-> _build/default/src/app/run_verifier/run_verifier.exe < ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
+> _build/default/src/app/run_verifier/run_verifier.exe ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
 Starting verifier
 Compiling transaction snark module...
 ### VF NOT Found in cache
@@ -73,7 +73,7 @@ Finally, we will run the verifier program inside `ocamldebug` (manual [here](htt
         OCaml Debugger version 4.14.0
 
 (ocd) set checkpoints off
-(ocd) set arguments < ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
+(ocd) set arguments ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
 (ocd) run
 Loading program... done.
 Starting verifier
@@ -93,7 +93,7 @@ Program exit.
 ```
 
 The `set checkpoints off` command tells `ocamldebug` to not take snapshots (which are used for backwards debugging), this speeds up the execution considerably.
-The `set arguments < ...` command sets the stdin input.
+The `set arguments ...` command sets the stdin input.
 Finally, `run` executes the program.
 
 To set a breakpoint before the verification function is called, we just have to issue the command printed by the program. After we reach the breakpoint, checkpoints can be enabled again with `set checkpoints on`. This will slow the execution, but allow the debugger to step backwards too.
@@ -103,7 +103,7 @@ To set a breakpoint before the verification function is called, we just have to 
         OCaml Debugger version 4.14.0
 
 (ocd) set checkpoints off
-(ocd) set arguments < ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
+(ocd) set arguments ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
 (ocd) break @ Dune__exe__Run_verifier 58
 Loading program... done.
 Breakpoint 1 at 0:19805800: file src/app/run_verifier/run_verifier.ml, line 57, characters 21-41
