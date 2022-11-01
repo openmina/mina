@@ -163,7 +163,6 @@ And finally, add this VSCode [debugger configuration](https://code.visualstudio.
             "env": {
                 "OPAM_SWITCH_PREFIX": "${workspaceFolder}/_opam",
                 "CAML_LD_LIBRARY_PATH": "${workspaceFolder}/_opam/lib/stublibs:${workspaceFolder}/_opam/lib/ocaml/stublibs:${workspaceFolder}/_opam/lib/ocaml"
-
             }
         }
     ]
