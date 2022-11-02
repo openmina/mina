@@ -19,8 +19,8 @@ cp ./_build/cargo_kimchi_bindgen/debug/libwires_15_stubs.so src/lib/crypto/kimch
 ```
 # Setup opam env
 eval $(opam env)
-# Optional step to add support for ocamldebug to VScode
-opam pin add earlybird git@github.com:nojb/ocamlearlybird.git\#414
+# Optional step to add support for debugging OCaml to VScode
+opam pin add earlybird git@github.com:tizoc/ocamlearlybird.git\#414-breakpoint-fixes
 # Build the bytecode program
 env DUNE_PROFILE=devnet dune build src/app/run_verifier/run_verifier.bc
 # Build the native program
@@ -34,11 +34,15 @@ _build/default/src/app/run_verifier/run_verifier.exe # native
 _build/default/src/app/run_verifier/run_verifier.bc  # bytecode
 ```
 
+`run_verifier` accepts as arguments a sequence of paths to files containing JSON-encoded state + proof values (either stand-alone, or an array containing a sequence). The files will be parsed and the results verified one by one. Once there are no more files available (or if none was provided) a prompt will ask for another path. If "quit" is provided (either in the prompt or as an argument) the program exits.
+
 We are going to first run the native program to produce the cached files so that when we run the bytecode version inside `ocamldebug` it runs faster.
 
 ```
-> _build/default/src/app/run_verifier/run_verifier.exe ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
+> _build/default/src/app/run_verifier/run_verifier.exe ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json quit
 Starting verifier
+Module name: Dune__exe__Run_verifier
+To set a breakpoint in this file: break @ Dune__exe__Run_verifier LINE
 Compiling transaction snark module...
 ### VF NOT Found in cache
 ### PF NOT Found in cache
@@ -59,83 +63,59 @@ Blockchain snark module creation time: 13.786125s
 Input JSON:
 Parsing.
 Calling verifier.
-Breakpoint before calling verify: break @ Dune__exe__Run_verifier 58
 Verification time: 2.901198s
 Proofs verified successfully
 ```
 
 This execution will output some files into `/tmp/coda_cache_dir/`. These files will be loaded in future runs to avoid some expensive computations.
 
-Finally, we will run the verifier program inside `ocamldebug` (manual [here](https://v2.ocaml.org/manual/debugger.html)):
+Finally, we will run the verifier program inside `ocamldebug` (manual [here](https://v2.ocaml.org/manual/debugger.html)) or the VSCode extension (see bellow):
 
 ```
 > ocamldebug ./_build/default/src/app/run_verifier/run_verifier.bc
         OCaml Debugger version 4.14.0
 
 (ocd) set checkpoints off
-(ocd) set arguments ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
-(ocd) run
+(ocd) break @ Dune__exe__Run_verifier 84
 Loading program... done.
+Breakpoint 1 at 0:19755948: file src/app/run_verifier/run_verifier.ml, line 83, characters 27-47
+(ocd) run
 Starting verifier
+Module name: Dune__exe__Run_verifier
+To set a breakpoint in this file: break @ Dune__exe__Run_verifier LINE
 Compiling transaction snark module...
-Transaction_snark.system: 1.484m
-Transaction snark module creation time: 89.049605s
+Transaction_snark.system: 2.164m
+Transaction snark module creation time: 129.844209s
 Compiling blockchain snark module...
-Blockchain snark module creation time: 135.773009s
-Input JSON:
+Blockchain snark module creation time: 167.108895s
+Input path/to/file.json:
+../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
 Parsing.
 Calling verifier.
-Breakpoint before calling verify: break @ Dune__exe__Run_verifier 58
-Verification time: 29.296549s
-Proofs verified successfullyTime: 2126817752
-Program exit.
-(ocd)
+Time: 1890739160 - pc: 0:19755952 - module Dune__exe__Run_verifier
+Breakpoint: 1
+84         <|b|>let result = verify input in
+(ocd) step
+Time: 1890739161 - pc: 0:12214456 - module Pickles
+1113       let verify ts = <|b|>verify_promise ts
+(ocd) step
+Time: 1890739162 - pc: 0:12214472 - module Pickles
+1105         <|b|>verify_promise
+....<SNIP>....
 ```
 
 The `set checkpoints off` command tells `ocamldebug` to not take snapshots (which are used for backwards debugging), this speeds up the execution considerably.
-The `set arguments ...` command sets the stdin input.
-Finally, `run` executes the program.
+`break @ Dune__exe__Run_verifier 84` sets a breakpoint before the call to `verify`.
+`run` executes the program.
 
-To set a breakpoint before the verification function is called, we just have to issue the command printed by the program. After we reach the breakpoint, checkpoints can be enabled again with `set checkpoints on`. This will slow the execution, but allow the debugger to step backwards too.
-
-```
-> ocamldebug ./_build/default/src/app/run_verifier/run_verifier.bc
-        OCaml Debugger version 4.14.0
-
-(ocd) set checkpoints off
-(ocd) set arguments ../mina-block-verifier-poc/src/data/6324_state_with_proof_for_mina_node_minified.json
-(ocd) break @ Dune__exe__Run_verifier 58
-Loading program... done.
-Breakpoint 1 at 0:19805800: file src/app/run_verifier/run_verifier.ml, line 57, characters 21-41
-(ocd) run
-Starting verifier
-Compiling transaction snark module...
-Transaction_snark.system: 2.009m
-Transaction snark module creation time: 120.512652s
-Compiling blockchain snark module...
-Blockchain snark module creation time: 158.718545s
-Input JSON:
-Parsing.
-Calling verifier.
-Time: 1890738907 - pc: 0:19805808 - module Dune__exe__Run_verifier
-Breakpoint: 1
-58   <|b|>Stdlib.Printf.printf "Breakpoint before calling verify: break @ %s %d\n%!" __MODULE__ __LINE__;
-(ocd) set checkpoints on
-(ocd) step
-Time: 1890738908 - pc: 0:234308 - module Stdlib__Printf
-31 let printf fmt = <|b|>fprintf stdout fmt
-(ocd) step
-Time: 1890738909 - pc: 0:234556 - module Stdlib__Printf
-27 let fprintf oc fmt = <|b|>kfprintf ignore oc fmt
-(ocd)
-```
+After we reach the breakpoint, checkpoints can be enabled again with `set checkpoints on`. This will slow the execution, but allow the debugger to step backwards too.
 
 ## VScode ocamldebug integration
 
 First, install a fork of the extension backend by pinning it:
 
 ```
-opam pin add ocamlearlybird https://github.com/nojb/ocamlearlybird.git\#414
+opam pin add earlybird git@github.com:tizoc/ocamlearlybird.git\#414-breakpoint-fixes
 ```
 
 Then install the forked extension:
@@ -154,11 +134,11 @@ And finally, add this VSCode [debugger configuration](https://code.visualstudio.
             "name": "run_verifier",
             "type": "ocamlearlybird",
             "request": "launch",
-            "stopOnEntry": true,
+            "stopOnEntry": false,
             "console": "integratedTerminal",
             "program": "${workspaceFolder}/_build/default/src/app/run_verifier/run_verifier.bc",
-            "onlyDebugGlob": "<${workspaceFolder}/**/*>",
-            "yieldSteps": 1024,
+            "onlyDebugGlob": "<${workspaceFolder}/src/**/*>",
+            "yieldSteps": 102400,
             "cwd": "${workspaceFolder}",
             "env": {
                 "OPAM_SWITCH_PREFIX": "${workspaceFolder}/_opam",
@@ -168,3 +148,9 @@ And finally, add this VSCode [debugger configuration](https://code.visualstudio.
     ]
 }
 ```
+
+This assumes that the opam switch is local to the mina project directory, if that is not the case (this can be checked with `opam switch`), replace `"${workspaceFolder}/_opam"` inside the paths for the `env` values with the path to the opam switch (usually `~/.opam/SWITCH_NAME`).
+
+Then in the VSCode settings for the "ocamlearlybird" extension enable the "Connect to a running ocamlearlybird server" option (may require a VSCode restart to take effect).
+
+Finally, in a terminal with the opam environment already initialized (`eval $(opam env)`), run the `ocamlearlybird serve` command, and execute the `run_verifier` launcher in VSCode's debug panel. This will open a new terminal tab where `run_verifier` will execute.

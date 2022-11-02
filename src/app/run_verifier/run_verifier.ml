@@ -5,6 +5,8 @@ open Mina_base
 open Mina_state
 
 let parse_json_file path =
+  if String.equal path "quit" then Stdlib.exit 0 ;
+  Stdlib.Printf.printf "Parsing.\n%!" ;
   let json_string = In_channel.read_all path in
   if String.is_prefix json_string ~prefix:"[" then
     [%derive.of_yojson: Blockchain_snark.Blockchain.t list]
@@ -15,12 +17,15 @@ let parse_json_file path =
       ([%derive.of_yojson: Blockchain_snark.Blockchain.t]
          (Yojson.Safe.from_string json_string) )
 
-let get_input () =
-  Stdlib.Printf.printf "Input path/to/file.json:\n%!" ;
+let get_input file =
   let input =
-    let input_line = Stdlib.input_line Stdlib.stdin in
-    Stdlib.Printf.printf "Parsing.\n%!" ;
-    parse_json_file input_line
+    match file with
+    | None ->
+        Stdlib.Printf.printf "Input path/to/file.json:\n%!" ;
+        let input_line = Stdlib.input_line Stdlib.stdin in
+        parse_json_file input_line
+    | Some file ->
+        parse_json_file file
   in
   Result.map input ~f:(fun input ->
       List.map input ~f:(fun snark ->
@@ -28,7 +33,7 @@ let get_input () =
           , Blockchain_snark.Blockchain.proof snark ) ) )
 
 let run () =
-  let files = List.tl_exn @@ Array.to_list @@ Sys.get_argv () in
+  let files = ref @@ List.tl_exn @@ Array.to_list @@ Sys.get_argv () in
   Stdlib.Printf.printf "Module name: %s\n%!" __MODULE__ ;
   Stdlib.Printf.printf "To set a breakpoint in this file: break @ %s LINE\n%!"
     __MODULE__ ;
@@ -59,11 +64,20 @@ let run () =
   let verify : (Protocol_state.Value.t * Proof.t) list -> bool =
     B.Proof.verify
   in
-  let rec repl () =
-    match get_input () with
+  let pop_file () =
+    match !files with
+    | [] ->
+        None
+    | file :: rest ->
+        files := rest ;
+        Some file
+  in
+  let rec loop () =
+    let next_file = pop_file () in
+    match get_input next_file with
     | Error err ->
         Stdlib.Printf.printf "Error processing input: %s\n%!" err ;
-        repl ()
+        loop ()
     | Ok input -> (
         Stdlib.Printf.printf "Calling verifier.\n%!" ;
         let before_time = Unix.gettimeofday () in
@@ -74,19 +88,12 @@ let run () =
         match result with
         | true ->
             Stdlib.Printf.printf "Proofs verified successfully.\n%!" ;
-            repl ()
+            loop ()
         | false ->
             Stdlib.Printf.printf "Proofs failed to verify.\n%!" ;
-            repl () )
+            loop () )
   in
-  let process_files files =
-    match files with
-    | [] ->
-        Stdlib.Printf.printf "No more files to process.\n%!"
-    | _file :: _rest ->
-        Stdlib.exit 0
-  in
-  match files with [] -> repl () | files -> process_files files
+  loop ()
 
 let () =
   Random.self_init () ;
