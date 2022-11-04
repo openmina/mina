@@ -909,6 +909,8 @@ module Make_str (_ : Wire_types.Concrete) = struct
           let to_field_elements =
             let (Typ typ) = typ in
             fun x -> fst (typ.value_to_fields x)
+
+          let sexp_of_t _ = Sexp.Atom "<opaque>"
         end : Intf.Statement_value
           with type t = t )
       in
@@ -943,6 +945,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
   let compile_promise :
       type var value a_var a_value ret_var ret_value auxiliary_var auxiliary_value prev_varss prev_valuess prev_ret_varss prev_ret_valuess widthss heightss max_proofs_verified branches.
          ?self:(var, value, max_proofs_verified, branches) Tag.t
+      -> ?sexp_of_app_state:(value -> Sexp.t)
       -> ?cache:Key_cache.Spec.t list
       -> ?disk_keys:
            (Cache.Step.Key.Verification.t, branches) Vector.t
@@ -993,9 +996,9 @@ module Make_str (_ : Wire_types.Concrete) = struct
    (* This function is an adapter between the user-facing Pickles.compile API
       and the underlying Make(_).compile function which builds the circuits.
    *)
-   fun ?self ?(cache = []) ?disk_keys ?(return_early_digest_exception = false)
-       ~public_input ~auxiliary_typ ~branches ~max_proofs_verified ~name
-       ~constraint_constants ~choices () ->
+   fun ?self ?sexp_of_app_state ?(cache = []) ?disk_keys
+       ?(return_early_digest_exception = false) ~public_input ~auxiliary_typ
+       ~branches ~max_proofs_verified ~name ~constraint_constants ~choices () ->
     let self =
       match self with
       | None ->
@@ -1021,11 +1024,15 @@ module Make_str (_ : Wire_types.Concrete) = struct
       type t = a_var
 
       let to_field_elements = a_var_to_fields
+
+      let sexp_of_t _ = Sexp.Atom "<opaque>"
     end in
     let module A_value = struct
       type t = a_value
 
       let to_field_elements = a_value_to_fields
+
+      let sexp_of_t _ = Sexp.Atom "<opaque>"
     end in
     let module Ret_var = struct
       type t = ret_var
@@ -1086,6 +1093,13 @@ module Make_str (_ : Wire_types.Concrete) = struct
       let to_field_elements =
         let (Typ typ) = typ in
         fun x -> fst (typ.value_to_fields x)
+
+      let sexp_of_t t =
+        match sexp_of_app_state with
+        | None ->
+            Sexp.Atom "<opaque>"
+        | Some f ->
+            f t
     end in
     let module P = struct
       type statement = value
@@ -1127,11 +1141,13 @@ module Make_str (_ : Wire_types.Concrete) = struct
     end in
     (self, cache_handle, (module P), provers)
 
-  let compile ?self ?cache ?disk_keys ~public_input ~auxiliary_typ ~branches
-      ~max_proofs_verified ~name ~constraint_constants ~choices () =
+  let compile ?self ?sexp_of_app_state ?cache ?disk_keys ~public_input
+      ~auxiliary_typ ~branches ~max_proofs_verified ~name ~constraint_constants
+      ~choices () =
     let self, cache_handle, proof_module, provers =
-      compile_promise ?self ?cache ?disk_keys ~public_input ~auxiliary_typ
-        ~branches ~max_proofs_verified ~name ~constraint_constants ~choices ()
+      compile_promise ?self ?sexp_of_app_state ?cache ?disk_keys ~public_input
+        ~auxiliary_typ ~branches ~max_proofs_verified ~name
+        ~constraint_constants ~choices ()
     in
     let rec adjust_provers :
         type a1 a2 a3 a4 s1 s2_inner.

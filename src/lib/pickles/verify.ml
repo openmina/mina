@@ -27,9 +27,52 @@ module Plonk_checks = struct
     Plonk_checks.Make (Shifted_value.Type2) (Plonk_checks.Scalars.Tock)
 end
 
+type 'app_state reduced_messages_for_next_step =
+  ( 'app_state
+  , Tock.Curve.Affine.t Vector.Vector_2.Stable.Latest.t
+  , Tick.Field.t Vector.Vector_16.Stable.Latest.t
+    Vector.Vector_2.Stable.Latest.t )
+  Reduced_messages_for_next_proof_over_same_field.Step.t
+[@@deriving sexp]
+
+type reduced_messages_for_next_wrap =
+  ( Tock.Inner_curve.Affine.t
+  , Reduced_messages_for_next_proof_over_same_field.Wrap.Challenges_vector.t
+    Vector.Vector_15.Stable.Latest.t )
+  Types.Wrap.Proof_state.Messages_for_next_wrap_proof.t
+[@@deriving sexp]
+
 let verify_heterogenous (ts : Instance.t list) =
   let module Plonk = Types.Wrap.Proof_state.Deferred_values.Plonk in
   let module Tick_field = Backend.Tick.Field in
+  let module Debug = struct
+    let sexp_of_scalar_challenge sexp_of_inner sc =
+      sexp_of_inner sc.Kimchi_types.inner
+
+    let sexp_of_challenge_constant =
+      sexp_of_scalar_challenge Challenge.Constant.sexp_of_t
+
+    let sexp_of_plonk =
+      Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
+        sexp_of_challenge_constant
+
+    let sexp_of_shifted_tick_field =
+      Shifted_value.Type1.sexp_of_t Tick_field.sexp_of_t
+
+    let sexp_of_reduced_messages_for_next_wrap x =
+      sexp_of_reduced_messages_for_next_wrap (Obj.magic (Obj.repr x))
+
+    let sexp_of_messages_for_next_step_proof sexp_of_app_state =
+      sexp_of_reduced_messages_for_next_step sexp_of_app_state
+
+    let sexp_of_messages_for_next_step_proof sexp_of_app_state x =
+      sexp_of_messages_for_next_step_proof sexp_of_app_state
+        (Obj.magic (Obj.repr x))
+
+    let sexp_of_bulletproof_challenges =
+      Step_bp_vec.sexp_of_t
+        (Bulletproof_challenge.sexp_of_t sexp_of_challenge_constant)
+  end in
   let tick_field : _ Plonk_checks.field = (module Tick_field) in
   let check, result =
     let r = ref [] in
@@ -49,7 +92,7 @@ let verify_heterogenous (ts : Instance.t list) =
       ~f:(fun
            (T
              ( _max_proofs_verified
-             , _statement
+             , (module A_value)
              , key
              , app_state
              , T
@@ -67,6 +110,18 @@ let verify_heterogenous (ts : Instance.t list) =
               { statement.messages_for_next_step_proof with app_state }
           }
         in
+        let sexp_of_statement =
+          let open Debug in
+          Types.Wrap.Statement.sexp_of_t sexp_of_plonk
+            sexp_of_challenge_constant sexp_of_shifted_tick_field
+            sexp_of_reduced_messages_for_next_wrap
+            Types.Digest.Constant.sexp_of_t
+            (sexp_of_messages_for_next_step_proof A_value.sexp_of_t)
+            sexp_of_bulletproof_challenges Branch_data.sexp_of_t
+        in
+        let sexp = sexp_of_statement statement in
+        Stdlib.Printf.printf "##### statement sexp:\n%s\n%!"
+          (Sexp.to_string_hum sexp) ;
         let open Types.Wrap.Proof_state in
         let sc =
           SC.to_field_constant tick_field ~endo:Endo.Wrap_inner_curve.scalar
@@ -266,7 +321,6 @@ let verify_heterogenous (ts : Instance.t list) =
   in
   Common.time "batch_step_dlog_check" (fun () ->
       check (lazy "batch_step_dlog_check", accumulator_check) ) ;
-  (* TODOX: can it be done without promise?*)
   let dlog_check =
     batch_verify
       (List.map2_exn ts in_circuit_plonks
