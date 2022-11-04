@@ -247,6 +247,8 @@ module Make_str (_ : Wire_types.Concrete) = struct
           let to_field_elements =
             let (Typ typ) = typ in
             fun x -> fst (typ.value_to_fields x)
+
+          let sexp_of_t _ = Sexp.Atom "<opaque>"
         end : Intf.Statement_value
           with type t = t )
       in

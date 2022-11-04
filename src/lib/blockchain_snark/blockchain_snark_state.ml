@@ -386,6 +386,8 @@ module Statement = struct
 
   let to_field_elements (t : t) : Tick.Field.t array =
     [| (Protocol_state.hashes t).state_hash |]
+
+  let sexp_of_t = Protocol_state.Value.sexp_of_t
 end
 
 module Statement_var = struct
@@ -479,7 +481,7 @@ end) : S = struct
 
   let tag, cache_handle, p, Pickles.Provers.[ step ] =
     Pickles.compile () ~cache:Cache_dir.cache ~public_input:(Input typ)
-      ~auxiliary_typ:Typ.unit
+      ~sexp_of_app_state:Statement.sexp_of_t ~auxiliary_typ:Typ.unit
       ~branches:(module Nat.N1)
       ~max_proofs_verified:(module Nat.N2)
       ~name:"blockchain-snark"
