@@ -2,47 +2,71 @@
 
 open Core
 
-type t = { uuid : Uuid.Stable.V1.t; db : (unit[@sexp.opaque]) }
+module Bigstring_frozen = struct
+  module T = struct
+    include Bigstring.Stable.V1
+
+    (* we're not mutating Bigstrings, which would invalidate hashes
+       OK to use these hash functions
+    *)
+    let hash = hash_t_frozen
+
+    let hash_fold_t = hash_fold_t_frozen
+  end
+
+  include T
+  include Hashable.Make_binable (T)
+end
+
+type t =
+  { uuid : Uuid.Stable.V1.t
+  ; table : Bigstring_frozen.t Bigstring_frozen.Table.t
+  }
 [@@deriving sexp]
 
-let create _directory = failwith "unimplemented"
-
-let create_checkpoint _t _dir = failwith "unimplemented"
-
-let make_checkpoint _t _dir = failwith "unimplemented"
+let to_alist t =
+  let unsorted = Bigstring_frozen.Table.to_alist t.table in
+  (* sort by key *)
+  List.sort
+    ~compare:(fun (k1, _) (k2, _) -> Bigstring_frozen.compare k1 k2)
+    unsorted
 
 let get_uuid t = t.uuid
 
-let close _t = failwith "unimplemented"
+let create _ =
+  { uuid = Uuid_unix.create (); table = Bigstring_frozen.Table.create () }
 
-let get _t ~(key : Bigstring.t) : Bigstring.t option =
-  ignore key ; failwith "unimplemented"
+let create_checkpoint t _ =
+  { uuid = Uuid_unix.create ()
+  ; table =
+      Bigstring_frozen.Table.of_alist_exn
+      @@ Bigstring_frozen.Table.to_alist t.table
+  }
 
-let get_batch _t ~(keys : Bigstring.t list) : Bigstring.t option list =
-  ignore keys ; failwith "unimplemented"
+let close _ = ()
 
-let set _t ~(key : Bigstring.t) ~(data : Bigstring.t) : unit =
-  ignore key ; ignore data ; failwith "unimplemented"
+let get t ~key = Bigstring_frozen.Table.find t.table key
 
-let set_batch _t ?(remove_keys = [])
-    ~(key_data_pairs : (Bigstring.t * Bigstring.t) list) : unit =
-  ignore remove_keys ; ignore key_data_pairs ; failwith "unimplemented"
+let get_batch t ~keys = List.map keys ~f:(Bigstring_frozen.Table.find t.table)
+
+let set t ~key ~data = Bigstring_frozen.Table.set t.table ~key ~data
+
+let set_batch t ?(remove_keys = []) ~key_data_pairs =
+  List.iter key_data_pairs ~f:(fun (key, data) -> set t ~key ~data) ;
+  List.iter remove_keys ~f:(fun key ->
+      Bigstring_frozen.Table.remove t.table key )
+
+let remove t ~key = Bigstring_frozen.Table.remove t.table key
+
+let make_checkpoint _ _ = ()
 
 module Batch = struct
   type t = unit
 
-  let remove _t ~key = ignore key ; failwith "unimplemented"
+  let remove t ~key = ignore t ; ignore key ; failwith "unimplemented"
 
-  let set _t ~key ~data = ignore key ; ignore data ; failwith "unimplemented"
+  let set t ~key ~data =
+    ignore t ; ignore key ; ignore data ; failwith "unimplemented"
 
-  let with_batch _t ~f = ignore f ; failwith "unimplemented"
+  let with_batch t ~f = ignore t ; f ; failwith "unimplemented"
 end
-
-let copy _t = failwith "copy: not implemented"
-
-let remove _t ~(key : Bigstring.t) : unit =
-  ignore key ; failwith "unimplemented"
-
-let to_alist _t : (Bigstring.t * Bigstring.t) list = failwith "unimplemented"
-
-let to_bigstring = Bigstring.of_string
