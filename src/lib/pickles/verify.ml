@@ -46,15 +46,25 @@ let verify_heterogenous (ts : Instance.t list) =
   let module Plonk = Types.Wrap.Proof_state.Deferred_values.Plonk in
   let module Tick_field = Backend.Tick.Field in
   let module Debug = struct
+    let debugging = ref true
+
+    let value label ~loc ~sexp =
+      if !debugging then
+        Stdlib.Printf.printf "##### %s sexp @ %s:\n%s\n%!" label loc
+          (Sexp.to_string_hum sexp)
+
+    let checkpoint label ~loc =
+      if !debugging then Stdlib.Printf.printf "***** %s @ %s\n%!" label loc
+
     let sexp_of_scalar_challenge sexp_of_inner sc =
       sexp_of_inner sc.Kimchi_types.inner
 
-    let sexp_of_challenge_constant =
+    let sexp_of_constant_scallar_challenge =
       sexp_of_scalar_challenge Challenge.Constant.sexp_of_t
 
     let sexp_of_plonk =
       Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
-        sexp_of_challenge_constant
+        sexp_of_constant_scallar_challenge
 
     let sexp_of_shifted_tick_field =
       Shifted_value.Type1.sexp_of_t Tick_field.sexp_of_t
@@ -71,7 +81,7 @@ let verify_heterogenous (ts : Instance.t list) =
 
     let sexp_of_bulletproof_challenges =
       Step_bp_vec.sexp_of_t
-        (Bulletproof_challenge.sexp_of_t sexp_of_challenge_constant)
+        (Bulletproof_challenge.sexp_of_t sexp_of_constant_scallar_challenge)
   end in
   let tick_field : _ Plonk_checks.field = (module Tick_field) in
   let check, result =
@@ -88,6 +98,7 @@ let verify_heterogenous (ts : Instance.t list) =
     in
     ((fun (lab, b) -> if not b then r := lab :: !r), result)
   in
+  Debug.checkpoint "Build in_circuit_plonks and computed_bp_chals" ~loc:__LOC__ ;
   let in_circuit_plonks, computed_bp_chals =
     List.map ts
       ~f:(fun
@@ -105,6 +116,11 @@ let verify_heterogenous (ts : Instance.t list) =
                  } ) )
          ->
         Timer.start __LOC__ ;
+        Debug.checkpoint
+          "Add build a Types.Wrap.Statement.t from a \
+           Types.Wrap.Statement.Minimal.t by embedding app_state inside \
+           statement.messages_for_next_step_proof"
+          ~loc:__LOC__ ;
         let statement =
           { statement with
             messages_for_next_step_proof =
@@ -114,30 +130,52 @@ let verify_heterogenous (ts : Instance.t list) =
         let sexp_of_statement =
           let open Debug in
           Types.Wrap.Statement.sexp_of_t sexp_of_plonk
-            sexp_of_challenge_constant sexp_of_shifted_tick_field
+            sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
             sexp_of_reduced_messages_for_next_wrap
             Types.Digest.Constant.sexp_of_t
             (sexp_of_messages_for_next_step_proof A_value.sexp_of_t)
             sexp_of_bulletproof_challenges Branch_data.sexp_of_t
         in
         let sexp = sexp_of_statement statement in
-        Stdlib.Printf.printf "##### statement sexp:\n%s\n%!"
-          (Sexp.to_string_hum sexp) ;
+        Debug.value "statement" ~sexp ~loc:__LOC__ ;
         let open Types.Wrap.Proof_state in
         let sc =
           SC.to_field_constant tick_field ~endo:Endo.Wrap_inner_curve.scalar
         in
         Timer.clock __LOC__ ;
-        let { Deferred_values.xi
-            ; plonk = plonk0
-            ; combined_inner_product
-            ; branch_data
-            ; bulletproof_challenges
-            ; b
-            } =
+        let sexp =
+          let open Debug in
+          Deferred_values.sexp_of_t
+            (Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
+               sexp_of_constant_scallar_challenge )
+            sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
+            sexp_of_bulletproof_challenges Branch_data.sexp_of_t
+            statement.proof_state.deferred_values
+        in
+        Debug.checkpoint "Deferred_values.map_challenges" ~loc:__LOC__ ;
+        Debug.value
+          "Deferred_values.map_challenges input: \
+           statement.proof_state.deferred_values"
+          ~sexp ~loc:__LOC__ ;
+        let ( { Deferred_values.xi
+              ; plonk = plonk0
+              ; combined_inner_product
+              ; branch_data
+              ; bulletproof_challenges
+              ; b
+              } as output ) =
           Deferred_values.map_challenges ~f:Challenge.Constant.to_tick_field
             ~scalar:sc statement.proof_state.deferred_values
         in
+        let sexp =
+          let open Debug in
+          Deferred_values.sexp_of_t
+            (Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
+               sexp_of_constant_scallar_challenge )
+            Tick.Field.sexp_of_t sexp_of_shifted_tick_field
+            sexp_of_bulletproof_challenges Branch_data.sexp_of_t output
+        in
+        Debug.value "Deferred_values.map_challenges output" ~sexp ~loc:__LOC__ ;
         let zeta = sc plonk0.zeta in
         let alpha = sc plonk0.alpha in
         let step_domain = Branch_data.domain branch_data in
@@ -160,6 +198,11 @@ let verify_heterogenous (ts : Instance.t list) =
           ; feature_flags = plonk0.feature_flags
           }
         in
+        let sexp =
+          Plonk.Minimal.sexp_of_t Tick.Field.sexp_of_t Tick.Field.sexp_of_t
+            tick_plonk_minimal
+        in
+        Debug.value "tick_plonk_minimal" ~sexp ~loc:__LOC__ ;
         let tick_combined_evals =
           Plonk_checks.evals_of_split_evals
             (module Tick.Field)
@@ -352,25 +395,23 @@ let verify_heterogenous (ts : Instance.t list) =
   in
   let sexp_of_plonk_in_circuit_lookup =
     let open Debug in
-    Plonk.In_circuit.Lookup.sexp_of_t sexp_of_challenge_constant
+    Plonk.In_circuit.Lookup.sexp_of_t sexp_of_constant_scallar_challenge
       sexp_of_shifted_tick_field
   in
   let sexp_of_plonk_in_circuit =
     let open Debug in
     Plonk.In_circuit.sexp_of_t Challenge.Constant.sexp_of_t
-      sexp_of_challenge_constant sexp_of_shifted_tick_field
+      sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
       (Option.sexp_of_t sexp_of_plonk_in_circuit_lookup)
   in
   let sexp = List.sexp_of_t sexp_of_plonk_in_circuit in_circuit_plonks in
-  Stdlib.Printf.printf "##### in_circuit_plonks sexp:\n%s\n%!"
-    (Sexp.to_string_hum sexp) ;
+  Debug.value "in_circuit_plonks" ~sexp ~loc:__LOC__ ;
   let sexp =
     List.sexp_of_t
       (Vector.sexp_of_t Tick.Field.sexp_of_t Tick.Rounds.n)
       computed_bp_chals
   in
-  Stdlib.Printf.printf "##### computed_bp_chals sexp:\n%s\n%!"
-    (Sexp.to_string_hum sexp) ;
+  Debug.value "computed_bp_chals" ~sexp ~loc:__LOC__ ;
   let open Backend.Tock.Proof in
   let open Promise.Let_syntax in
   let accumulator_check_inputs =
@@ -386,8 +427,7 @@ let verify_heterogenous (ts : Instance.t list) =
          (Vector.sexp_of_t Tick.Field.sexp_of_t Tick.Rounds.n) )
       accumulator_check_inputs
   in
-  Stdlib.Printf.printf "##### accumulator_check_inputs sexp:\n%s\n%!"
-    (Sexp.to_string_hum sexp) ;
+  Debug.value "accumulator_check_inputs" ~sexp ~loc:__LOC__ ;
   let%bind accumulator_check =
     Ipa.Step.accumulator_check accumulator_check_inputs
   in
@@ -430,10 +470,11 @@ let verify_heterogenous (ts : Instance.t list) =
            let sexp_of_prepared_statement =
              let open Debug in
              Types.Wrap.Statement.In_circuit.sexp_of_t
-               Challenge.Constant.sexp_of_t sexp_of_challenge_constant
+               Challenge.Constant.sexp_of_t sexp_of_constant_scallar_challenge
                sexp_of_shifted_tick_field
                (Option.sexp_of_t
-                  (Plonk.In_circuit.Lookup.sexp_of_t sexp_of_challenge_constant
+                  (Plonk.In_circuit.Lookup.sexp_of_t
+                     sexp_of_constant_scallar_challenge
                      sexp_of_shifted_tick_field ) )
                (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
                Types.Digest.Constant.sexp_of_t
@@ -441,15 +482,18 @@ let verify_heterogenous (ts : Instance.t list) =
                sexp_of_bulletproof_challenges Branch_data.sexp_of_t
            in
            let sexp = sexp_of_prepared_statement prepared_statement in
-           Stdlib.Printf.printf "##### prepared statement sexp:\n%s\n%!"
-             (Sexp.to_string_hum sexp) ;
+           Debug.value "prepared statement" ~sexp ~loc:__LOC__ ;
            let input =
              tock_unpadded_public_input_of_statement prepared_statement
            in
            Stdlib.Printf.printf "##### key json:\n%s\n%!"
              (Yojson.Safe.pretty_to_string @@ Verification_key.to_yojson key) ;
-           printf !"##### t.proof sexp:\n%{sexp:Tock.Proof.t}\n%!" t.proof ;
-           printf !"##### input sexp:\n%{sexp:Fq.t list}\n%!" input ;
+           Debug.value "t.proof"
+             ~sexp:(Tock.Proof.sexp_of_t t.proof)
+             ~loc:__LOC__ ;
+           Debug.value "input"
+             ~sexp:(List.sexp_of_t Fq.sexp_of_t input)
+             ~loc:__LOC__ ;
            ( key.index
            , t.proof
            , input
