@@ -308,7 +308,20 @@ let verify_heterogenous (ts : Instance.t list) =
         (plonk, bulletproof_challenges) )
     |> List.unzip
   in
-  (* TODOX: pring sexp plonks *)
+  let sexp_of_plonk_in_circuit_lookup =
+    let open Debug in
+    Plonk.In_circuit.Lookup.sexp_of_t sexp_of_challenge_constant
+      sexp_of_shifted_tick_field
+  in
+  let sexp_of_plonk_in_circuit =
+    let open Debug in
+    Plonk.In_circuit.sexp_of_t Challenge.Constant.sexp_of_t
+      sexp_of_challenge_constant sexp_of_shifted_tick_field
+      (Option.sexp_of_t sexp_of_plonk_in_circuit_lookup)
+  in
+  let sexp = List.sexp_of_t sexp_of_plonk_in_circuit in_circuit_plonks in
+  Stdlib.Printf.printf "##### in_circuit_plonks sexp:\n%s\n%!"
+    (Sexp.to_string_hum sexp) ;
   let open Backend.Tock.Proof in
   let open Promise.Let_syntax in
   let accumulator_check =
