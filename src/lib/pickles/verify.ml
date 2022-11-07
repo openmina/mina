@@ -322,17 +322,31 @@ let verify_heterogenous (ts : Instance.t list) =
   let sexp = List.sexp_of_t sexp_of_plonk_in_circuit in_circuit_plonks in
   Stdlib.Printf.printf "##### in_circuit_plonks sexp:\n%s\n%!"
     (Sexp.to_string_hum sexp) ;
+  let sexp =
+    List.sexp_of_t
+      (Vector.sexp_of_t Tick.Field.sexp_of_t Tick.Rounds.n)
+      computed_bp_chals
+  in
+  Stdlib.Printf.printf "##### computed_bp_chals sexp:\n%s\n%!"
+    (Sexp.to_string_hum sexp) ;
   let open Backend.Tock.Proof in
   let open Promise.Let_syntax in
-  let accumulator_check =
-    Ipa.Step.accumulator_check
-      (List.map ts ~f:(fun (T (_, _, _, _, T t)) ->
-           ( t.statement.proof_state.messages_for_next_wrap_proof
-               .challenge_polynomial_commitment
-           , Ipa.Step.compute_challenges
-               t.statement.proof_state.deferred_values.bulletproof_challenges ) )
-      )
+  let accumulator_check_inputs =
+    List.map ts ~f:(fun (T (_, _, _, _, T t)) ->
+        ( t.statement.proof_state.messages_for_next_wrap_proof
+            .challenge_polynomial_commitment
+        , Ipa.Step.compute_challenges
+            t.statement.proof_state.deferred_values.bulletproof_challenges ) )
   in
+  let sexp =
+    List.sexp_of_t
+      (sexp_of_pair Wrap.Step_acc.sexp_of_t
+         (Vector.sexp_of_t Tick.Field.sexp_of_t Tick.Rounds.n) )
+      accumulator_check_inputs
+  in
+  Stdlib.Printf.printf "##### accumulator_check_inputs sexp:\n%s\n%!"
+    (Sexp.to_string_hum sexp) ;
+  let accumulator_check = Ipa.Step.accumulator_check accumulator_check_inputs in
   Common.time "batch_step_dlog_check" (fun () ->
       check (lazy "batch_step_dlog_check", accumulator_check) ) ;
   let dlog_check =
