@@ -442,8 +442,8 @@ let verify_heterogenous (ts : Instance.t list) =
            let input =
              tock_unpadded_public_input_of_statement prepared_statement
            in
-           Stdlib.Printf.printf "##### key json:\n%s\n%!"
-             (Yojson.Safe.pretty_to_string @@ Verification_key.to_yojson key) ;
+           (*Stdlib.Printf.printf "##### key json:\n%s\n%!"
+             (Yojson.Safe.pretty_to_string @@ Verification_key.to_yojson key) ;*)
            Debug.value "t.proof"
              ~sexp:(Tock.Proof.sexp_of_t t.proof)
              ~loc:__LOC__ ;
