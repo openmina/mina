@@ -389,86 +389,84 @@ let verify_heterogenous (ts : Instance.t list) =
   let accumulator_check = Ipa.Step.accumulator_check accumulator_check_inputs in
   Common.time "batch_step_dlog_check" (fun () ->
       check (lazy "batch_step_dlog_check", accumulator_check) ) ;
-  let dlog_check =
-    batch_verify
-      (List.map2_exn ts in_circuit_plonks
-         ~f:(fun
-              (T
-                ( (module Max_proofs_verified)
-                , (module A_value)
-                , key
-                , app_state
-                , T t ) )
-              plonk
-            ->
-           let prepared_statement : _ Types.Wrap.Statement.In_circuit.t =
-             { messages_for_next_step_proof =
-                 Common.hash_messages_for_next_step_proof
-                   ~app_state:A_value.to_field_elements
-                   (Reduced_messages_for_next_proof_over_same_field.Step.prepare
-                      ~dlog_plonk_index:key.commitments
-                      { t.statement.messages_for_next_step_proof with
-                        app_state
-                      } )
-             ; proof_state =
-                 { t.statement.proof_state with
-                   deferred_values =
-                     { t.statement.proof_state.deferred_values with plonk }
-                 ; messages_for_next_wrap_proof =
-                     Wrap_hack.hash_messages_for_next_wrap_proof
-                       Max_proofs_verified.n
-                       (Reduced_messages_for_next_proof_over_same_field.Wrap
-                        .prepare
-                          t.statement.proof_state.messages_for_next_wrap_proof )
-                 }
-             }
-           in
-           let sexp_of_prepared_statement =
-             let open Debug in
-             Types.Wrap.Statement.In_circuit.sexp_of_t
-               Challenge.Constant.sexp_of_t sexp_of_constant_scallar_challenge
-               sexp_of_shifted_tick_field
-               (Option.sexp_of_t
-                  (Plonk.In_circuit.Lookup.sexp_of_t
-                     sexp_of_constant_scallar_challenge
-                     sexp_of_shifted_tick_field ) )
-               (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
-               Types.Digest.Constant.sexp_of_t
-               (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
-               sexp_of_bulletproof_challenges Branch_data.sexp_of_t
-           in
-           let sexp = sexp_of_prepared_statement prepared_statement in
-           Debug.value "prepared statement" ~sexp ~loc:__LOC__ ;
-           let input =
-             tock_unpadded_public_input_of_statement prepared_statement
-           in
-           (*Stdlib.Printf.printf "##### key json:\n%s\n%!"
-             (Yojson.Safe.pretty_to_string @@ Verification_key.to_yojson key) ;*)
-           Debug.value "t.proof"
-             ~sexp:(Tock.Proof.sexp_of_t t.proof)
-             ~loc:__LOC__ ;
-           Debug.value "input"
-             ~sexp:(List.sexp_of_t Fq.sexp_of_t input)
-             ~loc:__LOC__ ;
-           ( key.index
-           , t.proof
-           , input
-           , Some
-               (Wrap_hack.pad_accumulator
-                  (Vector.map2
-                     ~f:(fun g cs ->
-                       { Challenge_polynomial.challenges =
-                           Vector.to_array (Ipa.Wrap.compute_challenges cs)
-                       ; commitment = g
-                       } )
-                     (Vector.extend_exn
-                        t.statement.messages_for_next_step_proof
-                          .challenge_polynomial_commitments
-                        Max_proofs_verified.n
-                        (Lazy.force Dummy.Ipa.Wrap.sg) )
-                     t.statement.proof_state.messages_for_next_wrap_proof
-                       .old_bulletproof_challenges ) ) ) ) )
+  Debug.checkpoint "Preparing inputs for dlog_check batch_verify" ~loc:__LOC__ ;
+  let dlog_check_inputs =
+    List.map2_exn ts in_circuit_plonks
+      ~f:(fun
+           (T
+             ( (module Max_proofs_verified)
+             , (module A_value)
+             , key
+             , app_state
+             , T t ) )
+           plonk
+         ->
+        let prepared_statement : _ Types.Wrap.Statement.In_circuit.t =
+          { messages_for_next_step_proof =
+              Common.hash_messages_for_next_step_proof
+                ~app_state:A_value.to_field_elements
+                (Reduced_messages_for_next_proof_over_same_field.Step.prepare
+                   ~dlog_plonk_index:key.commitments
+                   { t.statement.messages_for_next_step_proof with app_state } )
+          ; proof_state =
+              { t.statement.proof_state with
+                deferred_values =
+                  { t.statement.proof_state.deferred_values with plonk }
+              ; messages_for_next_wrap_proof =
+                  Wrap_hack.hash_messages_for_next_wrap_proof
+                    Max_proofs_verified.n
+                    (Reduced_messages_for_next_proof_over_same_field.Wrap
+                     .prepare
+                       t.statement.proof_state.messages_for_next_wrap_proof )
+              }
+          }
+        in
+        let sexp_of_prepared_statement =
+          let open Debug in
+          Types.Wrap.Statement.In_circuit.sexp_of_t Challenge.Constant.sexp_of_t
+            sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
+            (Option.sexp_of_t
+               (Plonk.In_circuit.Lookup.sexp_of_t
+                  sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field ) )
+            (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
+            Types.Digest.Constant.sexp_of_t
+            (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
+            sexp_of_bulletproof_challenges Branch_data.sexp_of_t
+        in
+        let sexp = sexp_of_prepared_statement prepared_statement in
+        Debug.value "prepared statement" ~sexp ~loc:__LOC__ ;
+        let input =
+          tock_unpadded_public_input_of_statement prepared_statement
+        in
+        (*Stdlib.Printf.printf "##### key json:\n%s\n%!"
+          (Yojson.Safe.pretty_to_string @@ Verification_key.to_yojson key) ;*)
+        Debug.value "t.proof" ~sexp:(Tock.Proof.sexp_of_t t.proof) ~loc:__LOC__ ;
+        Debug.value "input"
+          ~sexp:(List.sexp_of_t Fq.sexp_of_t input)
+          ~loc:__LOC__ ;
+        let padded_accumulator =
+          Wrap_hack.pad_accumulator
+            (Vector.map2
+               ~f:(fun g cs ->
+                 { Challenge_polynomial.challenges =
+                     Vector.to_array (Ipa.Wrap.compute_challenges cs)
+                 ; commitment = g
+                 } )
+               (Vector.extend_exn
+                  t.statement.messages_for_next_step_proof
+                    .challenge_polynomial_commitments Max_proofs_verified.n
+                  (Lazy.force Dummy.Ipa.Wrap.sg) )
+               t.statement.proof_state.messages_for_next_wrap_proof
+                 .old_bulletproof_challenges )
+        in
+        let sexp =
+          List.sexp_of_t Challenge_polynomial.sexp_of_t padded_accumulator
+        in
+        Debug.value "padded_accumulator" ~sexp ~loc:__LOC__ ;
+        (key.index, t.proof, input, Some padded_accumulator) )
   in
+  Debug.checkpoint "Call dlog_check batch_verify" ~loc:__LOC__ ;
+  let dlog_check = batch_verify dlog_check_inputs in
   Common.time "dlog_check" (fun () -> check (lazy "dlog_check", dlog_check)) ;
   match result () with
   | Ok () ->
