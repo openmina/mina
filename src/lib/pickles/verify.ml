@@ -350,6 +350,7 @@ let verify_heterogenous (ts : Instance.t list) =
         (plonk, bulletproof_challenges) )
     |> List.unzip
   in
+  (* TODOX: pring sexp plonks *)
   let open Backend.Tock.Proof in
   let open Promise.Let_syntax in
   let%bind accumulator_check =
@@ -397,9 +398,29 @@ let verify_heterogenous (ts : Instance.t list) =
                  }
              }
            in
+           let sexp_of_prepared_statement =
+             let open Debug in
+             Types.Wrap.Statement.In_circuit.sexp_of_t
+               Challenge.Constant.sexp_of_t sexp_of_challenge_constant
+               sexp_of_shifted_tick_field
+               (Option.sexp_of_t
+                  (Plonk.In_circuit.Lookup.sexp_of_t sexp_of_challenge_constant
+                     sexp_of_shifted_tick_field ) )
+               (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
+               Types.Digest.Constant.sexp_of_t
+               (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
+               sexp_of_bulletproof_challenges Branch_data.sexp_of_t
+           in
+           let sexp = sexp_of_prepared_statement prepared_statement in
+           Stdlib.Printf.printf "##### prepared statement sexp:\n%s\n%!"
+             (Sexp.to_string_hum sexp) ;
            let input =
              tock_unpadded_public_input_of_statement prepared_statement
            in
+           Stdlib.Printf.printf "##### key json:\n%s\n%!"
+             (Yojson.Safe.pretty_to_string @@ Verification_key.to_yojson key) ;
+           printf !"##### t.proof sexp:\n%{sexp:Tock.Proof.t}\n%!" t.proof ;
+           printf !"##### input sexp:\n%{sexp:Fq.t list}\n%!" input ;
            ( key.index
            , t.proof
            , input
