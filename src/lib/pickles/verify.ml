@@ -445,23 +445,33 @@ let verify_heterogenous (ts : Instance.t list) =
              , T t ) )
            plonk
          ->
+        let messages_for_next_step_proof =
+          Common.hash_messages_for_next_step_proof
+            ~app_state:A_value.to_field_elements
+            (Reduced_messages_for_next_proof_over_same_field.Step.prepare
+               ~dlog_plonk_index:key.commitments
+               { t.statement.messages_for_next_step_proof with app_state } )
+        in
+        let messages_for_next_wrap_proof =
+          Wrap_hack.hash_messages_for_next_wrap_proof Max_proofs_verified.n
+            (Reduced_messages_for_next_proof_over_same_field.Wrap.prepare
+               t.statement.proof_state.messages_for_next_wrap_proof )
+        in
+        Debug.value "messages_for_next_step_proof" ~loc:__LOC__
+          ~sexp:
+            (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n
+               messages_for_next_step_proof ) ;
+        Debug.value "messages_for_next_wrap_proof" ~loc:__LOC__
+          ~sexp:
+            (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n
+               messages_for_next_wrap_proof ) ;
         let prepared_statement : _ Types.Wrap.Statement.In_circuit.t =
-          { messages_for_next_step_proof =
-              Common.hash_messages_for_next_step_proof
-                ~app_state:A_value.to_field_elements
-                (Reduced_messages_for_next_proof_over_same_field.Step.prepare
-                   ~dlog_plonk_index:key.commitments
-                   { t.statement.messages_for_next_step_proof with app_state } )
+          { messages_for_next_step_proof
           ; proof_state =
               { t.statement.proof_state with
                 deferred_values =
                   { t.statement.proof_state.deferred_values with plonk }
-              ; messages_for_next_wrap_proof =
-                  Wrap_hack.hash_messages_for_next_wrap_proof
-                    Max_proofs_verified.n
-                    (Reduced_messages_for_next_proof_over_same_field.Wrap
-                     .prepare
-                       t.statement.proof_state.messages_for_next_wrap_proof )
+              ; messages_for_next_wrap_proof
               }
           }
         in
