@@ -48,6 +48,8 @@ let verify_heterogenous (ts : Instance.t list) =
   let module Debug = struct
     let debugging = ref true
 
+    let shifted_tick_field_as_int = ref false
+
     let value label ~loc ~sexp =
       if !debugging then
         Stdlib.Printf.printf "##### %s sexp @ %s:\n%s\n%!" label loc
@@ -67,7 +69,13 @@ let verify_heterogenous (ts : Instance.t list) =
         sexp_of_constant_scallar_challenge
 
     let sexp_of_shifted_tick_field =
-      Shifted_value.Type1.sexp_of_t Tick_field.sexp_of_t
+      let sexp_of_tick_as_int tf =
+        tf |> Tick.Field.to_bigint |> Pasta_bindings.BigInt256.to_string
+        |> String.sexp_of_t
+      in
+      Shifted_value.Type1.sexp_of_t
+        ( if !shifted_tick_field_as_int then sexp_of_tick_as_int
+        else Tick.Field.sexp_of_t )
 
     let sexp_of_reduced_messages_for_next_wrap x =
       sexp_of_reduced_messages_for_next_wrap (Obj.magic (Obj.repr x))
