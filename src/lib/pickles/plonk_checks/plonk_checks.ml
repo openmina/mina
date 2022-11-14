@@ -213,7 +213,7 @@ let scalars_env (type t) (module F : Field_intf with type t = t) ~endo ~mds
 
 (* TODO: not true anymore if lookup is used *)
 
-(** The offset of the powers of alpha for the permutation. 
+(** The offset of the powers of alpha for the permutation.
 (see https://github.com/o1-labs/proof-systems/blob/516b16fc9b0fdcab5c608cd1aea07c0c66b6675d/kimchi/src/index.rs#L190) *)
 let perm_alpha0 : int = 21
 
@@ -326,7 +326,7 @@ let tick_lookup_constant_term_part (type a)
       )
 
 module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
-  (** Computes the ft evaluation at zeta. 
+  (** Computes the ft evaluation at zeta.
   (see https://o1-labs.github.io/mina-book/crypto/plonk/maller_15.html#the-evaluation-of-l)
   *)
   let ft_eval0 (type t) (module F : Field_intf with type t = t) ~domain
@@ -378,7 +378,8 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
 
   (** Computes the list of scalars used in the linearization. *)
   let derive_plonk (type t) ?(with_label = fun _ (f : unit -> t) -> f ())
-      (module F : Field_intf with type t = t) ~(env : t Scalars.Env.t) ~shift =
+      (module F : Field_intf with type t = t) ~(env : t Scalars.Env.t)
+      ?print_sexp_of_fields ~shift =
     let _ = with_label in
     let open F in
     fun ({ alpha; beta; gamma; zeta; joint_combiner } : _ Minimal.t)
@@ -406,9 +407,8 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
         let m2 = l2 * r2 in
         [ e0 generic_selector; l1; r1; o1; m1; l2; r2; o2; m2 ]
       in
-      In_circuit.map_fields
-        ~f:(Shifted_value.of_field (module F) ~shift)
-        { alpha
+      let before_map_fields =
+        { In_circuit.alpha
         ; beta
         ; gamma
         ; zeta
@@ -429,20 +429,29 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
                 Plonk_types.Opt.None
             | Some joint_combiner ->
                 Some
-                  { joint_combiner
+                  { In_circuit.Lookup.joint_combiner
                   ; lookup_gate =
                       Lazy.force
                         (Hashtbl.find_exn index_terms
                            (LookupKindIndex LookupGate) )
                   } )
         }
+      in
+      ( match print_sexp_of_fields with
+      | Some print_sexp_of_fields ->
+          print_sexp_of_fields before_map_fields
+      | None ->
+          () ) ;
+      In_circuit.map_fields
+        ~f:(Shifted_value.of_field (module F) ~shift)
+        before_map_fields
 
   (** Check that computed proof scalars match the expected ones,
     using the native field.
-    Note that the expected scalars are used to check 
-    the linearization in a proof over the other field 
-    (where those checks are more efficient), 
-    but we deferred the arithmetic checks until here 
+    Note that the expected scalars are used to check
+    the linearization in a proof over the other field
+    (where those checks are more efficient),
+    but we deferred the arithmetic checks until here
     so that we have the efficiency of the native field.
   *)
   let checked (type t)
