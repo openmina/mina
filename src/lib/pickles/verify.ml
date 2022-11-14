@@ -215,6 +215,13 @@ let verify_heterogenous (ts : Instance.t list) =
             evals.evals.evals ~rounds:(Nat.to_int Tick.Rounds.n) ~zeta ~zetaw
           |> Plonk_types.Evals.to_in_circuit
         in
+        let sexp =
+          Plonk_types.Evals.In_circuit.sexp_of_t
+            (sexp_of_pair Tick.Field.sexp_of_t Tick.Field.sexp_of_t)
+            (fun _ -> Sexp.Atom "<opaque>")
+            tick_combined_evals
+        in
+        Debug.value "tick_combined_evals" ~sexp ~loc:__LOC__ ;
         let tick_domain =
           Plonk_checks.domain
             (module Tick.Field)
