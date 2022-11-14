@@ -230,7 +230,7 @@ module Evals = struct
         ; table : 'f
         ; runtime : ('f, 'bool) Opt.t
         }
-      [@@deriving hlist, fields]
+      [@@deriving hlist, fields, sexp]
 
       let map { sorted; aggreg; table; runtime } ~f =
         { sorted = Array.map ~f sorted
@@ -299,7 +299,7 @@ module Evals = struct
       ; poseidon_selector : 'f
       ; lookup : (('f, 'bool) Lookup.In_circuit.t, 'bool) Opt.t
       }
-    [@@deriving hlist, fields]
+    [@@deriving hlist, fields, sexp]
 
     let map (type bool a b)
         ({ w; z; s; generic_selector; poseidon_selector; lookup } : (a, bool) t)
