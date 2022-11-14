@@ -248,6 +248,18 @@ let verify_heterogenous (ts : Instance.t list) =
                   Plonk_types.Opt.Flag.Yes )
             plonk0.feature_flags
         in
+        Debug.value "endo:Endo.Step_inner_curve.base"
+          ~sexp:(Tick.Field.sexp_of_t Endo.Step_inner_curve.base)
+          ~loc:__LOC__ ;
+        Debug.value "mds:Tick_field_sponge.params.mds"
+          ~sexp:
+            (sexp_of_array
+               (sexp_of_array Tick.Field.sexp_of_t)
+               Tick_field_sponge.params.mds )
+          ~loc:__LOC__ ;
+        Debug.value "srs_length_log2:Common.Max_degree.step_log2"
+          ~sexp:(sexp_of_int Common.Max_degree.step_log2)
+          ~loc:__LOC__ ;
         let tick_env =
           let module Env_bool = struct
             type t = bool
@@ -279,6 +291,17 @@ let verify_heterogenous (ts : Instance.t list) =
               |> Kimchi_pasta.Pasta.Fp.of_bigint )
             ~domain:tick_domain tick_plonk_minimal tick_combined_evals
         in
+        let print_sexp_of_fields fields loc =
+          Debug.value "derive_plonk -> before_map_fields"
+            ~sexp:
+              (Composition_types.Wrap.Proof_state.Deferred_values.Plonk
+               .In_circuit
+               .sexp_of_t Tick.Field.sexp_of_t Tick.Field.sexp_of_t
+                 Tick.Field.sexp_of_t
+                 (fun _ -> Sexp.Atom "<opaque>")
+                 fields )
+            ~loc
+        in
         let plonk =
           let p =
             let module Field = struct
@@ -288,8 +311,8 @@ let verify_heterogenous (ts : Instance.t list) =
             end in
             Plonk_checks.Type1.derive_plonk
               (module Field)
-              ~feature_flags ~shift:Shifts.tick1 ~env:tick_env
-              tick_plonk_minimal tick_combined_evals
+              ~feature_flags ~print_sexp_of_fields ~shift:Shifts.tick1
+              ~env:tick_env tick_plonk_minimal tick_combined_evals
           in
           { p with
             zeta = plonk0.zeta
