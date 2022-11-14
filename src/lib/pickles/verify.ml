@@ -211,6 +211,15 @@ let verify_heterogenous (ts : Instance.t list) =
             tick_plonk_minimal
         in
         Debug.value "tick_plonk_minimal" ~sexp ~loc:__LOC__ ;
+        let sexp =
+          Plonk_types.Evals.sexp_of_t
+            (sexp_of_pair
+               (sexp_of_array Tick.Field.sexp_of_t)
+               (sexp_of_array Tick.Field.sexp_of_t) )
+            evals.evals.evals
+        in
+        Debug.value "evals.evals.evals" ~sexp ~loc:__LOC__ ;
+        Debug.value "zetaw" ~sexp:(Tick.Field.sexp_of_t zetaw) ~loc:__LOC__ ;
         let tick_combined_evals =
           Plonk_checks.evals_of_split_evals
             (module Tick.Field)
