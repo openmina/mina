@@ -439,7 +439,7 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
       in
       ( match print_sexp_of_fields with
       | Some print_sexp_of_fields ->
-          print_sexp_of_fields before_map_fields
+          print_sexp_of_fields before_map_fields __LOC__
       | None ->
           () ) ;
       In_circuit.map_fields
