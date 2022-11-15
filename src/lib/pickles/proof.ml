@@ -324,8 +324,8 @@ module Make (W : Nat.Intf) (MLMB : Nat.Intf) = struct
   let of_yojson = function
     | `String x ->
         of_base64 x
-    | _ ->
-        Error "Invalid json for proof. Expecting base64 encoded string"
+    | other ->
+        Result.map ~f:of_repr (Repr.of_yojson other)
 end
 
 module Proofs_verified_2 = struct
