@@ -27,18 +27,21 @@ module Plonk_checks = struct
     Plonk_checks.Make (Shifted_value.Type2) (Plonk_checks.Scalars.Tock)
 end
 
+module Vec2 = Vector.With_length (Nat.N2)
+module Vec15 = Vector.With_length (Nat.N15)
+module Vec16 = Vector.With_length (Nat.N16)
+
 type 'app_state reduced_messages_for_next_step =
   ( 'app_state
-  , Tock.Curve.Affine.t Vector.Vector_2.Stable.Latest.t
-  , Tick.Field.t Vector.Vector_16.Stable.Latest.t
-    Vector.Vector_2.Stable.Latest.t )
+  , Tock.Curve.Affine.t Vec2.t
+  , Tick.Field.t Vec16.t Vec2.t )
   Reduced_messages_for_next_proof_over_same_field.Step.t
 [@@deriving sexp]
 
 type reduced_messages_for_next_wrap =
   ( Tock.Inner_curve.Affine.t
   , Reduced_messages_for_next_proof_over_same_field.Wrap.Challenges_vector.t
-    Vector.Vector_15.Stable.Latest.t )
+    Vec15.t )
   Types.Wrap.Proof_state.Messages_for_next_wrap_proof.t
 [@@deriving sexp]
 

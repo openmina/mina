@@ -216,6 +216,12 @@ module Evals : sig
       ; lookup : (('f, 'bool) Lookup.In_circuit.t, 'bool) Opt.t
       }
 
+    val sexp_of_t :
+         ('a -> Ppx_sexp_conv_lib.Sexp.t)
+      -> ('bool -> Ppx_sexp_conv_lib.Sexp.t)
+      -> ('a, 'bool) t
+      -> Ppx_sexp_conv_lib.Sexp.t
+
     (** {4 Accessors} *)
 
     val s : ('a, 'b) t -> 'a Permuts_minus_1_vec.t
@@ -249,6 +255,9 @@ module Evals : sig
     ; poseidon_selector : 'a
     ; lookup : 'a Lookup.t option
     }
+
+  val sexp_of_t :
+    ('a -> Ppx_sexp_conv_lib.Sexp.t) -> 'a t -> Ppx_sexp_conv_lib.Sexp.t
 
   (** {4 Iterators} *)
 
