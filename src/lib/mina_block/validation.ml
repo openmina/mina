@@ -340,6 +340,54 @@ let validate_proofs ~verifier ~genesis_state_hash tvs =
         (* Skip calling the verifier, nothing here to verify. *)
         return (Ok (Ok ()))
     | _ ->
+        Core.Unix.mkdir_p "captured-blocks/json" ;
+        Core.Unix.mkdir_p "captured-blocks/binprot" ;
+        let blockchain_length bc =
+          let state = Blockchain_snark.Blockchain.state bc in
+          state |> Mina_state.Protocol_state.consensus_state
+          |> Consensus.Data.Consensus_state.blockchain_length
+          |> Unsigned.UInt32.to_int
+        in
+        let save_as_json (bc : Blockchain_snark.Blockchain.t) =
+          let proof_json =
+            Proof.Stable.V2.to_yojson_full
+              (Blockchain_snark.Blockchain.proof bc)
+            |> Yojson.Safe.to_basic
+          in
+          let state_json =
+            Protocol_state.Value.Stable.V2.to_yojson
+              (Blockchain_snark.Blockchain.state bc)
+            |> Yojson.Safe.to_basic
+          in
+          let json : Yojson.Basic.t =
+            `Assoc [ ("state", state_json); ("proof", proof_json) ]
+          in
+          let json_str = Yojson.Basic.pretty_to_string ~std:true json in
+          let file =
+            Core.Unix.openfile
+              ~mode:[ O_WRONLY; O_TRUNC; O_CREAT ]
+              (Printf.sprintf "captured-blocks/json/%d.json"
+                 (blockchain_length bc) )
+          in
+          ignore @@ Core.Unix.write_substring file ~buf:json_str ;
+          Core.Unix.close file
+        in
+        let save_as_binprot bc =
+          let encoded =
+            Bin_prot.Writer.to_string
+              Blockchain_snark.Blockchain.Stable.Latest.bin_writer_t bc
+          in
+          let file =
+            Core.Unix.openfile
+              ~mode:[ O_WRONLY; O_TRUNC; O_CREAT ]
+              (Printf.sprintf "captured-blocks/binprot/%d.binprot"
+                 (blockchain_length bc) )
+          in
+          ignore @@ Core.Unix.write_substring file ~buf:encoded ;
+          Core.Unix.close file
+        in
+        List.iter ~f:save_as_json to_verify ;
+        List.iter ~f:save_as_binprot to_verify ;
         Verifier.verify_blockchain_snarks verifier to_verify
   with
   | Ok (Ok ()) ->

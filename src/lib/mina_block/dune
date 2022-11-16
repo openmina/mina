@@ -6,6 +6,7 @@
    ;; opam libraries
    integers
    core_kernel
+   core_unix
    async_kernel
    bin_prot.shape
    base.caml
