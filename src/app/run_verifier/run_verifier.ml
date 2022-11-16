@@ -4,28 +4,41 @@ open Blockchain_snark
 open Mina_base
 open Mina_state
 
-let parse_json_file path =
-  if String.equal path "quit" then Stdlib.exit 0 ;
-  Stdlib.Printf.printf "Parsing.\n%!" ;
-  let json_string = In_channel.read_all path in
-  if String.is_prefix json_string ~prefix:"[" then
+let parse_json data =
+  if String.is_prefix data ~prefix:"[" then
     [%derive.of_yojson: Blockchain_snark.Blockchain.t list]
-      (Yojson.Safe.from_string json_string)
+      (Yojson.Safe.from_string data)
   else
     Result.map
       ~f:(fun bc -> [ bc ])
       ([%derive.of_yojson: Blockchain_snark.Blockchain.t]
-         (Yojson.Safe.from_string json_string) )
+         (Yojson.Safe.from_string data) )
+
+let parse_json_or_binprot_file path =
+  if String.equal path "quit" then Stdlib.exit 0 ;
+  Stdlib.Printf.printf "Parsing.\n%!" ;
+  let data = In_channel.read_all path in
+  if String.is_prefix data ~prefix:"[" || String.is_prefix data ~prefix:"{" then
+    let result = parse_json data in
+    Result.map_error result ~f:(fun err -> err)
+  else
+    try
+      let result =
+        Bin_prot.Reader.of_string
+          Blockchain_snark.Blockchain.Stable.Latest.bin_reader_t data
+      in
+      Ok [ result ]
+    with exn -> Error (Exn.to_string exn)
 
 let get_input file =
   let input =
     match file with
     | None ->
-        Stdlib.Printf.printf "Input path/to/file.json:\n%!" ;
+        Stdlib.Printf.printf "Input path/to/file.[json|binprot]:\n%!" ;
         let input_line = Stdlib.input_line Stdlib.stdin in
-        parse_json_file input_line
+        parse_json_or_binprot_file input_line
     | Some file ->
-        parse_json_file file
+        parse_json_or_binprot_file file
   in
   Result.map input ~f:(fun input ->
       List.map input ~f:(fun snark ->
