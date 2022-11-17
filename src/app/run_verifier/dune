@@ -44,6 +44,7 @@
    ;;signature_lib
    mina_base
    mina_state
+   mina_block
    blockchain_snark
    transaction_snark
    ;;error_json
