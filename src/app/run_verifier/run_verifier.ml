@@ -24,8 +24,17 @@ let parse_json_or_binprot_file path =
   else
     try
       let result =
-        Bin_prot.Reader.of_string
-          Blockchain_snark.Blockchain.Stable.Latest.bin_reader_t data
+        try
+          let block : Mina_block.t =
+            Bin_prot.Reader.of_string Mina_block.Stable.Latest.bin_reader_t data
+          in
+          let header = Mina_block.header block in
+          let proof = Mina_block.Header.protocol_state_proof header in
+          let state = Mina_block.Header.protocol_state header in
+          Blockchain_snark.Blockchain.create ~proof ~state
+        with _ ->
+          Bin_prot.Reader.of_string
+            Blockchain_snark.Blockchain.Stable.Latest.bin_reader_t data
       in
       Ok [ result ]
     with exn -> Error (Exn.to_string exn)
