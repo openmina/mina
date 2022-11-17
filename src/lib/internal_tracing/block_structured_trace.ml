@@ -138,7 +138,13 @@ let structure_checkpoints checkpoints =
          else collapse_pending_stack_simple entry accum stack )
 
 let of_flat_trace trace =
-  let { Trace.source; blockchain_length; status; checkpoints; total_time } =
+  let { Trace.source
+      ; blockchain_length
+      ; status
+      ; checkpoints
+      ; other_checkpoints = _
+      ; total_time
+      } =
     trace
   in
   let checkpoints = structure_checkpoints checkpoints in

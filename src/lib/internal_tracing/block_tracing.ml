@@ -89,14 +89,15 @@ module Registry = struct
     (* TODO handle more cases, this assumes catchup + regular always means that the
        source was catchup, but there are race conditions *)
     (* These checkpoints add noise to the final trace, get rid of them *)
-    let catchup_checkpoints =
-      List.filter catchup.checkpoints ~f:(fun entry ->
-          match entry.checkpoint with
+    let filter_cachup_noise cp =
+      List.filter cp ~f:(fun entry ->
+          match entry.Entry.checkpoint with
           | `To_verify | `To_build_breadcrumb | `Catchup_job_finished ->
               false
           | _ ->
               true )
     in
+    let catchup_checkpoints = filter_cachup_noise catchup.checkpoints in
     let checkpoints = regular.checkpoints @ catchup_checkpoints in
     let checkpoints =
       List.sort checkpoints ~compare:(fun l r ->
@@ -107,6 +108,8 @@ module Registry = struct
     { source = catchup.source
     ; blockchain_length = regular.blockchain_length
     ; checkpoints
+    ; other_checkpoints =
+        regular.other_checkpoints (* Catchup will not happen more than once *)
     ; status = catchup.status
     ; total_time = regular.total_time
     }
