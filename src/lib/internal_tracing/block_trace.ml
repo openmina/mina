@@ -19,9 +19,9 @@ end
 
 type block_source =
   [ `External | `Internal | `Catchup | `Reconstruct | `Unknown ]
-[@@deriving to_yojson]
+[@@deriving to_yojson, equal]
 
-type status = [ `Pending | `Failure | `Success ] [@@deriving to_yojson]
+type status = [ `Pending | `Failure | `Success ] [@@deriving to_yojson, equal]
 
 let block_source_to_yojson = Util.flatten_yojson_variant block_source_to_yojson
 
@@ -32,6 +32,7 @@ type t =
   { source : block_source
   ; blockchain_length : Mina_numbers.Length.t
   ; checkpoints : Entry.t list
+  ; other_checkpoints : Entry.t list
   ; status : status
   ; total_time : float
   }
@@ -41,6 +42,7 @@ let empty ?(blockchain_length = Mina_numbers.Length.zero) source =
   { source
   ; blockchain_length
   ; checkpoints = []
+  ; other_checkpoints = []
   ; status = `Pending
   ; total_time = 0.0
   }
@@ -54,11 +56,19 @@ let push ~status ~source ?blockchain_length entry trace =
       { trace with checkpoints = [ entry ]; status }
   | Some ({ checkpoints = []; _ } as trace) ->
       { trace with checkpoints = [ entry ]; status }
-  | Some ({ checkpoints = previous :: rest; _ } as trace) ->
+  | Some ({ checkpoints = previous :: rest; _ } as trace)
+    when equal_status trace.status `Pending
+         || not (equal_block_source source `External) ->
+      (* Only add checkpoints to the main list if processing has not been completed before *)
       let previous =
         { previous with duration = entry.started_at -. previous.started_at }
       in
-      (* TODOX: this will be incorrect if the block is processed twice
-         because it gets received twice *)
       let total_time = trace.total_time +. previous.duration in
       { trace with checkpoints = entry :: previous :: rest; status; total_time }
+  | Some ({ other_checkpoints = []; _ } as trace) ->
+      { trace with other_checkpoints = [ entry ] }
+  | Some ({ other_checkpoints = previous :: rest; _ } as trace) ->
+      let previous =
+        { previous with duration = entry.started_at -. previous.started_at }
+      in
+      { trace with other_checkpoints = entry :: previous :: rest }
