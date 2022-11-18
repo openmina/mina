@@ -184,7 +184,7 @@ module Registry = struct
       ~f:(Trace.push ~status ~source ?blockchain_length entry)
 
   let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
-      block_id checkpoint =
+      (block_id : Mina_base.State_hash.t) checkpoint =
     push_entry ~status ~source ?blockchain_length block_id
       (Trace.Entry.make ?metadata checkpoint)
 

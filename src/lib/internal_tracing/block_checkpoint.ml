@@ -79,6 +79,9 @@ type block_processing_checkpoint =
   | `Synchronize_persistent_frontier
   | `Persistent_frontier_synchronized
   | `Notify_frontier_extensions
+  | `Notify_snark_pool_refcount_handle_diffs
+  | `Notify_snark_pool_refcount_write_view
+  | `Notify_snark_pool_refcount_write_view_done
   | `Notify_frontier_extensions_done
   | `Add_breadcrumb_to_frontier_done
   | `Parent_breadcrumb_not_found
