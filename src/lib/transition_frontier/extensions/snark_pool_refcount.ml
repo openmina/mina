@@ -157,4 +157,27 @@ module T = struct
 end
 
 include T
-module Broadcasted = Functor.Make_broadcasted (T)
+
+module Broadcasted = struct
+  open Pipe_lib
+  open Async_kernel
+  include Functor.Make_broadcasted (T)
+
+  let update t ?state_hash frontier diffs =
+    let extension = extension t in
+    let writer = writer t in
+    Option.iter state_hash ~f:(fun state_hash ->
+        Block_tracing.Processing.checkpoint state_hash
+          `Notify_snark_pool_refcount_handle_diffs ) ;
+    match T.handle_diffs extension frontier diffs with
+    | Some view ->
+        Option.iter state_hash ~f:(fun state_hash ->
+            Block_tracing.Processing.checkpoint state_hash
+              `Notify_snark_pool_refcount_write_view ) ;
+        Deferred.map (Broadcast_pipe.Writer.write writer view) ~f:(fun () ->
+            Option.iter state_hash ~f:(fun state_hash ->
+                Block_tracing.Processing.checkpoint state_hash
+                  `Notify_snark_pool_refcount_write_view_done ) )
+    | None ->
+        Deferred.unit
+end

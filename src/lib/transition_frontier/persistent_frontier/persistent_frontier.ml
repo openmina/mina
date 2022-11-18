@@ -270,7 +270,8 @@ module Instance = struct
             else `Enabled root_ledger )
       in
       (* TODOX: trace this *)
-      Extensions.notify extensions ~frontier ~diffs_with_mutants
+      Extensions.notify extensions ~state_hash:None ~frontier
+        ~diffs_with_mutants
       |> Deferred.map ~f:Result.return
     in
     (* crawl through persistent frontier and load transitions into in memory frontier *)

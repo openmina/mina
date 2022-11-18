@@ -69,6 +69,11 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Notify_frontier_extensions
       ; `Notify_frontier_extensions_done
       ]
+  | `Notify_frontier_extensions ->
+      [ `Notify_snark_pool_refcount_handle_diffs
+      ; `Notify_snark_pool_refcount_write_view
+      ; `Notify_snark_pool_refcount_write_view_done
+      ]
   | _ ->
       []
 

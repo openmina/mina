@@ -28,6 +28,7 @@ val close : t -> unit
 
 val notify :
      t
+  -> state_hash:Mina_base.State_hash.t option
   -> frontier:Full_frontier.t
   -> diffs_with_mutants:Diff.Full.With_mutant.t list
   -> unit Deferred.t
