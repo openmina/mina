@@ -81,6 +81,8 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `SRPC_get_statements
       ; `SRPC_update_work_table
       ; `SRPC_update_work_table_done
+      ; `SRPC_update_best_tip_table
+      ; `SRPC_update_best_tip_table_done
       ]
   | _ ->
       []
