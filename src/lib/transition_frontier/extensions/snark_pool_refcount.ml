@@ -57,6 +57,7 @@ module T = struct
       (but not if the same elements exist with a different reference count) *)
   let remove_from_table ~get_work ~get_statement table t : bool =
     let res = ref false in
+    (* TODOX trace this *)
     List.iter (get_work t) ~f:(fun work ->
         Work.Table.change table (get_statement work) ~f:(function
           | Some 1 ->
@@ -156,7 +157,11 @@ module T = struct
             in
             let num_blocks_to_include = 3 in
             Hash_set.clear t.best_tip_table ;
+            Block_tracing.Processing.checkpoint_current
+              `SRPC_update_best_tip_table ;
             update_best_tip_table num_blocks_to_include new_best_tip_hash ;
+            Block_tracing.Processing.checkpoint_current
+              `SRPC_update_best_tip_table_done ;
             { num_removed; is_added = true } )
     in
     if num_removed > 0 || is_added then
@@ -179,7 +184,9 @@ module Broadcasted = struct
     let extension = extension t in
     let writer = writer t in
     Option.iter state_hash ~f:(fun state_hash ->
-        Block_tracing.Processing.checkpoint state_hash `Notify_SPRC_handle_diffs ) ;
+        let metadata = Printf.sprintf "diffs_count=%d" (List.length diffs) in
+        Block_tracing.Processing.checkpoint state_hash ~metadata
+          `Notify_SPRC_handle_diffs ) ;
     Block_tracing.Processing.set_current_state_hash state_hash ;
     match T.handle_diffs extension frontier diffs with
     | Some view ->
