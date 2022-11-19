@@ -40,6 +40,8 @@ module T = struct
     let work = get_work t in
     Block_tracing.Processing.checkpoint_current `SRPC_get_statements ;
     let statements = List.map ~f:get_statement work in
+    Block_tracing.Processing.checkpoint_current `SRPC_hash_statements ;
+    let _hashed = List.map ~f:Work.hash statements in
     Block_tracing.Processing.checkpoint_current `SRPC_update_work_table ;
     List.iter statements ~f:(fun statement ->
         Work.Table.update table statement ~f:(function

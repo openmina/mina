@@ -83,6 +83,7 @@ type block_processing_checkpoint =
   | `SRPC_add_scan_state_to_ref_table
   | `SRPC_get_work
   | `SRPC_get_statements
+  | `SRPC_hash_statements
   | `SRPC_update_work_table
   | `SRPC_update_work_table_done
   | `SRPC_update_best_tip_table

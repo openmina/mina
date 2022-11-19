@@ -79,6 +79,7 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `SRPC_add_scan_state_to_ref_table_done
       ; `SRPC_get_work
       ; `SRPC_get_statements
+      ; `SRPC_hash_statements
       ; `SRPC_update_work_table
       ; `SRPC_update_work_table_done
       ; `SRPC_update_best_tip_table
