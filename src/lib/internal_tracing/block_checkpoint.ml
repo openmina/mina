@@ -79,9 +79,15 @@ type block_processing_checkpoint =
   | `Synchronize_persistent_frontier
   | `Persistent_frontier_synchronized
   | `Notify_frontier_extensions
-  | `Notify_snark_pool_refcount_handle_diffs
-  | `Notify_snark_pool_refcount_write_view
-  | `Notify_snark_pool_refcount_write_view_done
+  | `Notify_SPRC_handle_diffs
+  | `SRPC_add_scan_state_to_ref_table
+  | `SRPC_get_work
+  | `SRPC_get_statements
+  | `SRPC_update_work_table
+  | `SRPC_update_work_table_done
+  | `SRPC_add_scan_state_to_ref_table_done
+  | `Notify_SPRC_write_view
+  | `Notify_SPRC_write_view_done
   | `Notify_frontier_extensions_done
   | `Add_breadcrumb_to_frontier_done
   | `Parent_breadcrumb_not_found
