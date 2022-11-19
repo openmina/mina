@@ -70,9 +70,17 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Notify_frontier_extensions_done
       ]
   | `Notify_frontier_extensions ->
-      [ `Notify_snark_pool_refcount_handle_diffs
-      ; `Notify_snark_pool_refcount_write_view
-      ; `Notify_snark_pool_refcount_write_view_done
+      [ `Notify_SPRC_handle_diffs
+      ; `Notify_SPRC_write_view
+      ; `Notify_SPRC_write_view_done
+      ]
+  | `Notify_SPRC_handle_diffs ->
+      [ `SRPC_add_scan_state_to_ref_table
+      ; `SRPC_add_scan_state_to_ref_table_done
+      ; `SRPC_get_work
+      ; `SRPC_get_statements
+      ; `SRPC_update_work_table
+      ; `SRPC_update_work_table_done
       ]
   | _ ->
       []

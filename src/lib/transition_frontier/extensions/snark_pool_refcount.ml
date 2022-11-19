@@ -36,13 +36,21 @@ module T = struct
       (but not if the same elements exist with a different reference count) *)
   let add_to_table ~get_work ~get_statement table t : bool =
     let res = ref false in
-    List.iter (get_work t) ~f:(fun work ->
-        Work.Table.update table (get_statement work) ~f:(function
+    Block_tracing.Processing.checkpoint_current `SRPC_get_work ;
+    let work = get_work t in
+    Block_tracing.Processing.checkpoint_current `SRPC_get_statements ;
+    let statements = List.map ~f:get_statement work in
+    Block_tracing.Processing.checkpoint_current `SRPC_update_work_table ;
+    List.iter statements ~f:(fun statement ->
+        Work.Table.update table statement ~f:(function
           | Some count ->
               count + 1
           | None ->
               res := true ;
               1 ) ) ;
+    let metadata = Printf.sprintf "work_count=%d" (List.length work) in
+    Block_tracing.Processing.checkpoint_current ~metadata
+      `SRPC_update_work_table_done ;
     !res
 
   (** Returns true if this update changed which elements are in the table
@@ -99,9 +107,13 @@ module T = struct
             let scan_state =
               Breadcrumb.staged_ledger breadcrumb |> Staged_ledger.scan_state
             in
+            Block_tracing.Processing.checkpoint_current
+              `SRPC_add_scan_state_to_ref_table ;
             let added_scan_state =
               add_scan_state_to_ref_table t.refcount_table scan_state
             in
+            Block_tracing.Processing.checkpoint_current
+              `SRPC_add_scan_state_to_ref_table_done ;
             { num_removed; is_added = is_added || added_scan_state }
         | E
             ( Root_transitioned { new_root = _; garbage = Full garbage_nodes; _ }
@@ -167,17 +179,17 @@ module Broadcasted = struct
     let extension = extension t in
     let writer = writer t in
     Option.iter state_hash ~f:(fun state_hash ->
-        Block_tracing.Processing.checkpoint state_hash
-          `Notify_snark_pool_refcount_handle_diffs ) ;
+        Block_tracing.Processing.checkpoint state_hash `Notify_SPRC_handle_diffs ) ;
+    Block_tracing.Processing.set_current_state_hash state_hash ;
     match T.handle_diffs extension frontier diffs with
     | Some view ->
         Option.iter state_hash ~f:(fun state_hash ->
             Block_tracing.Processing.checkpoint state_hash
-              `Notify_snark_pool_refcount_write_view ) ;
+              `Notify_SPRC_write_view ) ;
         Deferred.map (Broadcast_pipe.Writer.write writer view) ~f:(fun () ->
             Option.iter state_hash ~f:(fun state_hash ->
                 Block_tracing.Processing.checkpoint state_hash
-                  `Notify_snark_pool_refcount_write_view_done ) )
+                  `Notify_SPRC_write_view_done ) )
     | None ->
         Deferred.unit
 end

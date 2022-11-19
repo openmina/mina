@@ -252,6 +252,12 @@ module External = struct
 end
 
 module Processing = struct
+  let current_state_hash : Mina_base.State_hash.t option ref = ref None
+
+  let set_current_state_hash state_hash = current_state_hash := state_hash
+
+  let get_current_state_hash () = !current_state_hash
+
   let parent_registry = Hashtbl.create (module Mina_base.State_hash)
 
   let register_parent ~state_hash ~parent_hash =
@@ -262,6 +268,15 @@ module Processing = struct
     Hashtbl.find parent_registry parent_hash
 
   let checkpoint ?(source = `Unknown) = Registry.checkpoint ~source
+
+  let checkpoint_current ?status ?metadata ?source ?blockchain_length
+      checkpoint_name =
+    match !current_state_hash with
+    | None ->
+        ()
+    | Some block_id ->
+        checkpoint ?status ?metadata ?source ?blockchain_length block_id
+          checkpoint_name
 
   let failure ~reason state_hash =
     (* TODOX: compute structured version and save it *)
