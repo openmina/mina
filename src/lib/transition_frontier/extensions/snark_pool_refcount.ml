@@ -141,6 +141,7 @@ module T = struct
             Storage_tracing.Frontier_extensions.record `Best_tip_changed
               `Snark_pool_refcount
             @@ fun () ->
+            let added_count = ref 0 in
             let rec update_best_tip_table blocks_remaining state_hash =
               match Full_frontier.find frontier state_hash with
               | None ->
@@ -152,6 +153,7 @@ module T = struct
                       |> Staged_ledger.all_work_statements_exn
                     with _ -> []
                   in
+                  added_count := !added_count + List.length statements ;
                   List.iter ~f:(Hash_set.add t.best_tip_table) statements ;
                   if blocks_remaining > 0 then
                     update_best_tip_table (blocks_remaining - 1)
@@ -162,7 +164,8 @@ module T = struct
             Block_tracing.Processing.checkpoint_current
               `SRPC_update_best_tip_table ;
             update_best_tip_table num_blocks_to_include new_best_tip_hash ;
-            Block_tracing.Processing.checkpoint_current
+            let metadata = Printf.sprintf "added_count=%d" !added_count in
+            Block_tracing.Processing.checkpoint_current ~metadata
               `SRPC_update_best_tip_table_done ;
             { num_removed; is_added = true } )
     in
