@@ -700,7 +700,7 @@ struct
             frontier_broadcast_pipe pool ~tf_diff_writer ;
           res
       | Error e ->
-          [%log debug] "Failed to load snark pool data: $error"
+          [%log warn] "Failed to load snark pool data: $error"
             ~metadata:[ ("error", `String (Error.to_string_hum e)) ] ;
           create ~config ~logger ~constraint_constants ~consensus_constants
             ~time_controller ~expiry_ns ~frontier_broadcast_pipe
