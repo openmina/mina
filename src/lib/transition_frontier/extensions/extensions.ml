@@ -71,7 +71,7 @@ let close t : unit =
 let notify (t : t) ~state_hash ~frontier ~diffs_with_mutants =
   let update (type t)
       (module B : Intf.Broadcasted_extension_intf with type t = t) field =
-    B.update ?state_hash (Field.get field t) frontier diffs_with_mutants
+    B.update ~state_hash (Field.get field t) frontier diffs_with_mutants
   in
   Deferred.List.all_unit
     (Fields.to_list
