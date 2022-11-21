@@ -244,7 +244,7 @@ module Make_str (A : Wire_types.Concrete) = struct
           , unit
           , Local_state.Stable.V1.t )
           Poly.Stable.V2.t
-        [@@deriving compare, equal, sexp, yojson]
+        [@@deriving equal, sexp, yojson]
 
         let to_latest = Fn.id
 
@@ -254,6 +254,9 @@ module Make_str (A : Wire_types.Concrete) = struct
         let hash t =
           let target_ledger_hash = t.target.ledger in
           Frozen_ledger_hash.Stable.V1.hash target_ledger_hash
+
+        let compare tl tr =
+          Frozen_ledger_hash.Stable.V1.compare tl.target.ledger tr.target.ledger
       end
     end]
 
@@ -269,7 +272,7 @@ module Make_str (A : Wire_types.Concrete) = struct
             , Sok_message.Digest.Stable.V1.t
             , Local_state.Stable.V1.t )
             Poly.Stable.V2.t
-          [@@deriving compare, equal, sexp, yojson]
+          [@@deriving equal, sexp, yojson]
 
           let to_latest = Fn.id
 
@@ -279,12 +282,18 @@ module Make_str (A : Wire_types.Concrete) = struct
           let hash t =
             let target_ledger_hash = t.target.ledger in
             Frozen_ledger_hash.Stable.V1.hash target_ledger_hash
+
+          let compare tl tr =
+            Frozen_ledger_hash.Stable.V1.compare tl.target.ledger
+              tr.target.ledger
         end
       end]
 
       let hash_fold_t = Stable.V2.hash_fold_t
 
       let hash = Stable.V2.hash
+
+      let compare = Stable.V2.compare
 
       type var =
         ( Frozen_ledger_hash.var
