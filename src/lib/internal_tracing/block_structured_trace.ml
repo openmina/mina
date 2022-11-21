@@ -75,14 +75,14 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Notify_SPRC_write_view_done
       ]
   | `Notify_SPRC_handle_diffs ->
-      [ `SRPC_add_scan_state_to_ref_table
-      ; `SRPC_add_scan_state_to_ref_table_done
-      ; `SRPC_get_work
-      ; `SRPC_get_statements
-      ; `SRPC_update_work_table
-      ; `SRPC_update_work_table_done
-      ; `SRPC_update_best_tip_table
-      ; `SRPC_update_best_tip_table_done
+      [ `SPRC_add_scan_state_to_ref_table
+      ; `SPRC_add_scan_state_to_ref_table_done
+      ; `SPRC_get_work
+      ; `SPRC_get_statements
+      ; `SPRC_update_work_table
+      ; `SPRC_update_work_table_done
+      ; `SPRC_update_best_tip_table
+      ; `SPRC_update_best_tip_table_done
       ]
   | _ ->
       []

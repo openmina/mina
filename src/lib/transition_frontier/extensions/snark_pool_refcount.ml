@@ -36,11 +36,11 @@ module T = struct
       (but not if the same elements exist with a different reference count) *)
   let add_to_table ~get_work ~get_statement table t : bool =
     let res = ref false in
-    Block_tracing.Processing.checkpoint_current `SRPC_get_work ;
+    Block_tracing.Processing.checkpoint_current `SPRC_get_work ;
     let work = get_work t in
-    Block_tracing.Processing.checkpoint_current `SRPC_get_statements ;
+    Block_tracing.Processing.checkpoint_current `SPRC_get_statements ;
     let statements = List.map ~f:get_statement work in
-    Block_tracing.Processing.checkpoint_current `SRPC_update_work_table ;
+    Block_tracing.Processing.checkpoint_current `SPRC_update_work_table ;
     List.iter statements ~f:(fun statement ->
         Work.Table.update table statement ~f:(function
           | Some count ->
@@ -50,7 +50,7 @@ module T = struct
               1 ) ) ;
     let metadata = Printf.sprintf "work_count=%d" (List.length work) in
     Block_tracing.Processing.checkpoint_current ~metadata
-      `SRPC_update_work_table_done ;
+      `SPRC_update_work_table_done ;
     !res
 
   (** Returns true if this update changed which elements are in the table
@@ -109,12 +109,12 @@ module T = struct
               Breadcrumb.staged_ledger breadcrumb |> Staged_ledger.scan_state
             in
             Block_tracing.Processing.checkpoint_current
-              `SRPC_add_scan_state_to_ref_table ;
+              `SPRC_add_scan_state_to_ref_table ;
             let added_scan_state =
               add_scan_state_to_ref_table t.refcount_table scan_state
             in
             Block_tracing.Processing.checkpoint_current
-              `SRPC_add_scan_state_to_ref_table_done ;
+              `SPRC_add_scan_state_to_ref_table_done ;
             { num_removed; is_added = is_added || added_scan_state }
         | E
             ( Root_transitioned { new_root = _; garbage = Full garbage_nodes; _ }
@@ -160,11 +160,11 @@ module T = struct
             let num_blocks_to_include = 3 in
             Hash_set.clear t.best_tip_table ;
             Block_tracing.Processing.checkpoint_current
-              `SRPC_update_best_tip_table ;
+              `SPRC_update_best_tip_table ;
             update_best_tip_table num_blocks_to_include new_best_tip_hash ;
             let metadata = Printf.sprintf "added_count=%d" !added_count in
             Block_tracing.Processing.checkpoint_current ~metadata
-              `SRPC_update_best_tip_table_done ;
+              `SPRC_update_best_tip_table_done ;
             { num_removed; is_added = true } )
     in
     if num_removed > 0 || is_added then
