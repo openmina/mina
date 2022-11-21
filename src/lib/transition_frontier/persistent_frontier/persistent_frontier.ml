@@ -262,16 +262,18 @@ module Instance = struct
         (Extensions.create ~logger:t.factory.logger frontier)
         ~f:Result.return
     in
-    let apply_diff diff =
+    let apply_diff ~state_hash diff =
+      Block_tracing.Processing.checkpoint state_hash `Apply_full_frontier_diffs ;
       let (`New_root_and_diffs_with_mutants (_, diffs_with_mutants)) =
         Full_frontier.apply_diffs frontier [ diff ] ~has_long_catchup_job:false
           ~enable_epoch_ledger_sync:
             ( if ignore_consensus_local_state then `Disabled
             else `Enabled root_ledger )
       in
-      (* TODOX: trace this *)
-      Extensions.notify extensions ~state_hash:None ~frontier
-        ~diffs_with_mutants
+      Block_tracing.Processing.checkpoint state_hash
+        `Full_frontier_diffs_applied ;
+      Block_tracing.Processing.checkpoint state_hash `Notify_frontier_extensions ;
+      Extensions.notify extensions ~state_hash ~frontier ~diffs_with_mutants
       |> Deferred.map ~f:Result.return
     in
     (* crawl through persistent frontier and load transitions into in memory frontier *)
@@ -310,7 +312,9 @@ module Instance = struct
                  ~trust_system:(Trust_system.null ()) ~parent ~transition
                  ~sender:None ~transition_receipt_time ()
              in
-             let%map () = apply_diff Diff.(E (New_node (Full breadcrumb))) in
+             let%map () =
+               apply_diff ~state_hash Diff.(E (New_node (Full breadcrumb)))
+             in
              Block_tracing.Reconstruct.complete state_hash ;
              breadcrumb ) )
         ~f:
@@ -331,7 +335,9 @@ module Instance = struct
             | `Not_found _ as err ->
                 `Failure (Database.Error.not_found_message err) ) )
     in
-    let%map () = apply_diff Diff.(E (Best_tip_changed best_tip)) in
+    let%map () =
+      apply_diff ~state_hash:best_tip Diff.(E (Best_tip_changed best_tip))
+    in
     (frontier, extensions)
 end
 
