@@ -261,15 +261,13 @@ let save_block (block : Mina_block.t) =
             @@ [%to_yojson: State_hash.t * State_body_hash.t list]
                  (Header.delta_block_chain_proof header) )
         ; ( "current_protocol_version"
-          , `String
-              (Protocol_version.to_string
-                 (Header.current_protocol_version header) ) )
+          , Yojson.Safe.to_basic
+            @@ Protocol_version.to_yojson
+                 (Header.current_protocol_version header) )
         ; ( "proposed_protocol_version"
-          , match Header.proposed_protocol_version_opt header with
-            | None ->
-                `Null
-            | Some version ->
-                `String (Protocol_version.to_string version) )
+          , Yojson.Safe.to_basic
+            @@ [%to_yojson: Protocol_version.t option]
+                 (Header.proposed_protocol_version_opt header) )
         ]
     in
     let json_str = Yojson.Basic.pretty_to_string ~std:true json in
