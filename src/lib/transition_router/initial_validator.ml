@@ -232,6 +232,69 @@ module Duplicate_block_detector = struct
           [%log error] ~metadata msg )
 end
 
+let save_block (block : Mina_block.t) =
+  Core.Unix.mkdir_p "captured-blocks/json" ;
+  Core.Unix.mkdir_p "captured-blocks/binprot" ;
+  let header = Mina_block.header block in
+  let protocol_state = Mina_block.Header.protocol_state header in
+  let protocol_state_proof = Mina_block.Header.protocol_state_proof header in
+  let blockchain_length =
+    protocol_state |> Mina_state.Protocol_state.consensus_state
+    |> Consensus.Data.Consensus_state.blockchain_length
+    |> Unsigned.UInt32.to_int
+  in
+  let save_as_json () =
+    let proof_json =
+      Proof.Stable.V2.to_yojson_full protocol_state_proof
+      |> Yojson.Safe.to_basic
+    in
+    let state_json =
+      Protocol_state.Value.Stable.V2.to_yojson protocol_state
+      |> Yojson.Safe.to_basic
+    in
+    let json : Yojson.Basic.t =
+      `Assoc
+        [ ("protocol_state", state_json)
+        ; ("protocol_state_proof", proof_json)
+        ; ( "delta_block_chain_proof"
+          , Yojson.Safe.to_basic
+            @@ [%to_yojson: State_hash.t * State_body_hash.t list]
+                 (Header.delta_block_chain_proof header) )
+        ; ( "current_protocol_version"
+          , `String
+              (Protocol_version.to_string
+                 (Header.current_protocol_version header) ) )
+        ; ( "proposed_protocol_version"
+          , match Header.proposed_protocol_version_opt header with
+            | None ->
+                `Null
+            | Some version ->
+                `String (Protocol_version.to_string version) )
+        ]
+    in
+    let json_str = Yojson.Basic.pretty_to_string ~std:true json in
+    let file =
+      Core.Unix.openfile
+        ~mode:[ O_WRONLY; O_TRUNC; O_CREAT ]
+        (Printf.sprintf "captured-blocks/json/%d.json" blockchain_length)
+    in
+    ignore @@ Core.Unix.write_substring file ~buf:json_str ;
+    Core.Unix.close file
+  in
+  let save_as_binprot () =
+    let encoded =
+      Bin_prot.Writer.to_string Mina_block.Header.Stable.V2.bin_writer_t header
+    in
+    let file =
+      Core.Unix.openfile
+        ~mode:[ O_WRONLY; O_TRUNC; O_CREAT ]
+        (Printf.sprintf "captured-blocks/binprot/%d.binprot" blockchain_length)
+    in
+    ignore @@ Core.Unix.write_substring file ~buf:encoded ;
+    Core.Unix.close file
+  in
+  save_as_binprot () ; save_as_json () ; ()
+
 let run ~logger ~trust_system ~verifier ~transition_reader
     ~valid_transition_writer ~initialization_finish_signal ~precomputed_values =
   let genesis_state_hash =
@@ -270,6 +333,8 @@ let run ~logger ~trust_system ~verifier ~transition_reader
               Duplicate_block_detector.check ~precomputed_values
                 ~rejected_blocks_logger ~time_received duplicate_checker logger
                 transition_with_hash ;
+              (* Capture block to disk for debugging *)
+              save_block (With_hash.data transition_with_hash) ;
               let sender = Envelope.Incoming.sender transition_env in
               let computation =
                 let open Interruptible.Let_syntax in
