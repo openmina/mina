@@ -47,6 +47,7 @@
    mina_block
    blockchain_snark
    transaction_snark
+   transition_chain_verifier
    ;;error_json
    ;;genesis_ledger_helper
    ;;memory_stats

@@ -4,39 +4,21 @@ open Blockchain_snark
 open Mina_base
 open Mina_state
 
-let parse_json data =
-  if String.is_prefix data ~prefix:"[" then
-    [%derive.of_yojson: Blockchain_snark.Blockchain.t list]
-      (Yojson.Safe.from_string data)
-  else
-    Result.map
-      ~f:(fun bc -> [ bc ])
-      ([%derive.of_yojson: Blockchain_snark.Blockchain.t]
-         (Yojson.Safe.from_string data) )
-
 let parse_json_or_binprot_file path =
   if String.equal path "quit" then Stdlib.exit 0 ;
   Stdlib.Printf.printf "Parsing.\n%!" ;
   let data = In_channel.read_all path in
-  if String.is_prefix data ~prefix:"[" || String.is_prefix data ~prefix:"{" then
-    let result = parse_json data in
-    Result.map_error result ~f:(fun err -> err)
+  if String.is_prefix data ~prefix:"{" then
+    let result =
+      Mina_block.Header.Stable.V2.of_yojson (Yojson.Safe.from_string data)
+    in
+    Result.map_error result ~f:(fun err -> "JSON parsing failure: " ^ err)
   else
     try
       let result =
-        try
-          let block : Mina_block.t =
-            Bin_prot.Reader.of_string Mina_block.Stable.Latest.bin_reader_t data
-          in
-          let header = Mina_block.header block in
-          let proof = Mina_block.Header.protocol_state_proof header in
-          let state = Mina_block.Header.protocol_state header in
-          Blockchain_snark.Blockchain.create ~proof ~state
-        with _ ->
-          Bin_prot.Reader.of_string
-            Blockchain_snark.Blockchain.Stable.Latest.bin_reader_t data
+        Bin_prot.Reader.of_string Mina_block.Header.Stable.V2.bin_reader_t data
       in
-      Ok [ result ]
+      Ok result
     with exn -> Error (Exn.to_string exn)
 
 let get_input file =
@@ -49,10 +31,16 @@ let get_input file =
     | Some file ->
         parse_json_or_binprot_file file
   in
-  Result.map input ~f:(fun input ->
-      List.map input ~f:(fun snark ->
-          ( Blockchain_snark.Blockchain.state snark
-          , Blockchain_snark.Blockchain.proof snark ) ) )
+  Result.map input ~f:(fun header ->
+      let proof = Mina_block.Header.protocol_state_proof header in
+      let state = Mina_block.Header.protocol_state header in
+      let delta_block_chain_proof =
+        Mina_block.Header.delta_block_chain_proof header
+      in
+      let previous_state_hash =
+        Protocol_state.previous_state_hash (Obj.magic (Obj.repr state))
+      in
+      (state, proof, previous_state_hash, delta_block_chain_proof) )
 
 let run () =
   let files = ref @@ List.tl_exn @@ Array.to_list @@ Sys.get_argv () in
@@ -100,16 +88,27 @@ let run () =
     | Error err ->
         Stdlib.Printf.printf "Error processing input: %s\n%!" err ;
         loop ()
-    | Ok input -> (
+    | Ok (state, proof, previous_state_hash, delta_block_chain_proof) -> (
         Stdlib.Printf.printf "Calling verifier.\n%!" ;
         let before_time = Unix.gettimeofday () in
-        let result = verify input in
+        let result = verify [ (state, proof) ] in
         let after_time = Unix.gettimeofday () in
         Stdlib.Printf.printf "Verification time: %fs\n%!"
           (after_time -. before_time) ;
         match result with
         | true ->
             Stdlib.Printf.printf "Proofs verified successfully.\n%!" ;
+            let tfvr =
+              Transition_chain_verifier.verify ~target_hash:previous_state_hash
+                ~transition_chain_proof:delta_block_chain_proof
+            in
+            ( match tfvr with
+            | None ->
+                Stdlib.Printf.printf
+                  "Failed to verify delta block chain proof.\n%!"
+            | Some _ ->
+                Stdlib.Printf.printf
+                  "Delta block chain proof verified successfully.\n%!" ) ;
             loop ()
         | false ->
             Stdlib.Printf.printf "Proofs failed to verify.\n%!" ;
