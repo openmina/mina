@@ -884,9 +884,9 @@ module T = struct
       pre_diff_info ?state_hash ~current_state_view ~state_and_body_hash
       ~log_prefix =
     let open Deferred.Result.Let_syntax in
-    let checkpoint cp =
+    let checkpoint ?metadata cp =
       Option.iter state_hash ~f:(fun state_hash ->
-          Block_tracing.External.checkpoint state_hash cp )
+          Block_tracing.External.checkpoint ?metadata state_hash cp )
     in
     let max_throughput =
       Int.pow 2 t.constraint_constants.transaction_capacity_log_2
@@ -899,7 +899,13 @@ module T = struct
     let new_mask = Ledger.Mask.create ~depth:(Ledger.depth t.ledger) () in
     let new_ledger = Ledger.register_mask t.ledger new_mask in
     let transactions, works, commands_count, coinbases = pre_diff_info in
-    checkpoint `Update_coinbase_stack ;
+    let metadata =
+      Printf.sprintf
+        "transactions=%d, works=%d, commands_count=%d, coinbases=%d"
+        (List.length transactions) (List.length works) commands_count
+        (List.length coinbases)
+    in
+    checkpoint ~metadata `Update_coinbase_stack ;
     let%bind is_new_stack, data, stack_update_in_snark, stack_update =
       O1trace.thread "update_coinbase_stack_start_time" (fun () ->
           update_coinbase_stack_and_get_data ~constraint_constants t.scan_state
@@ -909,7 +915,12 @@ module T = struct
     let slots = List.length data in
     let work_count = List.length works in
     let required_pairs = Scan_state.work_statements_for_new_diff t.scan_state in
-    checkpoint `Check_for_sufficient_snark_work ;
+    let metadata =
+      Printf.sprintf "required=%d work_count=%d slots=%d"
+        (List.length required_pairs)
+        work_count slots
+    in
+    checkpoint ~metadata `Check_for_sufficient_snark_work ;
     let%bind () =
       O1trace.thread "check_for_sufficient_snark_work" (fun () ->
           let required = List.length required_pairs in
@@ -956,7 +967,9 @@ module T = struct
           Deferred.return (to_staged_ledger_or_error r) )
     in
     let%bind () = yield_result () in
-    checkpoint `Update_pending_coinbase_collection ;
+    checkpoint
+      ~metadata:(Printf.sprintf "is_new_stack=%b" is_new_stack)
+      `Update_pending_coinbase_collection ;
     let%bind updated_pending_coinbase_collection' =
       O1trace.thread "update_pending_coinbase_collection" (fun () ->
           update_pending_coinbase_collection
