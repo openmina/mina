@@ -13,7 +13,17 @@ let to_libp2p_ipc = Libp2p_ipc.create_multiaddr
 
 let to_peer t =
   match String.split ~on:'/' t with
-  | [ ""; "ip4"; ip4_str; "tcp"; tcp_str; "p2p"; peer_id ] -> (
+  | [ ""; "ip4"; ip4_str; "tcp"; tcp_str; "p2p"; peer_id ]
+  | [ ""
+    ; "ip4"
+    ; ip4_str
+    ; "tcp"
+    ; tcp_str
+    ; "http"
+    ; "p2p-webrtc-direct"
+    ; "p2p"
+    ; peer_id
+    ] -> (
       try
         let host = Unix.Inet_addr.of_string ip4_str in
         let libp2p_port = Int.of_string tcp_str in
@@ -28,14 +38,14 @@ let of_peer ({ host; libp2p_port; peer_id } : Peer.t) =
     (Unix.Inet_addr.to_string host)
     libp2p_port peer_id
 
-let valid_as_peer t =
-  match String.split ~on:'/' t with
-  | [ ""; protocol; _; "tcp"; _; "p2p"; _ ]
-    when List.mem [ "ip4"; "ip6"; "dns4"; "dns6" ] protocol ~equal:String.equal
-    ->
-      true
-  | _ ->
-      false
+let valid_as_peer t = not (String.is_empty t)
+(* match String.split ~on:'/' t with
+   | [ ""; protocol; _; "tcp"; _; "p2p"; _ ]
+     when List.mem [ "ip4"; "ip6"; "dns4"; "dns6" ] protocol ~equal:String.equal
+     ->
+       true
+   | _ ->
+       false *)
 
 let of_file_contents contents : t list =
   String.split ~on:'\n' contents
