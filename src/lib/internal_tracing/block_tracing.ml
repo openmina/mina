@@ -183,6 +183,9 @@ module Registry = struct
     Hashtbl.update registry block_id
       ~f:(Trace.push ~status ~source ?blockchain_length entry)
 
+  let push_metadata ~metadata (block_id : Mina_base.State_hash.t) =
+    Hashtbl.change registry block_id ~f:(Trace.push_metadata ~metadata)
+
   let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
       (block_id : Mina_base.State_hash.t) checkpoint =
     push_entry ~status ~source ?blockchain_length block_id
@@ -277,6 +280,13 @@ module Processing = struct
     | Some block_id ->
         checkpoint ?status ?metadata ?source ?blockchain_length block_id
           checkpoint_name
+
+  let push_metadata metadata =
+    match !current_state_hash with
+    | None ->
+        ()
+    | Some block_id ->
+        Registry.push_metadata ~metadata block_id
 
   let failure ~reason state_hash =
     (* TODOX: compute structured version and save it *)
