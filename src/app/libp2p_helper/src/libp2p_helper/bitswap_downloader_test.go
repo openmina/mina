@@ -15,7 +15,7 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/stretchr/testify/require"
 )
 
@@ -695,16 +695,11 @@ func (bs *testBitswapState) DeleteBlocks(keys [][32]byte) error {
 	return nil
 }
 func (bs *testBitswapState) ViewBlock(key [32]byte, callback func([]byte) error) error {
-	cid := codanet.BlockHashToCid(key)
-	b, has := bs.blocks[cid]
+	b, has := bs.blocks[codanet.BlockHashToCid(key)]
 	if !has {
-		return ipld.ErrNotFound{Cid: cid}
+		return blockstore.ErrNotFound
 	}
 	return callback(b)
-}
-func (bs *testBitswapState) StoreDownloadedBlock(block blocks.Block) error {
-	bs.blocks[block.Cid()] = block.RawData()
-	return nil
 }
 
 func (bg1 *blockGroup) add(bg blockGroup) {
@@ -717,9 +712,6 @@ func (bg1 *blockGroup) add(bg blockGroup) {
 	bg1.starts = append(bg1.starts, bg.starts...)
 }
 
-func (bs *testBitswapState) Context() context.Context {
-	return context.Background()
-}
 func (bs *testBitswapState) CheckInvariants() {
 	if !bs.checkInvariantsNow() {
 		return

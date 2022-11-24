@@ -17,9 +17,9 @@ import (
 	net "github.com/libp2p/go-libp2p-core/network"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-core/peerstore"
+	discovery "github.com/libp2p/go-libp2p-discovery"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	pb "github.com/libp2p/go-libp2p-pubsub/pb"
-	discovery "github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	"github.com/multiformats/go-multiaddr"
 	"golang.org/x/crypto/blake2b"
 )
@@ -432,8 +432,8 @@ func (msg ConfigureReq) handle(app *app, seqno uint64) *capnp.Message {
 		gatingConfig,
 		int(m.MinConnections()),
 		int(m.MaxConnections()),
-		m.PeerProtectionRatio(),
-		time.Second*15,
+		false,
+		time.Millisecond,
 		knownPrivateIpNets,
 	)
 	if err != nil {
@@ -506,7 +506,7 @@ func fromGenerateKeypairReq(req ipcRpcRequest) (rpcRequest, error) {
 	return GenerateKeypairReq(i), err
 }
 func (msg GenerateKeypairReq) handle(app *app, seqno uint64) *capnp.Message {
-	privk, pubk, err := crypto.GenerateEd25519Key(cryptorand.Reader)
+	privk, pubk, err := crypto.GenerateECDSAKeyPair(cryptorand.Reader)
 	if err != nil {
 		return mkRpcRespError(seqno, badp2p(err))
 	}
