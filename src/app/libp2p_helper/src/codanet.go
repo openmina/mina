@@ -3,19 +3,25 @@ package codanet
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math"
+	"math/rand"
 	gonet "net"
 	"path"
 	"sync"
 	"time"
 
+	lmdbbs "github.com/georgeee/go-bs-lmdb"
 	"github.com/ipfs/go-bitswap"
 	bitnet "github.com/ipfs/go-bitswap/network"
 	dsb "github.com/ipfs/go-ds-badger"
 	logging "github.com/ipfs/go-log/v2"
 	p2p "github.com/libp2p/go-libp2p"
 
+	p2pconnmgr "github.com/libp2p/go-libp2p-connmgr"
 	"github.com/libp2p/go-libp2p-core/connmgr"
 	"github.com/libp2p/go-libp2p-core/control"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -23,24 +29,27 @@ import (
 	"github.com/libp2p/go-libp2p-core/metrics"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
+	peerstore "github.com/libp2p/go-libp2p-core/peerstore"
 	protocol "github.com/libp2p/go-libp2p-core/protocol"
 	"github.com/libp2p/go-libp2p-core/routing"
+	tpt "github.com/libp2p/go-libp2p-core/transport"
+	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-kad-dht/dual"
 	"github.com/libp2p/go-libp2p-peerstore/pstoreds"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	record "github.com/libp2p/go-libp2p-record"
+	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
 	p2pconfig "github.com/libp2p/go-libp2p/config"
 	mdns "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
-	discovery "github.com/libp2p/go-libp2p/p2p/discovery/routing"
-	libp2pyamux "github.com/libp2p/go-libp2p/p2p/muxer/yamux"
-	p2pconnmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
-	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
+	tcp "github.com/libp2p/go-tcp-transport"
 	ma "github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"golang.org/x/crypto/blake2b"
 
-	patcher "github.com/o1-labs/go-libp2p-kad-dht-patcher"
+	direct "github.com/libp2p/go-libp2p-webrtc-direct"
+	libp2pyamux "github.com/libp2p/go-libp2p-yamux"
+	"github.com/pion/webrtc/v3"
 )
 
 const NodeStatusTimeout = 10 * time.Second
@@ -52,6 +61,10 @@ func parseCIDR(cidr string) gonet.IPNet {
 	}
 	return *ipnet
 }
+
+type getRandomPeersFunc func(num int, from peer.ID) []peer.AddrInfo
+
+const numPxConnectionWorkers int = 8
 
 var (
 	logger      = logging.Logger("codanet.Helper")
@@ -67,6 +80,7 @@ var (
 		"169.254.0.0/16",
 	}
 
+	pxProtocolID         = protocol.ID("/mina/peer-exchange")
 	NodeStatusProtocolID = protocol.ID("/mina/node-status")
 	BitSwapExchange      = protocol.ID("/mina/bitswap-exchange")
 
@@ -89,9 +103,15 @@ func isPrivateAddr(addr ma.Multiaddr) bool {
 }
 
 type CodaConnectionManager struct {
-	p2pManager   *p2pconnmgr.BasicConnMgr
-	OnConnect    func(network.Network, network.Conn)
-	OnDisconnect func(network.Network, network.Conn)
+	ctx        context.Context
+	host       host.Host
+	p2pManager *p2pconnmgr.BasicConnMgr
+	// minaPeerExchange controls whether to send random peers to the other ndoe before trimming its
+	// recently opened connection
+	minaPeerExchange bool
+	getRandomPeers   getRandomPeersFunc
+	OnConnect        func(network.Network, network.Conn)
+	OnDisconnect     func(network.Network, network.Conn)
 	// protectedMirror is a map of protected peer ids/tags, mirroring the structure in
 	// BasicConnMgr which is not accessible from CodaConnectionManager
 	protectedMirror     map[peer.ID]map[string]interface{}
@@ -114,18 +134,16 @@ func (cm *CodaConnectionManager) AddOnDisconnectHandler(f func(network.Network, 
 	}
 }
 
-func newCodaConnectionManager(minConnections, maxConnections int, grace time.Duration) (*CodaConnectionManager, error) {
+func newCodaConnectionManager(minConnections, maxConnections int, minaPeerExchange bool, grace time.Duration) *CodaConnectionManager {
 	noop := func(net network.Network, c network.Conn) {}
-	connmgr, err := p2pconnmgr.NewConnManager(minConnections, maxConnections, p2pconnmgr.WithGracePeriod(grace))
-	if err != nil {
-		return nil, err
-	}
+
 	return &CodaConnectionManager{
-		p2pManager:      connmgr,
-		OnConnect:       noop,
-		OnDisconnect:    noop,
-		protectedMirror: make(map[peer.ID]map[string]interface{}),
-	}, nil
+		p2pManager:       p2pconnmgr.NewConnManager(minConnections, maxConnections, grace),
+		OnConnect:        noop,
+		OnDisconnect:     noop,
+		minaPeerExchange: minaPeerExchange,
+		protectedMirror:  make(map[peer.ID]map[string]interface{}),
+	}
 }
 
 // proxy connmgr.ConnManager interface to p2pconnmgr.BasicConnMgr
@@ -191,10 +209,67 @@ func (cm *CodaConnectionManager) Listen(net network.Network, addr ma.Multiaddr) 
 func (cm *CodaConnectionManager) ListenClose(net network.Network, addr ma.Multiaddr) {
 	cm.p2pManager.Notifee().ListenClose(net, addr)
 }
+func (cm *CodaConnectionManager) OpenedStream(net network.Network, stream network.Stream) {
+	cm.p2pManager.Notifee().OpenedStream(net, stream)
+}
+func (cm *CodaConnectionManager) ClosedStream(net network.Network, stream network.Stream) {
+	cm.p2pManager.Notifee().ClosedStream(net, stream)
+}
 func (cm *CodaConnectionManager) Connected(net network.Network, c network.Conn) {
 	logger.Debugf("%s connected to %s", c.LocalPeer(), c.RemotePeer())
 	cm.OnConnect(net, c)
 	cm.p2pManager.Notifee().Connected(net, c)
+
+	info := cm.GetInfo()
+	if len(net.Peers()) <= info.HighWater {
+		return
+	}
+
+	cm.TrimOpenConns(context.Background())
+
+	if !cm.minaPeerExchange {
+		return
+	}
+
+	logger.Debugf("node=%s disconnecting from peer=%s; max peers=%d peercount=%d", c.LocalPeer(), c.RemotePeer(), info.HighWater, len(net.Peers()))
+
+	defer func() {
+		go func() {
+			// small delay to allow for remote peer to read from stream
+			time.Sleep(time.Millisecond * 400)
+			_ = c.Close()
+		}()
+	}()
+
+	// select random subset of our peers to send over, then disconnect
+	if cm.getRandomPeers == nil {
+		logger.Error("getRandomPeers function not set")
+		return
+	}
+
+	peers := cm.getRandomPeers(info.LowWater, c.RemotePeer())
+	bz, err := json.Marshal(peers)
+	if err != nil {
+		logger.Error("failed to marshal peers", err)
+		return
+	}
+
+	stream, err := cm.host.NewStream(cm.ctx, c.RemotePeer(), pxProtocolID)
+	if err != nil {
+		logger.Debug("failed to open stream", err)
+		return
+	}
+
+	n, err := stream.Write(bz)
+	if err != nil {
+		logger.Debug("failed to write to stream", err)
+		return
+	} else if n != len(bz) {
+		logger.Debug("failed to write all data to stream")
+		return
+	}
+
+	logger.Debugf("wrote peers to stream %s", stream.Protocol())
 }
 
 func (cm *CodaConnectionManager) Disconnected(net network.Network, c network.Conn) {
@@ -226,7 +301,7 @@ type Helper struct {
 	MsgStats          *MessageStats
 	Seeds             []peer.AddrInfo
 	NodeStatus        []byte
-	HeartbeatPeer     func(peer.ID)
+	pxDiscoveries     chan peer.AddrInfo
 }
 
 type MessageStats struct {
@@ -550,6 +625,35 @@ func (gs *CodaGatingState) InterceptUpgraded(network.Conn) (allow bool, reason c
 	return
 }
 
+func (h *Helper) getRandomPeers(num int, from peer.ID) []peer.AddrInfo {
+	peers := h.Host.Peerstore().Peers()
+	if len(peers)-2 < num {
+		num = len(peers) - 2 // -2 because excluding ourself and the peer we are sending this to
+	}
+
+	ret := make([]peer.AddrInfo, num)
+	rand.Shuffle(len(peers), func(i, j int) { peers[i], peers[j] = peers[j], peers[i] })
+	idx := 0
+
+	for i := 0; i < num; i++ {
+		for {
+			if idx >= len(peers) {
+				return ret
+			} else if peers[idx] != h.Host.ID() && peers[idx] != from && len(h.Host.Peerstore().PeerInfo(peers[idx]).Addrs) != 0 {
+				break
+			} else {
+				idx += 1
+			}
+		}
+
+		ret[i] = h.Host.Peerstore().PeerInfo(peers[idx])
+		idx += 1
+	}
+
+	logger.Debugf("node=%s sending random peers", h.Host.ID(), ret)
+	return ret
+}
+
 type customValidator struct {
 	Base record.Validator
 }
@@ -562,6 +666,46 @@ func (cv customValidator) Validate(key string, value []byte) error {
 func (cv customValidator) Select(key string, values [][]byte) (int, error) {
 	logger.Debugf("DHT Selecting Among: %s = %s", key, bytes.Join(values, []byte("; ")))
 	return cv.Base.Select(key, values)
+}
+
+func (h *Helper) handlePxStreams(s network.Stream) {
+	defer func() {
+		_ = s.Close()
+	}()
+
+	stat := s.Conn().Stat()
+	if stat.Direction != network.DirOutbound {
+		return
+	}
+
+	connInfo := h.ConnectionManager.GetInfo()
+	if connInfo.ConnCount >= connInfo.LowWater {
+		return
+	}
+
+	buf := make([]byte, 8192)
+	_, err := s.Read(buf)
+	if err != nil && err != io.EOF {
+		logger.Debugf("failed to decode list of peers err=%s", err)
+		return
+	}
+
+	r := bytes.NewReader(buf)
+	peers := []peer.AddrInfo{}
+	dec := json.NewDecoder(r)
+	err = dec.Decode(&peers)
+	if err != nil {
+		logger.Debugf("failed to decode list of peers err=%s", err)
+		return
+	}
+
+	for _, p := range peers {
+		select {
+		case h.pxDiscoveries <- p:
+		default:
+			logger.Debugf("peer discoveries channel full; dropping peer %v", p)
+		}
+	}
 }
 
 func (h *Helper) handleNodeStatusStreams(s network.Stream) {
@@ -593,12 +737,25 @@ func (h *Helper) handleNodeStatusStreams(s network.Stream) {
 	logger.Debugf("wrote node status to stream %s", s.Protocol())
 }
 
-func (h *Helper) TrimOpenConns(ctx context.Context) {
-	h.ConnectionManager.TrimOpenConns(ctx)
+func (h Helper) pxConnectionWorker() {
+	for peer := range h.pxDiscoveries {
+		connInfo := h.ConnectionManager.GetInfo()
+		if connInfo.ConnCount < connInfo.LowWater {
+			err := h.Host.Connect(h.Ctx, peer)
+			if err != nil {
+				logger.Debugf("failed to connect to peer %v err=%s", peer, err)
+			} else {
+				logger.Debugf("connected to peer! %v", peer)
+			}
+		} else {
+			logger.Debugf("discovered peer (%v) via peer exchange, but already have too many connections; adding to peerstore, but refusing to connect", peer)
+			h.Host.Peerstore().AddAddrs(peer.ID, peer.Addrs, peerstore.ConnectedAddrTTL)
+		}
+	}
 }
 
 // MakeHelper does all the initialization to run one host
-func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Multiaddr, statedir string, pk crypto.PrivKey, networkID string, seeds []peer.AddrInfo, gatingConfig *CodaGatingConfig, minConnections, maxConnections int, peerProtectionRatio float32, grace time.Duration, knownPrivateIpNets []gonet.IPNet) (*Helper, error) {
+func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Multiaddr, statedir string, pk crypto.PrivKey, networkID string, seeds []peer.AddrInfo, gatingConfig *CodaGatingConfig, minConnections, maxConnections int, minaPeerExchange bool, grace time.Duration, knownPrivateIpNets []gonet.IPNet) (*Helper, error) {
 	me, err := peer.IDFromPrivateKey(pk)
 	if err != nil {
 		return nil, err
@@ -627,23 +784,14 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	rendezvousString := fmt.Sprintf("/coda/0.0.1/%s", networkID)
 
 	pnetKey := blake2b.Sum256([]byte(rendezvousString))
+	_ = pnetKey
 
 	// custom validator to omit the ipns validation.
 	rv := customValidator{Base: record.NamespacedValidator{"pk": record.PublicKeyValidator{}}}
 
-	lanPatcher := patcher.NewPatcher()
-	wanPatcher := patcher.NewPatcher()
-	lanPatcher.MaxProtected = minConnections
-	wanPatcher.MaxProtected = minConnections
-	lanPatcher.ProtectionRate = peerProtectionRatio
-	wanPatcher.ProtectionRate = peerProtectionRatio
-
 	var kad *dual.DHT
 
-	connManager, err := newCodaConnectionManager(minConnections, maxConnections, grace)
-	if err != nil {
-		return nil, err
-	}
+	connManager := newCodaConnectionManager(minConnections, maxConnections, minaPeerExchange, grace)
 	bandwidthCounter := metrics.NewBandwidthCounter()
 
 	// we initialize the known private addr filters to reject all ip addresses initially
@@ -652,17 +800,67 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	for _, net := range knownPrivateIpNets {
 		knownPrivateAddrFilters.AddFilter(net, ma.ActionAccept)
 	}
+	muxer := libp2pyamux.DefaultTransport
+
+	bytes, err := pk.Raw()
+	if err != nil {
+		return nil, err
+	}
+	priv, err := x509.ParseECPrivateKey(bytes)
+	if err != nil {
+		return nil, err
+	}
+	cert, err := webrtc.GenerateCertificate(priv)
+	if err != nil {
+		return nil, err
+	}
+
+	transport := direct.NewTransport(
+		webrtc.Configuration{
+			Certificates: []webrtc.Certificate{*cert},
+			// Certificates: []webrtc.Certificate{*cert},
+		},
+		muxer,
+		pk,
+		pk.GetPublic(),
+	)
+	// WithSignalConfiguration(star.SignalConfiguration{
+	// 	URLPath: "/socket.io/?EIO=3&transport=websocket",
+	// }).
+	// WithWebRTCConfiguration(webrtc.Configuration{
+	// 	ICEServers: []webrtc.ICEServer{
+	// 		{
+	// 			URLs: []string{
+	// 				"stun:stun.l.google.com:19302",
+	// 				"stun:stun1.l.google.com:19302",
+	// 				"stun:stun2.l.google.com:19302",
+	// 				"stun:stun3.l.google.com:19302",
+	// 				"stun:stun4.l.google.com:19302",
+	// 			},
+	// 		},
+	// 	},
+	// })
 
 	gs := NewCodaGatingState(gatingConfig, knownPrivateAddrFilters)
-	host, err := p2p.New(
-		p2p.Transport(tcp.NewTCPTransport),
-		p2p.Muxer("/coda/yamux/1.0.0", libp2pyamux.DefaultTransport),
+	host, err := p2p.New(ctx,
+		p2p.Transport(func(origUpgrader *tptu.Upgrader) tpt.Transport {
+			upgrader := **&origUpgrader
+			upgrader.PSK = pnetKey[:]
+			upgrader.InherentlySecure = false
+			// Secure           sec.SecureMuxer
+			// Muxer            mux.Multiplexer
+			return tcp.NewTCPTransport(&upgrader)
+		}),
+		p2p.Transport(transport.WithUpgrader),
+		// Encryption is handled by WebRTC itself (DTLS).
+		p2p.InherentlySecure,
+		p2p.Muxer("/coda/yamux/1.0.0", muxer),
 		p2p.Identity(pk),
 		p2p.Peerstore(ps),
 		p2p.DisableRelay(),
 		p2p.ConnectionGater(gs),
 		p2p.ConnectionManager(connManager),
-		p2p.ListenAddrs(listenOn...),
+		// p2p.ListenAddrs(listenOn...),
 		p2p.AddrsFactory(func(as []ma.Multiaddr) []ma.Multiaddr {
 			if externalAddr != nil {
 				as = append(as, externalAddr)
@@ -683,30 +881,37 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 					dual.DHTOption(dht.BootstrapPeers(seeds...)),
 					dual.DHTOption(dht.ProtocolPrefix("/coda")),
 				)
-				lanPatcher.Patch(kad.LAN)
-				wanPatcher.Patch(kad.WAN)
 				return kad, err
 			})),
 		p2p.UserAgent("github.com/codaprotocol/coda/tree/master/src/app/libp2p_helper"),
-		p2p.PrivateNetwork(pnetKey[:]),
+		// p2p.PrivateNetwork(pnetKey[:]),
 		p2p.BandwidthReporter(bandwidthCounter),
 	)
 
 	if err != nil {
 		return nil, err
 	}
-	bstore, err := OpenBitswapStorageLmdb(path.Join(statedir, "block-db"))
+
+	// 256MiB, a large enough mmap size to make mmap grow() a rare event
+	opt := lmdbbs.Options{
+		Path:            path.Join(statedir, "block-db"),
+		InitialMmapSize: 256 << 20,
+		CidToKeyMapper:  cidToKeyMapper,
+		KeyToCidMapper:  keyToCidMapper,
+	}
+	bstore, err := lmdbbs.Open(&opt)
 	if err != nil {
 		return nil, err
 	}
+
 	bitswapNetwork := bitnet.NewFromIpfsHost(host, kad, bitnet.Prefix(BitSwapExchange))
-	bs := bitswap.New(context.Background(), bitswapNetwork, bstore.Blockstore())
+	bs := bitswap.New(context.Background(), bitswapNetwork, bstore).(*bitswap.Bitswap)
 
 	// nil fields are initialized by beginAdvertising
 	h := &Helper{
 		Host:              host,
 		Bitswap:           bs,
-		BitswapStorage:    bstore,
+		BitswapStorage:    (*BitswapStorageLmdb)(bstore),
 		Ctx:               ctx,
 		Mdns:              nil,
 		Dht:               kad,
@@ -720,12 +925,22 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 		BandwidthCounter:  bandwidthCounter,
 		MsgStats:          &MessageStats{min: math.MaxUint64},
 		Seeds:             seeds,
-		HeartbeatPeer: func(p peer.ID) {
-			lanPatcher.Heartbeat(p)
-			wanPatcher.Heartbeat(p)
-		},
+		pxDiscoveries:     nil,
 	}
 
+	if !minaPeerExchange {
+		return h, nil
+	}
+
+	h.pxDiscoveries = make(chan peer.AddrInfo, maxConnections*3)
+	for w := 0; w < numPxConnectionWorkers; w++ {
+		go h.pxConnectionWorker()
+	}
+
+	connManager.getRandomPeers = h.getRandomPeers
+	connManager.ctx = ctx
+	connManager.host = host
+	h.Host.SetStreamHandler(pxProtocolID, h.handlePxStreams)
 	h.Host.SetStreamHandler(NodeStatusProtocolID, h.handleNodeStatusStreams)
 	return h, nil
 }

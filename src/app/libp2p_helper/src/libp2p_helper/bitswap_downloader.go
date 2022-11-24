@@ -10,7 +10,7 @@ import (
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 )
 
@@ -73,12 +73,7 @@ func (s *RootDownloadState) getTag() BitswapDataTag {
 }
 
 type BitswapState interface {
-	GetStatus(key [32]byte) (codanet.RootBlockStatus, error)
-	SetStatus(key [32]byte, value codanet.RootBlockStatus) error
-	DeleteStatus(key [32]byte) error
-	DeleteBlocks(keys [][32]byte) error
-	ViewBlock(key [32]byte, callback func([]byte) error) error
-	StoreDownloadedBlock(block blocks.Block) error
+	codanet.BitswapStorage
 	NodeDownloadParams() map[cid.Cid]map[root][]NodeIndex
 	RootDownloadStates() map[root]*RootDownloadState
 	MaxBlockSize() int
@@ -140,7 +135,7 @@ func kickStartRootDownload(root_ BitswapBlockLink, tag BitswapDataTag, bs Bitswa
 		copy(rootBlock, b)
 		return nil
 	}
-	if err := bs.ViewBlock(root_, rootBlockViewF); err != nil && err != (ipld.ErrNotFound{Cid: codanet.BlockHashToCid(root_)}) {
+	if err := bs.ViewBlock(root_, rootBlockViewF); err != nil && err != blockstore.ErrNotFound {
 		handleError(err)
 		return
 	}
@@ -251,10 +246,6 @@ func processDownloadedBlockStep(params map[root][]NodeIndex, block blocks.Block,
 func processDownloadedBlock(block blocks.Block, bs BitswapState) {
 	bs.CheckInvariants()
 	id := block.Cid()
-	err := bs.StoreDownloadedBlock(block)
-	if err != nil {
-		bitswapLogger.Errorf("Failed to store block %s", id)
-	}
 	nodeDownloadParams := bs.NodeDownloadParams()
 	rootDownloadStates := bs.RootDownloadStates()
 	depthIndices := bs.DepthIndices()
@@ -316,7 +307,7 @@ func processDownloadedBlock(block blocks.Block, bs BitswapState) {
 			b, _ := blocks.NewBlockWithCid(blockBytes, childId)
 			blocksToProcess = append(blocksToProcess, b)
 		} else {
-			if err != (ipld.ErrNotFound{Cid: codanet.BlockHashToCid(link)}) {
+			if err != blockstore.ErrNotFound {
 				// we still schedule blocks for downloading
 				// this case should rarely happen in practice
 				bitswapLogger.Warnf("Failed to retrieve block %s from storage: %w", childId, err)
