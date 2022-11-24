@@ -916,9 +916,10 @@ module T = struct
     let work_count = List.length works in
     let required_pairs = Scan_state.work_statements_for_new_diff t.scan_state in
     let metadata =
-      Printf.sprintf "required=%d work_count=%d slots=%d"
+      Printf.sprintf "required=%d work_count=%d slots=%d free_space=%d"
         (List.length required_pairs)
         work_count slots
+        (Scan_state.free_space t.scan_state)
     in
     checkpoint ~metadata `Check_for_sufficient_snark_work ;
     let%bind () =
