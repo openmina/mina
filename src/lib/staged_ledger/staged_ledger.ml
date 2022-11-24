@@ -741,7 +741,7 @@ module T = struct
     let { Scan_state.Space_partition.first = slots, _; second } =
       Scan_state.partition_if_overflowing scan_state
     in
-    if List.length transactions > 0 then
+    if List.length transactions > 0 then (
       match second with
       | None ->
           (*Single partition:
@@ -811,7 +811,10 @@ module T = struct
                 (* a diff consists of only non-coinbase transactions. This is currently not possible because a diff will have a coinbase at the very least, so don't update anything?*)
                 (Update_none, `Update_none)
           in
-          (false, data1 @ data2, pending_coinbase_action, stack_update)
+          Internal_tracing.Block_tracing.Processing.push_metadata
+            (Printf.sprintf "coinbase_in_first_partition=%b second_has_data=%b"
+               coinbase_in_first_partition second_has_data ) ;
+          (false, data1 @ data2, pending_coinbase_action, stack_update) )
     else
       Deferred.return
         (Ok (false, [], Pending_coinbase.Update.Action.Update_none, `Update_none)
