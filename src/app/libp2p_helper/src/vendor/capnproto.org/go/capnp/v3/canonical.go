@@ -17,7 +17,7 @@ func Canonicalize(s Struct) ([]byte, error) {
 		return nil, errorf("canonicalize: %v", err)
 	}
 	if err := fillCanonicalStruct(root, s); err != nil {
-		return nil, annotate(err).errorf("canonicalize")
+		return nil, annotatef(err, "canonicalize")
 	}
 	return seg.Data(), nil
 }
@@ -43,7 +43,8 @@ func canonicalPtr(dst *Segment, p Ptr) (Ptr, error) {
 		}
 		return ll.ToPtr(), nil
 	case interfacePtrType:
-		return Ptr{}, newError("cannot canonicalize interface")
+		iface := NewInterface(dst, p.Interface().Capability())
+		return iface.ToPtr(), nil
 	default:
 		panic("unreachable")
 	}
@@ -54,14 +55,14 @@ func fillCanonicalStruct(dst, s Struct) error {
 	for i := uint16(0); i < dst.size.PointerCount; i++ {
 		p, err := s.Ptr(i)
 		if err != nil {
-			return annotate(err).errorf("struct pointer %d", i)
+			return annotatef(err, "struct pointer %d", i)
 		}
 		cp, err := canonicalPtr(dst.seg, p)
 		if err != nil {
-			return annotate(err).errorf("struct pointer %d", i)
+			return annotatef(err, "struct pointer %d", i)
 		}
 		if err := dst.SetPtr(i, cp); err != nil {
-			return annotate(err).errorf("struct pointer %d", i)
+			return annotatef(err, "struct pointer %d", i)
 		}
 	}
 	return nil
@@ -117,19 +118,19 @@ func canonicalList(dst *Segment, l List) (List, error) {
 			return List{}, errorf("list: %v", err)
 		}
 		for i := 0; i < l.Len(); i++ {
-			p, err := PointerList{l}.At(i)
+			p, err := PointerList(l).At(i)
 			if err != nil {
 				return List{}, errorf("list element %d: %v", i, err)
 			}
 			cp, err := canonicalPtr(dst, p)
 			if err != nil {
-				return List{}, annotate(err).errorf("list element %d", i)
+				return List{}, annotatef(err, "list element %d", i)
 			}
 			if err := cl.Set(i, cp); err != nil {
 				return List{}, errorf("list element %d: %v", i, err)
 			}
 		}
-		return cl.List, nil
+		return List(cl), nil
 	}
 
 	// Struct/composite list
@@ -149,7 +150,7 @@ func canonicalList(dst *Segment, l List) (List, error) {
 	}
 	for i := 0; i < cl.Len(); i++ {
 		if err := fillCanonicalStruct(cl.Struct(i), l.Struct(i)); err != nil {
-			return List{}, annotate(err).errorf("list element %d", i)
+			return List{}, annotatef(err, "list element %d", i)
 		}
 	}
 	return cl, nil
