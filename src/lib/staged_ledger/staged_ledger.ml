@@ -913,9 +913,10 @@ module T = struct
     let transactions, works, commands_count, coinbases = pre_diff_info in
     let metadata =
       Printf.sprintf
-        "transactions=%d, works=%d, commands_count=%d, coinbases=%d"
+        "transactions=%d, works=%d, commands_count=%d, coinbases=%d, \
+         spots_available=%d, proofs_waiting=%d, max_throughput=%d"
         (List.length transactions) (List.length works) commands_count
-        (List.length coinbases)
+        (List.length coinbases) spots_available proofs_waiting max_throughput
     in
     checkpoint ~metadata `Update_coinbase_stack ;
     let%bind is_new_stack, data, stack_update_in_snark, stack_update =
