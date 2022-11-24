@@ -75,6 +75,7 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
     @@ Mina_block.Validation.block_with_hash transition_with_validation )
       .state_hash
   in
+  Block_tracing.Processing.set_current_state_hash (Some state_hash) ;
   Block_tracing.Processing.checkpoint state_hash `Build_breadcrumb ;
   O1trace.thread "build_breadcrumb" (fun () ->
       let open Deferred.Let_syntax in
