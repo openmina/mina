@@ -133,7 +133,7 @@ func main() {
 	setLogLevel("badger", "debug")
 	setLogLevel("relay", "info") // Log relayed byte counts spammily
 	setLogLevel("routedhost", "debug")
-	setLogLevel("swarm2", "info") // Logs a new stream to each peer when opended at debug
+	setLogLevel("swarm2", "debug") // Logs a new stream to each peer when opended at debug
 	setLogLevel("peerstore/ds", "debug")
 	setLogLevel("mdns", "debug") // Logs each mdns call
 	setLogLevel("reuseport-transport", "debug")
@@ -145,6 +145,7 @@ func main() {
 	go func() {
 		for {
 			msg := <-app.OutChan
+			helperLog.Warn("##main::main>>", " msg: ", msg)
 			bytes, err := msg.Marshal()
 			if err != nil {
 				panic(err)
