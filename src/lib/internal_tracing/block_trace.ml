@@ -49,6 +49,18 @@ let empty ?(blockchain_length = Mina_numbers.Length.zero) source =
 
 let to_yojson t = to_yojson { t with checkpoints = List.rev t.checkpoints }
 
+let push_metadata ~metadata trace =
+  match trace with
+  | None | Some { checkpoints = []; _ } ->
+      trace (* do nothing *)
+  | Some ({ checkpoints = previous :: rest; _ } as trace) ->
+      let previous =
+        { previous with
+          metadata = String.concat ~sep:" " [ previous.metadata; metadata ]
+        }
+      in
+      Some { trace with checkpoints = previous :: rest }
+
 let push ~status ~source ?blockchain_length entry trace =
   match trace with
   | None ->
