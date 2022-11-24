@@ -284,13 +284,13 @@ module Make (Rpc_intf : Network_peer.Rpc_intf.Rpc_interface_intf) :
               configure net2 ~me ~metrics_port:config.metrics_port
                 ~maddrs:
                   [ Multiaddr.of_string
-                      (sprintf "/ip4/0.0.0.0/tcp/%d"
+                      (sprintf "/ip4/0.0.0.0/tcp/%d/http/p2p-webrtc-direct"
                          (Option.value_exn config.addrs_and_ports.peer)
                            .libp2p_port )
                   ]
                 ~external_maddr:
                   (Multiaddr.of_string
-                     (sprintf "/ip4/%s/tcp/%d"
+                     (sprintf "/ip4/%s/tcp/%d/http/p2p-webrtc-direct"
                         (Unix.Inet_addr.to_string
                            config.addrs_and_ports.external_ip )
                         (Option.value_exn config.addrs_and_ports.peer)
@@ -485,7 +485,8 @@ module Make (Rpc_intf : Network_peer.Rpc_intf.Rpc_interface_intf) :
                  or it is possible to miss connections! *)
               listen_on net2
                 (Multiaddr.of_string
-                   (sprintf "/ip4/%s/tcp/%d"
+                   (* TODO *)
+                   (sprintf "/ip4/%s/tcp/%d/http/p2p-webrtc-direct"
                       ( config.addrs_and_ports.bind_ip
                       |> Unix.Inet_addr.to_string )
                       (Option.value_exn config.addrs_and_ports.peer).libp2p_port ) )
