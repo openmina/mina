@@ -144,7 +144,7 @@ func (p Ptr) text() (b []byte, ok bool) {
 		// Text must be null-terminated.
 		return nil, false
 	}
-	return b[:len(b)-1 : len(b)], true
+	return b[: len(b)-1 : len(b)], true
 }
 
 // Data attempts to convert p into Data, returning nil if p is not a
@@ -200,14 +200,23 @@ func SamePtr(p, q Ptr) bool {
 	return p.seg == q.seg && p.off == q.off
 }
 
+// EncodeAsPtr returns the receiver; for implementing TypeParam.
+// The segment argument is ignored.
+func (p Ptr) EncodeAsPtr(*Segment) Ptr { return p }
+
+// DecodeFromPtr returns its argument; for implementing TypeParam.
+func (Ptr) DecodeFromPtr(p Ptr) Ptr { return p }
+
+var _ TypeParam[Ptr] = Ptr{}
+
 func unmarshalDefault(def []byte) (Ptr, error) {
 	msg, err := Unmarshal(def)
 	if err != nil {
-		return Ptr{}, annotate(err).errorf("read default")
+		return Ptr{}, annotatef(err, "read default")
 	}
 	p, err := msg.Root()
 	if err != nil {
-		return Ptr{}, annotate(err).errorf("read default")
+		return Ptr{}, annotatef(err, "read default")
 	}
 	return p, nil
 }
@@ -315,11 +324,11 @@ func Equal(p1, p2 Ptr) (bool, error) {
 		for i := 0; i < n; i++ {
 			sp1, err := s1.Ptr(uint16(i))
 			if err != nil {
-				return false, annotate(err).errorf("equal")
+				return false, annotatef(err, "equal")
 			}
 			sp2, err := s2.Ptr(uint16(i))
 			if err != nil {
-				return false, annotate(err).errorf("equal")
+				return false, annotatef(err, "equal")
 			}
 			if ok, err := Equal(sp1, sp2); !ok || err != nil {
 				return false, err
@@ -352,7 +361,7 @@ func Equal(p1, p2 Ptr) (bool, error) {
 		for i := 0; i < l1.Len(); i++ {
 			e1, e2 := l1.Struct(i), l2.Struct(i)
 			if ok, err := Equal(e1.ToPtr(), e2.ToPtr()); err != nil {
-				return false, annotate(err).errorf("equal: list element %d", i)
+				return false, annotatef(err, "equal: list element %d", i)
 			} else if !ok {
 				return false, nil
 			}
