@@ -209,7 +209,13 @@ func TestUpcalls(t *testing.T) {
 	errChan := make(chan error, 3)
 	ctx, cancelF := context.WithCancel(context.Background())
 
-	handleErrChan(t, errChan, cancelF)
+	t.Cleanup(func() {
+		cancelF()
+		close(errChan)
+		for err := range errChan {
+			t.Errorf("feedUpcallTrap failed with %s", err)
+		}
+	})
 
 	launchFeedUpcallTrap(alice.P2p.Logger, alice.OutChan, aTrap, errChan, ctx)
 	launchFeedUpcallTrap(bob.P2p.Logger, bob.OutChan, bTrap, errChan, ctx)
