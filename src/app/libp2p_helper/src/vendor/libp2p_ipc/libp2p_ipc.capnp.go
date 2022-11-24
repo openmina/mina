@@ -10,65 +10,78 @@ import (
 	strconv "strconv"
 )
 
-type Multiaddr struct{ capnp.Struct }
+type Multiaddr capnp.Struct
 
 // Multiaddr_TypeID is the unique identifier for the type Multiaddr.
 const Multiaddr_TypeID = 0xed11d634701b0d8e
 
 func NewMultiaddr(s *capnp.Segment) (Multiaddr, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Multiaddr{st}, err
+	return Multiaddr(st), err
 }
 
 func NewRootMultiaddr(s *capnp.Segment) (Multiaddr, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Multiaddr{st}, err
+	return Multiaddr(st), err
 }
 
 func ReadRootMultiaddr(msg *capnp.Message) (Multiaddr, error) {
 	root, err := msg.Root()
-	return Multiaddr{root.Struct()}, err
+	return Multiaddr(root.Struct()), err
 }
 
 func (s Multiaddr) String() string {
-	str, _ := text.Marshal(0xed11d634701b0d8e, s.Struct)
+	str, _ := text.Marshal(0xed11d634701b0d8e, capnp.Struct(s))
 	return str
 }
 
+func (s Multiaddr) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Multiaddr) DecodeFromPtr(p capnp.Ptr) Multiaddr {
+	return Multiaddr(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Multiaddr) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Multiaddr) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Multiaddr) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Multiaddr) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Multiaddr) Representation() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s Multiaddr) HasRepresentation() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Multiaddr) RepresentationBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s Multiaddr) SetRepresentation(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 // Multiaddr_List is a list of Multiaddr.
-type Multiaddr_List struct{ capnp.List }
+type Multiaddr_List = capnp.StructList[Multiaddr]
 
 // NewMultiaddr creates a new list of Multiaddr.
 func NewMultiaddr_List(s *capnp.Segment, sz int32) (Multiaddr_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Multiaddr_List{l}, err
-}
-
-func (s Multiaddr_List) At(i int) Multiaddr { return Multiaddr{s.List.Struct(i)} }
-
-func (s Multiaddr_List) Set(i int, v Multiaddr) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s Multiaddr_List) String() string {
-	str, _ := text.MarshalList(0xed11d634701b0d8e, s.List)
-	return str
+	return capnp.StructList[Multiaddr](l), err
 }
 
 // Multiaddr_Future is a wrapper for a Multiaddr promised by a client call.
@@ -76,68 +89,81 @@ type Multiaddr_Future struct{ *capnp.Future }
 
 func (p Multiaddr_Future) Struct() (Multiaddr, error) {
 	s, err := p.Future.Struct()
-	return Multiaddr{s}, err
+	return Multiaddr(s), err
 }
 
-type PeerId struct{ capnp.Struct }
+type PeerId capnp.Struct
 
 // PeerId_TypeID is the unique identifier for the type PeerId.
 const PeerId_TypeID = 0xcaf9ffc384dfb56c
 
 func NewPeerId(s *capnp.Segment) (PeerId, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return PeerId{st}, err
+	return PeerId(st), err
 }
 
 func NewRootPeerId(s *capnp.Segment) (PeerId, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return PeerId{st}, err
+	return PeerId(st), err
 }
 
 func ReadRootPeerId(msg *capnp.Message) (PeerId, error) {
 	root, err := msg.Root()
-	return PeerId{root.Struct()}, err
+	return PeerId(root.Struct()), err
 }
 
 func (s PeerId) String() string {
-	str, _ := text.Marshal(0xcaf9ffc384dfb56c, s.Struct)
+	str, _ := text.Marshal(0xcaf9ffc384dfb56c, capnp.Struct(s))
 	return str
 }
 
+func (s PeerId) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (PeerId) DecodeFromPtr(p capnp.Ptr) PeerId {
+	return PeerId(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s PeerId) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s PeerId) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s PeerId) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s PeerId) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s PeerId) Id() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s PeerId) HasId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s PeerId) IdBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s PeerId) SetId(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 // PeerId_List is a list of PeerId.
-type PeerId_List struct{ capnp.List }
+type PeerId_List = capnp.StructList[PeerId]
 
 // NewPeerId creates a new list of PeerId.
 func NewPeerId_List(s *capnp.Segment, sz int32) (PeerId_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return PeerId_List{l}, err
-}
-
-func (s PeerId_List) At(i int) PeerId { return PeerId{s.List.Struct(i)} }
-
-func (s PeerId_List) Set(i int, v PeerId) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s PeerId_List) String() string {
-	str, _ := text.MarshalList(0xcaf9ffc384dfb56c, s.List)
-	return str
+	return capnp.StructList[PeerId](l), err
 }
 
 // PeerId_Future is a wrapper for a PeerId promised by a client call.
@@ -145,76 +171,89 @@ type PeerId_Future struct{ *capnp.Future }
 
 func (p PeerId_Future) Struct() (PeerId, error) {
 	s, err := p.Future.Struct()
-	return PeerId{s}, err
+	return PeerId(s), err
 }
 
-type BlockWithId struct{ capnp.Struct }
+type BlockWithId capnp.Struct
 
 // BlockWithId_TypeID is the unique identifier for the type BlockWithId.
 const BlockWithId_TypeID = 0xa784810bf56d058c
 
 func NewBlockWithId(s *capnp.Segment) (BlockWithId, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return BlockWithId{st}, err
+	return BlockWithId(st), err
 }
 
 func NewRootBlockWithId(s *capnp.Segment) (BlockWithId, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return BlockWithId{st}, err
+	return BlockWithId(st), err
 }
 
 func ReadRootBlockWithId(msg *capnp.Message) (BlockWithId, error) {
 	root, err := msg.Root()
-	return BlockWithId{root.Struct()}, err
+	return BlockWithId(root.Struct()), err
 }
 
 func (s BlockWithId) String() string {
-	str, _ := text.Marshal(0xa784810bf56d058c, s.Struct)
+	str, _ := text.Marshal(0xa784810bf56d058c, capnp.Struct(s))
 	return str
 }
 
+func (s BlockWithId) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (BlockWithId) DecodeFromPtr(p capnp.Ptr) BlockWithId {
+	return BlockWithId(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s BlockWithId) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s BlockWithId) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s BlockWithId) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s BlockWithId) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s BlockWithId) Blake2bHash() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s BlockWithId) HasBlake2bHash() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s BlockWithId) SetBlake2bHash(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 func (s BlockWithId) Block() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return []byte(p.Data()), err
 }
 
 func (s BlockWithId) HasBlock() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s BlockWithId) SetBlock(v []byte) error {
-	return s.Struct.SetData(1, v)
+	return capnp.Struct(s).SetData(1, v)
 }
 
 // BlockWithId_List is a list of BlockWithId.
-type BlockWithId_List struct{ capnp.List }
+type BlockWithId_List = capnp.StructList[BlockWithId]
 
 // NewBlockWithId creates a new list of BlockWithId.
 func NewBlockWithId_List(s *capnp.Segment, sz int32) (BlockWithId_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return BlockWithId_List{l}, err
-}
-
-func (s BlockWithId_List) At(i int) BlockWithId { return BlockWithId{s.List.Struct(i)} }
-
-func (s BlockWithId_List) Set(i int, v BlockWithId) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s BlockWithId_List) String() string {
-	str, _ := text.MarshalList(0xa784810bf56d058c, s.List)
-	return str
+	return capnp.StructList[BlockWithId](l), err
 }
 
 // BlockWithId_Future is a wrapper for a BlockWithId promised by a client call.
@@ -222,63 +261,76 @@ type BlockWithId_Future struct{ *capnp.Future }
 
 func (p BlockWithId_Future) Struct() (BlockWithId, error) {
 	s, err := p.Future.Struct()
-	return BlockWithId{s}, err
+	return BlockWithId(s), err
 }
 
-type RootBlockId struct{ capnp.Struct }
+type RootBlockId capnp.Struct
 
 // RootBlockId_TypeID is the unique identifier for the type RootBlockId.
 const RootBlockId_TypeID = 0xabf6a984ba800725
 
 func NewRootBlockId(s *capnp.Segment) (RootBlockId, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return RootBlockId{st}, err
+	return RootBlockId(st), err
 }
 
 func NewRootRootBlockId(s *capnp.Segment) (RootBlockId, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return RootBlockId{st}, err
+	return RootBlockId(st), err
 }
 
 func ReadRootRootBlockId(msg *capnp.Message) (RootBlockId, error) {
 	root, err := msg.Root()
-	return RootBlockId{root.Struct()}, err
+	return RootBlockId(root.Struct()), err
 }
 
 func (s RootBlockId) String() string {
-	str, _ := text.Marshal(0xabf6a984ba800725, s.Struct)
+	str, _ := text.Marshal(0xabf6a984ba800725, capnp.Struct(s))
 	return str
 }
 
+func (s RootBlockId) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (RootBlockId) DecodeFromPtr(p capnp.Ptr) RootBlockId {
+	return RootBlockId(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s RootBlockId) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s RootBlockId) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s RootBlockId) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s RootBlockId) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s RootBlockId) Blake2bHash() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s RootBlockId) HasBlake2bHash() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s RootBlockId) SetBlake2bHash(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 // RootBlockId_List is a list of RootBlockId.
-type RootBlockId_List struct{ capnp.List }
+type RootBlockId_List = capnp.StructList[RootBlockId]
 
 // NewRootBlockId creates a new list of RootBlockId.
 func NewRootBlockId_List(s *capnp.Segment, sz int32) (RootBlockId_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return RootBlockId_List{l}, err
-}
-
-func (s RootBlockId_List) At(i int) RootBlockId { return RootBlockId{s.List.Struct(i)} }
-
-func (s RootBlockId_List) Set(i int, v RootBlockId) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s RootBlockId_List) String() string {
-	str, _ := text.MarshalList(0xabf6a984ba800725, s.List)
-	return str
+	return capnp.StructList[RootBlockId](l), err
 }
 
 // RootBlockId_Future is a wrapper for a RootBlockId promised by a client call.
@@ -286,98 +338,111 @@ type RootBlockId_Future struct{ *capnp.Future }
 
 func (p RootBlockId_Future) Struct() (RootBlockId, error) {
 	s, err := p.Future.Struct()
-	return RootBlockId{s}, err
+	return RootBlockId(s), err
 }
 
-type AddrInfo struct{ capnp.Struct }
+type AddrInfo capnp.Struct
 
 // AddrInfo_TypeID is the unique identifier for the type AddrInfo.
 const AddrInfo_TypeID = 0x89e4194c3e64d647
 
 func NewAddrInfo(s *capnp.Segment) (AddrInfo, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return AddrInfo{st}, err
+	return AddrInfo(st), err
 }
 
 func NewRootAddrInfo(s *capnp.Segment) (AddrInfo, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return AddrInfo{st}, err
+	return AddrInfo(st), err
 }
 
 func ReadRootAddrInfo(msg *capnp.Message) (AddrInfo, error) {
 	root, err := msg.Root()
-	return AddrInfo{root.Struct()}, err
+	return AddrInfo(root.Struct()), err
 }
 
 func (s AddrInfo) String() string {
-	str, _ := text.Marshal(0x89e4194c3e64d647, s.Struct)
+	str, _ := text.Marshal(0x89e4194c3e64d647, capnp.Struct(s))
 	return str
 }
 
+func (s AddrInfo) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (AddrInfo) DecodeFromPtr(p capnp.Ptr) AddrInfo {
+	return AddrInfo(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s AddrInfo) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s AddrInfo) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s AddrInfo) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s AddrInfo) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s AddrInfo) PeerId() (PeerId, error) {
-	p, err := s.Struct.Ptr(0)
-	return PeerId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PeerId(p.Struct()), err
 }
 
 func (s AddrInfo) HasPeerId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s AddrInfo) SetPeerId(v PeerId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPeerId sets the peerId field to a newly
 // allocated PeerId struct, preferring placement in s's segment.
 func (s AddrInfo) NewPeerId() (PeerId, error) {
-	ss, err := NewPeerId(s.Struct.Segment())
+	ss, err := NewPeerId(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s AddrInfo) Addrs() (Multiaddr_List, error) {
-	p, err := s.Struct.Ptr(1)
-	return Multiaddr_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Multiaddr_List(p.List()), err
 }
 
 func (s AddrInfo) HasAddrs() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s AddrInfo) SetAddrs(v Multiaddr_List) error {
-	return s.Struct.SetPtr(1, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(1, v.ToPtr())
 }
 
 // NewAddrs sets the addrs field to a newly
 // allocated Multiaddr_List, preferring placement in s's segment.
 func (s AddrInfo) NewAddrs(n int32) (Multiaddr_List, error) {
-	l, err := NewMultiaddr_List(s.Struct.Segment(), n)
+	l, err := NewMultiaddr_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return Multiaddr_List{}, err
 	}
-	err = s.Struct.SetPtr(1, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, l.ToPtr())
 	return l, err
 }
 
 // AddrInfo_List is a list of AddrInfo.
-type AddrInfo_List struct{ capnp.List }
+type AddrInfo_List = capnp.StructList[AddrInfo]
 
 // NewAddrInfo creates a new list of AddrInfo.
 func NewAddrInfo_List(s *capnp.Segment, sz int32) (AddrInfo_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return AddrInfo_List{l}, err
-}
-
-func (s AddrInfo_List) At(i int) AddrInfo { return AddrInfo{s.List.Struct(i)} }
-
-func (s AddrInfo_List) Set(i int, v AddrInfo) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s AddrInfo_List) String() string {
-	str, _ := text.MarshalList(0x89e4194c3e64d647, s.List)
-	return str
+	return capnp.StructList[AddrInfo](l), err
 }
 
 // AddrInfo_Future is a wrapper for a AddrInfo promised by a client call.
@@ -385,104 +450,117 @@ type AddrInfo_Future struct{ *capnp.Future }
 
 func (p AddrInfo_Future) Struct() (AddrInfo, error) {
 	s, err := p.Future.Struct()
-	return AddrInfo{s}, err
+	return AddrInfo(s), err
 }
 
 func (p AddrInfo_Future) PeerId() PeerId_Future {
 	return PeerId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type PeerInfo struct{ capnp.Struct }
+type PeerInfo capnp.Struct
 
 // PeerInfo_TypeID is the unique identifier for the type PeerInfo.
 const PeerInfo_TypeID = 0xae7b97cc383b684e
 
 func NewPeerInfo(s *capnp.Segment) (PeerInfo, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return PeerInfo{st}, err
+	return PeerInfo(st), err
 }
 
 func NewRootPeerInfo(s *capnp.Segment) (PeerInfo, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return PeerInfo{st}, err
+	return PeerInfo(st), err
 }
 
 func ReadRootPeerInfo(msg *capnp.Message) (PeerInfo, error) {
 	root, err := msg.Root()
-	return PeerInfo{root.Struct()}, err
+	return PeerInfo(root.Struct()), err
 }
 
 func (s PeerInfo) String() string {
-	str, _ := text.Marshal(0xae7b97cc383b684e, s.Struct)
+	str, _ := text.Marshal(0xae7b97cc383b684e, capnp.Struct(s))
 	return str
 }
 
+func (s PeerInfo) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (PeerInfo) DecodeFromPtr(p capnp.Ptr) PeerInfo {
+	return PeerInfo(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s PeerInfo) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s PeerInfo) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s PeerInfo) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s PeerInfo) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s PeerInfo) Libp2pPort() uint16 {
-	return s.Struct.Uint16(0)
+	return capnp.Struct(s).Uint16(0)
 }
 
 func (s PeerInfo) SetLibp2pPort(v uint16) {
-	s.Struct.SetUint16(0, v)
+	capnp.Struct(s).SetUint16(0, v)
 }
 
 func (s PeerInfo) Host() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s PeerInfo) HasHost() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s PeerInfo) HostBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s PeerInfo) SetHost(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 func (s PeerInfo) PeerId() (PeerId, error) {
-	p, err := s.Struct.Ptr(1)
-	return PeerId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return PeerId(p.Struct()), err
 }
 
 func (s PeerInfo) HasPeerId() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s PeerInfo) SetPeerId(v PeerId) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewPeerId sets the peerId field to a newly
 // allocated PeerId struct, preferring placement in s's segment.
 func (s PeerInfo) NewPeerId() (PeerId, error) {
-	ss, err := NewPeerId(s.Struct.Segment())
+	ss, err := NewPeerId(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerId{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // PeerInfo_List is a list of PeerInfo.
-type PeerInfo_List struct{ capnp.List }
+type PeerInfo_List = capnp.StructList[PeerInfo]
 
 // NewPeerInfo creates a new list of PeerInfo.
 func NewPeerInfo_List(s *capnp.Segment, sz int32) (PeerInfo_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2}, sz)
-	return PeerInfo_List{l}, err
-}
-
-func (s PeerInfo_List) At(i int) PeerInfo { return PeerInfo{s.List.Struct(i)} }
-
-func (s PeerInfo_List) Set(i int, v PeerInfo) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s PeerInfo_List) String() string {
-	str, _ := text.MarshalList(0xae7b97cc383b684e, s.List)
-	return str
+	return capnp.StructList[PeerInfo](l), err
 }
 
 // PeerInfo_Future is a wrapper for a PeerInfo promised by a client call.
@@ -490,62 +568,75 @@ type PeerInfo_Future struct{ *capnp.Future }
 
 func (p PeerInfo_Future) Struct() (PeerInfo, error) {
 	s, err := p.Future.Struct()
-	return PeerInfo{s}, err
+	return PeerInfo(s), err
 }
 
 func (p PeerInfo_Future) PeerId() PeerId_Future {
 	return PeerId_Future{Future: p.Future.Field(1, nil)}
 }
 
-type SequenceNumber struct{ capnp.Struct }
+type SequenceNumber capnp.Struct
 
 // SequenceNumber_TypeID is the unique identifier for the type SequenceNumber.
 const SequenceNumber_TypeID = 0xa5063d26e6e7aa47
 
 func NewSequenceNumber(s *capnp.Segment) (SequenceNumber, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return SequenceNumber{st}, err
+	return SequenceNumber(st), err
 }
 
 func NewRootSequenceNumber(s *capnp.Segment) (SequenceNumber, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return SequenceNumber{st}, err
+	return SequenceNumber(st), err
 }
 
 func ReadRootSequenceNumber(msg *capnp.Message) (SequenceNumber, error) {
 	root, err := msg.Root()
-	return SequenceNumber{root.Struct()}, err
+	return SequenceNumber(root.Struct()), err
 }
 
 func (s SequenceNumber) String() string {
-	str, _ := text.Marshal(0xa5063d26e6e7aa47, s.Struct)
+	str, _ := text.Marshal(0xa5063d26e6e7aa47, capnp.Struct(s))
 	return str
 }
 
+func (s SequenceNumber) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (SequenceNumber) DecodeFromPtr(p capnp.Ptr) SequenceNumber {
+	return SequenceNumber(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s SequenceNumber) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s SequenceNumber) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s SequenceNumber) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s SequenceNumber) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s SequenceNumber) Seqno() uint64 {
-	return s.Struct.Uint64(0)
+	return capnp.Struct(s).Uint64(0)
 }
 
 func (s SequenceNumber) SetSeqno(v uint64) {
-	s.Struct.SetUint64(0, v)
+	capnp.Struct(s).SetUint64(0, v)
 }
 
 // SequenceNumber_List is a list of SequenceNumber.
-type SequenceNumber_List struct{ capnp.List }
+type SequenceNumber_List = capnp.StructList[SequenceNumber]
 
 // NewSequenceNumber creates a new list of SequenceNumber.
 func NewSequenceNumber_List(s *capnp.Segment, sz int32) (SequenceNumber_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
-	return SequenceNumber_List{l}, err
-}
-
-func (s SequenceNumber_List) At(i int) SequenceNumber { return SequenceNumber{s.List.Struct(i)} }
-
-func (s SequenceNumber_List) Set(i int, v SequenceNumber) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s SequenceNumber_List) String() string {
-	str, _ := text.MarshalList(0xa5063d26e6e7aa47, s.List)
-	return str
+	return capnp.StructList[SequenceNumber](l), err
 }
 
 // SequenceNumber_Future is a wrapper for a SequenceNumber promised by a client call.
@@ -553,58 +644,71 @@ type SequenceNumber_Future struct{ *capnp.Future }
 
 func (p SequenceNumber_Future) Struct() (SequenceNumber, error) {
 	s, err := p.Future.Struct()
-	return SequenceNumber{s}, err
+	return SequenceNumber(s), err
 }
 
-type ValidationId struct{ capnp.Struct }
+type ValidationId capnp.Struct
 
 // ValidationId_TypeID is the unique identifier for the type ValidationId.
 const ValidationId_TypeID = 0x89c0f3360eecf997
 
 func NewValidationId(s *capnp.Segment) (ValidationId, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return ValidationId{st}, err
+	return ValidationId(st), err
 }
 
 func NewRootValidationId(s *capnp.Segment) (ValidationId, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return ValidationId{st}, err
+	return ValidationId(st), err
 }
 
 func ReadRootValidationId(msg *capnp.Message) (ValidationId, error) {
 	root, err := msg.Root()
-	return ValidationId{root.Struct()}, err
+	return ValidationId(root.Struct()), err
 }
 
 func (s ValidationId) String() string {
-	str, _ := text.Marshal(0x89c0f3360eecf997, s.Struct)
+	str, _ := text.Marshal(0x89c0f3360eecf997, capnp.Struct(s))
 	return str
 }
 
+func (s ValidationId) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (ValidationId) DecodeFromPtr(p capnp.Ptr) ValidationId {
+	return ValidationId(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s ValidationId) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s ValidationId) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s ValidationId) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s ValidationId) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s ValidationId) Id() uint64 {
-	return s.Struct.Uint64(0)
+	return capnp.Struct(s).Uint64(0)
 }
 
 func (s ValidationId) SetId(v uint64) {
-	s.Struct.SetUint64(0, v)
+	capnp.Struct(s).SetUint64(0, v)
 }
 
 // ValidationId_List is a list of ValidationId.
-type ValidationId_List struct{ capnp.List }
+type ValidationId_List = capnp.StructList[ValidationId]
 
 // NewValidationId creates a new list of ValidationId.
 func NewValidationId_List(s *capnp.Segment, sz int32) (ValidationId_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
-	return ValidationId_List{l}, err
-}
-
-func (s ValidationId_List) At(i int) ValidationId { return ValidationId{s.List.Struct(i)} }
-
-func (s ValidationId_List) Set(i int, v ValidationId) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s ValidationId_List) String() string {
-	str, _ := text.MarshalList(0x89c0f3360eecf997, s.List)
-	return str
+	return capnp.StructList[ValidationId](l), err
 }
 
 // ValidationId_Future is a wrapper for a ValidationId promised by a client call.
@@ -612,58 +716,71 @@ type ValidationId_Future struct{ *capnp.Future }
 
 func (p ValidationId_Future) Struct() (ValidationId, error) {
 	s, err := p.Future.Struct()
-	return ValidationId{s}, err
+	return ValidationId(s), err
 }
 
-type StreamId struct{ capnp.Struct }
+type StreamId capnp.Struct
 
 // StreamId_TypeID is the unique identifier for the type StreamId.
 const StreamId_TypeID = 0xd3ec891916526de8
 
 func NewStreamId(s *capnp.Segment) (StreamId, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return StreamId{st}, err
+	return StreamId(st), err
 }
 
 func NewRootStreamId(s *capnp.Segment) (StreamId, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return StreamId{st}, err
+	return StreamId(st), err
 }
 
 func ReadRootStreamId(msg *capnp.Message) (StreamId, error) {
 	root, err := msg.Root()
-	return StreamId{root.Struct()}, err
+	return StreamId(root.Struct()), err
 }
 
 func (s StreamId) String() string {
-	str, _ := text.Marshal(0xd3ec891916526de8, s.Struct)
+	str, _ := text.Marshal(0xd3ec891916526de8, capnp.Struct(s))
 	return str
 }
 
+func (s StreamId) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (StreamId) DecodeFromPtr(p capnp.Ptr) StreamId {
+	return StreamId(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s StreamId) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s StreamId) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s StreamId) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s StreamId) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s StreamId) Id() uint64 {
-	return s.Struct.Uint64(0)
+	return capnp.Struct(s).Uint64(0)
 }
 
 func (s StreamId) SetId(v uint64) {
-	s.Struct.SetUint64(0, v)
+	capnp.Struct(s).SetUint64(0, v)
 }
 
 // StreamId_List is a list of StreamId.
-type StreamId_List struct{ capnp.List }
+type StreamId_List = capnp.StructList[StreamId]
 
 // NewStreamId creates a new list of StreamId.
 func NewStreamId_List(s *capnp.Segment, sz int32) (StreamId_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
-	return StreamId_List{l}, err
-}
-
-func (s StreamId_List) At(i int) StreamId { return StreamId{s.List.Struct(i)} }
-
-func (s StreamId_List) Set(i int, v StreamId) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s StreamId_List) String() string {
-	str, _ := text.MarshalList(0xd3ec891916526de8, s.List)
-	return str
+	return capnp.StructList[StreamId](l), err
 }
 
 // StreamId_Future is a wrapper for a StreamId promised by a client call.
@@ -671,58 +788,71 @@ type StreamId_Future struct{ *capnp.Future }
 
 func (p StreamId_Future) Struct() (StreamId, error) {
 	s, err := p.Future.Struct()
-	return StreamId{s}, err
+	return StreamId(s), err
 }
 
-type SubscriptionId struct{ capnp.Struct }
+type SubscriptionId capnp.Struct
 
 // SubscriptionId_TypeID is the unique identifier for the type SubscriptionId.
 const SubscriptionId_TypeID = 0xfc2430a71b2c8f44
 
 func NewSubscriptionId(s *capnp.Segment) (SubscriptionId, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return SubscriptionId{st}, err
+	return SubscriptionId(st), err
 }
 
 func NewRootSubscriptionId(s *capnp.Segment) (SubscriptionId, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return SubscriptionId{st}, err
+	return SubscriptionId(st), err
 }
 
 func ReadRootSubscriptionId(msg *capnp.Message) (SubscriptionId, error) {
 	root, err := msg.Root()
-	return SubscriptionId{root.Struct()}, err
+	return SubscriptionId(root.Struct()), err
 }
 
 func (s SubscriptionId) String() string {
-	str, _ := text.Marshal(0xfc2430a71b2c8f44, s.Struct)
+	str, _ := text.Marshal(0xfc2430a71b2c8f44, capnp.Struct(s))
 	return str
 }
 
+func (s SubscriptionId) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (SubscriptionId) DecodeFromPtr(p capnp.Ptr) SubscriptionId {
+	return SubscriptionId(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s SubscriptionId) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s SubscriptionId) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s SubscriptionId) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s SubscriptionId) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s SubscriptionId) Id() uint64 {
-	return s.Struct.Uint64(0)
+	return capnp.Struct(s).Uint64(0)
 }
 
 func (s SubscriptionId) SetId(v uint64) {
-	s.Struct.SetUint64(0, v)
+	capnp.Struct(s).SetUint64(0, v)
 }
 
 // SubscriptionId_List is a list of SubscriptionId.
-type SubscriptionId_List struct{ capnp.List }
+type SubscriptionId_List = capnp.StructList[SubscriptionId]
 
 // NewSubscriptionId creates a new list of SubscriptionId.
 func NewSubscriptionId_List(s *capnp.Segment, sz int32) (SubscriptionId_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
-	return SubscriptionId_List{l}, err
-}
-
-func (s SubscriptionId_List) At(i int) SubscriptionId { return SubscriptionId{s.List.Struct(i)} }
-
-func (s SubscriptionId_List) Set(i int, v SubscriptionId) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s SubscriptionId_List) String() string {
-	str, _ := text.MarshalList(0xfc2430a71b2c8f44, s.List)
-	return str
+	return capnp.StructList[SubscriptionId](l), err
 }
 
 // SubscriptionId_Future is a wrapper for a SubscriptionId promised by a client call.
@@ -730,100 +860,113 @@ type SubscriptionId_Future struct{ *capnp.Future }
 
 func (p SubscriptionId_Future) Struct() (SubscriptionId, error) {
 	s, err := p.Future.Struct()
-	return SubscriptionId{s}, err
+	return SubscriptionId(s), err
 }
 
-type Libp2pKeypair struct{ capnp.Struct }
+type Libp2pKeypair capnp.Struct
 
 // Libp2pKeypair_TypeID is the unique identifier for the type Libp2pKeypair.
 const Libp2pKeypair_TypeID = 0xfb61e5f7d6a0208e
 
 func NewLibp2pKeypair(s *capnp.Segment) (Libp2pKeypair, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 3})
-	return Libp2pKeypair{st}, err
+	return Libp2pKeypair(st), err
 }
 
 func NewRootLibp2pKeypair(s *capnp.Segment) (Libp2pKeypair, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 3})
-	return Libp2pKeypair{st}, err
+	return Libp2pKeypair(st), err
 }
 
 func ReadRootLibp2pKeypair(msg *capnp.Message) (Libp2pKeypair, error) {
 	root, err := msg.Root()
-	return Libp2pKeypair{root.Struct()}, err
+	return Libp2pKeypair(root.Struct()), err
 }
 
 func (s Libp2pKeypair) String() string {
-	str, _ := text.Marshal(0xfb61e5f7d6a0208e, s.Struct)
+	str, _ := text.Marshal(0xfb61e5f7d6a0208e, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pKeypair) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pKeypair) DecodeFromPtr(p capnp.Ptr) Libp2pKeypair {
+	return Libp2pKeypair(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pKeypair) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pKeypair) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pKeypair) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pKeypair) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pKeypair) PrivateKey() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pKeypair) HasPrivateKey() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pKeypair) SetPrivateKey(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 func (s Libp2pKeypair) PublicKey() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pKeypair) HasPublicKey() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pKeypair) SetPublicKey(v []byte) error {
-	return s.Struct.SetData(1, v)
+	return capnp.Struct(s).SetData(1, v)
 }
 
 func (s Libp2pKeypair) PeerId() (PeerId, error) {
-	p, err := s.Struct.Ptr(2)
-	return PeerId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(2)
+	return PeerId(p.Struct()), err
 }
 
 func (s Libp2pKeypair) HasPeerId() bool {
-	return s.Struct.HasPtr(2)
+	return capnp.Struct(s).HasPtr(2)
 }
 
 func (s Libp2pKeypair) SetPeerId(v PeerId) error {
-	return s.Struct.SetPtr(2, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(2, capnp.Struct(v).ToPtr())
 }
 
 // NewPeerId sets the peerId field to a newly
 // allocated PeerId struct, preferring placement in s's segment.
 func (s Libp2pKeypair) NewPeerId() (PeerId, error) {
-	ss, err := NewPeerId(s.Struct.Segment())
+	ss, err := NewPeerId(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerId{}, err
 	}
-	err = s.Struct.SetPtr(2, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(2, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pKeypair_List is a list of Libp2pKeypair.
-type Libp2pKeypair_List struct{ capnp.List }
+type Libp2pKeypair_List = capnp.StructList[Libp2pKeypair]
 
 // NewLibp2pKeypair creates a new list of Libp2pKeypair.
 func NewLibp2pKeypair_List(s *capnp.Segment, sz int32) (Libp2pKeypair_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 3}, sz)
-	return Libp2pKeypair_List{l}, err
-}
-
-func (s Libp2pKeypair_List) At(i int) Libp2pKeypair { return Libp2pKeypair{s.List.Struct(i)} }
-
-func (s Libp2pKeypair_List) Set(i int, v Libp2pKeypair) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s Libp2pKeypair_List) String() string {
-	str, _ := text.MarshalList(0xfb61e5f7d6a0208e, s.List)
-	return str
+	return capnp.StructList[Libp2pKeypair](l), err
 }
 
 // Libp2pKeypair_Future is a wrapper for a Libp2pKeypair promised by a client call.
@@ -831,158 +974,171 @@ type Libp2pKeypair_Future struct{ *capnp.Future }
 
 func (p Libp2pKeypair_Future) Struct() (Libp2pKeypair, error) {
 	s, err := p.Future.Struct()
-	return Libp2pKeypair{s}, err
+	return Libp2pKeypair(s), err
 }
 
 func (p Libp2pKeypair_Future) PeerId() PeerId_Future {
 	return PeerId_Future{Future: p.Future.Field(2, nil)}
 }
 
-type GatingConfig struct{ capnp.Struct }
+type GatingConfig capnp.Struct
 
 // GatingConfig_TypeID is the unique identifier for the type GatingConfig.
 const GatingConfig_TypeID = 0xe1202e2bb52d45e6
 
 func NewGatingConfig(s *capnp.Segment) (GatingConfig, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 4})
-	return GatingConfig{st}, err
+	return GatingConfig(st), err
 }
 
 func NewRootGatingConfig(s *capnp.Segment) (GatingConfig, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 4})
-	return GatingConfig{st}, err
+	return GatingConfig(st), err
 }
 
 func ReadRootGatingConfig(msg *capnp.Message) (GatingConfig, error) {
 	root, err := msg.Root()
-	return GatingConfig{root.Struct()}, err
+	return GatingConfig(root.Struct()), err
 }
 
 func (s GatingConfig) String() string {
-	str, _ := text.Marshal(0xe1202e2bb52d45e6, s.Struct)
+	str, _ := text.Marshal(0xe1202e2bb52d45e6, capnp.Struct(s))
 	return str
 }
 
+func (s GatingConfig) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (GatingConfig) DecodeFromPtr(p capnp.Ptr) GatingConfig {
+	return GatingConfig(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s GatingConfig) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s GatingConfig) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s GatingConfig) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s GatingConfig) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s GatingConfig) BannedIps() (capnp.TextList, error) {
-	p, err := s.Struct.Ptr(0)
-	return capnp.TextList{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return capnp.TextList(p.List()), err
 }
 
 func (s GatingConfig) HasBannedIps() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s GatingConfig) SetBannedIps(v capnp.TextList) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewBannedIps sets the bannedIps field to a newly
 // allocated capnp.TextList, preferring placement in s's segment.
 func (s GatingConfig) NewBannedIps(n int32) (capnp.TextList, error) {
-	l, err := capnp.NewTextList(s.Struct.Segment(), n)
+	l, err := capnp.NewTextList(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return capnp.TextList{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 func (s GatingConfig) BannedPeerIds() (PeerId_List, error) {
-	p, err := s.Struct.Ptr(1)
-	return PeerId_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return PeerId_List(p.List()), err
 }
 
 func (s GatingConfig) HasBannedPeerIds() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s GatingConfig) SetBannedPeerIds(v PeerId_List) error {
-	return s.Struct.SetPtr(1, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(1, v.ToPtr())
 }
 
 // NewBannedPeerIds sets the bannedPeerIds field to a newly
 // allocated PeerId_List, preferring placement in s's segment.
 func (s GatingConfig) NewBannedPeerIds(n int32) (PeerId_List, error) {
-	l, err := NewPeerId_List(s.Struct.Segment(), n)
+	l, err := NewPeerId_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return PeerId_List{}, err
 	}
-	err = s.Struct.SetPtr(1, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, l.ToPtr())
 	return l, err
 }
 
 func (s GatingConfig) TrustedIps() (capnp.TextList, error) {
-	p, err := s.Struct.Ptr(2)
-	return capnp.TextList{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(2)
+	return capnp.TextList(p.List()), err
 }
 
 func (s GatingConfig) HasTrustedIps() bool {
-	return s.Struct.HasPtr(2)
+	return capnp.Struct(s).HasPtr(2)
 }
 
 func (s GatingConfig) SetTrustedIps(v capnp.TextList) error {
-	return s.Struct.SetPtr(2, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(2, v.ToPtr())
 }
 
 // NewTrustedIps sets the trustedIps field to a newly
 // allocated capnp.TextList, preferring placement in s's segment.
 func (s GatingConfig) NewTrustedIps(n int32) (capnp.TextList, error) {
-	l, err := capnp.NewTextList(s.Struct.Segment(), n)
+	l, err := capnp.NewTextList(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return capnp.TextList{}, err
 	}
-	err = s.Struct.SetPtr(2, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(2, l.ToPtr())
 	return l, err
 }
 
 func (s GatingConfig) TrustedPeerIds() (PeerId_List, error) {
-	p, err := s.Struct.Ptr(3)
-	return PeerId_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(3)
+	return PeerId_List(p.List()), err
 }
 
 func (s GatingConfig) HasTrustedPeerIds() bool {
-	return s.Struct.HasPtr(3)
+	return capnp.Struct(s).HasPtr(3)
 }
 
 func (s GatingConfig) SetTrustedPeerIds(v PeerId_List) error {
-	return s.Struct.SetPtr(3, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(3, v.ToPtr())
 }
 
 // NewTrustedPeerIds sets the trustedPeerIds field to a newly
 // allocated PeerId_List, preferring placement in s's segment.
 func (s GatingConfig) NewTrustedPeerIds(n int32) (PeerId_List, error) {
-	l, err := NewPeerId_List(s.Struct.Segment(), n)
+	l, err := NewPeerId_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return PeerId_List{}, err
 	}
-	err = s.Struct.SetPtr(3, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(3, l.ToPtr())
 	return l, err
 }
 
 func (s GatingConfig) Isolate() bool {
-	return s.Struct.Bit(0)
+	return capnp.Struct(s).Bit(0)
 }
 
 func (s GatingConfig) SetIsolate(v bool) {
-	s.Struct.SetBit(0, v)
+	capnp.Struct(s).SetBit(0, v)
 }
 
 // GatingConfig_List is a list of GatingConfig.
-type GatingConfig_List struct{ capnp.List }
+type GatingConfig_List = capnp.StructList[GatingConfig]
 
 // NewGatingConfig creates a new list of GatingConfig.
 func NewGatingConfig_List(s *capnp.Segment, sz int32) (GatingConfig_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 4}, sz)
-	return GatingConfig_List{l}, err
-}
-
-func (s GatingConfig_List) At(i int) GatingConfig { return GatingConfig{s.List.Struct(i)} }
-
-func (s GatingConfig_List) Set(i int, v GatingConfig) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s GatingConfig_List) String() string {
-	str, _ := text.MarshalList(0xe1202e2bb52d45e6, s.List)
-	return str
+	return capnp.StructList[GatingConfig](l), err
 }
 
 // GatingConfig_Future is a wrapper for a GatingConfig promised by a client call.
@@ -990,74 +1146,87 @@ type GatingConfig_Future struct{ *capnp.Future }
 
 func (p GatingConfig_Future) Struct() (GatingConfig, error) {
 	s, err := p.Future.Struct()
-	return GatingConfig{s}, err
+	return GatingConfig(s), err
 }
 
-type TopicLevel struct{ capnp.Struct }
+type TopicLevel capnp.Struct
 
 // TopicLevel_TypeID is the unique identifier for the type TopicLevel.
 const TopicLevel_TypeID = 0xa382869c0ba548c2
 
 func NewTopicLevel(s *capnp.Segment) (TopicLevel, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return TopicLevel{st}, err
+	return TopicLevel(st), err
 }
 
 func NewRootTopicLevel(s *capnp.Segment) (TopicLevel, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return TopicLevel{st}, err
+	return TopicLevel(st), err
 }
 
 func ReadRootTopicLevel(msg *capnp.Message) (TopicLevel, error) {
 	root, err := msg.Root()
-	return TopicLevel{root.Struct()}, err
+	return TopicLevel(root.Struct()), err
 }
 
 func (s TopicLevel) String() string {
-	str, _ := text.Marshal(0xa382869c0ba548c2, s.Struct)
+	str, _ := text.Marshal(0xa382869c0ba548c2, capnp.Struct(s))
 	return str
 }
 
+func (s TopicLevel) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (TopicLevel) DecodeFromPtr(p capnp.Ptr) TopicLevel {
+	return TopicLevel(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s TopicLevel) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s TopicLevel) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s TopicLevel) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s TopicLevel) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s TopicLevel) Topics() (capnp.TextList, error) {
-	p, err := s.Struct.Ptr(0)
-	return capnp.TextList{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return capnp.TextList(p.List()), err
 }
 
 func (s TopicLevel) HasTopics() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s TopicLevel) SetTopics(v capnp.TextList) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewTopics sets the topics field to a newly
 // allocated capnp.TextList, preferring placement in s's segment.
 func (s TopicLevel) NewTopics(n int32) (capnp.TextList, error) {
-	l, err := capnp.NewTextList(s.Struct.Segment(), n)
+	l, err := capnp.NewTextList(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return capnp.TextList{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 // TopicLevel_List is a list of TopicLevel.
-type TopicLevel_List struct{ capnp.List }
+type TopicLevel_List = capnp.StructList[TopicLevel]
 
 // NewTopicLevel creates a new list of TopicLevel.
 func NewTopicLevel_List(s *capnp.Segment, sz int32) (TopicLevel_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return TopicLevel_List{l}, err
-}
-
-func (s TopicLevel_List) At(i int) TopicLevel { return TopicLevel{s.List.Struct(i)} }
-
-func (s TopicLevel_List) Set(i int, v TopicLevel) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s TopicLevel_List) String() string {
-	str, _ := text.MarshalList(0xa382869c0ba548c2, s.List)
-	return str
+	return capnp.StructList[TopicLevel](l), err
 }
 
 // TopicLevel_Future is a wrapper for a TopicLevel promised by a client call.
@@ -1065,331 +1234,344 @@ type TopicLevel_Future struct{ *capnp.Future }
 
 func (p TopicLevel_Future) Struct() (TopicLevel, error) {
 	s, err := p.Future.Struct()
-	return TopicLevel{s}, err
+	return TopicLevel(s), err
 }
 
-type Libp2pConfig struct{ capnp.Struct }
+type Libp2pConfig capnp.Struct
 
 // Libp2pConfig_TypeID is the unique identifier for the type Libp2pConfig.
 const Libp2pConfig_TypeID = 0xc90f65b6852b9c22
 
 func NewLibp2pConfig(s *capnp.Segment) (Libp2pConfig, error) {
-	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 10})
-	return Libp2pConfig{st}, err
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 24, PointerCount: 10})
+	return Libp2pConfig(st), err
 }
 
 func NewRootLibp2pConfig(s *capnp.Segment) (Libp2pConfig, error) {
-	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 10})
-	return Libp2pConfig{st}, err
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 24, PointerCount: 10})
+	return Libp2pConfig(st), err
 }
 
 func ReadRootLibp2pConfig(msg *capnp.Message) (Libp2pConfig, error) {
 	root, err := msg.Root()
-	return Libp2pConfig{root.Struct()}, err
+	return Libp2pConfig(root.Struct()), err
 }
 
 func (s Libp2pConfig) String() string {
-	str, _ := text.Marshal(0xc90f65b6852b9c22, s.Struct)
+	str, _ := text.Marshal(0xc90f65b6852b9c22, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pConfig) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pConfig) DecodeFromPtr(p capnp.Ptr) Libp2pConfig {
+	return Libp2pConfig(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pConfig) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pConfig) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pConfig) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pConfig) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pConfig) Statedir() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s Libp2pConfig) HasStatedir() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pConfig) StatedirBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pConfig) SetStatedir(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 func (s Libp2pConfig) PrivateKey() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pConfig) HasPrivateKey() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pConfig) SetPrivateKey(v []byte) error {
-	return s.Struct.SetData(1, v)
+	return capnp.Struct(s).SetData(1, v)
 }
 
 func (s Libp2pConfig) NetworkId() (string, error) {
-	p, err := s.Struct.Ptr(2)
+	p, err := capnp.Struct(s).Ptr(2)
 	return p.Text(), err
 }
 
 func (s Libp2pConfig) HasNetworkId() bool {
-	return s.Struct.HasPtr(2)
+	return capnp.Struct(s).HasPtr(2)
 }
 
 func (s Libp2pConfig) NetworkIdBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(2)
+	p, err := capnp.Struct(s).Ptr(2)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pConfig) SetNetworkId(v string) error {
-	return s.Struct.SetText(2, v)
+	return capnp.Struct(s).SetText(2, v)
 }
 
 func (s Libp2pConfig) ListenOn() (Multiaddr_List, error) {
-	p, err := s.Struct.Ptr(3)
-	return Multiaddr_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(3)
+	return Multiaddr_List(p.List()), err
 }
 
 func (s Libp2pConfig) HasListenOn() bool {
-	return s.Struct.HasPtr(3)
+	return capnp.Struct(s).HasPtr(3)
 }
 
 func (s Libp2pConfig) SetListenOn(v Multiaddr_List) error {
-	return s.Struct.SetPtr(3, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(3, v.ToPtr())
 }
 
 // NewListenOn sets the listenOn field to a newly
 // allocated Multiaddr_List, preferring placement in s's segment.
 func (s Libp2pConfig) NewListenOn(n int32) (Multiaddr_List, error) {
-	l, err := NewMultiaddr_List(s.Struct.Segment(), n)
+	l, err := NewMultiaddr_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return Multiaddr_List{}, err
 	}
-	err = s.Struct.SetPtr(3, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(3, l.ToPtr())
 	return l, err
 }
 
 func (s Libp2pConfig) MetricsPort() uint16 {
-	return s.Struct.Uint16(0)
+	return capnp.Struct(s).Uint16(0)
 }
 
 func (s Libp2pConfig) SetMetricsPort(v uint16) {
-	s.Struct.SetUint16(0, v)
+	capnp.Struct(s).SetUint16(0, v)
 }
 
 func (s Libp2pConfig) ExternalMultiaddr() (Multiaddr, error) {
-	p, err := s.Struct.Ptr(4)
-	return Multiaddr{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(4)
+	return Multiaddr(p.Struct()), err
 }
 
 func (s Libp2pConfig) HasExternalMultiaddr() bool {
-	return s.Struct.HasPtr(4)
+	return capnp.Struct(s).HasPtr(4)
 }
 
 func (s Libp2pConfig) SetExternalMultiaddr(v Multiaddr) error {
-	return s.Struct.SetPtr(4, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(4, capnp.Struct(v).ToPtr())
 }
 
 // NewExternalMultiaddr sets the externalMultiaddr field to a newly
 // allocated Multiaddr struct, preferring placement in s's segment.
 func (s Libp2pConfig) NewExternalMultiaddr() (Multiaddr, error) {
-	ss, err := NewMultiaddr(s.Struct.Segment())
+	ss, err := NewMultiaddr(capnp.Struct(s).Segment())
 	if err != nil {
 		return Multiaddr{}, err
 	}
-	err = s.Struct.SetPtr(4, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(4, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pConfig) UnsafeNoTrustIp() bool {
-	return s.Struct.Bit(16)
+	return capnp.Struct(s).Bit(16)
 }
 
 func (s Libp2pConfig) SetUnsafeNoTrustIp(v bool) {
-	s.Struct.SetBit(16, v)
+	capnp.Struct(s).SetBit(16, v)
 }
 
 func (s Libp2pConfig) Flood() bool {
-	return s.Struct.Bit(17)
+	return capnp.Struct(s).Bit(17)
 }
 
 func (s Libp2pConfig) SetFlood(v bool) {
-	s.Struct.SetBit(17, v)
+	capnp.Struct(s).SetBit(17, v)
 }
 
 func (s Libp2pConfig) PeerExchange() bool {
-	return s.Struct.Bit(18)
+	return capnp.Struct(s).Bit(18)
 }
 
 func (s Libp2pConfig) SetPeerExchange(v bool) {
-	s.Struct.SetBit(18, v)
+	capnp.Struct(s).SetBit(18, v)
 }
 
 func (s Libp2pConfig) DirectPeers() (Multiaddr_List, error) {
-	p, err := s.Struct.Ptr(5)
-	return Multiaddr_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(5)
+	return Multiaddr_List(p.List()), err
 }
 
 func (s Libp2pConfig) HasDirectPeers() bool {
-	return s.Struct.HasPtr(5)
+	return capnp.Struct(s).HasPtr(5)
 }
 
 func (s Libp2pConfig) SetDirectPeers(v Multiaddr_List) error {
-	return s.Struct.SetPtr(5, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(5, v.ToPtr())
 }
 
 // NewDirectPeers sets the directPeers field to a newly
 // allocated Multiaddr_List, preferring placement in s's segment.
 func (s Libp2pConfig) NewDirectPeers(n int32) (Multiaddr_List, error) {
-	l, err := NewMultiaddr_List(s.Struct.Segment(), n)
+	l, err := NewMultiaddr_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return Multiaddr_List{}, err
 	}
-	err = s.Struct.SetPtr(5, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(5, l.ToPtr())
 	return l, err
 }
 
 func (s Libp2pConfig) SeedPeers() (Multiaddr_List, error) {
-	p, err := s.Struct.Ptr(6)
-	return Multiaddr_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(6)
+	return Multiaddr_List(p.List()), err
 }
 
 func (s Libp2pConfig) HasSeedPeers() bool {
-	return s.Struct.HasPtr(6)
+	return capnp.Struct(s).HasPtr(6)
 }
 
 func (s Libp2pConfig) SetSeedPeers(v Multiaddr_List) error {
-	return s.Struct.SetPtr(6, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(6, v.ToPtr())
 }
 
 // NewSeedPeers sets the seedPeers field to a newly
 // allocated Multiaddr_List, preferring placement in s's segment.
 func (s Libp2pConfig) NewSeedPeers(n int32) (Multiaddr_List, error) {
-	l, err := NewMultiaddr_List(s.Struct.Segment(), n)
+	l, err := NewMultiaddr_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return Multiaddr_List{}, err
 	}
-	err = s.Struct.SetPtr(6, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(6, l.ToPtr())
 	return l, err
 }
 
 func (s Libp2pConfig) GatingConfig() (GatingConfig, error) {
-	p, err := s.Struct.Ptr(7)
-	return GatingConfig{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(7)
+	return GatingConfig(p.Struct()), err
 }
 
 func (s Libp2pConfig) HasGatingConfig() bool {
-	return s.Struct.HasPtr(7)
+	return capnp.Struct(s).HasPtr(7)
 }
 
 func (s Libp2pConfig) SetGatingConfig(v GatingConfig) error {
-	return s.Struct.SetPtr(7, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(7, capnp.Struct(v).ToPtr())
 }
 
 // NewGatingConfig sets the gatingConfig field to a newly
 // allocated GatingConfig struct, preferring placement in s's segment.
 func (s Libp2pConfig) NewGatingConfig() (GatingConfig, error) {
-	ss, err := NewGatingConfig(s.Struct.Segment())
+	ss, err := NewGatingConfig(capnp.Struct(s).Segment())
 	if err != nil {
 		return GatingConfig{}, err
 	}
-	err = s.Struct.SetPtr(7, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(7, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pConfig) MaxConnections() uint32 {
-	return s.Struct.Uint32(4)
+	return capnp.Struct(s).Uint32(4)
 }
 
 func (s Libp2pConfig) SetMaxConnections(v uint32) {
-	s.Struct.SetUint32(4, v)
+	capnp.Struct(s).SetUint32(4, v)
 }
 
 func (s Libp2pConfig) ValidationQueueSize() uint32 {
-	return s.Struct.Uint32(8)
+	return capnp.Struct(s).Uint32(8)
 }
 
 func (s Libp2pConfig) SetValidationQueueSize(v uint32) {
-	s.Struct.SetUint32(8, v)
+	capnp.Struct(s).SetUint32(8, v)
 }
 
-func (s Libp2pConfig) MinaPeerExchange() bool {
-	return s.Struct.Bit(19)
+func (s Libp2pConfig) PeerProtectionRatio() float32 {
+	return math.Float32frombits(capnp.Struct(s).Uint32(12))
 }
 
-func (s Libp2pConfig) SetMinaPeerExchange(v bool) {
-	s.Struct.SetBit(19, v)
+func (s Libp2pConfig) SetPeerProtectionRatio(v float32) {
+	capnp.Struct(s).SetUint32(12, math.Float32bits(v))
 }
 
 func (s Libp2pConfig) MinConnections() uint32 {
-	return s.Struct.Uint32(12)
+	return capnp.Struct(s).Uint32(16)
 }
 
 func (s Libp2pConfig) SetMinConnections(v uint32) {
-	s.Struct.SetUint32(12, v)
+	capnp.Struct(s).SetUint32(16, v)
 }
 
 func (s Libp2pConfig) KnownPrivateIpNets() (capnp.TextList, error) {
-	p, err := s.Struct.Ptr(8)
-	return capnp.TextList{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(8)
+	return capnp.TextList(p.List()), err
 }
 
 func (s Libp2pConfig) HasKnownPrivateIpNets() bool {
-	return s.Struct.HasPtr(8)
+	return capnp.Struct(s).HasPtr(8)
 }
 
 func (s Libp2pConfig) SetKnownPrivateIpNets(v capnp.TextList) error {
-	return s.Struct.SetPtr(8, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(8, v.ToPtr())
 }
 
 // NewKnownPrivateIpNets sets the knownPrivateIpNets field to a newly
 // allocated capnp.TextList, preferring placement in s's segment.
 func (s Libp2pConfig) NewKnownPrivateIpNets(n int32) (capnp.TextList, error) {
-	l, err := capnp.NewTextList(s.Struct.Segment(), n)
+	l, err := capnp.NewTextList(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return capnp.TextList{}, err
 	}
-	err = s.Struct.SetPtr(8, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(8, l.ToPtr())
 	return l, err
 }
 
 func (s Libp2pConfig) TopicConfig() (TopicLevel_List, error) {
-	p, err := s.Struct.Ptr(9)
-	return TopicLevel_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(9)
+	return TopicLevel_List(p.List()), err
 }
 
 func (s Libp2pConfig) HasTopicConfig() bool {
-	return s.Struct.HasPtr(9)
+	return capnp.Struct(s).HasPtr(9)
 }
 
 func (s Libp2pConfig) SetTopicConfig(v TopicLevel_List) error {
-	return s.Struct.SetPtr(9, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(9, v.ToPtr())
 }
 
 // NewTopicConfig sets the topicConfig field to a newly
 // allocated TopicLevel_List, preferring placement in s's segment.
 func (s Libp2pConfig) NewTopicConfig(n int32) (TopicLevel_List, error) {
-	l, err := NewTopicLevel_List(s.Struct.Segment(), n)
+	l, err := NewTopicLevel_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return TopicLevel_List{}, err
 	}
-	err = s.Struct.SetPtr(9, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(9, l.ToPtr())
 	return l, err
 }
 
 // Libp2pConfig_List is a list of Libp2pConfig.
-type Libp2pConfig_List struct{ capnp.List }
+type Libp2pConfig_List = capnp.StructList[Libp2pConfig]
 
 // NewLibp2pConfig creates a new list of Libp2pConfig.
 func NewLibp2pConfig_List(s *capnp.Segment, sz int32) (Libp2pConfig_List, error) {
-	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 16, PointerCount: 10}, sz)
-	return Libp2pConfig_List{l}, err
-}
-
-func (s Libp2pConfig_List) At(i int) Libp2pConfig { return Libp2pConfig{s.List.Struct(i)} }
-
-func (s Libp2pConfig_List) Set(i int, v Libp2pConfig) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s Libp2pConfig_List) String() string {
-	str, _ := text.MarshalList(0xc90f65b6852b9c22, s.List)
-	return str
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 24, PointerCount: 10}, sz)
+	return capnp.StructList[Libp2pConfig](l), err
 }
 
 // Libp2pConfig_Future is a wrapper for a Libp2pConfig promised by a client call.
@@ -1397,7 +1579,7 @@ type Libp2pConfig_Future struct{ *capnp.Future }
 
 func (p Libp2pConfig_Future) Struct() (Libp2pConfig, error) {
 	s, err := p.Future.Struct()
-	return Libp2pConfig{s}, err
+	return Libp2pConfig(s), err
 }
 
 func (p Libp2pConfig_Future) ExternalMultiaddr() Multiaddr_Future {
@@ -1451,21 +1633,10 @@ func ResourceUpdateTypeFromString(c string) ResourceUpdateType {
 	}
 }
 
-type ResourceUpdateType_List struct{ capnp.List }
+type ResourceUpdateType_List = capnp.EnumList[ResourceUpdateType]
 
 func NewResourceUpdateType_List(s *capnp.Segment, sz int32) (ResourceUpdateType_List, error) {
-	l, err := capnp.NewUInt16List(s, sz)
-	return ResourceUpdateType_List{l.List}, err
-}
-
-func (l ResourceUpdateType_List) At(i int) ResourceUpdateType {
-	ul := capnp.UInt16List{List: l.List}
-	return ResourceUpdateType(ul.At(i))
-}
-
-func (l ResourceUpdateType_List) Set(i int, v ResourceUpdateType) {
-	ul := capnp.UInt16List{List: l.List}
-	ul.Set(i, uint16(v))
+	return capnp.NewEnumList[ResourceUpdateType](s, sz)
 }
 
 type ValidationResult uint16
@@ -1511,101 +1682,103 @@ func ValidationResultFromString(c string) ValidationResult {
 	}
 }
 
-type ValidationResult_List struct{ capnp.List }
+type ValidationResult_List = capnp.EnumList[ValidationResult]
 
 func NewValidationResult_List(s *capnp.Segment, sz int32) (ValidationResult_List, error) {
-	l, err := capnp.NewUInt16List(s, sz)
-	return ValidationResult_List{l.List}, err
+	return capnp.NewEnumList[ValidationResult](s, sz)
 }
 
-func (l ValidationResult_List) At(i int) ValidationResult {
-	ul := capnp.UInt16List{List: l.List}
-	return ValidationResult(ul.At(i))
-}
-
-func (l ValidationResult_List) Set(i int, v ValidationResult) {
-	ul := capnp.UInt16List{List: l.List}
-	ul.Set(i, uint16(v))
-}
-
-type StreamMessage struct{ capnp.Struct }
+type StreamMessage capnp.Struct
 
 // StreamMessage_TypeID is the unique identifier for the type StreamMessage.
 const StreamMessage_TypeID = 0xaa5cdd4cc2bd8222
 
 func NewStreamMessage(s *capnp.Segment) (StreamMessage, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return StreamMessage{st}, err
+	return StreamMessage(st), err
 }
 
 func NewRootStreamMessage(s *capnp.Segment) (StreamMessage, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return StreamMessage{st}, err
+	return StreamMessage(st), err
 }
 
 func ReadRootStreamMessage(msg *capnp.Message) (StreamMessage, error) {
 	root, err := msg.Root()
-	return StreamMessage{root.Struct()}, err
+	return StreamMessage(root.Struct()), err
 }
 
 func (s StreamMessage) String() string {
-	str, _ := text.Marshal(0xaa5cdd4cc2bd8222, s.Struct)
+	str, _ := text.Marshal(0xaa5cdd4cc2bd8222, capnp.Struct(s))
 	return str
 }
 
+func (s StreamMessage) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (StreamMessage) DecodeFromPtr(p capnp.Ptr) StreamMessage {
+	return StreamMessage(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s StreamMessage) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s StreamMessage) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s StreamMessage) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s StreamMessage) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s StreamMessage) StreamId() (StreamId, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamId(p.Struct()), err
 }
 
 func (s StreamMessage) HasStreamId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s StreamMessage) SetStreamId(v StreamId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamId sets the streamId field to a newly
 // allocated StreamId struct, preferring placement in s's segment.
 func (s StreamMessage) NewStreamId() (StreamId, error) {
-	ss, err := NewStreamId(s.Struct.Segment())
+	ss, err := NewStreamId(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s StreamMessage) Data() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return []byte(p.Data()), err
 }
 
 func (s StreamMessage) HasData() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s StreamMessage) SetData(v []byte) error {
-	return s.Struct.SetData(1, v)
+	return capnp.Struct(s).SetData(1, v)
 }
 
 // StreamMessage_List is a list of StreamMessage.
-type StreamMessage_List struct{ capnp.List }
+type StreamMessage_List = capnp.StructList[StreamMessage]
 
 // NewStreamMessage creates a new list of StreamMessage.
 func NewStreamMessage_List(s *capnp.Segment, sz int32) (StreamMessage_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return StreamMessage_List{l}, err
-}
-
-func (s StreamMessage_List) At(i int) StreamMessage { return StreamMessage{s.List.Struct(i)} }
-
-func (s StreamMessage_List) Set(i int, v StreamMessage) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s StreamMessage_List) String() string {
-	str, _ := text.MarshalList(0xaa5cdd4cc2bd8222, s.List)
-	return str
+	return capnp.StructList[StreamMessage](l), err
 }
 
 // StreamMessage_Future is a wrapper for a StreamMessage promised by a client call.
@@ -1613,62 +1786,75 @@ type StreamMessage_Future struct{ *capnp.Future }
 
 func (p StreamMessage_Future) Struct() (StreamMessage, error) {
 	s, err := p.Future.Struct()
-	return StreamMessage{s}, err
+	return StreamMessage(s), err
 }
 
 func (p StreamMessage_Future) StreamId() StreamId_Future {
 	return StreamId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Duration struct{ capnp.Struct }
+type Duration capnp.Struct
 
 // Duration_TypeID is the unique identifier for the type Duration.
 const Duration_TypeID = 0xbf96c4e0ff964090
 
 func NewDuration(s *capnp.Segment) (Duration, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return Duration{st}, err
+	return Duration(st), err
 }
 
 func NewRootDuration(s *capnp.Segment) (Duration, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return Duration{st}, err
+	return Duration(st), err
 }
 
 func ReadRootDuration(msg *capnp.Message) (Duration, error) {
 	root, err := msg.Root()
-	return Duration{root.Struct()}, err
+	return Duration(root.Struct()), err
 }
 
 func (s Duration) String() string {
-	str, _ := text.Marshal(0xbf96c4e0ff964090, s.Struct)
+	str, _ := text.Marshal(0xbf96c4e0ff964090, capnp.Struct(s))
 	return str
 }
 
+func (s Duration) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Duration) DecodeFromPtr(p capnp.Ptr) Duration {
+	return Duration(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Duration) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Duration) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Duration) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Duration) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Duration) NanoSec() uint64 {
-	return s.Struct.Uint64(0)
+	return capnp.Struct(s).Uint64(0)
 }
 
 func (s Duration) SetNanoSec(v uint64) {
-	s.Struct.SetUint64(0, v)
+	capnp.Struct(s).SetUint64(0, v)
 }
 
 // Duration_List is a list of Duration.
-type Duration_List struct{ capnp.List }
+type Duration_List = capnp.StructList[Duration]
 
 // NewDuration creates a new list of Duration.
 func NewDuration_List(s *capnp.Segment, sz int32) (Duration_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
-	return Duration_List{l}, err
-}
-
-func (s Duration_List) At(i int) Duration { return Duration{s.List.Struct(i)} }
-
-func (s Duration_List) Set(i int, v Duration) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s Duration_List) String() string {
-	str, _ := text.MarshalList(0xbf96c4e0ff964090, s.List)
-	return str
+	return capnp.StructList[Duration](l), err
 }
 
 // Duration_Future is a wrapper for a Duration promised by a client call.
@@ -1676,58 +1862,71 @@ type Duration_Future struct{ *capnp.Future }
 
 func (p Duration_Future) Struct() (Duration, error) {
 	s, err := p.Future.Struct()
-	return Duration{s}, err
+	return Duration(s), err
 }
 
-type UnixNano struct{ capnp.Struct }
+type UnixNano capnp.Struct
 
 // UnixNano_TypeID is the unique identifier for the type UnixNano.
 const UnixNano_TypeID = 0x9d6900bcb72b8938
 
 func NewUnixNano(s *capnp.Segment) (UnixNano, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return UnixNano{st}, err
+	return UnixNano(st), err
 }
 
 func NewRootUnixNano(s *capnp.Segment) (UnixNano, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
-	return UnixNano{st}, err
+	return UnixNano(st), err
 }
 
 func ReadRootUnixNano(msg *capnp.Message) (UnixNano, error) {
 	root, err := msg.Root()
-	return UnixNano{root.Struct()}, err
+	return UnixNano(root.Struct()), err
 }
 
 func (s UnixNano) String() string {
-	str, _ := text.Marshal(0x9d6900bcb72b8938, s.Struct)
+	str, _ := text.Marshal(0x9d6900bcb72b8938, capnp.Struct(s))
 	return str
 }
 
+func (s UnixNano) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (UnixNano) DecodeFromPtr(p capnp.Ptr) UnixNano {
+	return UnixNano(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s UnixNano) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s UnixNano) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s UnixNano) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s UnixNano) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s UnixNano) NanoSec() int64 {
-	return int64(s.Struct.Uint64(0))
+	return int64(capnp.Struct(s).Uint64(0))
 }
 
 func (s UnixNano) SetNanoSec(v int64) {
-	s.Struct.SetUint64(0, uint64(v))
+	capnp.Struct(s).SetUint64(0, uint64(v))
 }
 
 // UnixNano_List is a list of UnixNano.
-type UnixNano_List struct{ capnp.List }
+type UnixNano_List = capnp.StructList[UnixNano]
 
 // NewUnixNano creates a new list of UnixNano.
 func NewUnixNano_List(s *capnp.Segment, sz int32) (UnixNano_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
-	return UnixNano_List{l}, err
-}
-
-func (s UnixNano_List) At(i int) UnixNano { return UnixNano{s.List.Struct(i)} }
-
-func (s UnixNano_List) Set(i int, v UnixNano) error { return s.List.SetStruct(i, v.Struct) }
-
-func (s UnixNano_List) String() string {
-	str, _ := text.MarshalList(0x9d6900bcb72b8938, s.List)
-	return str
+	return capnp.StructList[UnixNano](l), err
 }
 
 // UnixNano_Future is a wrapper for a UnixNano promised by a client call.
@@ -1735,78 +1934,87 @@ type UnixNano_Future struct{ *capnp.Future }
 
 func (p UnixNano_Future) Struct() (UnixNano, error) {
 	s, err := p.Future.Struct()
-	return UnixNano{s}, err
+	return UnixNano(s), err
 }
 
-type PushMessageHeader struct{ capnp.Struct }
+type PushMessageHeader capnp.Struct
 
 // PushMessageHeader_TypeID is the unique identifier for the type PushMessageHeader.
 const PushMessageHeader_TypeID = 0xa8298a9629f09cdc
 
 func NewPushMessageHeader(s *capnp.Segment) (PushMessageHeader, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return PushMessageHeader{st}, err
+	return PushMessageHeader(st), err
 }
 
 func NewRootPushMessageHeader(s *capnp.Segment) (PushMessageHeader, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return PushMessageHeader{st}, err
+	return PushMessageHeader(st), err
 }
 
 func ReadRootPushMessageHeader(msg *capnp.Message) (PushMessageHeader, error) {
 	root, err := msg.Root()
-	return PushMessageHeader{root.Struct()}, err
+	return PushMessageHeader(root.Struct()), err
 }
 
 func (s PushMessageHeader) String() string {
-	str, _ := text.Marshal(0xa8298a9629f09cdc, s.Struct)
+	str, _ := text.Marshal(0xa8298a9629f09cdc, capnp.Struct(s))
 	return str
 }
 
+func (s PushMessageHeader) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (PushMessageHeader) DecodeFromPtr(p capnp.Ptr) PushMessageHeader {
+	return PushMessageHeader(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s PushMessageHeader) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s PushMessageHeader) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s PushMessageHeader) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s PushMessageHeader) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s PushMessageHeader) TimeSent() (UnixNano, error) {
-	p, err := s.Struct.Ptr(0)
-	return UnixNano{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return UnixNano(p.Struct()), err
 }
 
 func (s PushMessageHeader) HasTimeSent() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s PushMessageHeader) SetTimeSent(v UnixNano) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewTimeSent sets the timeSent field to a newly
 // allocated UnixNano struct, preferring placement in s's segment.
 func (s PushMessageHeader) NewTimeSent() (UnixNano, error) {
-	ss, err := NewUnixNano(s.Struct.Segment())
+	ss, err := NewUnixNano(capnp.Struct(s).Segment())
 	if err != nil {
 		return UnixNano{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // PushMessageHeader_List is a list of PushMessageHeader.
-type PushMessageHeader_List struct{ capnp.List }
+type PushMessageHeader_List = capnp.StructList[PushMessageHeader]
 
 // NewPushMessageHeader creates a new list of PushMessageHeader.
 func NewPushMessageHeader_List(s *capnp.Segment, sz int32) (PushMessageHeader_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return PushMessageHeader_List{l}, err
-}
-
-func (s PushMessageHeader_List) At(i int) PushMessageHeader {
-	return PushMessageHeader{s.List.Struct(i)}
-}
-
-func (s PushMessageHeader_List) Set(i int, v PushMessageHeader) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s PushMessageHeader_List) String() string {
-	str, _ := text.MarshalList(0xa8298a9629f09cdc, s.List)
-	return str
+	return capnp.StructList[PushMessageHeader](l), err
 }
 
 // PushMessageHeader_Future is a wrapper for a PushMessageHeader promised by a client call.
@@ -1814,104 +2022,115 @@ type PushMessageHeader_Future struct{ *capnp.Future }
 
 func (p PushMessageHeader_Future) Struct() (PushMessageHeader, error) {
 	s, err := p.Future.Struct()
-	return PushMessageHeader{s}, err
+	return PushMessageHeader(s), err
 }
 
 func (p PushMessageHeader_Future) TimeSent() UnixNano_Future {
 	return UnixNano_Future{Future: p.Future.Field(0, nil)}
 }
 
-type RpcMessageHeader struct{ capnp.Struct }
+type RpcMessageHeader capnp.Struct
 
 // RpcMessageHeader_TypeID is the unique identifier for the type RpcMessageHeader.
 const RpcMessageHeader_TypeID = 0xa244ebaa77d7c1cf
 
 func NewRpcMessageHeader(s *capnp.Segment) (RpcMessageHeader, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return RpcMessageHeader{st}, err
+	return RpcMessageHeader(st), err
 }
 
 func NewRootRpcMessageHeader(s *capnp.Segment) (RpcMessageHeader, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return RpcMessageHeader{st}, err
+	return RpcMessageHeader(st), err
 }
 
 func ReadRootRpcMessageHeader(msg *capnp.Message) (RpcMessageHeader, error) {
 	root, err := msg.Root()
-	return RpcMessageHeader{root.Struct()}, err
+	return RpcMessageHeader(root.Struct()), err
 }
 
 func (s RpcMessageHeader) String() string {
-	str, _ := text.Marshal(0xa244ebaa77d7c1cf, s.Struct)
+	str, _ := text.Marshal(0xa244ebaa77d7c1cf, capnp.Struct(s))
 	return str
 }
 
+func (s RpcMessageHeader) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (RpcMessageHeader) DecodeFromPtr(p capnp.Ptr) RpcMessageHeader {
+	return RpcMessageHeader(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s RpcMessageHeader) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s RpcMessageHeader) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s RpcMessageHeader) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s RpcMessageHeader) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s RpcMessageHeader) TimeSent() (UnixNano, error) {
-	p, err := s.Struct.Ptr(0)
-	return UnixNano{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return UnixNano(p.Struct()), err
 }
 
 func (s RpcMessageHeader) HasTimeSent() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s RpcMessageHeader) SetTimeSent(v UnixNano) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewTimeSent sets the timeSent field to a newly
 // allocated UnixNano struct, preferring placement in s's segment.
 func (s RpcMessageHeader) NewTimeSent() (UnixNano, error) {
-	ss, err := NewUnixNano(s.Struct.Segment())
+	ss, err := NewUnixNano(capnp.Struct(s).Segment())
 	if err != nil {
 		return UnixNano{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s RpcMessageHeader) SequenceNumber() (SequenceNumber, error) {
-	p, err := s.Struct.Ptr(1)
-	return SequenceNumber{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return SequenceNumber(p.Struct()), err
 }
 
 func (s RpcMessageHeader) HasSequenceNumber() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s RpcMessageHeader) SetSequenceNumber(v SequenceNumber) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSequenceNumber sets the sequenceNumber field to a newly
 // allocated SequenceNumber struct, preferring placement in s's segment.
 func (s RpcMessageHeader) NewSequenceNumber() (SequenceNumber, error) {
-	ss, err := NewSequenceNumber(s.Struct.Segment())
+	ss, err := NewSequenceNumber(capnp.Struct(s).Segment())
 	if err != nil {
 		return SequenceNumber{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // RpcMessageHeader_List is a list of RpcMessageHeader.
-type RpcMessageHeader_List struct{ capnp.List }
+type RpcMessageHeader_List = capnp.StructList[RpcMessageHeader]
 
 // NewRpcMessageHeader creates a new list of RpcMessageHeader.
 func NewRpcMessageHeader_List(s *capnp.Segment, sz int32) (RpcMessageHeader_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return RpcMessageHeader_List{l}, err
-}
-
-func (s RpcMessageHeader_List) At(i int) RpcMessageHeader { return RpcMessageHeader{s.List.Struct(i)} }
-
-func (s RpcMessageHeader_List) Set(i int, v RpcMessageHeader) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s RpcMessageHeader_List) String() string {
-	str, _ := text.MarshalList(0xa244ebaa77d7c1cf, s.List)
-	return str
+	return capnp.StructList[RpcMessageHeader](l), err
 }
 
 // RpcMessageHeader_Future is a wrapper for a RpcMessageHeader promised by a client call.
@@ -1919,7 +2138,7 @@ type RpcMessageHeader_Future struct{ *capnp.Future }
 
 func (p RpcMessageHeader_Future) Struct() (RpcMessageHeader, error) {
 	s, err := p.Future.Struct()
-	return RpcMessageHeader{s}, err
+	return RpcMessageHeader(s), err
 }
 
 func (p RpcMessageHeader_Future) TimeSent() UnixNano_Future {
@@ -1930,51 +2149,61 @@ func (p RpcMessageHeader_Future) SequenceNumber() SequenceNumber_Future {
 	return SequenceNumber_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface struct{ capnp.Struct }
+type Libp2pHelperInterface capnp.Struct
 
 // Libp2pHelperInterface_TypeID is the unique identifier for the type Libp2pHelperInterface.
 const Libp2pHelperInterface_TypeID = 0x91c5868ca6847cc5
 
 func NewLibp2pHelperInterface(s *capnp.Segment) (Libp2pHelperInterface, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface{st}, err
+	return Libp2pHelperInterface(st), err
 }
 
 func NewRootLibp2pHelperInterface(s *capnp.Segment) (Libp2pHelperInterface, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface{st}, err
+	return Libp2pHelperInterface(st), err
 }
 
 func ReadRootLibp2pHelperInterface(msg *capnp.Message) (Libp2pHelperInterface, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface{root.Struct()}, err
+	return Libp2pHelperInterface(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface) String() string {
-	str, _ := text.Marshal(0x91c5868ca6847cc5, s.Struct)
+	str, _ := text.Marshal(0x91c5868ca6847cc5, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface {
+	return Libp2pHelperInterface(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_List is a list of Libp2pHelperInterface.
-type Libp2pHelperInterface_List struct{ capnp.List }
+type Libp2pHelperInterface_List = capnp.StructList[Libp2pHelperInterface]
 
 // NewLibp2pHelperInterface creates a new list of Libp2pHelperInterface.
 func NewLibp2pHelperInterface_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_List{l}, err
-}
-
-func (s Libp2pHelperInterface_List) At(i int) Libp2pHelperInterface {
-	return Libp2pHelperInterface{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_List) Set(i int, v Libp2pHelperInterface) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_List) String() string {
-	str, _ := text.MarshalList(0x91c5868ca6847cc5, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface](l), err
 }
 
 // Libp2pHelperInterface_Future is a wrapper for a Libp2pHelperInterface promised by a client call.
@@ -1982,54 +2211,64 @@ type Libp2pHelperInterface_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Future) Struct() (Libp2pHelperInterface, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface{s}, err
+	return Libp2pHelperInterface(s), err
 }
 
-type Libp2pHelperInterface_Configure struct{ capnp.Struct }
+type Libp2pHelperInterface_Configure capnp.Struct
 
 // Libp2pHelperInterface_Configure_TypeID is the unique identifier for the type Libp2pHelperInterface_Configure.
 const Libp2pHelperInterface_Configure_TypeID = 0xff0e5f175237cf55
 
 func NewLibp2pHelperInterface_Configure(s *capnp.Segment) (Libp2pHelperInterface_Configure, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Configure{st}, err
+	return Libp2pHelperInterface_Configure(st), err
 }
 
 func NewRootLibp2pHelperInterface_Configure(s *capnp.Segment) (Libp2pHelperInterface_Configure, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Configure{st}, err
+	return Libp2pHelperInterface_Configure(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Configure(msg *capnp.Message) (Libp2pHelperInterface_Configure, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Configure{root.Struct()}, err
+	return Libp2pHelperInterface_Configure(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Configure) String() string {
-	str, _ := text.Marshal(0xff0e5f175237cf55, s.Struct)
+	str, _ := text.Marshal(0xff0e5f175237cf55, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Configure) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Configure) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Configure {
+	return Libp2pHelperInterface_Configure(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Configure) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Configure) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Configure) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Configure) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Configure_List is a list of Libp2pHelperInterface_Configure.
-type Libp2pHelperInterface_Configure_List struct{ capnp.List }
+type Libp2pHelperInterface_Configure_List = capnp.StructList[Libp2pHelperInterface_Configure]
 
 // NewLibp2pHelperInterface_Configure creates a new list of Libp2pHelperInterface_Configure.
 func NewLibp2pHelperInterface_Configure_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Configure_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Configure_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Configure_List) At(i int) Libp2pHelperInterface_Configure {
-	return Libp2pHelperInterface_Configure{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Configure_List) Set(i int, v Libp2pHelperInterface_Configure) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Configure_List) String() string {
-	str, _ := text.MarshalList(0xff0e5f175237cf55, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Configure](l), err
 }
 
 // Libp2pHelperInterface_Configure_Future is a wrapper for a Libp2pHelperInterface_Configure promised by a client call.
@@ -2037,78 +2276,87 @@ type Libp2pHelperInterface_Configure_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Configure_Future) Struct() (Libp2pHelperInterface_Configure, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Configure{s}, err
+	return Libp2pHelperInterface_Configure(s), err
 }
 
-type Libp2pHelperInterface_Configure_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_Configure_Request capnp.Struct
 
 // Libp2pHelperInterface_Configure_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_Configure_Request.
 const Libp2pHelperInterface_Configure_Request_TypeID = 0xbbfd8fe6d222b0a1
 
 func NewLibp2pHelperInterface_Configure_Request(s *capnp.Segment) (Libp2pHelperInterface_Configure_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Configure_Request{st}, err
+	return Libp2pHelperInterface_Configure_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_Configure_Request(s *capnp.Segment) (Libp2pHelperInterface_Configure_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Configure_Request{st}, err
+	return Libp2pHelperInterface_Configure_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Configure_Request(msg *capnp.Message) (Libp2pHelperInterface_Configure_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Configure_Request{root.Struct()}, err
+	return Libp2pHelperInterface_Configure_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Configure_Request) String() string {
-	str, _ := text.Marshal(0xbbfd8fe6d222b0a1, s.Struct)
+	str, _ := text.Marshal(0xbbfd8fe6d222b0a1, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Configure_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Configure_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Configure_Request {
+	return Libp2pHelperInterface_Configure_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Configure_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Configure_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Configure_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Configure_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_Configure_Request) Config() (Libp2pConfig, error) {
-	p, err := s.Struct.Ptr(0)
-	return Libp2pConfig{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pConfig(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Configure_Request) HasConfig() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Configure_Request) SetConfig(v Libp2pConfig) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewConfig sets the config field to a newly
 // allocated Libp2pConfig struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Configure_Request) NewConfig() (Libp2pConfig, error) {
-	ss, err := NewLibp2pConfig(s.Struct.Segment())
+	ss, err := NewLibp2pConfig(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pConfig{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_Configure_Request_List is a list of Libp2pHelperInterface_Configure_Request.
-type Libp2pHelperInterface_Configure_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_Configure_Request_List = capnp.StructList[Libp2pHelperInterface_Configure_Request]
 
 // NewLibp2pHelperInterface_Configure_Request creates a new list of Libp2pHelperInterface_Configure_Request.
 func NewLibp2pHelperInterface_Configure_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Configure_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_Configure_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Configure_Request_List) At(i int) Libp2pHelperInterface_Configure_Request {
-	return Libp2pHelperInterface_Configure_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Configure_Request_List) Set(i int, v Libp2pHelperInterface_Configure_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Configure_Request_List) String() string {
-	str, _ := text.MarshalList(0xbbfd8fe6d222b0a1, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Configure_Request](l), err
 }
 
 // Libp2pHelperInterface_Configure_Request_Future is a wrapper for a Libp2pHelperInterface_Configure_Request promised by a client call.
@@ -2116,58 +2364,68 @@ type Libp2pHelperInterface_Configure_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Configure_Request_Future) Struct() (Libp2pHelperInterface_Configure_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Configure_Request{s}, err
+	return Libp2pHelperInterface_Configure_Request(s), err
 }
 
 func (p Libp2pHelperInterface_Configure_Request_Future) Config() Libp2pConfig_Future {
 	return Libp2pConfig_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_Configure_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_Configure_Response capnp.Struct
 
 // Libp2pHelperInterface_Configure_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_Configure_Response.
 const Libp2pHelperInterface_Configure_Response_TypeID = 0xffdbb8a4a072322b
 
 func NewLibp2pHelperInterface_Configure_Response(s *capnp.Segment) (Libp2pHelperInterface_Configure_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Configure_Response{st}, err
+	return Libp2pHelperInterface_Configure_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_Configure_Response(s *capnp.Segment) (Libp2pHelperInterface_Configure_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Configure_Response{st}, err
+	return Libp2pHelperInterface_Configure_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Configure_Response(msg *capnp.Message) (Libp2pHelperInterface_Configure_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Configure_Response{root.Struct()}, err
+	return Libp2pHelperInterface_Configure_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Configure_Response) String() string {
-	str, _ := text.Marshal(0xffdbb8a4a072322b, s.Struct)
+	str, _ := text.Marshal(0xffdbb8a4a072322b, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Configure_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Configure_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Configure_Response {
+	return Libp2pHelperInterface_Configure_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Configure_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Configure_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Configure_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Configure_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Configure_Response_List is a list of Libp2pHelperInterface_Configure_Response.
-type Libp2pHelperInterface_Configure_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_Configure_Response_List = capnp.StructList[Libp2pHelperInterface_Configure_Response]
 
 // NewLibp2pHelperInterface_Configure_Response creates a new list of Libp2pHelperInterface_Configure_Response.
 func NewLibp2pHelperInterface_Configure_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Configure_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Configure_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Configure_Response_List) At(i int) Libp2pHelperInterface_Configure_Response {
-	return Libp2pHelperInterface_Configure_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Configure_Response_List) Set(i int, v Libp2pHelperInterface_Configure_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Configure_Response_List) String() string {
-	str, _ := text.MarshalList(0xffdbb8a4a072322b, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Configure_Response](l), err
 }
 
 // Libp2pHelperInterface_Configure_Response_Future is a wrapper for a Libp2pHelperInterface_Configure_Response promised by a client call.
@@ -2175,54 +2433,64 @@ type Libp2pHelperInterface_Configure_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Configure_Response_Future) Struct() (Libp2pHelperInterface_Configure_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Configure_Response{s}, err
+	return Libp2pHelperInterface_Configure_Response(s), err
 }
 
-type Libp2pHelperInterface_SetGatingConfig struct{ capnp.Struct }
+type Libp2pHelperInterface_SetGatingConfig capnp.Struct
 
 // Libp2pHelperInterface_SetGatingConfig_TypeID is the unique identifier for the type Libp2pHelperInterface_SetGatingConfig.
 const Libp2pHelperInterface_SetGatingConfig_TypeID = 0x9eed76ad25f4d362
 
 func NewLibp2pHelperInterface_SetGatingConfig(s *capnp.Segment) (Libp2pHelperInterface_SetGatingConfig, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetGatingConfig{st}, err
+	return Libp2pHelperInterface_SetGatingConfig(st), err
 }
 
 func NewRootLibp2pHelperInterface_SetGatingConfig(s *capnp.Segment) (Libp2pHelperInterface_SetGatingConfig, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetGatingConfig{st}, err
+	return Libp2pHelperInterface_SetGatingConfig(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SetGatingConfig(msg *capnp.Message) (Libp2pHelperInterface_SetGatingConfig, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SetGatingConfig{root.Struct()}, err
+	return Libp2pHelperInterface_SetGatingConfig(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SetGatingConfig) String() string {
-	str, _ := text.Marshal(0x9eed76ad25f4d362, s.Struct)
+	str, _ := text.Marshal(0x9eed76ad25f4d362, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SetGatingConfig) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SetGatingConfig) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SetGatingConfig {
+	return Libp2pHelperInterface_SetGatingConfig(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SetGatingConfig) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_SetGatingConfig_List is a list of Libp2pHelperInterface_SetGatingConfig.
-type Libp2pHelperInterface_SetGatingConfig_List struct{ capnp.List }
+type Libp2pHelperInterface_SetGatingConfig_List = capnp.StructList[Libp2pHelperInterface_SetGatingConfig]
 
 // NewLibp2pHelperInterface_SetGatingConfig creates a new list of Libp2pHelperInterface_SetGatingConfig.
 func NewLibp2pHelperInterface_SetGatingConfig_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SetGatingConfig_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_SetGatingConfig_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_List) At(i int) Libp2pHelperInterface_SetGatingConfig {
-	return Libp2pHelperInterface_SetGatingConfig{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_List) Set(i int, v Libp2pHelperInterface_SetGatingConfig) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_List) String() string {
-	str, _ := text.MarshalList(0x9eed76ad25f4d362, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SetGatingConfig](l), err
 }
 
 // Libp2pHelperInterface_SetGatingConfig_Future is a wrapper for a Libp2pHelperInterface_SetGatingConfig promised by a client call.
@@ -2230,78 +2498,87 @@ type Libp2pHelperInterface_SetGatingConfig_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_SetGatingConfig_Future) Struct() (Libp2pHelperInterface_SetGatingConfig, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SetGatingConfig{s}, err
+	return Libp2pHelperInterface_SetGatingConfig(s), err
 }
 
-type Libp2pHelperInterface_SetGatingConfig_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_SetGatingConfig_Request capnp.Struct
 
 // Libp2pHelperInterface_SetGatingConfig_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_SetGatingConfig_Request.
 const Libp2pHelperInterface_SetGatingConfig_Request_TypeID = 0xbae9227a811faef6
 
 func NewLibp2pHelperInterface_SetGatingConfig_Request(s *capnp.Segment) (Libp2pHelperInterface_SetGatingConfig_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_SetGatingConfig_Request{st}, err
+	return Libp2pHelperInterface_SetGatingConfig_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_SetGatingConfig_Request(s *capnp.Segment) (Libp2pHelperInterface_SetGatingConfig_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_SetGatingConfig_Request{st}, err
+	return Libp2pHelperInterface_SetGatingConfig_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SetGatingConfig_Request(msg *capnp.Message) (Libp2pHelperInterface_SetGatingConfig_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SetGatingConfig_Request{root.Struct()}, err
+	return Libp2pHelperInterface_SetGatingConfig_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SetGatingConfig_Request) String() string {
-	str, _ := text.Marshal(0xbae9227a811faef6, s.Struct)
+	str, _ := text.Marshal(0xbae9227a811faef6, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SetGatingConfig_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SetGatingConfig_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SetGatingConfig_Request {
+	return Libp2pHelperInterface_SetGatingConfig_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SetGatingConfig_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_SetGatingConfig_Request) GatingConfig() (GatingConfig, error) {
-	p, err := s.Struct.Ptr(0)
-	return GatingConfig{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return GatingConfig(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SetGatingConfig_Request) HasGatingConfig() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_SetGatingConfig_Request) SetGatingConfig(v GatingConfig) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewGatingConfig sets the gatingConfig field to a newly
 // allocated GatingConfig struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_SetGatingConfig_Request) NewGatingConfig() (GatingConfig, error) {
-	ss, err := NewGatingConfig(s.Struct.Segment())
+	ss, err := NewGatingConfig(capnp.Struct(s).Segment())
 	if err != nil {
 		return GatingConfig{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_SetGatingConfig_Request_List is a list of Libp2pHelperInterface_SetGatingConfig_Request.
-type Libp2pHelperInterface_SetGatingConfig_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_SetGatingConfig_Request_List = capnp.StructList[Libp2pHelperInterface_SetGatingConfig_Request]
 
 // NewLibp2pHelperInterface_SetGatingConfig_Request creates a new list of Libp2pHelperInterface_SetGatingConfig_Request.
 func NewLibp2pHelperInterface_SetGatingConfig_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SetGatingConfig_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_SetGatingConfig_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_Request_List) At(i int) Libp2pHelperInterface_SetGatingConfig_Request {
-	return Libp2pHelperInterface_SetGatingConfig_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_Request_List) Set(i int, v Libp2pHelperInterface_SetGatingConfig_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_Request_List) String() string {
-	str, _ := text.MarshalList(0xbae9227a811faef6, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SetGatingConfig_Request](l), err
 }
 
 // Libp2pHelperInterface_SetGatingConfig_Request_Future is a wrapper for a Libp2pHelperInterface_SetGatingConfig_Request promised by a client call.
@@ -2309,58 +2586,68 @@ type Libp2pHelperInterface_SetGatingConfig_Request_Future struct{ *capnp.Future 
 
 func (p Libp2pHelperInterface_SetGatingConfig_Request_Future) Struct() (Libp2pHelperInterface_SetGatingConfig_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SetGatingConfig_Request{s}, err
+	return Libp2pHelperInterface_SetGatingConfig_Request(s), err
 }
 
 func (p Libp2pHelperInterface_SetGatingConfig_Request_Future) GatingConfig() GatingConfig_Future {
 	return GatingConfig_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_SetGatingConfig_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_SetGatingConfig_Response capnp.Struct
 
 // Libp2pHelperInterface_SetGatingConfig_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_SetGatingConfig_Response.
 const Libp2pHelperInterface_SetGatingConfig_Response_TypeID = 0x8b1c161e3d21d6b1
 
 func NewLibp2pHelperInterface_SetGatingConfig_Response(s *capnp.Segment) (Libp2pHelperInterface_SetGatingConfig_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetGatingConfig_Response{st}, err
+	return Libp2pHelperInterface_SetGatingConfig_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_SetGatingConfig_Response(s *capnp.Segment) (Libp2pHelperInterface_SetGatingConfig_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetGatingConfig_Response{st}, err
+	return Libp2pHelperInterface_SetGatingConfig_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SetGatingConfig_Response(msg *capnp.Message) (Libp2pHelperInterface_SetGatingConfig_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SetGatingConfig_Response{root.Struct()}, err
+	return Libp2pHelperInterface_SetGatingConfig_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SetGatingConfig_Response) String() string {
-	str, _ := text.Marshal(0x8b1c161e3d21d6b1, s.Struct)
+	str, _ := text.Marshal(0x8b1c161e3d21d6b1, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SetGatingConfig_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SetGatingConfig_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SetGatingConfig_Response {
+	return Libp2pHelperInterface_SetGatingConfig_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SetGatingConfig_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SetGatingConfig_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_SetGatingConfig_Response_List is a list of Libp2pHelperInterface_SetGatingConfig_Response.
-type Libp2pHelperInterface_SetGatingConfig_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_SetGatingConfig_Response_List = capnp.StructList[Libp2pHelperInterface_SetGatingConfig_Response]
 
 // NewLibp2pHelperInterface_SetGatingConfig_Response creates a new list of Libp2pHelperInterface_SetGatingConfig_Response.
 func NewLibp2pHelperInterface_SetGatingConfig_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SetGatingConfig_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_SetGatingConfig_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_Response_List) At(i int) Libp2pHelperInterface_SetGatingConfig_Response {
-	return Libp2pHelperInterface_SetGatingConfig_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_Response_List) Set(i int, v Libp2pHelperInterface_SetGatingConfig_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SetGatingConfig_Response_List) String() string {
-	str, _ := text.MarshalList(0x8b1c161e3d21d6b1, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SetGatingConfig_Response](l), err
 }
 
 // Libp2pHelperInterface_SetGatingConfig_Response_Future is a wrapper for a Libp2pHelperInterface_SetGatingConfig_Response promised by a client call.
@@ -2368,54 +2655,64 @@ type Libp2pHelperInterface_SetGatingConfig_Response_Future struct{ *capnp.Future
 
 func (p Libp2pHelperInterface_SetGatingConfig_Response_Future) Struct() (Libp2pHelperInterface_SetGatingConfig_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SetGatingConfig_Response{s}, err
+	return Libp2pHelperInterface_SetGatingConfig_Response(s), err
 }
 
-type Libp2pHelperInterface_Listen struct{ capnp.Struct }
+type Libp2pHelperInterface_Listen capnp.Struct
 
 // Libp2pHelperInterface_Listen_TypeID is the unique identifier for the type Libp2pHelperInterface_Listen.
 const Libp2pHelperInterface_Listen_TypeID = 0xe884b52c8948d81b
 
 func NewLibp2pHelperInterface_Listen(s *capnp.Segment) (Libp2pHelperInterface_Listen, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Listen{st}, err
+	return Libp2pHelperInterface_Listen(st), err
 }
 
 func NewRootLibp2pHelperInterface_Listen(s *capnp.Segment) (Libp2pHelperInterface_Listen, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Listen{st}, err
+	return Libp2pHelperInterface_Listen(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Listen(msg *capnp.Message) (Libp2pHelperInterface_Listen, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Listen{root.Struct()}, err
+	return Libp2pHelperInterface_Listen(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Listen) String() string {
-	str, _ := text.Marshal(0xe884b52c8948d81b, s.Struct)
+	str, _ := text.Marshal(0xe884b52c8948d81b, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Listen) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Listen) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Listen {
+	return Libp2pHelperInterface_Listen(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Listen) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Listen) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Listen) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Listen) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Listen_List is a list of Libp2pHelperInterface_Listen.
-type Libp2pHelperInterface_Listen_List struct{ capnp.List }
+type Libp2pHelperInterface_Listen_List = capnp.StructList[Libp2pHelperInterface_Listen]
 
 // NewLibp2pHelperInterface_Listen creates a new list of Libp2pHelperInterface_Listen.
 func NewLibp2pHelperInterface_Listen_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Listen_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Listen_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Listen_List) At(i int) Libp2pHelperInterface_Listen {
-	return Libp2pHelperInterface_Listen{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Listen_List) Set(i int, v Libp2pHelperInterface_Listen) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Listen_List) String() string {
-	str, _ := text.MarshalList(0xe884b52c8948d81b, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Listen](l), err
 }
 
 // Libp2pHelperInterface_Listen_Future is a wrapper for a Libp2pHelperInterface_Listen promised by a client call.
@@ -2423,78 +2720,87 @@ type Libp2pHelperInterface_Listen_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Listen_Future) Struct() (Libp2pHelperInterface_Listen, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Listen{s}, err
+	return Libp2pHelperInterface_Listen(s), err
 }
 
-type Libp2pHelperInterface_Listen_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_Listen_Request capnp.Struct
 
 // Libp2pHelperInterface_Listen_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_Listen_Request.
 const Libp2pHelperInterface_Listen_Request_TypeID = 0xcdbeb7cf54035b71
 
 func NewLibp2pHelperInterface_Listen_Request(s *capnp.Segment) (Libp2pHelperInterface_Listen_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Listen_Request{st}, err
+	return Libp2pHelperInterface_Listen_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_Listen_Request(s *capnp.Segment) (Libp2pHelperInterface_Listen_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Listen_Request{st}, err
+	return Libp2pHelperInterface_Listen_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Listen_Request(msg *capnp.Message) (Libp2pHelperInterface_Listen_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Listen_Request{root.Struct()}, err
+	return Libp2pHelperInterface_Listen_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Listen_Request) String() string {
-	str, _ := text.Marshal(0xcdbeb7cf54035b71, s.Struct)
+	str, _ := text.Marshal(0xcdbeb7cf54035b71, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Listen_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Listen_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Listen_Request {
+	return Libp2pHelperInterface_Listen_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Listen_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Listen_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Listen_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Listen_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_Listen_Request) Iface() (Multiaddr, error) {
-	p, err := s.Struct.Ptr(0)
-	return Multiaddr{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Multiaddr(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Listen_Request) HasIface() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Listen_Request) SetIface(v Multiaddr) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewIface sets the iface field to a newly
 // allocated Multiaddr struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Listen_Request) NewIface() (Multiaddr, error) {
-	ss, err := NewMultiaddr(s.Struct.Segment())
+	ss, err := NewMultiaddr(capnp.Struct(s).Segment())
 	if err != nil {
 		return Multiaddr{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_Listen_Request_List is a list of Libp2pHelperInterface_Listen_Request.
-type Libp2pHelperInterface_Listen_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_Listen_Request_List = capnp.StructList[Libp2pHelperInterface_Listen_Request]
 
 // NewLibp2pHelperInterface_Listen_Request creates a new list of Libp2pHelperInterface_Listen_Request.
 func NewLibp2pHelperInterface_Listen_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Listen_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_Listen_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Listen_Request_List) At(i int) Libp2pHelperInterface_Listen_Request {
-	return Libp2pHelperInterface_Listen_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Listen_Request_List) Set(i int, v Libp2pHelperInterface_Listen_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Listen_Request_List) String() string {
-	str, _ := text.MarshalList(0xcdbeb7cf54035b71, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Listen_Request](l), err
 }
 
 // Libp2pHelperInterface_Listen_Request_Future is a wrapper for a Libp2pHelperInterface_Listen_Request promised by a client call.
@@ -2502,82 +2808,91 @@ type Libp2pHelperInterface_Listen_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Listen_Request_Future) Struct() (Libp2pHelperInterface_Listen_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Listen_Request{s}, err
+	return Libp2pHelperInterface_Listen_Request(s), err
 }
 
 func (p Libp2pHelperInterface_Listen_Request_Future) Iface() Multiaddr_Future {
 	return Multiaddr_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_Listen_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_Listen_Response capnp.Struct
 
 // Libp2pHelperInterface_Listen_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_Listen_Response.
 const Libp2pHelperInterface_Listen_Response_TypeID = 0xc1f9b9db8212bf72
 
 func NewLibp2pHelperInterface_Listen_Response(s *capnp.Segment) (Libp2pHelperInterface_Listen_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Listen_Response{st}, err
+	return Libp2pHelperInterface_Listen_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_Listen_Response(s *capnp.Segment) (Libp2pHelperInterface_Listen_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Listen_Response{st}, err
+	return Libp2pHelperInterface_Listen_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Listen_Response(msg *capnp.Message) (Libp2pHelperInterface_Listen_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Listen_Response{root.Struct()}, err
+	return Libp2pHelperInterface_Listen_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Listen_Response) String() string {
-	str, _ := text.Marshal(0xc1f9b9db8212bf72, s.Struct)
+	str, _ := text.Marshal(0xc1f9b9db8212bf72, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Listen_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Listen_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Listen_Response {
+	return Libp2pHelperInterface_Listen_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Listen_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Listen_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Listen_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Listen_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_Listen_Response) Result() (Multiaddr_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return Multiaddr_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Multiaddr_List(p.List()), err
 }
 
 func (s Libp2pHelperInterface_Listen_Response) HasResult() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Listen_Response) SetResult(v Multiaddr_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewResult sets the result field to a newly
 // allocated Multiaddr_List, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Listen_Response) NewResult(n int32) (Multiaddr_List, error) {
-	l, err := NewMultiaddr_List(s.Struct.Segment(), n)
+	l, err := NewMultiaddr_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return Multiaddr_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 // Libp2pHelperInterface_Listen_Response_List is a list of Libp2pHelperInterface_Listen_Response.
-type Libp2pHelperInterface_Listen_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_Listen_Response_List = capnp.StructList[Libp2pHelperInterface_Listen_Response]
 
 // NewLibp2pHelperInterface_Listen_Response creates a new list of Libp2pHelperInterface_Listen_Response.
 func NewLibp2pHelperInterface_Listen_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Listen_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_Listen_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Listen_Response_List) At(i int) Libp2pHelperInterface_Listen_Response {
-	return Libp2pHelperInterface_Listen_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Listen_Response_List) Set(i int, v Libp2pHelperInterface_Listen_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Listen_Response_List) String() string {
-	str, _ := text.MarshalList(0xc1f9b9db8212bf72, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Listen_Response](l), err
 }
 
 // Libp2pHelperInterface_Listen_Response_Future is a wrapper for a Libp2pHelperInterface_Listen_Response promised by a client call.
@@ -2585,54 +2900,64 @@ type Libp2pHelperInterface_Listen_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Listen_Response_Future) Struct() (Libp2pHelperInterface_Listen_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Listen_Response{s}, err
+	return Libp2pHelperInterface_Listen_Response(s), err
 }
 
-type Libp2pHelperInterface_GetListeningAddrs struct{ capnp.Struct }
+type Libp2pHelperInterface_GetListeningAddrs capnp.Struct
 
 // Libp2pHelperInterface_GetListeningAddrs_TypeID is the unique identifier for the type Libp2pHelperInterface_GetListeningAddrs.
 const Libp2pHelperInterface_GetListeningAddrs_TypeID = 0xf6c7b7d1f45c6434
 
 func NewLibp2pHelperInterface_GetListeningAddrs(s *capnp.Segment) (Libp2pHelperInterface_GetListeningAddrs, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GetListeningAddrs{st}, err
+	return Libp2pHelperInterface_GetListeningAddrs(st), err
 }
 
 func NewRootLibp2pHelperInterface_GetListeningAddrs(s *capnp.Segment) (Libp2pHelperInterface_GetListeningAddrs, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GetListeningAddrs{st}, err
+	return Libp2pHelperInterface_GetListeningAddrs(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GetListeningAddrs(msg *capnp.Message) (Libp2pHelperInterface_GetListeningAddrs, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GetListeningAddrs{root.Struct()}, err
+	return Libp2pHelperInterface_GetListeningAddrs(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GetListeningAddrs) String() string {
-	str, _ := text.Marshal(0xf6c7b7d1f45c6434, s.Struct)
+	str, _ := text.Marshal(0xf6c7b7d1f45c6434, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GetListeningAddrs) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GetListeningAddrs) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GetListeningAddrs {
+	return Libp2pHelperInterface_GetListeningAddrs(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GetListeningAddrs) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_GetListeningAddrs_List is a list of Libp2pHelperInterface_GetListeningAddrs.
-type Libp2pHelperInterface_GetListeningAddrs_List struct{ capnp.List }
+type Libp2pHelperInterface_GetListeningAddrs_List = capnp.StructList[Libp2pHelperInterface_GetListeningAddrs]
 
 // NewLibp2pHelperInterface_GetListeningAddrs creates a new list of Libp2pHelperInterface_GetListeningAddrs.
 func NewLibp2pHelperInterface_GetListeningAddrs_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GetListeningAddrs_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_GetListeningAddrs_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_List) At(i int) Libp2pHelperInterface_GetListeningAddrs {
-	return Libp2pHelperInterface_GetListeningAddrs{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_List) Set(i int, v Libp2pHelperInterface_GetListeningAddrs) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_List) String() string {
-	str, _ := text.MarshalList(0xf6c7b7d1f45c6434, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GetListeningAddrs](l), err
 }
 
 // Libp2pHelperInterface_GetListeningAddrs_Future is a wrapper for a Libp2pHelperInterface_GetListeningAddrs promised by a client call.
@@ -2640,54 +2965,64 @@ type Libp2pHelperInterface_GetListeningAddrs_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_GetListeningAddrs_Future) Struct() (Libp2pHelperInterface_GetListeningAddrs, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GetListeningAddrs{s}, err
+	return Libp2pHelperInterface_GetListeningAddrs(s), err
 }
 
-type Libp2pHelperInterface_GetListeningAddrs_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_GetListeningAddrs_Request capnp.Struct
 
 // Libp2pHelperInterface_GetListeningAddrs_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_GetListeningAddrs_Request.
 const Libp2pHelperInterface_GetListeningAddrs_Request_TypeID = 0x83d991af72ada648
 
 func NewLibp2pHelperInterface_GetListeningAddrs_Request(s *capnp.Segment) (Libp2pHelperInterface_GetListeningAddrs_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GetListeningAddrs_Request{st}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_GetListeningAddrs_Request(s *capnp.Segment) (Libp2pHelperInterface_GetListeningAddrs_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GetListeningAddrs_Request{st}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GetListeningAddrs_Request(msg *capnp.Message) (Libp2pHelperInterface_GetListeningAddrs_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GetListeningAddrs_Request{root.Struct()}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GetListeningAddrs_Request) String() string {
-	str, _ := text.Marshal(0x83d991af72ada648, s.Struct)
+	str, _ := text.Marshal(0x83d991af72ada648, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GetListeningAddrs_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GetListeningAddrs_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GetListeningAddrs_Request {
+	return Libp2pHelperInterface_GetListeningAddrs_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GetListeningAddrs_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_GetListeningAddrs_Request_List is a list of Libp2pHelperInterface_GetListeningAddrs_Request.
-type Libp2pHelperInterface_GetListeningAddrs_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_GetListeningAddrs_Request_List = capnp.StructList[Libp2pHelperInterface_GetListeningAddrs_Request]
 
 // NewLibp2pHelperInterface_GetListeningAddrs_Request creates a new list of Libp2pHelperInterface_GetListeningAddrs_Request.
 func NewLibp2pHelperInterface_GetListeningAddrs_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GetListeningAddrs_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_GetListeningAddrs_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_Request_List) At(i int) Libp2pHelperInterface_GetListeningAddrs_Request {
-	return Libp2pHelperInterface_GetListeningAddrs_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_Request_List) Set(i int, v Libp2pHelperInterface_GetListeningAddrs_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_Request_List) String() string {
-	str, _ := text.MarshalList(0x83d991af72ada648, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GetListeningAddrs_Request](l), err
 }
 
 // Libp2pHelperInterface_GetListeningAddrs_Request_Future is a wrapper for a Libp2pHelperInterface_GetListeningAddrs_Request promised by a client call.
@@ -2695,78 +3030,87 @@ type Libp2pHelperInterface_GetListeningAddrs_Request_Future struct{ *capnp.Futur
 
 func (p Libp2pHelperInterface_GetListeningAddrs_Request_Future) Struct() (Libp2pHelperInterface_GetListeningAddrs_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GetListeningAddrs_Request{s}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Request(s), err
 }
 
-type Libp2pHelperInterface_GetListeningAddrs_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_GetListeningAddrs_Response capnp.Struct
 
 // Libp2pHelperInterface_GetListeningAddrs_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_GetListeningAddrs_Response.
 const Libp2pHelperInterface_GetListeningAddrs_Response_TypeID = 0xbae1386e815a99d1
 
 func NewLibp2pHelperInterface_GetListeningAddrs_Response(s *capnp.Segment) (Libp2pHelperInterface_GetListeningAddrs_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GetListeningAddrs_Response{st}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_GetListeningAddrs_Response(s *capnp.Segment) (Libp2pHelperInterface_GetListeningAddrs_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GetListeningAddrs_Response{st}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GetListeningAddrs_Response(msg *capnp.Message) (Libp2pHelperInterface_GetListeningAddrs_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GetListeningAddrs_Response{root.Struct()}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GetListeningAddrs_Response) String() string {
-	str, _ := text.Marshal(0xbae1386e815a99d1, s.Struct)
+	str, _ := text.Marshal(0xbae1386e815a99d1, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GetListeningAddrs_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GetListeningAddrs_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GetListeningAddrs_Response {
+	return Libp2pHelperInterface_GetListeningAddrs_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GetListeningAddrs_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GetListeningAddrs_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_GetListeningAddrs_Response) Result() (Multiaddr_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return Multiaddr_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Multiaddr_List(p.List()), err
 }
 
 func (s Libp2pHelperInterface_GetListeningAddrs_Response) HasResult() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_GetListeningAddrs_Response) SetResult(v Multiaddr_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewResult sets the result field to a newly
 // allocated Multiaddr_List, preferring placement in s's segment.
 func (s Libp2pHelperInterface_GetListeningAddrs_Response) NewResult(n int32) (Multiaddr_List, error) {
-	l, err := NewMultiaddr_List(s.Struct.Segment(), n)
+	l, err := NewMultiaddr_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return Multiaddr_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 // Libp2pHelperInterface_GetListeningAddrs_Response_List is a list of Libp2pHelperInterface_GetListeningAddrs_Response.
-type Libp2pHelperInterface_GetListeningAddrs_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_GetListeningAddrs_Response_List = capnp.StructList[Libp2pHelperInterface_GetListeningAddrs_Response]
 
 // NewLibp2pHelperInterface_GetListeningAddrs_Response creates a new list of Libp2pHelperInterface_GetListeningAddrs_Response.
 func NewLibp2pHelperInterface_GetListeningAddrs_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GetListeningAddrs_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_GetListeningAddrs_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_Response_List) At(i int) Libp2pHelperInterface_GetListeningAddrs_Response {
-	return Libp2pHelperInterface_GetListeningAddrs_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_Response_List) Set(i int, v Libp2pHelperInterface_GetListeningAddrs_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GetListeningAddrs_Response_List) String() string {
-	str, _ := text.MarshalList(0xbae1386e815a99d1, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GetListeningAddrs_Response](l), err
 }
 
 // Libp2pHelperInterface_GetListeningAddrs_Response_Future is a wrapper for a Libp2pHelperInterface_GetListeningAddrs_Response promised by a client call.
@@ -2774,54 +3118,64 @@ type Libp2pHelperInterface_GetListeningAddrs_Response_Future struct{ *capnp.Futu
 
 func (p Libp2pHelperInterface_GetListeningAddrs_Response_Future) Struct() (Libp2pHelperInterface_GetListeningAddrs_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GetListeningAddrs_Response{s}, err
+	return Libp2pHelperInterface_GetListeningAddrs_Response(s), err
 }
 
-type Libp2pHelperInterface_BeginAdvertising struct{ capnp.Struct }
+type Libp2pHelperInterface_BeginAdvertising capnp.Struct
 
 // Libp2pHelperInterface_BeginAdvertising_TypeID is the unique identifier for the type Libp2pHelperInterface_BeginAdvertising.
 const Libp2pHelperInterface_BeginAdvertising_TypeID = 0xfde7d941c690b3a7
 
 func NewLibp2pHelperInterface_BeginAdvertising(s *capnp.Segment) (Libp2pHelperInterface_BeginAdvertising, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BeginAdvertising{st}, err
+	return Libp2pHelperInterface_BeginAdvertising(st), err
 }
 
 func NewRootLibp2pHelperInterface_BeginAdvertising(s *capnp.Segment) (Libp2pHelperInterface_BeginAdvertising, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BeginAdvertising{st}, err
+	return Libp2pHelperInterface_BeginAdvertising(st), err
 }
 
 func ReadRootLibp2pHelperInterface_BeginAdvertising(msg *capnp.Message) (Libp2pHelperInterface_BeginAdvertising, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_BeginAdvertising{root.Struct()}, err
+	return Libp2pHelperInterface_BeginAdvertising(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_BeginAdvertising) String() string {
-	str, _ := text.Marshal(0xfde7d941c690b3a7, s.Struct)
+	str, _ := text.Marshal(0xfde7d941c690b3a7, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_BeginAdvertising) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_BeginAdvertising) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_BeginAdvertising {
+	return Libp2pHelperInterface_BeginAdvertising(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_BeginAdvertising) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_BeginAdvertising_List is a list of Libp2pHelperInterface_BeginAdvertising.
-type Libp2pHelperInterface_BeginAdvertising_List struct{ capnp.List }
+type Libp2pHelperInterface_BeginAdvertising_List = capnp.StructList[Libp2pHelperInterface_BeginAdvertising]
 
 // NewLibp2pHelperInterface_BeginAdvertising creates a new list of Libp2pHelperInterface_BeginAdvertising.
 func NewLibp2pHelperInterface_BeginAdvertising_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_BeginAdvertising_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_BeginAdvertising_List{l}, err
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_List) At(i int) Libp2pHelperInterface_BeginAdvertising {
-	return Libp2pHelperInterface_BeginAdvertising{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_List) Set(i int, v Libp2pHelperInterface_BeginAdvertising) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_List) String() string {
-	str, _ := text.MarshalList(0xfde7d941c690b3a7, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_BeginAdvertising](l), err
 }
 
 // Libp2pHelperInterface_BeginAdvertising_Future is a wrapper for a Libp2pHelperInterface_BeginAdvertising promised by a client call.
@@ -2829,54 +3183,64 @@ type Libp2pHelperInterface_BeginAdvertising_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_BeginAdvertising_Future) Struct() (Libp2pHelperInterface_BeginAdvertising, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_BeginAdvertising{s}, err
+	return Libp2pHelperInterface_BeginAdvertising(s), err
 }
 
-type Libp2pHelperInterface_BeginAdvertising_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_BeginAdvertising_Request capnp.Struct
 
 // Libp2pHelperInterface_BeginAdvertising_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_BeginAdvertising_Request.
 const Libp2pHelperInterface_BeginAdvertising_Request_TypeID = 0xd2e7ac23195dffe2
 
 func NewLibp2pHelperInterface_BeginAdvertising_Request(s *capnp.Segment) (Libp2pHelperInterface_BeginAdvertising_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BeginAdvertising_Request{st}, err
+	return Libp2pHelperInterface_BeginAdvertising_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_BeginAdvertising_Request(s *capnp.Segment) (Libp2pHelperInterface_BeginAdvertising_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BeginAdvertising_Request{st}, err
+	return Libp2pHelperInterface_BeginAdvertising_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_BeginAdvertising_Request(msg *capnp.Message) (Libp2pHelperInterface_BeginAdvertising_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_BeginAdvertising_Request{root.Struct()}, err
+	return Libp2pHelperInterface_BeginAdvertising_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_BeginAdvertising_Request) String() string {
-	str, _ := text.Marshal(0xd2e7ac23195dffe2, s.Struct)
+	str, _ := text.Marshal(0xd2e7ac23195dffe2, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_BeginAdvertising_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_BeginAdvertising_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_BeginAdvertising_Request {
+	return Libp2pHelperInterface_BeginAdvertising_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_BeginAdvertising_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_BeginAdvertising_Request_List is a list of Libp2pHelperInterface_BeginAdvertising_Request.
-type Libp2pHelperInterface_BeginAdvertising_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_BeginAdvertising_Request_List = capnp.StructList[Libp2pHelperInterface_BeginAdvertising_Request]
 
 // NewLibp2pHelperInterface_BeginAdvertising_Request creates a new list of Libp2pHelperInterface_BeginAdvertising_Request.
 func NewLibp2pHelperInterface_BeginAdvertising_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_BeginAdvertising_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_BeginAdvertising_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_Request_List) At(i int) Libp2pHelperInterface_BeginAdvertising_Request {
-	return Libp2pHelperInterface_BeginAdvertising_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_Request_List) Set(i int, v Libp2pHelperInterface_BeginAdvertising_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_Request_List) String() string {
-	str, _ := text.MarshalList(0xd2e7ac23195dffe2, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_BeginAdvertising_Request](l), err
 }
 
 // Libp2pHelperInterface_BeginAdvertising_Request_Future is a wrapper for a Libp2pHelperInterface_BeginAdvertising_Request promised by a client call.
@@ -2884,54 +3248,64 @@ type Libp2pHelperInterface_BeginAdvertising_Request_Future struct{ *capnp.Future
 
 func (p Libp2pHelperInterface_BeginAdvertising_Request_Future) Struct() (Libp2pHelperInterface_BeginAdvertising_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_BeginAdvertising_Request{s}, err
+	return Libp2pHelperInterface_BeginAdvertising_Request(s), err
 }
 
-type Libp2pHelperInterface_BeginAdvertising_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_BeginAdvertising_Response capnp.Struct
 
 // Libp2pHelperInterface_BeginAdvertising_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_BeginAdvertising_Response.
 const Libp2pHelperInterface_BeginAdvertising_Response_TypeID = 0xf6c843e7ba07b900
 
 func NewLibp2pHelperInterface_BeginAdvertising_Response(s *capnp.Segment) (Libp2pHelperInterface_BeginAdvertising_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BeginAdvertising_Response{st}, err
+	return Libp2pHelperInterface_BeginAdvertising_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_BeginAdvertising_Response(s *capnp.Segment) (Libp2pHelperInterface_BeginAdvertising_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BeginAdvertising_Response{st}, err
+	return Libp2pHelperInterface_BeginAdvertising_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_BeginAdvertising_Response(msg *capnp.Message) (Libp2pHelperInterface_BeginAdvertising_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_BeginAdvertising_Response{root.Struct()}, err
+	return Libp2pHelperInterface_BeginAdvertising_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_BeginAdvertising_Response) String() string {
-	str, _ := text.Marshal(0xf6c843e7ba07b900, s.Struct)
+	str, _ := text.Marshal(0xf6c843e7ba07b900, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_BeginAdvertising_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_BeginAdvertising_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_BeginAdvertising_Response {
+	return Libp2pHelperInterface_BeginAdvertising_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_BeginAdvertising_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_BeginAdvertising_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_BeginAdvertising_Response_List is a list of Libp2pHelperInterface_BeginAdvertising_Response.
-type Libp2pHelperInterface_BeginAdvertising_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_BeginAdvertising_Response_List = capnp.StructList[Libp2pHelperInterface_BeginAdvertising_Response]
 
 // NewLibp2pHelperInterface_BeginAdvertising_Response creates a new list of Libp2pHelperInterface_BeginAdvertising_Response.
 func NewLibp2pHelperInterface_BeginAdvertising_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_BeginAdvertising_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_BeginAdvertising_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_Response_List) At(i int) Libp2pHelperInterface_BeginAdvertising_Response {
-	return Libp2pHelperInterface_BeginAdvertising_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_Response_List) Set(i int, v Libp2pHelperInterface_BeginAdvertising_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_BeginAdvertising_Response_List) String() string {
-	str, _ := text.MarshalList(0xf6c843e7ba07b900, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_BeginAdvertising_Response](l), err
 }
 
 // Libp2pHelperInterface_BeginAdvertising_Response_Future is a wrapper for a Libp2pHelperInterface_BeginAdvertising_Response promised by a client call.
@@ -2939,54 +3313,64 @@ type Libp2pHelperInterface_BeginAdvertising_Response_Future struct{ *capnp.Futur
 
 func (p Libp2pHelperInterface_BeginAdvertising_Response_Future) Struct() (Libp2pHelperInterface_BeginAdvertising_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_BeginAdvertising_Response{s}, err
+	return Libp2pHelperInterface_BeginAdvertising_Response(s), err
 }
 
-type Libp2pHelperInterface_AddPeer struct{ capnp.Struct }
+type Libp2pHelperInterface_AddPeer capnp.Struct
 
 // Libp2pHelperInterface_AddPeer_TypeID is the unique identifier for the type Libp2pHelperInterface_AddPeer.
 const Libp2pHelperInterface_AddPeer_TypeID = 0xba41f14b128a1dd7
 
 func NewLibp2pHelperInterface_AddPeer(s *capnp.Segment) (Libp2pHelperInterface_AddPeer, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddPeer{st}, err
+	return Libp2pHelperInterface_AddPeer(st), err
 }
 
 func NewRootLibp2pHelperInterface_AddPeer(s *capnp.Segment) (Libp2pHelperInterface_AddPeer, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddPeer{st}, err
+	return Libp2pHelperInterface_AddPeer(st), err
 }
 
 func ReadRootLibp2pHelperInterface_AddPeer(msg *capnp.Message) (Libp2pHelperInterface_AddPeer, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_AddPeer{root.Struct()}, err
+	return Libp2pHelperInterface_AddPeer(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddPeer) String() string {
-	str, _ := text.Marshal(0xba41f14b128a1dd7, s.Struct)
+	str, _ := text.Marshal(0xba41f14b128a1dd7, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_AddPeer) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_AddPeer) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_AddPeer {
+	return Libp2pHelperInterface_AddPeer(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_AddPeer) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_AddPeer) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_AddPeer) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_AddPeer) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_AddPeer_List is a list of Libp2pHelperInterface_AddPeer.
-type Libp2pHelperInterface_AddPeer_List struct{ capnp.List }
+type Libp2pHelperInterface_AddPeer_List = capnp.StructList[Libp2pHelperInterface_AddPeer]
 
 // NewLibp2pHelperInterface_AddPeer creates a new list of Libp2pHelperInterface_AddPeer.
 func NewLibp2pHelperInterface_AddPeer_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_AddPeer_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_AddPeer_List{l}, err
-}
-
-func (s Libp2pHelperInterface_AddPeer_List) At(i int) Libp2pHelperInterface_AddPeer {
-	return Libp2pHelperInterface_AddPeer{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_AddPeer_List) Set(i int, v Libp2pHelperInterface_AddPeer) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_AddPeer_List) String() string {
-	str, _ := text.MarshalList(0xba41f14b128a1dd7, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_AddPeer](l), err
 }
 
 // Libp2pHelperInterface_AddPeer_Future is a wrapper for a Libp2pHelperInterface_AddPeer promised by a client call.
@@ -2994,86 +3378,95 @@ type Libp2pHelperInterface_AddPeer_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_AddPeer_Future) Struct() (Libp2pHelperInterface_AddPeer, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_AddPeer{s}, err
+	return Libp2pHelperInterface_AddPeer(s), err
 }
 
-type Libp2pHelperInterface_AddPeer_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_AddPeer_Request capnp.Struct
 
 // Libp2pHelperInterface_AddPeer_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_AddPeer_Request.
 const Libp2pHelperInterface_AddPeer_Request_TypeID = 0xc258720d7c5c09ed
 
 func NewLibp2pHelperInterface_AddPeer_Request(s *capnp.Segment) (Libp2pHelperInterface_AddPeer_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_AddPeer_Request{st}, err
+	return Libp2pHelperInterface_AddPeer_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_AddPeer_Request(s *capnp.Segment) (Libp2pHelperInterface_AddPeer_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_AddPeer_Request{st}, err
+	return Libp2pHelperInterface_AddPeer_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_AddPeer_Request(msg *capnp.Message) (Libp2pHelperInterface_AddPeer_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_AddPeer_Request{root.Struct()}, err
+	return Libp2pHelperInterface_AddPeer_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddPeer_Request) String() string {
-	str, _ := text.Marshal(0xc258720d7c5c09ed, s.Struct)
+	str, _ := text.Marshal(0xc258720d7c5c09ed, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_AddPeer_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_AddPeer_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_AddPeer_Request {
+	return Libp2pHelperInterface_AddPeer_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_AddPeer_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_AddPeer_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_AddPeer_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_AddPeer_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_AddPeer_Request) Multiaddr() (Multiaddr, error) {
-	p, err := s.Struct.Ptr(0)
-	return Multiaddr{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Multiaddr(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddPeer_Request) HasMultiaddr() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_AddPeer_Request) SetMultiaddr(v Multiaddr) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewMultiaddr sets the multiaddr field to a newly
 // allocated Multiaddr struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_AddPeer_Request) NewMultiaddr() (Multiaddr, error) {
-	ss, err := NewMultiaddr(s.Struct.Segment())
+	ss, err := NewMultiaddr(capnp.Struct(s).Segment())
 	if err != nil {
 		return Multiaddr{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_AddPeer_Request) IsSeed() bool {
-	return s.Struct.Bit(0)
+	return capnp.Struct(s).Bit(0)
 }
 
 func (s Libp2pHelperInterface_AddPeer_Request) SetIsSeed(v bool) {
-	s.Struct.SetBit(0, v)
+	capnp.Struct(s).SetBit(0, v)
 }
 
 // Libp2pHelperInterface_AddPeer_Request_List is a list of Libp2pHelperInterface_AddPeer_Request.
-type Libp2pHelperInterface_AddPeer_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_AddPeer_Request_List = capnp.StructList[Libp2pHelperInterface_AddPeer_Request]
 
 // NewLibp2pHelperInterface_AddPeer_Request creates a new list of Libp2pHelperInterface_AddPeer_Request.
 func NewLibp2pHelperInterface_AddPeer_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_AddPeer_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_AddPeer_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_AddPeer_Request_List) At(i int) Libp2pHelperInterface_AddPeer_Request {
-	return Libp2pHelperInterface_AddPeer_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_AddPeer_Request_List) Set(i int, v Libp2pHelperInterface_AddPeer_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_AddPeer_Request_List) String() string {
-	str, _ := text.MarshalList(0xc258720d7c5c09ed, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_AddPeer_Request](l), err
 }
 
 // Libp2pHelperInterface_AddPeer_Request_Future is a wrapper for a Libp2pHelperInterface_AddPeer_Request promised by a client call.
@@ -3081,58 +3474,68 @@ type Libp2pHelperInterface_AddPeer_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_AddPeer_Request_Future) Struct() (Libp2pHelperInterface_AddPeer_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_AddPeer_Request{s}, err
+	return Libp2pHelperInterface_AddPeer_Request(s), err
 }
 
 func (p Libp2pHelperInterface_AddPeer_Request_Future) Multiaddr() Multiaddr_Future {
 	return Multiaddr_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_AddPeer_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_AddPeer_Response capnp.Struct
 
 // Libp2pHelperInterface_AddPeer_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_AddPeer_Response.
 const Libp2pHelperInterface_AddPeer_Response_TypeID = 0x9a9a8d03d3f08548
 
 func NewLibp2pHelperInterface_AddPeer_Response(s *capnp.Segment) (Libp2pHelperInterface_AddPeer_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddPeer_Response{st}, err
+	return Libp2pHelperInterface_AddPeer_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_AddPeer_Response(s *capnp.Segment) (Libp2pHelperInterface_AddPeer_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddPeer_Response{st}, err
+	return Libp2pHelperInterface_AddPeer_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_AddPeer_Response(msg *capnp.Message) (Libp2pHelperInterface_AddPeer_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_AddPeer_Response{root.Struct()}, err
+	return Libp2pHelperInterface_AddPeer_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddPeer_Response) String() string {
-	str, _ := text.Marshal(0x9a9a8d03d3f08548, s.Struct)
+	str, _ := text.Marshal(0x9a9a8d03d3f08548, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_AddPeer_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_AddPeer_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_AddPeer_Response {
+	return Libp2pHelperInterface_AddPeer_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_AddPeer_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_AddPeer_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_AddPeer_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_AddPeer_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_AddPeer_Response_List is a list of Libp2pHelperInterface_AddPeer_Response.
-type Libp2pHelperInterface_AddPeer_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_AddPeer_Response_List = capnp.StructList[Libp2pHelperInterface_AddPeer_Response]
 
 // NewLibp2pHelperInterface_AddPeer_Response creates a new list of Libp2pHelperInterface_AddPeer_Response.
 func NewLibp2pHelperInterface_AddPeer_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_AddPeer_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_AddPeer_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_AddPeer_Response_List) At(i int) Libp2pHelperInterface_AddPeer_Response {
-	return Libp2pHelperInterface_AddPeer_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_AddPeer_Response_List) Set(i int, v Libp2pHelperInterface_AddPeer_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_AddPeer_Response_List) String() string {
-	str, _ := text.MarshalList(0x9a9a8d03d3f08548, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_AddPeer_Response](l), err
 }
 
 // Libp2pHelperInterface_AddPeer_Response_Future is a wrapper for a Libp2pHelperInterface_AddPeer_Response promised by a client call.
@@ -3140,54 +3543,64 @@ type Libp2pHelperInterface_AddPeer_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_AddPeer_Response_Future) Struct() (Libp2pHelperInterface_AddPeer_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_AddPeer_Response{s}, err
+	return Libp2pHelperInterface_AddPeer_Response(s), err
 }
 
-type Libp2pHelperInterface_ListPeers struct{ capnp.Struct }
+type Libp2pHelperInterface_ListPeers capnp.Struct
 
 // Libp2pHelperInterface_ListPeers_TypeID is the unique identifier for the type Libp2pHelperInterface_ListPeers.
 const Libp2pHelperInterface_ListPeers_TypeID = 0xd48ef9a8506586a6
 
 func NewLibp2pHelperInterface_ListPeers(s *capnp.Segment) (Libp2pHelperInterface_ListPeers, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ListPeers{st}, err
+	return Libp2pHelperInterface_ListPeers(st), err
 }
 
 func NewRootLibp2pHelperInterface_ListPeers(s *capnp.Segment) (Libp2pHelperInterface_ListPeers, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ListPeers{st}, err
+	return Libp2pHelperInterface_ListPeers(st), err
 }
 
 func ReadRootLibp2pHelperInterface_ListPeers(msg *capnp.Message) (Libp2pHelperInterface_ListPeers, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_ListPeers{root.Struct()}, err
+	return Libp2pHelperInterface_ListPeers(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_ListPeers) String() string {
-	str, _ := text.Marshal(0xd48ef9a8506586a6, s.Struct)
+	str, _ := text.Marshal(0xd48ef9a8506586a6, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_ListPeers) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_ListPeers) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_ListPeers {
+	return Libp2pHelperInterface_ListPeers(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_ListPeers) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_ListPeers) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_ListPeers) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_ListPeers) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_ListPeers_List is a list of Libp2pHelperInterface_ListPeers.
-type Libp2pHelperInterface_ListPeers_List struct{ capnp.List }
+type Libp2pHelperInterface_ListPeers_List = capnp.StructList[Libp2pHelperInterface_ListPeers]
 
 // NewLibp2pHelperInterface_ListPeers creates a new list of Libp2pHelperInterface_ListPeers.
 func NewLibp2pHelperInterface_ListPeers_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_ListPeers_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_ListPeers_List{l}, err
-}
-
-func (s Libp2pHelperInterface_ListPeers_List) At(i int) Libp2pHelperInterface_ListPeers {
-	return Libp2pHelperInterface_ListPeers{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_ListPeers_List) Set(i int, v Libp2pHelperInterface_ListPeers) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_ListPeers_List) String() string {
-	str, _ := text.MarshalList(0xd48ef9a8506586a6, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_ListPeers](l), err
 }
 
 // Libp2pHelperInterface_ListPeers_Future is a wrapper for a Libp2pHelperInterface_ListPeers promised by a client call.
@@ -3195,54 +3608,64 @@ type Libp2pHelperInterface_ListPeers_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_ListPeers_Future) Struct() (Libp2pHelperInterface_ListPeers, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_ListPeers{s}, err
+	return Libp2pHelperInterface_ListPeers(s), err
 }
 
-type Libp2pHelperInterface_ListPeers_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_ListPeers_Request capnp.Struct
 
 // Libp2pHelperInterface_ListPeers_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_ListPeers_Request.
 const Libp2pHelperInterface_ListPeers_Request_TypeID = 0xbb6edc2598638c9c
 
 func NewLibp2pHelperInterface_ListPeers_Request(s *capnp.Segment) (Libp2pHelperInterface_ListPeers_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ListPeers_Request{st}, err
+	return Libp2pHelperInterface_ListPeers_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_ListPeers_Request(s *capnp.Segment) (Libp2pHelperInterface_ListPeers_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ListPeers_Request{st}, err
+	return Libp2pHelperInterface_ListPeers_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_ListPeers_Request(msg *capnp.Message) (Libp2pHelperInterface_ListPeers_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_ListPeers_Request{root.Struct()}, err
+	return Libp2pHelperInterface_ListPeers_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_ListPeers_Request) String() string {
-	str, _ := text.Marshal(0xbb6edc2598638c9c, s.Struct)
+	str, _ := text.Marshal(0xbb6edc2598638c9c, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_ListPeers_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_ListPeers_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_ListPeers_Request {
+	return Libp2pHelperInterface_ListPeers_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_ListPeers_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_ListPeers_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_ListPeers_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_ListPeers_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_ListPeers_Request_List is a list of Libp2pHelperInterface_ListPeers_Request.
-type Libp2pHelperInterface_ListPeers_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_ListPeers_Request_List = capnp.StructList[Libp2pHelperInterface_ListPeers_Request]
 
 // NewLibp2pHelperInterface_ListPeers_Request creates a new list of Libp2pHelperInterface_ListPeers_Request.
 func NewLibp2pHelperInterface_ListPeers_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_ListPeers_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_ListPeers_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_ListPeers_Request_List) At(i int) Libp2pHelperInterface_ListPeers_Request {
-	return Libp2pHelperInterface_ListPeers_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_ListPeers_Request_List) Set(i int, v Libp2pHelperInterface_ListPeers_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_ListPeers_Request_List) String() string {
-	str, _ := text.MarshalList(0xbb6edc2598638c9c, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_ListPeers_Request](l), err
 }
 
 // Libp2pHelperInterface_ListPeers_Request_Future is a wrapper for a Libp2pHelperInterface_ListPeers_Request promised by a client call.
@@ -3250,78 +3673,87 @@ type Libp2pHelperInterface_ListPeers_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_ListPeers_Request_Future) Struct() (Libp2pHelperInterface_ListPeers_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_ListPeers_Request{s}, err
+	return Libp2pHelperInterface_ListPeers_Request(s), err
 }
 
-type Libp2pHelperInterface_ListPeers_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_ListPeers_Response capnp.Struct
 
 // Libp2pHelperInterface_ListPeers_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_ListPeers_Response.
 const Libp2pHelperInterface_ListPeers_Response_TypeID = 0xfb54cca136535a14
 
 func NewLibp2pHelperInterface_ListPeers_Response(s *capnp.Segment) (Libp2pHelperInterface_ListPeers_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_ListPeers_Response{st}, err
+	return Libp2pHelperInterface_ListPeers_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_ListPeers_Response(s *capnp.Segment) (Libp2pHelperInterface_ListPeers_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_ListPeers_Response{st}, err
+	return Libp2pHelperInterface_ListPeers_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_ListPeers_Response(msg *capnp.Message) (Libp2pHelperInterface_ListPeers_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_ListPeers_Response{root.Struct()}, err
+	return Libp2pHelperInterface_ListPeers_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_ListPeers_Response) String() string {
-	str, _ := text.Marshal(0xfb54cca136535a14, s.Struct)
+	str, _ := text.Marshal(0xfb54cca136535a14, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_ListPeers_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_ListPeers_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_ListPeers_Response {
+	return Libp2pHelperInterface_ListPeers_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_ListPeers_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_ListPeers_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_ListPeers_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_ListPeers_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_ListPeers_Response) Result() (PeerInfo_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return PeerInfo_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PeerInfo_List(p.List()), err
 }
 
 func (s Libp2pHelperInterface_ListPeers_Response) HasResult() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_ListPeers_Response) SetResult(v PeerInfo_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewResult sets the result field to a newly
 // allocated PeerInfo_List, preferring placement in s's segment.
 func (s Libp2pHelperInterface_ListPeers_Response) NewResult(n int32) (PeerInfo_List, error) {
-	l, err := NewPeerInfo_List(s.Struct.Segment(), n)
+	l, err := NewPeerInfo_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return PeerInfo_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 // Libp2pHelperInterface_ListPeers_Response_List is a list of Libp2pHelperInterface_ListPeers_Response.
-type Libp2pHelperInterface_ListPeers_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_ListPeers_Response_List = capnp.StructList[Libp2pHelperInterface_ListPeers_Response]
 
 // NewLibp2pHelperInterface_ListPeers_Response creates a new list of Libp2pHelperInterface_ListPeers_Response.
 func NewLibp2pHelperInterface_ListPeers_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_ListPeers_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_ListPeers_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_ListPeers_Response_List) At(i int) Libp2pHelperInterface_ListPeers_Response {
-	return Libp2pHelperInterface_ListPeers_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_ListPeers_Response_List) Set(i int, v Libp2pHelperInterface_ListPeers_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_ListPeers_Response_List) String() string {
-	str, _ := text.MarshalList(0xfb54cca136535a14, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_ListPeers_Response](l), err
 }
 
 // Libp2pHelperInterface_ListPeers_Response_Future is a wrapper for a Libp2pHelperInterface_ListPeers_Response promised by a client call.
@@ -3329,54 +3761,64 @@ type Libp2pHelperInterface_ListPeers_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_ListPeers_Response_Future) Struct() (Libp2pHelperInterface_ListPeers_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_ListPeers_Response{s}, err
+	return Libp2pHelperInterface_ListPeers_Response(s), err
 }
 
-type Libp2pHelperInterface_BandwidthInfo struct{ capnp.Struct }
+type Libp2pHelperInterface_BandwidthInfo capnp.Struct
 
 // Libp2pHelperInterface_BandwidthInfo_TypeID is the unique identifier for the type Libp2pHelperInterface_BandwidthInfo.
 const Libp2pHelperInterface_BandwidthInfo_TypeID = 0x969a629719fde633
 
 func NewLibp2pHelperInterface_BandwidthInfo(s *capnp.Segment) (Libp2pHelperInterface_BandwidthInfo, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BandwidthInfo{st}, err
+	return Libp2pHelperInterface_BandwidthInfo(st), err
 }
 
 func NewRootLibp2pHelperInterface_BandwidthInfo(s *capnp.Segment) (Libp2pHelperInterface_BandwidthInfo, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BandwidthInfo{st}, err
+	return Libp2pHelperInterface_BandwidthInfo(st), err
 }
 
 func ReadRootLibp2pHelperInterface_BandwidthInfo(msg *capnp.Message) (Libp2pHelperInterface_BandwidthInfo, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_BandwidthInfo{root.Struct()}, err
+	return Libp2pHelperInterface_BandwidthInfo(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo) String() string {
-	str, _ := text.Marshal(0x969a629719fde633, s.Struct)
+	str, _ := text.Marshal(0x969a629719fde633, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_BandwidthInfo) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_BandwidthInfo) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_BandwidthInfo {
+	return Libp2pHelperInterface_BandwidthInfo(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_BandwidthInfo) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_BandwidthInfo_List is a list of Libp2pHelperInterface_BandwidthInfo.
-type Libp2pHelperInterface_BandwidthInfo_List struct{ capnp.List }
+type Libp2pHelperInterface_BandwidthInfo_List = capnp.StructList[Libp2pHelperInterface_BandwidthInfo]
 
 // NewLibp2pHelperInterface_BandwidthInfo creates a new list of Libp2pHelperInterface_BandwidthInfo.
 func NewLibp2pHelperInterface_BandwidthInfo_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_BandwidthInfo_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_BandwidthInfo_List{l}, err
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_List) At(i int) Libp2pHelperInterface_BandwidthInfo {
-	return Libp2pHelperInterface_BandwidthInfo{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_List) Set(i int, v Libp2pHelperInterface_BandwidthInfo) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_List) String() string {
-	str, _ := text.MarshalList(0x969a629719fde633, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_BandwidthInfo](l), err
 }
 
 // Libp2pHelperInterface_BandwidthInfo_Future is a wrapper for a Libp2pHelperInterface_BandwidthInfo promised by a client call.
@@ -3384,54 +3826,64 @@ type Libp2pHelperInterface_BandwidthInfo_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_BandwidthInfo_Future) Struct() (Libp2pHelperInterface_BandwidthInfo, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_BandwidthInfo{s}, err
+	return Libp2pHelperInterface_BandwidthInfo(s), err
 }
 
-type Libp2pHelperInterface_BandwidthInfo_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_BandwidthInfo_Request capnp.Struct
 
 // Libp2pHelperInterface_BandwidthInfo_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_BandwidthInfo_Request.
 const Libp2pHelperInterface_BandwidthInfo_Request_TypeID = 0xe4386d9ee8d69654
 
 func NewLibp2pHelperInterface_BandwidthInfo_Request(s *capnp.Segment) (Libp2pHelperInterface_BandwidthInfo_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BandwidthInfo_Request{st}, err
+	return Libp2pHelperInterface_BandwidthInfo_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_BandwidthInfo_Request(s *capnp.Segment) (Libp2pHelperInterface_BandwidthInfo_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_BandwidthInfo_Request{st}, err
+	return Libp2pHelperInterface_BandwidthInfo_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_BandwidthInfo_Request(msg *capnp.Message) (Libp2pHelperInterface_BandwidthInfo_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_BandwidthInfo_Request{root.Struct()}, err
+	return Libp2pHelperInterface_BandwidthInfo_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo_Request) String() string {
-	str, _ := text.Marshal(0xe4386d9ee8d69654, s.Struct)
+	str, _ := text.Marshal(0xe4386d9ee8d69654, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_BandwidthInfo_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_BandwidthInfo_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_BandwidthInfo_Request {
+	return Libp2pHelperInterface_BandwidthInfo_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_BandwidthInfo_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_BandwidthInfo_Request_List is a list of Libp2pHelperInterface_BandwidthInfo_Request.
-type Libp2pHelperInterface_BandwidthInfo_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_BandwidthInfo_Request_List = capnp.StructList[Libp2pHelperInterface_BandwidthInfo_Request]
 
 // NewLibp2pHelperInterface_BandwidthInfo_Request creates a new list of Libp2pHelperInterface_BandwidthInfo_Request.
 func NewLibp2pHelperInterface_BandwidthInfo_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_BandwidthInfo_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_BandwidthInfo_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_Request_List) At(i int) Libp2pHelperInterface_BandwidthInfo_Request {
-	return Libp2pHelperInterface_BandwidthInfo_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_Request_List) Set(i int, v Libp2pHelperInterface_BandwidthInfo_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_Request_List) String() string {
-	str, _ := text.MarshalList(0xe4386d9ee8d69654, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_BandwidthInfo_Request](l), err
 }
 
 // Libp2pHelperInterface_BandwidthInfo_Request_Future is a wrapper for a Libp2pHelperInterface_BandwidthInfo_Request promised by a client call.
@@ -3439,78 +3891,87 @@ type Libp2pHelperInterface_BandwidthInfo_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_BandwidthInfo_Request_Future) Struct() (Libp2pHelperInterface_BandwidthInfo_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_BandwidthInfo_Request{s}, err
+	return Libp2pHelperInterface_BandwidthInfo_Request(s), err
 }
 
-type Libp2pHelperInterface_BandwidthInfo_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_BandwidthInfo_Response capnp.Struct
 
 // Libp2pHelperInterface_BandwidthInfo_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_BandwidthInfo_Response.
 const Libp2pHelperInterface_BandwidthInfo_Response_TypeID = 0x96359b995ba506f4
 
 func NewLibp2pHelperInterface_BandwidthInfo_Response(s *capnp.Segment) (Libp2pHelperInterface_BandwidthInfo_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 24, PointerCount: 0})
-	return Libp2pHelperInterface_BandwidthInfo_Response{st}, err
+	return Libp2pHelperInterface_BandwidthInfo_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_BandwidthInfo_Response(s *capnp.Segment) (Libp2pHelperInterface_BandwidthInfo_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 24, PointerCount: 0})
-	return Libp2pHelperInterface_BandwidthInfo_Response{st}, err
+	return Libp2pHelperInterface_BandwidthInfo_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_BandwidthInfo_Response(msg *capnp.Message) (Libp2pHelperInterface_BandwidthInfo_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_BandwidthInfo_Response{root.Struct()}, err
+	return Libp2pHelperInterface_BandwidthInfo_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo_Response) String() string {
-	str, _ := text.Marshal(0x96359b995ba506f4, s.Struct)
+	str, _ := text.Marshal(0x96359b995ba506f4, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_BandwidthInfo_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_BandwidthInfo_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_BandwidthInfo_Response {
+	return Libp2pHelperInterface_BandwidthInfo_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_BandwidthInfo_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_BandwidthInfo_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_BandwidthInfo_Response) InputBandwidth() float64 {
-	return math.Float64frombits(s.Struct.Uint64(0))
+	return math.Float64frombits(capnp.Struct(s).Uint64(0))
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo_Response) SetInputBandwidth(v float64) {
-	s.Struct.SetUint64(0, math.Float64bits(v))
+	capnp.Struct(s).SetUint64(0, math.Float64bits(v))
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo_Response) OutputBandwidth() float64 {
-	return math.Float64frombits(s.Struct.Uint64(8))
+	return math.Float64frombits(capnp.Struct(s).Uint64(8))
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo_Response) SetOutputBandwidth(v float64) {
-	s.Struct.SetUint64(8, math.Float64bits(v))
+	capnp.Struct(s).SetUint64(8, math.Float64bits(v))
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo_Response) CpuUsage() float64 {
-	return math.Float64frombits(s.Struct.Uint64(16))
+	return math.Float64frombits(capnp.Struct(s).Uint64(16))
 }
 
 func (s Libp2pHelperInterface_BandwidthInfo_Response) SetCpuUsage(v float64) {
-	s.Struct.SetUint64(16, math.Float64bits(v))
+	capnp.Struct(s).SetUint64(16, math.Float64bits(v))
 }
 
 // Libp2pHelperInterface_BandwidthInfo_Response_List is a list of Libp2pHelperInterface_BandwidthInfo_Response.
-type Libp2pHelperInterface_BandwidthInfo_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_BandwidthInfo_Response_List = capnp.StructList[Libp2pHelperInterface_BandwidthInfo_Response]
 
 // NewLibp2pHelperInterface_BandwidthInfo_Response creates a new list of Libp2pHelperInterface_BandwidthInfo_Response.
 func NewLibp2pHelperInterface_BandwidthInfo_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_BandwidthInfo_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 24, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_BandwidthInfo_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_Response_List) At(i int) Libp2pHelperInterface_BandwidthInfo_Response {
-	return Libp2pHelperInterface_BandwidthInfo_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_Response_List) Set(i int, v Libp2pHelperInterface_BandwidthInfo_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_BandwidthInfo_Response_List) String() string {
-	str, _ := text.MarshalList(0x96359b995ba506f4, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_BandwidthInfo_Response](l), err
 }
 
 // Libp2pHelperInterface_BandwidthInfo_Response_Future is a wrapper for a Libp2pHelperInterface_BandwidthInfo_Response promised by a client call.
@@ -3518,54 +3979,64 @@ type Libp2pHelperInterface_BandwidthInfo_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_BandwidthInfo_Response_Future) Struct() (Libp2pHelperInterface_BandwidthInfo_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_BandwidthInfo_Response{s}, err
+	return Libp2pHelperInterface_BandwidthInfo_Response(s), err
 }
 
-type Libp2pHelperInterface_GenerateKeypair struct{ capnp.Struct }
+type Libp2pHelperInterface_GenerateKeypair capnp.Struct
 
 // Libp2pHelperInterface_GenerateKeypair_TypeID is the unique identifier for the type Libp2pHelperInterface_GenerateKeypair.
 const Libp2pHelperInterface_GenerateKeypair_TypeID = 0xb973118252345b14
 
 func NewLibp2pHelperInterface_GenerateKeypair(s *capnp.Segment) (Libp2pHelperInterface_GenerateKeypair, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GenerateKeypair{st}, err
+	return Libp2pHelperInterface_GenerateKeypair(st), err
 }
 
 func NewRootLibp2pHelperInterface_GenerateKeypair(s *capnp.Segment) (Libp2pHelperInterface_GenerateKeypair, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GenerateKeypair{st}, err
+	return Libp2pHelperInterface_GenerateKeypair(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GenerateKeypair(msg *capnp.Message) (Libp2pHelperInterface_GenerateKeypair, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GenerateKeypair{root.Struct()}, err
+	return Libp2pHelperInterface_GenerateKeypair(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GenerateKeypair) String() string {
-	str, _ := text.Marshal(0xb973118252345b14, s.Struct)
+	str, _ := text.Marshal(0xb973118252345b14, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GenerateKeypair) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GenerateKeypair) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GenerateKeypair {
+	return Libp2pHelperInterface_GenerateKeypair(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GenerateKeypair) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_GenerateKeypair_List is a list of Libp2pHelperInterface_GenerateKeypair.
-type Libp2pHelperInterface_GenerateKeypair_List struct{ capnp.List }
+type Libp2pHelperInterface_GenerateKeypair_List = capnp.StructList[Libp2pHelperInterface_GenerateKeypair]
 
 // NewLibp2pHelperInterface_GenerateKeypair creates a new list of Libp2pHelperInterface_GenerateKeypair.
 func NewLibp2pHelperInterface_GenerateKeypair_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GenerateKeypair_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_GenerateKeypair_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_List) At(i int) Libp2pHelperInterface_GenerateKeypair {
-	return Libp2pHelperInterface_GenerateKeypair{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_List) Set(i int, v Libp2pHelperInterface_GenerateKeypair) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_List) String() string {
-	str, _ := text.MarshalList(0xb973118252345b14, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GenerateKeypair](l), err
 }
 
 // Libp2pHelperInterface_GenerateKeypair_Future is a wrapper for a Libp2pHelperInterface_GenerateKeypair promised by a client call.
@@ -3573,54 +4044,64 @@ type Libp2pHelperInterface_GenerateKeypair_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_GenerateKeypair_Future) Struct() (Libp2pHelperInterface_GenerateKeypair, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GenerateKeypair{s}, err
+	return Libp2pHelperInterface_GenerateKeypair(s), err
 }
 
-type Libp2pHelperInterface_GenerateKeypair_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_GenerateKeypair_Request capnp.Struct
 
 // Libp2pHelperInterface_GenerateKeypair_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_GenerateKeypair_Request.
 const Libp2pHelperInterface_GenerateKeypair_Request_TypeID = 0xce71e91d5eb99a49
 
 func NewLibp2pHelperInterface_GenerateKeypair_Request(s *capnp.Segment) (Libp2pHelperInterface_GenerateKeypair_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GenerateKeypair_Request{st}, err
+	return Libp2pHelperInterface_GenerateKeypair_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_GenerateKeypair_Request(s *capnp.Segment) (Libp2pHelperInterface_GenerateKeypair_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GenerateKeypair_Request{st}, err
+	return Libp2pHelperInterface_GenerateKeypair_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GenerateKeypair_Request(msg *capnp.Message) (Libp2pHelperInterface_GenerateKeypair_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GenerateKeypair_Request{root.Struct()}, err
+	return Libp2pHelperInterface_GenerateKeypair_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GenerateKeypair_Request) String() string {
-	str, _ := text.Marshal(0xce71e91d5eb99a49, s.Struct)
+	str, _ := text.Marshal(0xce71e91d5eb99a49, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GenerateKeypair_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GenerateKeypair_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GenerateKeypair_Request {
+	return Libp2pHelperInterface_GenerateKeypair_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GenerateKeypair_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_GenerateKeypair_Request_List is a list of Libp2pHelperInterface_GenerateKeypair_Request.
-type Libp2pHelperInterface_GenerateKeypair_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_GenerateKeypair_Request_List = capnp.StructList[Libp2pHelperInterface_GenerateKeypair_Request]
 
 // NewLibp2pHelperInterface_GenerateKeypair_Request creates a new list of Libp2pHelperInterface_GenerateKeypair_Request.
 func NewLibp2pHelperInterface_GenerateKeypair_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GenerateKeypair_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_GenerateKeypair_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_Request_List) At(i int) Libp2pHelperInterface_GenerateKeypair_Request {
-	return Libp2pHelperInterface_GenerateKeypair_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_Request_List) Set(i int, v Libp2pHelperInterface_GenerateKeypair_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_Request_List) String() string {
-	str, _ := text.MarshalList(0xce71e91d5eb99a49, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GenerateKeypair_Request](l), err
 }
 
 // Libp2pHelperInterface_GenerateKeypair_Request_Future is a wrapper for a Libp2pHelperInterface_GenerateKeypair_Request promised by a client call.
@@ -3628,78 +4109,87 @@ type Libp2pHelperInterface_GenerateKeypair_Request_Future struct{ *capnp.Future 
 
 func (p Libp2pHelperInterface_GenerateKeypair_Request_Future) Struct() (Libp2pHelperInterface_GenerateKeypair_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GenerateKeypair_Request{s}, err
+	return Libp2pHelperInterface_GenerateKeypair_Request(s), err
 }
 
-type Libp2pHelperInterface_GenerateKeypair_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_GenerateKeypair_Response capnp.Struct
 
 // Libp2pHelperInterface_GenerateKeypair_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_GenerateKeypair_Response.
 const Libp2pHelperInterface_GenerateKeypair_Response_TypeID = 0xb1b128c54a9c378a
 
 func NewLibp2pHelperInterface_GenerateKeypair_Response(s *capnp.Segment) (Libp2pHelperInterface_GenerateKeypair_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GenerateKeypair_Response{st}, err
+	return Libp2pHelperInterface_GenerateKeypair_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_GenerateKeypair_Response(s *capnp.Segment) (Libp2pHelperInterface_GenerateKeypair_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GenerateKeypair_Response{st}, err
+	return Libp2pHelperInterface_GenerateKeypair_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GenerateKeypair_Response(msg *capnp.Message) (Libp2pHelperInterface_GenerateKeypair_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GenerateKeypair_Response{root.Struct()}, err
+	return Libp2pHelperInterface_GenerateKeypair_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GenerateKeypair_Response) String() string {
-	str, _ := text.Marshal(0xb1b128c54a9c378a, s.Struct)
+	str, _ := text.Marshal(0xb1b128c54a9c378a, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GenerateKeypair_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GenerateKeypair_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GenerateKeypair_Response {
+	return Libp2pHelperInterface_GenerateKeypair_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GenerateKeypair_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GenerateKeypair_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_GenerateKeypair_Response) Result() (Libp2pKeypair, error) {
-	p, err := s.Struct.Ptr(0)
-	return Libp2pKeypair{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pKeypair(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GenerateKeypair_Response) HasResult() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_GenerateKeypair_Response) SetResult(v Libp2pKeypair) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewResult sets the result field to a newly
 // allocated Libp2pKeypair struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_GenerateKeypair_Response) NewResult() (Libp2pKeypair, error) {
-	ss, err := NewLibp2pKeypair(s.Struct.Segment())
+	ss, err := NewLibp2pKeypair(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pKeypair{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_GenerateKeypair_Response_List is a list of Libp2pHelperInterface_GenerateKeypair_Response.
-type Libp2pHelperInterface_GenerateKeypair_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_GenerateKeypair_Response_List = capnp.StructList[Libp2pHelperInterface_GenerateKeypair_Response]
 
 // NewLibp2pHelperInterface_GenerateKeypair_Response creates a new list of Libp2pHelperInterface_GenerateKeypair_Response.
 func NewLibp2pHelperInterface_GenerateKeypair_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GenerateKeypair_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_GenerateKeypair_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_Response_List) At(i int) Libp2pHelperInterface_GenerateKeypair_Response {
-	return Libp2pHelperInterface_GenerateKeypair_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_Response_List) Set(i int, v Libp2pHelperInterface_GenerateKeypair_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GenerateKeypair_Response_List) String() string {
-	str, _ := text.MarshalList(0xb1b128c54a9c378a, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GenerateKeypair_Response](l), err
 }
 
 // Libp2pHelperInterface_GenerateKeypair_Response_Future is a wrapper for a Libp2pHelperInterface_GenerateKeypair_Response promised by a client call.
@@ -3707,58 +4197,68 @@ type Libp2pHelperInterface_GenerateKeypair_Response_Future struct{ *capnp.Future
 
 func (p Libp2pHelperInterface_GenerateKeypair_Response_Future) Struct() (Libp2pHelperInterface_GenerateKeypair_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GenerateKeypair_Response{s}, err
+	return Libp2pHelperInterface_GenerateKeypair_Response(s), err
 }
 
 func (p Libp2pHelperInterface_GenerateKeypair_Response_Future) Result() Libp2pKeypair_Future {
 	return Libp2pKeypair_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_Publish struct{ capnp.Struct }
+type Libp2pHelperInterface_Publish capnp.Struct
 
 // Libp2pHelperInterface_Publish_TypeID is the unique identifier for the type Libp2pHelperInterface_Publish.
 const Libp2pHelperInterface_Publish_TypeID = 0xabd77ad6fe644f04
 
 func NewLibp2pHelperInterface_Publish(s *capnp.Segment) (Libp2pHelperInterface_Publish, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Publish{st}, err
+	return Libp2pHelperInterface_Publish(st), err
 }
 
 func NewRootLibp2pHelperInterface_Publish(s *capnp.Segment) (Libp2pHelperInterface_Publish, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Publish{st}, err
+	return Libp2pHelperInterface_Publish(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Publish(msg *capnp.Message) (Libp2pHelperInterface_Publish, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Publish{root.Struct()}, err
+	return Libp2pHelperInterface_Publish(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Publish) String() string {
-	str, _ := text.Marshal(0xabd77ad6fe644f04, s.Struct)
+	str, _ := text.Marshal(0xabd77ad6fe644f04, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Publish) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Publish) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Publish {
+	return Libp2pHelperInterface_Publish(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Publish) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Publish) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Publish) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Publish) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Publish_List is a list of Libp2pHelperInterface_Publish.
-type Libp2pHelperInterface_Publish_List struct{ capnp.List }
+type Libp2pHelperInterface_Publish_List = capnp.StructList[Libp2pHelperInterface_Publish]
 
 // NewLibp2pHelperInterface_Publish creates a new list of Libp2pHelperInterface_Publish.
 func NewLibp2pHelperInterface_Publish_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Publish_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Publish_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Publish_List) At(i int) Libp2pHelperInterface_Publish {
-	return Libp2pHelperInterface_Publish{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Publish_List) Set(i int, v Libp2pHelperInterface_Publish) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Publish_List) String() string {
-	str, _ := text.MarshalList(0xabd77ad6fe644f04, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Publish](l), err
 }
 
 // Libp2pHelperInterface_Publish_Future is a wrapper for a Libp2pHelperInterface_Publish promised by a client call.
@@ -3766,85 +4266,94 @@ type Libp2pHelperInterface_Publish_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Publish_Future) Struct() (Libp2pHelperInterface_Publish, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Publish{s}, err
+	return Libp2pHelperInterface_Publish(s), err
 }
 
-type Libp2pHelperInterface_Publish_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_Publish_Request capnp.Struct
 
 // Libp2pHelperInterface_Publish_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_Publish_Request.
 const Libp2pHelperInterface_Publish_Request_TypeID = 0x9cecb704bb2aeaaa
 
 func NewLibp2pHelperInterface_Publish_Request(s *capnp.Segment) (Libp2pHelperInterface_Publish_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_Publish_Request{st}, err
+	return Libp2pHelperInterface_Publish_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_Publish_Request(s *capnp.Segment) (Libp2pHelperInterface_Publish_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_Publish_Request{st}, err
+	return Libp2pHelperInterface_Publish_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Publish_Request(msg *capnp.Message) (Libp2pHelperInterface_Publish_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Publish_Request{root.Struct()}, err
+	return Libp2pHelperInterface_Publish_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Publish_Request) String() string {
-	str, _ := text.Marshal(0x9cecb704bb2aeaaa, s.Struct)
+	str, _ := text.Marshal(0x9cecb704bb2aeaaa, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Publish_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Publish_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Publish_Request {
+	return Libp2pHelperInterface_Publish_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Publish_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Publish_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Publish_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Publish_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_Publish_Request) Topic() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s Libp2pHelperInterface_Publish_Request) HasTopic() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Publish_Request) TopicBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pHelperInterface_Publish_Request) SetTopic(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 func (s Libp2pHelperInterface_Publish_Request) Data() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pHelperInterface_Publish_Request) HasData() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_Publish_Request) SetData(v []byte) error {
-	return s.Struct.SetData(1, v)
+	return capnp.Struct(s).SetData(1, v)
 }
 
 // Libp2pHelperInterface_Publish_Request_List is a list of Libp2pHelperInterface_Publish_Request.
-type Libp2pHelperInterface_Publish_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_Publish_Request_List = capnp.StructList[Libp2pHelperInterface_Publish_Request]
 
 // NewLibp2pHelperInterface_Publish_Request creates a new list of Libp2pHelperInterface_Publish_Request.
 func NewLibp2pHelperInterface_Publish_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Publish_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_Publish_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Publish_Request_List) At(i int) Libp2pHelperInterface_Publish_Request {
-	return Libp2pHelperInterface_Publish_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Publish_Request_List) Set(i int, v Libp2pHelperInterface_Publish_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Publish_Request_List) String() string {
-	str, _ := text.MarshalList(0x9cecb704bb2aeaaa, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Publish_Request](l), err
 }
 
 // Libp2pHelperInterface_Publish_Request_Future is a wrapper for a Libp2pHelperInterface_Publish_Request promised by a client call.
@@ -3852,54 +4361,64 @@ type Libp2pHelperInterface_Publish_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Publish_Request_Future) Struct() (Libp2pHelperInterface_Publish_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Publish_Request{s}, err
+	return Libp2pHelperInterface_Publish_Request(s), err
 }
 
-type Libp2pHelperInterface_Publish_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_Publish_Response capnp.Struct
 
 // Libp2pHelperInterface_Publish_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_Publish_Response.
 const Libp2pHelperInterface_Publish_Response_TypeID = 0xb608443b70279f42
 
 func NewLibp2pHelperInterface_Publish_Response(s *capnp.Segment) (Libp2pHelperInterface_Publish_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Publish_Response{st}, err
+	return Libp2pHelperInterface_Publish_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_Publish_Response(s *capnp.Segment) (Libp2pHelperInterface_Publish_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Publish_Response{st}, err
+	return Libp2pHelperInterface_Publish_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Publish_Response(msg *capnp.Message) (Libp2pHelperInterface_Publish_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Publish_Response{root.Struct()}, err
+	return Libp2pHelperInterface_Publish_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Publish_Response) String() string {
-	str, _ := text.Marshal(0xb608443b70279f42, s.Struct)
+	str, _ := text.Marshal(0xb608443b70279f42, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Publish_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Publish_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Publish_Response {
+	return Libp2pHelperInterface_Publish_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Publish_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Publish_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Publish_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Publish_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Publish_Response_List is a list of Libp2pHelperInterface_Publish_Response.
-type Libp2pHelperInterface_Publish_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_Publish_Response_List = capnp.StructList[Libp2pHelperInterface_Publish_Response]
 
 // NewLibp2pHelperInterface_Publish_Response creates a new list of Libp2pHelperInterface_Publish_Response.
 func NewLibp2pHelperInterface_Publish_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Publish_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Publish_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Publish_Response_List) At(i int) Libp2pHelperInterface_Publish_Response {
-	return Libp2pHelperInterface_Publish_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Publish_Response_List) Set(i int, v Libp2pHelperInterface_Publish_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Publish_Response_List) String() string {
-	str, _ := text.MarshalList(0xb608443b70279f42, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Publish_Response](l), err
 }
 
 // Libp2pHelperInterface_Publish_Response_Future is a wrapper for a Libp2pHelperInterface_Publish_Response promised by a client call.
@@ -3907,54 +4426,64 @@ type Libp2pHelperInterface_Publish_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Publish_Response_Future) Struct() (Libp2pHelperInterface_Publish_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Publish_Response{s}, err
+	return Libp2pHelperInterface_Publish_Response(s), err
 }
 
-type Libp2pHelperInterface_Subscribe struct{ capnp.Struct }
+type Libp2pHelperInterface_Subscribe capnp.Struct
 
 // Libp2pHelperInterface_Subscribe_TypeID is the unique identifier for the type Libp2pHelperInterface_Subscribe.
 const Libp2pHelperInterface_Subscribe_TypeID = 0x87e63b07187d61fd
 
 func NewLibp2pHelperInterface_Subscribe(s *capnp.Segment) (Libp2pHelperInterface_Subscribe, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Subscribe{st}, err
+	return Libp2pHelperInterface_Subscribe(st), err
 }
 
 func NewRootLibp2pHelperInterface_Subscribe(s *capnp.Segment) (Libp2pHelperInterface_Subscribe, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Subscribe{st}, err
+	return Libp2pHelperInterface_Subscribe(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Subscribe(msg *capnp.Message) (Libp2pHelperInterface_Subscribe, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Subscribe{root.Struct()}, err
+	return Libp2pHelperInterface_Subscribe(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Subscribe) String() string {
-	str, _ := text.Marshal(0x87e63b07187d61fd, s.Struct)
+	str, _ := text.Marshal(0x87e63b07187d61fd, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Subscribe) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Subscribe) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Subscribe {
+	return Libp2pHelperInterface_Subscribe(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Subscribe) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Subscribe) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Subscribe) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Subscribe) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Subscribe_List is a list of Libp2pHelperInterface_Subscribe.
-type Libp2pHelperInterface_Subscribe_List struct{ capnp.List }
+type Libp2pHelperInterface_Subscribe_List = capnp.StructList[Libp2pHelperInterface_Subscribe]
 
 // NewLibp2pHelperInterface_Subscribe creates a new list of Libp2pHelperInterface_Subscribe.
 func NewLibp2pHelperInterface_Subscribe_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Subscribe_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Subscribe_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Subscribe_List) At(i int) Libp2pHelperInterface_Subscribe {
-	return Libp2pHelperInterface_Subscribe{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Subscribe_List) Set(i int, v Libp2pHelperInterface_Subscribe) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Subscribe_List) String() string {
-	str, _ := text.MarshalList(0x87e63b07187d61fd, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Subscribe](l), err
 }
 
 // Libp2pHelperInterface_Subscribe_Future is a wrapper for a Libp2pHelperInterface_Subscribe promised by a client call.
@@ -3962,96 +4491,105 @@ type Libp2pHelperInterface_Subscribe_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Subscribe_Future) Struct() (Libp2pHelperInterface_Subscribe, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Subscribe{s}, err
+	return Libp2pHelperInterface_Subscribe(s), err
 }
 
-type Libp2pHelperInterface_Subscribe_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_Subscribe_Request capnp.Struct
 
 // Libp2pHelperInterface_Subscribe_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_Subscribe_Request.
 const Libp2pHelperInterface_Subscribe_Request_TypeID = 0xf30859dedd19e179
 
 func NewLibp2pHelperInterface_Subscribe_Request(s *capnp.Segment) (Libp2pHelperInterface_Subscribe_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_Subscribe_Request{st}, err
+	return Libp2pHelperInterface_Subscribe_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_Subscribe_Request(s *capnp.Segment) (Libp2pHelperInterface_Subscribe_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_Subscribe_Request{st}, err
+	return Libp2pHelperInterface_Subscribe_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Subscribe_Request(msg *capnp.Message) (Libp2pHelperInterface_Subscribe_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Subscribe_Request{root.Struct()}, err
+	return Libp2pHelperInterface_Subscribe_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Subscribe_Request) String() string {
-	str, _ := text.Marshal(0xf30859dedd19e179, s.Struct)
+	str, _ := text.Marshal(0xf30859dedd19e179, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Subscribe_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Subscribe_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Subscribe_Request {
+	return Libp2pHelperInterface_Subscribe_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Subscribe_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Subscribe_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Subscribe_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Subscribe_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_Subscribe_Request) Topic() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s Libp2pHelperInterface_Subscribe_Request) HasTopic() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Subscribe_Request) TopicBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pHelperInterface_Subscribe_Request) SetTopic(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 func (s Libp2pHelperInterface_Subscribe_Request) SubscriptionId() (SubscriptionId, error) {
-	p, err := s.Struct.Ptr(1)
-	return SubscriptionId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return SubscriptionId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Subscribe_Request) HasSubscriptionId() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_Subscribe_Request) SetSubscriptionId(v SubscriptionId) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSubscriptionId sets the subscriptionId field to a newly
 // allocated SubscriptionId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Subscribe_Request) NewSubscriptionId() (SubscriptionId, error) {
-	ss, err := NewSubscriptionId(s.Struct.Segment())
+	ss, err := NewSubscriptionId(capnp.Struct(s).Segment())
 	if err != nil {
 		return SubscriptionId{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_Subscribe_Request_List is a list of Libp2pHelperInterface_Subscribe_Request.
-type Libp2pHelperInterface_Subscribe_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_Subscribe_Request_List = capnp.StructList[Libp2pHelperInterface_Subscribe_Request]
 
 // NewLibp2pHelperInterface_Subscribe_Request creates a new list of Libp2pHelperInterface_Subscribe_Request.
 func NewLibp2pHelperInterface_Subscribe_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Subscribe_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_Subscribe_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Subscribe_Request_List) At(i int) Libp2pHelperInterface_Subscribe_Request {
-	return Libp2pHelperInterface_Subscribe_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Subscribe_Request_List) Set(i int, v Libp2pHelperInterface_Subscribe_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Subscribe_Request_List) String() string {
-	str, _ := text.MarshalList(0xf30859dedd19e179, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Subscribe_Request](l), err
 }
 
 // Libp2pHelperInterface_Subscribe_Request_Future is a wrapper for a Libp2pHelperInterface_Subscribe_Request promised by a client call.
@@ -4059,58 +4597,68 @@ type Libp2pHelperInterface_Subscribe_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Subscribe_Request_Future) Struct() (Libp2pHelperInterface_Subscribe_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Subscribe_Request{s}, err
+	return Libp2pHelperInterface_Subscribe_Request(s), err
 }
 
 func (p Libp2pHelperInterface_Subscribe_Request_Future) SubscriptionId() SubscriptionId_Future {
 	return SubscriptionId_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface_Subscribe_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_Subscribe_Response capnp.Struct
 
 // Libp2pHelperInterface_Subscribe_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_Subscribe_Response.
 const Libp2pHelperInterface_Subscribe_Response_TypeID = 0xa969a5ea58b5581c
 
 func NewLibp2pHelperInterface_Subscribe_Response(s *capnp.Segment) (Libp2pHelperInterface_Subscribe_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Subscribe_Response{st}, err
+	return Libp2pHelperInterface_Subscribe_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_Subscribe_Response(s *capnp.Segment) (Libp2pHelperInterface_Subscribe_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Subscribe_Response{st}, err
+	return Libp2pHelperInterface_Subscribe_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Subscribe_Response(msg *capnp.Message) (Libp2pHelperInterface_Subscribe_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Subscribe_Response{root.Struct()}, err
+	return Libp2pHelperInterface_Subscribe_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Subscribe_Response) String() string {
-	str, _ := text.Marshal(0xa969a5ea58b5581c, s.Struct)
+	str, _ := text.Marshal(0xa969a5ea58b5581c, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Subscribe_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Subscribe_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Subscribe_Response {
+	return Libp2pHelperInterface_Subscribe_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Subscribe_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Subscribe_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Subscribe_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Subscribe_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Subscribe_Response_List is a list of Libp2pHelperInterface_Subscribe_Response.
-type Libp2pHelperInterface_Subscribe_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_Subscribe_Response_List = capnp.StructList[Libp2pHelperInterface_Subscribe_Response]
 
 // NewLibp2pHelperInterface_Subscribe_Response creates a new list of Libp2pHelperInterface_Subscribe_Response.
 func NewLibp2pHelperInterface_Subscribe_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Subscribe_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Subscribe_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Subscribe_Response_List) At(i int) Libp2pHelperInterface_Subscribe_Response {
-	return Libp2pHelperInterface_Subscribe_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Subscribe_Response_List) Set(i int, v Libp2pHelperInterface_Subscribe_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Subscribe_Response_List) String() string {
-	str, _ := text.MarshalList(0xa969a5ea58b5581c, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Subscribe_Response](l), err
 }
 
 // Libp2pHelperInterface_Subscribe_Response_Future is a wrapper for a Libp2pHelperInterface_Subscribe_Response promised by a client call.
@@ -4118,54 +4666,64 @@ type Libp2pHelperInterface_Subscribe_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Subscribe_Response_Future) Struct() (Libp2pHelperInterface_Subscribe_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Subscribe_Response{s}, err
+	return Libp2pHelperInterface_Subscribe_Response(s), err
 }
 
-type Libp2pHelperInterface_Unsubscribe struct{ capnp.Struct }
+type Libp2pHelperInterface_Unsubscribe capnp.Struct
 
 // Libp2pHelperInterface_Unsubscribe_TypeID is the unique identifier for the type Libp2pHelperInterface_Unsubscribe.
 const Libp2pHelperInterface_Unsubscribe_TypeID = 0xcce2ad102c7ea857
 
 func NewLibp2pHelperInterface_Unsubscribe(s *capnp.Segment) (Libp2pHelperInterface_Unsubscribe, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Unsubscribe{st}, err
+	return Libp2pHelperInterface_Unsubscribe(st), err
 }
 
 func NewRootLibp2pHelperInterface_Unsubscribe(s *capnp.Segment) (Libp2pHelperInterface_Unsubscribe, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Unsubscribe{st}, err
+	return Libp2pHelperInterface_Unsubscribe(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Unsubscribe(msg *capnp.Message) (Libp2pHelperInterface_Unsubscribe, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Unsubscribe{root.Struct()}, err
+	return Libp2pHelperInterface_Unsubscribe(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Unsubscribe) String() string {
-	str, _ := text.Marshal(0xcce2ad102c7ea857, s.Struct)
+	str, _ := text.Marshal(0xcce2ad102c7ea857, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Unsubscribe) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Unsubscribe) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Unsubscribe {
+	return Libp2pHelperInterface_Unsubscribe(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Unsubscribe) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Unsubscribe) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Unsubscribe) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Unsubscribe) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Unsubscribe_List is a list of Libp2pHelperInterface_Unsubscribe.
-type Libp2pHelperInterface_Unsubscribe_List struct{ capnp.List }
+type Libp2pHelperInterface_Unsubscribe_List = capnp.StructList[Libp2pHelperInterface_Unsubscribe]
 
 // NewLibp2pHelperInterface_Unsubscribe creates a new list of Libp2pHelperInterface_Unsubscribe.
 func NewLibp2pHelperInterface_Unsubscribe_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Unsubscribe_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Unsubscribe_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_List) At(i int) Libp2pHelperInterface_Unsubscribe {
-	return Libp2pHelperInterface_Unsubscribe{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_List) Set(i int, v Libp2pHelperInterface_Unsubscribe) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_List) String() string {
-	str, _ := text.MarshalList(0xcce2ad102c7ea857, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Unsubscribe](l), err
 }
 
 // Libp2pHelperInterface_Unsubscribe_Future is a wrapper for a Libp2pHelperInterface_Unsubscribe promised by a client call.
@@ -4173,78 +4731,87 @@ type Libp2pHelperInterface_Unsubscribe_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Unsubscribe_Future) Struct() (Libp2pHelperInterface_Unsubscribe, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Unsubscribe{s}, err
+	return Libp2pHelperInterface_Unsubscribe(s), err
 }
 
-type Libp2pHelperInterface_Unsubscribe_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_Unsubscribe_Request capnp.Struct
 
 // Libp2pHelperInterface_Unsubscribe_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_Unsubscribe_Request.
 const Libp2pHelperInterface_Unsubscribe_Request_TypeID = 0xf3e0ba7fbe583065
 
 func NewLibp2pHelperInterface_Unsubscribe_Request(s *capnp.Segment) (Libp2pHelperInterface_Unsubscribe_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Unsubscribe_Request{st}, err
+	return Libp2pHelperInterface_Unsubscribe_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_Unsubscribe_Request(s *capnp.Segment) (Libp2pHelperInterface_Unsubscribe_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_Unsubscribe_Request{st}, err
+	return Libp2pHelperInterface_Unsubscribe_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Unsubscribe_Request(msg *capnp.Message) (Libp2pHelperInterface_Unsubscribe_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Unsubscribe_Request{root.Struct()}, err
+	return Libp2pHelperInterface_Unsubscribe_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Unsubscribe_Request) String() string {
-	str, _ := text.Marshal(0xf3e0ba7fbe583065, s.Struct)
+	str, _ := text.Marshal(0xf3e0ba7fbe583065, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Unsubscribe_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Unsubscribe_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Unsubscribe_Request {
+	return Libp2pHelperInterface_Unsubscribe_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Unsubscribe_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Unsubscribe_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Unsubscribe_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Unsubscribe_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_Unsubscribe_Request) SubscriptionId() (SubscriptionId, error) {
-	p, err := s.Struct.Ptr(0)
-	return SubscriptionId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return SubscriptionId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Unsubscribe_Request) HasSubscriptionId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Unsubscribe_Request) SetSubscriptionId(v SubscriptionId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewSubscriptionId sets the subscriptionId field to a newly
 // allocated SubscriptionId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Unsubscribe_Request) NewSubscriptionId() (SubscriptionId, error) {
-	ss, err := NewSubscriptionId(s.Struct.Segment())
+	ss, err := NewSubscriptionId(capnp.Struct(s).Segment())
 	if err != nil {
 		return SubscriptionId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_Unsubscribe_Request_List is a list of Libp2pHelperInterface_Unsubscribe_Request.
-type Libp2pHelperInterface_Unsubscribe_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_Unsubscribe_Request_List = capnp.StructList[Libp2pHelperInterface_Unsubscribe_Request]
 
 // NewLibp2pHelperInterface_Unsubscribe_Request creates a new list of Libp2pHelperInterface_Unsubscribe_Request.
 func NewLibp2pHelperInterface_Unsubscribe_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Unsubscribe_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_Unsubscribe_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_Request_List) At(i int) Libp2pHelperInterface_Unsubscribe_Request {
-	return Libp2pHelperInterface_Unsubscribe_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_Request_List) Set(i int, v Libp2pHelperInterface_Unsubscribe_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_Request_List) String() string {
-	str, _ := text.MarshalList(0xf3e0ba7fbe583065, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Unsubscribe_Request](l), err
 }
 
 // Libp2pHelperInterface_Unsubscribe_Request_Future is a wrapper for a Libp2pHelperInterface_Unsubscribe_Request promised by a client call.
@@ -4252,58 +4819,68 @@ type Libp2pHelperInterface_Unsubscribe_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Unsubscribe_Request_Future) Struct() (Libp2pHelperInterface_Unsubscribe_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Unsubscribe_Request{s}, err
+	return Libp2pHelperInterface_Unsubscribe_Request(s), err
 }
 
 func (p Libp2pHelperInterface_Unsubscribe_Request_Future) SubscriptionId() SubscriptionId_Future {
 	return SubscriptionId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_Unsubscribe_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_Unsubscribe_Response capnp.Struct
 
 // Libp2pHelperInterface_Unsubscribe_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_Unsubscribe_Response.
 const Libp2pHelperInterface_Unsubscribe_Response_TypeID = 0xaf6af6e1ad511e3a
 
 func NewLibp2pHelperInterface_Unsubscribe_Response(s *capnp.Segment) (Libp2pHelperInterface_Unsubscribe_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Unsubscribe_Response{st}, err
+	return Libp2pHelperInterface_Unsubscribe_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_Unsubscribe_Response(s *capnp.Segment) (Libp2pHelperInterface_Unsubscribe_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_Unsubscribe_Response{st}, err
+	return Libp2pHelperInterface_Unsubscribe_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Unsubscribe_Response(msg *capnp.Message) (Libp2pHelperInterface_Unsubscribe_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Unsubscribe_Response{root.Struct()}, err
+	return Libp2pHelperInterface_Unsubscribe_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Unsubscribe_Response) String() string {
-	str, _ := text.Marshal(0xaf6af6e1ad511e3a, s.Struct)
+	str, _ := text.Marshal(0xaf6af6e1ad511e3a, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Unsubscribe_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Unsubscribe_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Unsubscribe_Response {
+	return Libp2pHelperInterface_Unsubscribe_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Unsubscribe_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Unsubscribe_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Unsubscribe_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Unsubscribe_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_Unsubscribe_Response_List is a list of Libp2pHelperInterface_Unsubscribe_Response.
-type Libp2pHelperInterface_Unsubscribe_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_Unsubscribe_Response_List = capnp.StructList[Libp2pHelperInterface_Unsubscribe_Response]
 
 // NewLibp2pHelperInterface_Unsubscribe_Response creates a new list of Libp2pHelperInterface_Unsubscribe_Response.
 func NewLibp2pHelperInterface_Unsubscribe_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Unsubscribe_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_Unsubscribe_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_Response_List) At(i int) Libp2pHelperInterface_Unsubscribe_Response {
-	return Libp2pHelperInterface_Unsubscribe_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_Response_List) Set(i int, v Libp2pHelperInterface_Unsubscribe_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Unsubscribe_Response_List) String() string {
-	str, _ := text.MarshalList(0xaf6af6e1ad511e3a, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Unsubscribe_Response](l), err
 }
 
 // Libp2pHelperInterface_Unsubscribe_Response_Future is a wrapper for a Libp2pHelperInterface_Unsubscribe_Response promised by a client call.
@@ -4311,54 +4888,64 @@ type Libp2pHelperInterface_Unsubscribe_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Unsubscribe_Response_Future) Struct() (Libp2pHelperInterface_Unsubscribe_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Unsubscribe_Response{s}, err
+	return Libp2pHelperInterface_Unsubscribe_Response(s), err
 }
 
-type Libp2pHelperInterface_AddStreamHandler struct{ capnp.Struct }
+type Libp2pHelperInterface_AddStreamHandler capnp.Struct
 
 // Libp2pHelperInterface_AddStreamHandler_TypeID is the unique identifier for the type Libp2pHelperInterface_AddStreamHandler.
 const Libp2pHelperInterface_AddStreamHandler_TypeID = 0x87594eae8c8531ee
 
 func NewLibp2pHelperInterface_AddStreamHandler(s *capnp.Segment) (Libp2pHelperInterface_AddStreamHandler, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddStreamHandler{st}, err
+	return Libp2pHelperInterface_AddStreamHandler(st), err
 }
 
 func NewRootLibp2pHelperInterface_AddStreamHandler(s *capnp.Segment) (Libp2pHelperInterface_AddStreamHandler, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddStreamHandler{st}, err
+	return Libp2pHelperInterface_AddStreamHandler(st), err
 }
 
 func ReadRootLibp2pHelperInterface_AddStreamHandler(msg *capnp.Message) (Libp2pHelperInterface_AddStreamHandler, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_AddStreamHandler{root.Struct()}, err
+	return Libp2pHelperInterface_AddStreamHandler(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddStreamHandler) String() string {
-	str, _ := text.Marshal(0x87594eae8c8531ee, s.Struct)
+	str, _ := text.Marshal(0x87594eae8c8531ee, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_AddStreamHandler) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_AddStreamHandler) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_AddStreamHandler {
+	return Libp2pHelperInterface_AddStreamHandler(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_AddStreamHandler) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_AddStreamHandler_List is a list of Libp2pHelperInterface_AddStreamHandler.
-type Libp2pHelperInterface_AddStreamHandler_List struct{ capnp.List }
+type Libp2pHelperInterface_AddStreamHandler_List = capnp.StructList[Libp2pHelperInterface_AddStreamHandler]
 
 // NewLibp2pHelperInterface_AddStreamHandler creates a new list of Libp2pHelperInterface_AddStreamHandler.
 func NewLibp2pHelperInterface_AddStreamHandler_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_AddStreamHandler_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_AddStreamHandler_List{l}, err
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_List) At(i int) Libp2pHelperInterface_AddStreamHandler {
-	return Libp2pHelperInterface_AddStreamHandler{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_List) Set(i int, v Libp2pHelperInterface_AddStreamHandler) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_List) String() string {
-	str, _ := text.MarshalList(0x87594eae8c8531ee, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_AddStreamHandler](l), err
 }
 
 // Libp2pHelperInterface_AddStreamHandler_Future is a wrapper for a Libp2pHelperInterface_AddStreamHandler promised by a client call.
@@ -4366,72 +4953,81 @@ type Libp2pHelperInterface_AddStreamHandler_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_AddStreamHandler_Future) Struct() (Libp2pHelperInterface_AddStreamHandler, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_AddStreamHandler{s}, err
+	return Libp2pHelperInterface_AddStreamHandler(s), err
 }
 
-type Libp2pHelperInterface_AddStreamHandler_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_AddStreamHandler_Request capnp.Struct
 
 // Libp2pHelperInterface_AddStreamHandler_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_AddStreamHandler_Request.
 const Libp2pHelperInterface_AddStreamHandler_Request_TypeID = 0xa42892d737705a9c
 
 func NewLibp2pHelperInterface_AddStreamHandler_Request(s *capnp.Segment) (Libp2pHelperInterface_AddStreamHandler_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_AddStreamHandler_Request{st}, err
+	return Libp2pHelperInterface_AddStreamHandler_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_AddStreamHandler_Request(s *capnp.Segment) (Libp2pHelperInterface_AddStreamHandler_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_AddStreamHandler_Request{st}, err
+	return Libp2pHelperInterface_AddStreamHandler_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_AddStreamHandler_Request(msg *capnp.Message) (Libp2pHelperInterface_AddStreamHandler_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_AddStreamHandler_Request{root.Struct()}, err
+	return Libp2pHelperInterface_AddStreamHandler_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddStreamHandler_Request) String() string {
-	str, _ := text.Marshal(0xa42892d737705a9c, s.Struct)
+	str, _ := text.Marshal(0xa42892d737705a9c, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_AddStreamHandler_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_AddStreamHandler_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_AddStreamHandler_Request {
+	return Libp2pHelperInterface_AddStreamHandler_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_AddStreamHandler_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_AddStreamHandler_Request) Protocol() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s Libp2pHelperInterface_AddStreamHandler_Request) HasProtocol() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_AddStreamHandler_Request) ProtocolBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pHelperInterface_AddStreamHandler_Request) SetProtocol(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 // Libp2pHelperInterface_AddStreamHandler_Request_List is a list of Libp2pHelperInterface_AddStreamHandler_Request.
-type Libp2pHelperInterface_AddStreamHandler_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_AddStreamHandler_Request_List = capnp.StructList[Libp2pHelperInterface_AddStreamHandler_Request]
 
 // NewLibp2pHelperInterface_AddStreamHandler_Request creates a new list of Libp2pHelperInterface_AddStreamHandler_Request.
 func NewLibp2pHelperInterface_AddStreamHandler_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_AddStreamHandler_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_AddStreamHandler_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_Request_List) At(i int) Libp2pHelperInterface_AddStreamHandler_Request {
-	return Libp2pHelperInterface_AddStreamHandler_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_Request_List) Set(i int, v Libp2pHelperInterface_AddStreamHandler_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_Request_List) String() string {
-	str, _ := text.MarshalList(0xa42892d737705a9c, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_AddStreamHandler_Request](l), err
 }
 
 // Libp2pHelperInterface_AddStreamHandler_Request_Future is a wrapper for a Libp2pHelperInterface_AddStreamHandler_Request promised by a client call.
@@ -4439,54 +5035,64 @@ type Libp2pHelperInterface_AddStreamHandler_Request_Future struct{ *capnp.Future
 
 func (p Libp2pHelperInterface_AddStreamHandler_Request_Future) Struct() (Libp2pHelperInterface_AddStreamHandler_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_AddStreamHandler_Request{s}, err
+	return Libp2pHelperInterface_AddStreamHandler_Request(s), err
 }
 
-type Libp2pHelperInterface_AddStreamHandler_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_AddStreamHandler_Response capnp.Struct
 
 // Libp2pHelperInterface_AddStreamHandler_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_AddStreamHandler_Response.
 const Libp2pHelperInterface_AddStreamHandler_Response_TypeID = 0xf2765705336251b5
 
 func NewLibp2pHelperInterface_AddStreamHandler_Response(s *capnp.Segment) (Libp2pHelperInterface_AddStreamHandler_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddStreamHandler_Response{st}, err
+	return Libp2pHelperInterface_AddStreamHandler_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_AddStreamHandler_Response(s *capnp.Segment) (Libp2pHelperInterface_AddStreamHandler_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_AddStreamHandler_Response{st}, err
+	return Libp2pHelperInterface_AddStreamHandler_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_AddStreamHandler_Response(msg *capnp.Message) (Libp2pHelperInterface_AddStreamHandler_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_AddStreamHandler_Response{root.Struct()}, err
+	return Libp2pHelperInterface_AddStreamHandler_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddStreamHandler_Response) String() string {
-	str, _ := text.Marshal(0xf2765705336251b5, s.Struct)
+	str, _ := text.Marshal(0xf2765705336251b5, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_AddStreamHandler_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_AddStreamHandler_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_AddStreamHandler_Response {
+	return Libp2pHelperInterface_AddStreamHandler_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_AddStreamHandler_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_AddStreamHandler_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_AddStreamHandler_Response_List is a list of Libp2pHelperInterface_AddStreamHandler_Response.
-type Libp2pHelperInterface_AddStreamHandler_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_AddStreamHandler_Response_List = capnp.StructList[Libp2pHelperInterface_AddStreamHandler_Response]
 
 // NewLibp2pHelperInterface_AddStreamHandler_Response creates a new list of Libp2pHelperInterface_AddStreamHandler_Response.
 func NewLibp2pHelperInterface_AddStreamHandler_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_AddStreamHandler_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_AddStreamHandler_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_Response_List) At(i int) Libp2pHelperInterface_AddStreamHandler_Response {
-	return Libp2pHelperInterface_AddStreamHandler_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_Response_List) Set(i int, v Libp2pHelperInterface_AddStreamHandler_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_AddStreamHandler_Response_List) String() string {
-	str, _ := text.MarshalList(0xf2765705336251b5, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_AddStreamHandler_Response](l), err
 }
 
 // Libp2pHelperInterface_AddStreamHandler_Response_Future is a wrapper for a Libp2pHelperInterface_AddStreamHandler_Response promised by a client call.
@@ -4494,54 +5100,64 @@ type Libp2pHelperInterface_AddStreamHandler_Response_Future struct{ *capnp.Futur
 
 func (p Libp2pHelperInterface_AddStreamHandler_Response_Future) Struct() (Libp2pHelperInterface_AddStreamHandler_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_AddStreamHandler_Response{s}, err
+	return Libp2pHelperInterface_AddStreamHandler_Response(s), err
 }
 
-type Libp2pHelperInterface_RemoveStreamHandler struct{ capnp.Struct }
+type Libp2pHelperInterface_RemoveStreamHandler capnp.Struct
 
 // Libp2pHelperInterface_RemoveStreamHandler_TypeID is the unique identifier for the type Libp2pHelperInterface_RemoveStreamHandler.
 const Libp2pHelperInterface_RemoveStreamHandler_TypeID = 0xc909f587e1bb9499
 
 func NewLibp2pHelperInterface_RemoveStreamHandler(s *capnp.Segment) (Libp2pHelperInterface_RemoveStreamHandler, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_RemoveStreamHandler{st}, err
+	return Libp2pHelperInterface_RemoveStreamHandler(st), err
 }
 
 func NewRootLibp2pHelperInterface_RemoveStreamHandler(s *capnp.Segment) (Libp2pHelperInterface_RemoveStreamHandler, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_RemoveStreamHandler{st}, err
+	return Libp2pHelperInterface_RemoveStreamHandler(st), err
 }
 
 func ReadRootLibp2pHelperInterface_RemoveStreamHandler(msg *capnp.Message) (Libp2pHelperInterface_RemoveStreamHandler, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_RemoveStreamHandler{root.Struct()}, err
+	return Libp2pHelperInterface_RemoveStreamHandler(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RemoveStreamHandler) String() string {
-	str, _ := text.Marshal(0xc909f587e1bb9499, s.Struct)
+	str, _ := text.Marshal(0xc909f587e1bb9499, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_RemoveStreamHandler) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_RemoveStreamHandler) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_RemoveStreamHandler {
+	return Libp2pHelperInterface_RemoveStreamHandler(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_RemoveStreamHandler) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_RemoveStreamHandler_List is a list of Libp2pHelperInterface_RemoveStreamHandler.
-type Libp2pHelperInterface_RemoveStreamHandler_List struct{ capnp.List }
+type Libp2pHelperInterface_RemoveStreamHandler_List = capnp.StructList[Libp2pHelperInterface_RemoveStreamHandler]
 
 // NewLibp2pHelperInterface_RemoveStreamHandler creates a new list of Libp2pHelperInterface_RemoveStreamHandler.
 func NewLibp2pHelperInterface_RemoveStreamHandler_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_RemoveStreamHandler_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_RemoveStreamHandler_List{l}, err
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_List) At(i int) Libp2pHelperInterface_RemoveStreamHandler {
-	return Libp2pHelperInterface_RemoveStreamHandler{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_List) Set(i int, v Libp2pHelperInterface_RemoveStreamHandler) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_List) String() string {
-	str, _ := text.MarshalList(0xc909f587e1bb9499, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_RemoveStreamHandler](l), err
 }
 
 // Libp2pHelperInterface_RemoveStreamHandler_Future is a wrapper for a Libp2pHelperInterface_RemoveStreamHandler promised by a client call.
@@ -4549,72 +5165,81 @@ type Libp2pHelperInterface_RemoveStreamHandler_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_RemoveStreamHandler_Future) Struct() (Libp2pHelperInterface_RemoveStreamHandler, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_RemoveStreamHandler{s}, err
+	return Libp2pHelperInterface_RemoveStreamHandler(s), err
 }
 
-type Libp2pHelperInterface_RemoveStreamHandler_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_RemoveStreamHandler_Request capnp.Struct
 
 // Libp2pHelperInterface_RemoveStreamHandler_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_RemoveStreamHandler_Request.
 const Libp2pHelperInterface_RemoveStreamHandler_Request_TypeID = 0xb822fab66dabdf26
 
 func NewLibp2pHelperInterface_RemoveStreamHandler_Request(s *capnp.Segment) (Libp2pHelperInterface_RemoveStreamHandler_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_RemoveStreamHandler_Request{st}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_RemoveStreamHandler_Request(s *capnp.Segment) (Libp2pHelperInterface_RemoveStreamHandler_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_RemoveStreamHandler_Request{st}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_RemoveStreamHandler_Request(msg *capnp.Message) (Libp2pHelperInterface_RemoveStreamHandler_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_RemoveStreamHandler_Request{root.Struct()}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RemoveStreamHandler_Request) String() string {
-	str, _ := text.Marshal(0xb822fab66dabdf26, s.Struct)
+	str, _ := text.Marshal(0xb822fab66dabdf26, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_RemoveStreamHandler_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_RemoveStreamHandler_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_RemoveStreamHandler_Request {
+	return Libp2pHelperInterface_RemoveStreamHandler_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_RemoveStreamHandler_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_RemoveStreamHandler_Request) Protocol() (string, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.Text(), err
 }
 
 func (s Libp2pHelperInterface_RemoveStreamHandler_Request) HasProtocol() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RemoveStreamHandler_Request) ProtocolBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pHelperInterface_RemoveStreamHandler_Request) SetProtocol(v string) error {
-	return s.Struct.SetText(0, v)
+	return capnp.Struct(s).SetText(0, v)
 }
 
 // Libp2pHelperInterface_RemoveStreamHandler_Request_List is a list of Libp2pHelperInterface_RemoveStreamHandler_Request.
-type Libp2pHelperInterface_RemoveStreamHandler_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_RemoveStreamHandler_Request_List = capnp.StructList[Libp2pHelperInterface_RemoveStreamHandler_Request]
 
 // NewLibp2pHelperInterface_RemoveStreamHandler_Request creates a new list of Libp2pHelperInterface_RemoveStreamHandler_Request.
 func NewLibp2pHelperInterface_RemoveStreamHandler_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_RemoveStreamHandler_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_RemoveStreamHandler_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_Request_List) At(i int) Libp2pHelperInterface_RemoveStreamHandler_Request {
-	return Libp2pHelperInterface_RemoveStreamHandler_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_Request_List) Set(i int, v Libp2pHelperInterface_RemoveStreamHandler_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_Request_List) String() string {
-	str, _ := text.MarshalList(0xb822fab66dabdf26, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_RemoveStreamHandler_Request](l), err
 }
 
 // Libp2pHelperInterface_RemoveStreamHandler_Request_Future is a wrapper for a Libp2pHelperInterface_RemoveStreamHandler_Request promised by a client call.
@@ -4622,54 +5247,64 @@ type Libp2pHelperInterface_RemoveStreamHandler_Request_Future struct{ *capnp.Fut
 
 func (p Libp2pHelperInterface_RemoveStreamHandler_Request_Future) Struct() (Libp2pHelperInterface_RemoveStreamHandler_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_RemoveStreamHandler_Request{s}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Request(s), err
 }
 
-type Libp2pHelperInterface_RemoveStreamHandler_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_RemoveStreamHandler_Response capnp.Struct
 
 // Libp2pHelperInterface_RemoveStreamHandler_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_RemoveStreamHandler_Response.
 const Libp2pHelperInterface_RemoveStreamHandler_Response_TypeID = 0xcaae22b415293cb3
 
 func NewLibp2pHelperInterface_RemoveStreamHandler_Response(s *capnp.Segment) (Libp2pHelperInterface_RemoveStreamHandler_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_RemoveStreamHandler_Response{st}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_RemoveStreamHandler_Response(s *capnp.Segment) (Libp2pHelperInterface_RemoveStreamHandler_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_RemoveStreamHandler_Response{st}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_RemoveStreamHandler_Response(msg *capnp.Message) (Libp2pHelperInterface_RemoveStreamHandler_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_RemoveStreamHandler_Response{root.Struct()}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RemoveStreamHandler_Response) String() string {
-	str, _ := text.Marshal(0xcaae22b415293cb3, s.Struct)
+	str, _ := text.Marshal(0xcaae22b415293cb3, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_RemoveStreamHandler_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_RemoveStreamHandler_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_RemoveStreamHandler_Response {
+	return Libp2pHelperInterface_RemoveStreamHandler_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_RemoveStreamHandler_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_RemoveStreamHandler_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_RemoveStreamHandler_Response_List is a list of Libp2pHelperInterface_RemoveStreamHandler_Response.
-type Libp2pHelperInterface_RemoveStreamHandler_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_RemoveStreamHandler_Response_List = capnp.StructList[Libp2pHelperInterface_RemoveStreamHandler_Response]
 
 // NewLibp2pHelperInterface_RemoveStreamHandler_Response creates a new list of Libp2pHelperInterface_RemoveStreamHandler_Response.
 func NewLibp2pHelperInterface_RemoveStreamHandler_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_RemoveStreamHandler_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_RemoveStreamHandler_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_Response_List) At(i int) Libp2pHelperInterface_RemoveStreamHandler_Response {
-	return Libp2pHelperInterface_RemoveStreamHandler_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_Response_List) Set(i int, v Libp2pHelperInterface_RemoveStreamHandler_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_RemoveStreamHandler_Response_List) String() string {
-	str, _ := text.MarshalList(0xcaae22b415293cb3, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_RemoveStreamHandler_Response](l), err
 }
 
 // Libp2pHelperInterface_RemoveStreamHandler_Response_Future is a wrapper for a Libp2pHelperInterface_RemoveStreamHandler_Response promised by a client call.
@@ -4677,54 +5312,64 @@ type Libp2pHelperInterface_RemoveStreamHandler_Response_Future struct{ *capnp.Fu
 
 func (p Libp2pHelperInterface_RemoveStreamHandler_Response_Future) Struct() (Libp2pHelperInterface_RemoveStreamHandler_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_RemoveStreamHandler_Response{s}, err
+	return Libp2pHelperInterface_RemoveStreamHandler_Response(s), err
 }
 
-type Libp2pHelperInterface_OpenStream struct{ capnp.Struct }
+type Libp2pHelperInterface_OpenStream capnp.Struct
 
 // Libp2pHelperInterface_OpenStream_TypeID is the unique identifier for the type Libp2pHelperInterface_OpenStream.
 const Libp2pHelperInterface_OpenStream_TypeID = 0xdc75bca71078eb01
 
 func NewLibp2pHelperInterface_OpenStream(s *capnp.Segment) (Libp2pHelperInterface_OpenStream, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_OpenStream{st}, err
+	return Libp2pHelperInterface_OpenStream(st), err
 }
 
 func NewRootLibp2pHelperInterface_OpenStream(s *capnp.Segment) (Libp2pHelperInterface_OpenStream, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_OpenStream{st}, err
+	return Libp2pHelperInterface_OpenStream(st), err
 }
 
 func ReadRootLibp2pHelperInterface_OpenStream(msg *capnp.Message) (Libp2pHelperInterface_OpenStream, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_OpenStream{root.Struct()}, err
+	return Libp2pHelperInterface_OpenStream(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_OpenStream) String() string {
-	str, _ := text.Marshal(0xdc75bca71078eb01, s.Struct)
+	str, _ := text.Marshal(0xdc75bca71078eb01, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_OpenStream) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_OpenStream) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_OpenStream {
+	return Libp2pHelperInterface_OpenStream(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_OpenStream) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_OpenStream) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_OpenStream) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_OpenStream) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_OpenStream_List is a list of Libp2pHelperInterface_OpenStream.
-type Libp2pHelperInterface_OpenStream_List struct{ capnp.List }
+type Libp2pHelperInterface_OpenStream_List = capnp.StructList[Libp2pHelperInterface_OpenStream]
 
 // NewLibp2pHelperInterface_OpenStream creates a new list of Libp2pHelperInterface_OpenStream.
 func NewLibp2pHelperInterface_OpenStream_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_OpenStream_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_OpenStream_List{l}, err
-}
-
-func (s Libp2pHelperInterface_OpenStream_List) At(i int) Libp2pHelperInterface_OpenStream {
-	return Libp2pHelperInterface_OpenStream{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_OpenStream_List) Set(i int, v Libp2pHelperInterface_OpenStream) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_OpenStream_List) String() string {
-	str, _ := text.MarshalList(0xdc75bca71078eb01, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_OpenStream](l), err
 }
 
 // Libp2pHelperInterface_OpenStream_Future is a wrapper for a Libp2pHelperInterface_OpenStream promised by a client call.
@@ -4732,96 +5377,105 @@ type Libp2pHelperInterface_OpenStream_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_OpenStream_Future) Struct() (Libp2pHelperInterface_OpenStream, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_OpenStream{s}, err
+	return Libp2pHelperInterface_OpenStream(s), err
 }
 
-type Libp2pHelperInterface_OpenStream_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_OpenStream_Request capnp.Struct
 
 // Libp2pHelperInterface_OpenStream_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_OpenStream_Request.
 const Libp2pHelperInterface_OpenStream_Request_TypeID = 0xf77175f458d711a8
 
 func NewLibp2pHelperInterface_OpenStream_Request(s *capnp.Segment) (Libp2pHelperInterface_OpenStream_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_OpenStream_Request{st}, err
+	return Libp2pHelperInterface_OpenStream_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_OpenStream_Request(s *capnp.Segment) (Libp2pHelperInterface_OpenStream_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_OpenStream_Request{st}, err
+	return Libp2pHelperInterface_OpenStream_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_OpenStream_Request(msg *capnp.Message) (Libp2pHelperInterface_OpenStream_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_OpenStream_Request{root.Struct()}, err
+	return Libp2pHelperInterface_OpenStream_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Request) String() string {
-	str, _ := text.Marshal(0xf77175f458d711a8, s.Struct)
+	str, _ := text.Marshal(0xf77175f458d711a8, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_OpenStream_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_OpenStream_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_OpenStream_Request {
+	return Libp2pHelperInterface_OpenStream_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_OpenStream_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_OpenStream_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_OpenStream_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_OpenStream_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_OpenStream_Request) Peer() (PeerId, error) {
-	p, err := s.Struct.Ptr(0)
-	return PeerId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PeerId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Request) HasPeer() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_OpenStream_Request) SetPeer(v PeerId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPeer sets the peer field to a newly
 // allocated PeerId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_OpenStream_Request) NewPeer() (PeerId, error) {
-	ss, err := NewPeerId(s.Struct.Segment())
+	ss, err := NewPeerId(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Request) ProtocolId() (string, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return p.Text(), err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Request) HasProtocolId() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_OpenStream_Request) ProtocolIdBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Request) SetProtocolId(v string) error {
-	return s.Struct.SetText(1, v)
+	return capnp.Struct(s).SetText(1, v)
 }
 
 // Libp2pHelperInterface_OpenStream_Request_List is a list of Libp2pHelperInterface_OpenStream_Request.
-type Libp2pHelperInterface_OpenStream_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_OpenStream_Request_List = capnp.StructList[Libp2pHelperInterface_OpenStream_Request]
 
 // NewLibp2pHelperInterface_OpenStream_Request creates a new list of Libp2pHelperInterface_OpenStream_Request.
 func NewLibp2pHelperInterface_OpenStream_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_OpenStream_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_OpenStream_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_OpenStream_Request_List) At(i int) Libp2pHelperInterface_OpenStream_Request {
-	return Libp2pHelperInterface_OpenStream_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_OpenStream_Request_List) Set(i int, v Libp2pHelperInterface_OpenStream_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_OpenStream_Request_List) String() string {
-	str, _ := text.MarshalList(0xf77175f458d711a8, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_OpenStream_Request](l), err
 }
 
 // Libp2pHelperInterface_OpenStream_Request_Future is a wrapper for a Libp2pHelperInterface_OpenStream_Request promised by a client call.
@@ -4829,106 +5483,115 @@ type Libp2pHelperInterface_OpenStream_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_OpenStream_Request_Future) Struct() (Libp2pHelperInterface_OpenStream_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_OpenStream_Request{s}, err
+	return Libp2pHelperInterface_OpenStream_Request(s), err
 }
 
 func (p Libp2pHelperInterface_OpenStream_Request_Future) Peer() PeerId_Future {
 	return PeerId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_OpenStream_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_OpenStream_Response capnp.Struct
 
 // Libp2pHelperInterface_OpenStream_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_OpenStream_Response.
 const Libp2pHelperInterface_OpenStream_Response_TypeID = 0x918222cd43d37f6c
 
 func NewLibp2pHelperInterface_OpenStream_Response(s *capnp.Segment) (Libp2pHelperInterface_OpenStream_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_OpenStream_Response{st}, err
+	return Libp2pHelperInterface_OpenStream_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_OpenStream_Response(s *capnp.Segment) (Libp2pHelperInterface_OpenStream_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_OpenStream_Response{st}, err
+	return Libp2pHelperInterface_OpenStream_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_OpenStream_Response(msg *capnp.Message) (Libp2pHelperInterface_OpenStream_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_OpenStream_Response{root.Struct()}, err
+	return Libp2pHelperInterface_OpenStream_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Response) String() string {
-	str, _ := text.Marshal(0x918222cd43d37f6c, s.Struct)
+	str, _ := text.Marshal(0x918222cd43d37f6c, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_OpenStream_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_OpenStream_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_OpenStream_Response {
+	return Libp2pHelperInterface_OpenStream_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_OpenStream_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_OpenStream_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_OpenStream_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_OpenStream_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_OpenStream_Response) StreamId() (StreamId, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Response) HasStreamId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_OpenStream_Response) SetStreamId(v StreamId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamId sets the streamId field to a newly
 // allocated StreamId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_OpenStream_Response) NewStreamId() (StreamId, error) {
-	ss, err := NewStreamId(s.Struct.Segment())
+	ss, err := NewStreamId(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Response) Peer() (PeerInfo, error) {
-	p, err := s.Struct.Ptr(1)
-	return PeerInfo{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return PeerInfo(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_OpenStream_Response) HasPeer() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_OpenStream_Response) SetPeer(v PeerInfo) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewPeer sets the peer field to a newly
 // allocated PeerInfo struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_OpenStream_Response) NewPeer() (PeerInfo, error) {
-	ss, err := NewPeerInfo(s.Struct.Segment())
+	ss, err := NewPeerInfo(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerInfo{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_OpenStream_Response_List is a list of Libp2pHelperInterface_OpenStream_Response.
-type Libp2pHelperInterface_OpenStream_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_OpenStream_Response_List = capnp.StructList[Libp2pHelperInterface_OpenStream_Response]
 
 // NewLibp2pHelperInterface_OpenStream_Response creates a new list of Libp2pHelperInterface_OpenStream_Response.
 func NewLibp2pHelperInterface_OpenStream_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_OpenStream_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_OpenStream_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_OpenStream_Response_List) At(i int) Libp2pHelperInterface_OpenStream_Response {
-	return Libp2pHelperInterface_OpenStream_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_OpenStream_Response_List) Set(i int, v Libp2pHelperInterface_OpenStream_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_OpenStream_Response_List) String() string {
-	str, _ := text.MarshalList(0x918222cd43d37f6c, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_OpenStream_Response](l), err
 }
 
 // Libp2pHelperInterface_OpenStream_Response_Future is a wrapper for a Libp2pHelperInterface_OpenStream_Response promised by a client call.
@@ -4936,7 +5599,7 @@ type Libp2pHelperInterface_OpenStream_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_OpenStream_Response_Future) Struct() (Libp2pHelperInterface_OpenStream_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_OpenStream_Response{s}, err
+	return Libp2pHelperInterface_OpenStream_Response(s), err
 }
 
 func (p Libp2pHelperInterface_OpenStream_Response_Future) StreamId() StreamId_Future {
@@ -4947,51 +5610,61 @@ func (p Libp2pHelperInterface_OpenStream_Response_Future) Peer() PeerInfo_Future
 	return PeerInfo_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface_CloseStream struct{ capnp.Struct }
+type Libp2pHelperInterface_CloseStream capnp.Struct
 
 // Libp2pHelperInterface_CloseStream_TypeID is the unique identifier for the type Libp2pHelperInterface_CloseStream.
 const Libp2pHelperInterface_CloseStream_TypeID = 0xfb4640ea8f01c33b
 
 func NewLibp2pHelperInterface_CloseStream(s *capnp.Segment) (Libp2pHelperInterface_CloseStream, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_CloseStream{st}, err
+	return Libp2pHelperInterface_CloseStream(st), err
 }
 
 func NewRootLibp2pHelperInterface_CloseStream(s *capnp.Segment) (Libp2pHelperInterface_CloseStream, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_CloseStream{st}, err
+	return Libp2pHelperInterface_CloseStream(st), err
 }
 
 func ReadRootLibp2pHelperInterface_CloseStream(msg *capnp.Message) (Libp2pHelperInterface_CloseStream, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_CloseStream{root.Struct()}, err
+	return Libp2pHelperInterface_CloseStream(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_CloseStream) String() string {
-	str, _ := text.Marshal(0xfb4640ea8f01c33b, s.Struct)
+	str, _ := text.Marshal(0xfb4640ea8f01c33b, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_CloseStream) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_CloseStream) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_CloseStream {
+	return Libp2pHelperInterface_CloseStream(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_CloseStream) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_CloseStream) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_CloseStream) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_CloseStream) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_CloseStream_List is a list of Libp2pHelperInterface_CloseStream.
-type Libp2pHelperInterface_CloseStream_List struct{ capnp.List }
+type Libp2pHelperInterface_CloseStream_List = capnp.StructList[Libp2pHelperInterface_CloseStream]
 
 // NewLibp2pHelperInterface_CloseStream creates a new list of Libp2pHelperInterface_CloseStream.
 func NewLibp2pHelperInterface_CloseStream_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_CloseStream_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_CloseStream_List{l}, err
-}
-
-func (s Libp2pHelperInterface_CloseStream_List) At(i int) Libp2pHelperInterface_CloseStream {
-	return Libp2pHelperInterface_CloseStream{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_CloseStream_List) Set(i int, v Libp2pHelperInterface_CloseStream) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_CloseStream_List) String() string {
-	str, _ := text.MarshalList(0xfb4640ea8f01c33b, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_CloseStream](l), err
 }
 
 // Libp2pHelperInterface_CloseStream_Future is a wrapper for a Libp2pHelperInterface_CloseStream promised by a client call.
@@ -4999,78 +5672,87 @@ type Libp2pHelperInterface_CloseStream_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_CloseStream_Future) Struct() (Libp2pHelperInterface_CloseStream, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_CloseStream{s}, err
+	return Libp2pHelperInterface_CloseStream(s), err
 }
 
-type Libp2pHelperInterface_CloseStream_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_CloseStream_Request capnp.Struct
 
 // Libp2pHelperInterface_CloseStream_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_CloseStream_Request.
 const Libp2pHelperInterface_CloseStream_Request_TypeID = 0x956577d02c2197b3
 
 func NewLibp2pHelperInterface_CloseStream_Request(s *capnp.Segment) (Libp2pHelperInterface_CloseStream_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_CloseStream_Request{st}, err
+	return Libp2pHelperInterface_CloseStream_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_CloseStream_Request(s *capnp.Segment) (Libp2pHelperInterface_CloseStream_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_CloseStream_Request{st}, err
+	return Libp2pHelperInterface_CloseStream_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_CloseStream_Request(msg *capnp.Message) (Libp2pHelperInterface_CloseStream_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_CloseStream_Request{root.Struct()}, err
+	return Libp2pHelperInterface_CloseStream_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_CloseStream_Request) String() string {
-	str, _ := text.Marshal(0x956577d02c2197b3, s.Struct)
+	str, _ := text.Marshal(0x956577d02c2197b3, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_CloseStream_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_CloseStream_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_CloseStream_Request {
+	return Libp2pHelperInterface_CloseStream_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_CloseStream_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_CloseStream_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_CloseStream_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_CloseStream_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_CloseStream_Request) StreamId() (StreamId, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_CloseStream_Request) HasStreamId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_CloseStream_Request) SetStreamId(v StreamId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamId sets the streamId field to a newly
 // allocated StreamId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_CloseStream_Request) NewStreamId() (StreamId, error) {
-	ss, err := NewStreamId(s.Struct.Segment())
+	ss, err := NewStreamId(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_CloseStream_Request_List is a list of Libp2pHelperInterface_CloseStream_Request.
-type Libp2pHelperInterface_CloseStream_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_CloseStream_Request_List = capnp.StructList[Libp2pHelperInterface_CloseStream_Request]
 
 // NewLibp2pHelperInterface_CloseStream_Request creates a new list of Libp2pHelperInterface_CloseStream_Request.
 func NewLibp2pHelperInterface_CloseStream_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_CloseStream_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_CloseStream_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_CloseStream_Request_List) At(i int) Libp2pHelperInterface_CloseStream_Request {
-	return Libp2pHelperInterface_CloseStream_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_CloseStream_Request_List) Set(i int, v Libp2pHelperInterface_CloseStream_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_CloseStream_Request_List) String() string {
-	str, _ := text.MarshalList(0x956577d02c2197b3, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_CloseStream_Request](l), err
 }
 
 // Libp2pHelperInterface_CloseStream_Request_Future is a wrapper for a Libp2pHelperInterface_CloseStream_Request promised by a client call.
@@ -5078,58 +5760,68 @@ type Libp2pHelperInterface_CloseStream_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_CloseStream_Request_Future) Struct() (Libp2pHelperInterface_CloseStream_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_CloseStream_Request{s}, err
+	return Libp2pHelperInterface_CloseStream_Request(s), err
 }
 
 func (p Libp2pHelperInterface_CloseStream_Request_Future) StreamId() StreamId_Future {
 	return StreamId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_CloseStream_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_CloseStream_Response capnp.Struct
 
 // Libp2pHelperInterface_CloseStream_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_CloseStream_Response.
 const Libp2pHelperInterface_CloseStream_Response_TypeID = 0xdea74fe5c2096c99
 
 func NewLibp2pHelperInterface_CloseStream_Response(s *capnp.Segment) (Libp2pHelperInterface_CloseStream_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_CloseStream_Response{st}, err
+	return Libp2pHelperInterface_CloseStream_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_CloseStream_Response(s *capnp.Segment) (Libp2pHelperInterface_CloseStream_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_CloseStream_Response{st}, err
+	return Libp2pHelperInterface_CloseStream_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_CloseStream_Response(msg *capnp.Message) (Libp2pHelperInterface_CloseStream_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_CloseStream_Response{root.Struct()}, err
+	return Libp2pHelperInterface_CloseStream_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_CloseStream_Response) String() string {
-	str, _ := text.Marshal(0xdea74fe5c2096c99, s.Struct)
+	str, _ := text.Marshal(0xdea74fe5c2096c99, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_CloseStream_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_CloseStream_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_CloseStream_Response {
+	return Libp2pHelperInterface_CloseStream_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_CloseStream_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_CloseStream_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_CloseStream_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_CloseStream_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_CloseStream_Response_List is a list of Libp2pHelperInterface_CloseStream_Response.
-type Libp2pHelperInterface_CloseStream_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_CloseStream_Response_List = capnp.StructList[Libp2pHelperInterface_CloseStream_Response]
 
 // NewLibp2pHelperInterface_CloseStream_Response creates a new list of Libp2pHelperInterface_CloseStream_Response.
 func NewLibp2pHelperInterface_CloseStream_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_CloseStream_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_CloseStream_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_CloseStream_Response_List) At(i int) Libp2pHelperInterface_CloseStream_Response {
-	return Libp2pHelperInterface_CloseStream_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_CloseStream_Response_List) Set(i int, v Libp2pHelperInterface_CloseStream_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_CloseStream_Response_List) String() string {
-	str, _ := text.MarshalList(0xdea74fe5c2096c99, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_CloseStream_Response](l), err
 }
 
 // Libp2pHelperInterface_CloseStream_Response_Future is a wrapper for a Libp2pHelperInterface_CloseStream_Response promised by a client call.
@@ -5137,54 +5829,64 @@ type Libp2pHelperInterface_CloseStream_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_CloseStream_Response_Future) Struct() (Libp2pHelperInterface_CloseStream_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_CloseStream_Response{s}, err
+	return Libp2pHelperInterface_CloseStream_Response(s), err
 }
 
-type Libp2pHelperInterface_ResetStream struct{ capnp.Struct }
+type Libp2pHelperInterface_ResetStream capnp.Struct
 
 // Libp2pHelperInterface_ResetStream_TypeID is the unique identifier for the type Libp2pHelperInterface_ResetStream.
 const Libp2pHelperInterface_ResetStream_TypeID = 0xaa5672b913b9c728
 
 func NewLibp2pHelperInterface_ResetStream(s *capnp.Segment) (Libp2pHelperInterface_ResetStream, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ResetStream{st}, err
+	return Libp2pHelperInterface_ResetStream(st), err
 }
 
 func NewRootLibp2pHelperInterface_ResetStream(s *capnp.Segment) (Libp2pHelperInterface_ResetStream, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ResetStream{st}, err
+	return Libp2pHelperInterface_ResetStream(st), err
 }
 
 func ReadRootLibp2pHelperInterface_ResetStream(msg *capnp.Message) (Libp2pHelperInterface_ResetStream, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_ResetStream{root.Struct()}, err
+	return Libp2pHelperInterface_ResetStream(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_ResetStream) String() string {
-	str, _ := text.Marshal(0xaa5672b913b9c728, s.Struct)
+	str, _ := text.Marshal(0xaa5672b913b9c728, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_ResetStream) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_ResetStream) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_ResetStream {
+	return Libp2pHelperInterface_ResetStream(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_ResetStream) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_ResetStream) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_ResetStream) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_ResetStream) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_ResetStream_List is a list of Libp2pHelperInterface_ResetStream.
-type Libp2pHelperInterface_ResetStream_List struct{ capnp.List }
+type Libp2pHelperInterface_ResetStream_List = capnp.StructList[Libp2pHelperInterface_ResetStream]
 
 // NewLibp2pHelperInterface_ResetStream creates a new list of Libp2pHelperInterface_ResetStream.
 func NewLibp2pHelperInterface_ResetStream_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_ResetStream_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_ResetStream_List{l}, err
-}
-
-func (s Libp2pHelperInterface_ResetStream_List) At(i int) Libp2pHelperInterface_ResetStream {
-	return Libp2pHelperInterface_ResetStream{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_ResetStream_List) Set(i int, v Libp2pHelperInterface_ResetStream) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_ResetStream_List) String() string {
-	str, _ := text.MarshalList(0xaa5672b913b9c728, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_ResetStream](l), err
 }
 
 // Libp2pHelperInterface_ResetStream_Future is a wrapper for a Libp2pHelperInterface_ResetStream promised by a client call.
@@ -5192,78 +5894,87 @@ type Libp2pHelperInterface_ResetStream_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_ResetStream_Future) Struct() (Libp2pHelperInterface_ResetStream, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_ResetStream{s}, err
+	return Libp2pHelperInterface_ResetStream(s), err
 }
 
-type Libp2pHelperInterface_ResetStream_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_ResetStream_Request capnp.Struct
 
 // Libp2pHelperInterface_ResetStream_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_ResetStream_Request.
 const Libp2pHelperInterface_ResetStream_Request_TypeID = 0xf2ba9a25df1929e3
 
 func NewLibp2pHelperInterface_ResetStream_Request(s *capnp.Segment) (Libp2pHelperInterface_ResetStream_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_ResetStream_Request{st}, err
+	return Libp2pHelperInterface_ResetStream_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_ResetStream_Request(s *capnp.Segment) (Libp2pHelperInterface_ResetStream_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_ResetStream_Request{st}, err
+	return Libp2pHelperInterface_ResetStream_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_ResetStream_Request(msg *capnp.Message) (Libp2pHelperInterface_ResetStream_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_ResetStream_Request{root.Struct()}, err
+	return Libp2pHelperInterface_ResetStream_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_ResetStream_Request) String() string {
-	str, _ := text.Marshal(0xf2ba9a25df1929e3, s.Struct)
+	str, _ := text.Marshal(0xf2ba9a25df1929e3, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_ResetStream_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_ResetStream_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_ResetStream_Request {
+	return Libp2pHelperInterface_ResetStream_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_ResetStream_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_ResetStream_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_ResetStream_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_ResetStream_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_ResetStream_Request) StreamId() (StreamId, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_ResetStream_Request) HasStreamId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_ResetStream_Request) SetStreamId(v StreamId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamId sets the streamId field to a newly
 // allocated StreamId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_ResetStream_Request) NewStreamId() (StreamId, error) {
-	ss, err := NewStreamId(s.Struct.Segment())
+	ss, err := NewStreamId(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_ResetStream_Request_List is a list of Libp2pHelperInterface_ResetStream_Request.
-type Libp2pHelperInterface_ResetStream_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_ResetStream_Request_List = capnp.StructList[Libp2pHelperInterface_ResetStream_Request]
 
 // NewLibp2pHelperInterface_ResetStream_Request creates a new list of Libp2pHelperInterface_ResetStream_Request.
 func NewLibp2pHelperInterface_ResetStream_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_ResetStream_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_ResetStream_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_ResetStream_Request_List) At(i int) Libp2pHelperInterface_ResetStream_Request {
-	return Libp2pHelperInterface_ResetStream_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_ResetStream_Request_List) Set(i int, v Libp2pHelperInterface_ResetStream_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_ResetStream_Request_List) String() string {
-	str, _ := text.MarshalList(0xf2ba9a25df1929e3, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_ResetStream_Request](l), err
 }
 
 // Libp2pHelperInterface_ResetStream_Request_Future is a wrapper for a Libp2pHelperInterface_ResetStream_Request promised by a client call.
@@ -5271,58 +5982,68 @@ type Libp2pHelperInterface_ResetStream_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_ResetStream_Request_Future) Struct() (Libp2pHelperInterface_ResetStream_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_ResetStream_Request{s}, err
+	return Libp2pHelperInterface_ResetStream_Request(s), err
 }
 
 func (p Libp2pHelperInterface_ResetStream_Request_Future) StreamId() StreamId_Future {
 	return StreamId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_ResetStream_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_ResetStream_Response capnp.Struct
 
 // Libp2pHelperInterface_ResetStream_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_ResetStream_Response.
 const Libp2pHelperInterface_ResetStream_Response_TypeID = 0xa4ef405cd24ad7a3
 
 func NewLibp2pHelperInterface_ResetStream_Response(s *capnp.Segment) (Libp2pHelperInterface_ResetStream_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ResetStream_Response{st}, err
+	return Libp2pHelperInterface_ResetStream_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_ResetStream_Response(s *capnp.Segment) (Libp2pHelperInterface_ResetStream_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_ResetStream_Response{st}, err
+	return Libp2pHelperInterface_ResetStream_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_ResetStream_Response(msg *capnp.Message) (Libp2pHelperInterface_ResetStream_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_ResetStream_Response{root.Struct()}, err
+	return Libp2pHelperInterface_ResetStream_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_ResetStream_Response) String() string {
-	str, _ := text.Marshal(0xa4ef405cd24ad7a3, s.Struct)
+	str, _ := text.Marshal(0xa4ef405cd24ad7a3, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_ResetStream_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_ResetStream_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_ResetStream_Response {
+	return Libp2pHelperInterface_ResetStream_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_ResetStream_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_ResetStream_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_ResetStream_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_ResetStream_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_ResetStream_Response_List is a list of Libp2pHelperInterface_ResetStream_Response.
-type Libp2pHelperInterface_ResetStream_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_ResetStream_Response_List = capnp.StructList[Libp2pHelperInterface_ResetStream_Response]
 
 // NewLibp2pHelperInterface_ResetStream_Response creates a new list of Libp2pHelperInterface_ResetStream_Response.
 func NewLibp2pHelperInterface_ResetStream_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_ResetStream_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_ResetStream_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_ResetStream_Response_List) At(i int) Libp2pHelperInterface_ResetStream_Response {
-	return Libp2pHelperInterface_ResetStream_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_ResetStream_Response_List) Set(i int, v Libp2pHelperInterface_ResetStream_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_ResetStream_Response_List) String() string {
-	str, _ := text.MarshalList(0xa4ef405cd24ad7a3, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_ResetStream_Response](l), err
 }
 
 // Libp2pHelperInterface_ResetStream_Response_Future is a wrapper for a Libp2pHelperInterface_ResetStream_Response promised by a client call.
@@ -5330,54 +6051,64 @@ type Libp2pHelperInterface_ResetStream_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_ResetStream_Response_Future) Struct() (Libp2pHelperInterface_ResetStream_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_ResetStream_Response{s}, err
+	return Libp2pHelperInterface_ResetStream_Response(s), err
 }
 
-type Libp2pHelperInterface_SendStream struct{ capnp.Struct }
+type Libp2pHelperInterface_SendStream capnp.Struct
 
 // Libp2pHelperInterface_SendStream_TypeID is the unique identifier for the type Libp2pHelperInterface_SendStream.
 const Libp2pHelperInterface_SendStream_TypeID = 0xe079d0d7c895a200
 
 func NewLibp2pHelperInterface_SendStream(s *capnp.Segment) (Libp2pHelperInterface_SendStream, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SendStream{st}, err
+	return Libp2pHelperInterface_SendStream(st), err
 }
 
 func NewRootLibp2pHelperInterface_SendStream(s *capnp.Segment) (Libp2pHelperInterface_SendStream, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SendStream{st}, err
+	return Libp2pHelperInterface_SendStream(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SendStream(msg *capnp.Message) (Libp2pHelperInterface_SendStream, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SendStream{root.Struct()}, err
+	return Libp2pHelperInterface_SendStream(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SendStream) String() string {
-	str, _ := text.Marshal(0xe079d0d7c895a200, s.Struct)
+	str, _ := text.Marshal(0xe079d0d7c895a200, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SendStream) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SendStream) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SendStream {
+	return Libp2pHelperInterface_SendStream(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SendStream) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SendStream) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SendStream) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SendStream) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_SendStream_List is a list of Libp2pHelperInterface_SendStream.
-type Libp2pHelperInterface_SendStream_List struct{ capnp.List }
+type Libp2pHelperInterface_SendStream_List = capnp.StructList[Libp2pHelperInterface_SendStream]
 
 // NewLibp2pHelperInterface_SendStream creates a new list of Libp2pHelperInterface_SendStream.
 func NewLibp2pHelperInterface_SendStream_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SendStream_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_SendStream_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SendStream_List) At(i int) Libp2pHelperInterface_SendStream {
-	return Libp2pHelperInterface_SendStream{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SendStream_List) Set(i int, v Libp2pHelperInterface_SendStream) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SendStream_List) String() string {
-	str, _ := text.MarshalList(0xe079d0d7c895a200, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SendStream](l), err
 }
 
 // Libp2pHelperInterface_SendStream_Future is a wrapper for a Libp2pHelperInterface_SendStream promised by a client call.
@@ -5385,78 +6116,87 @@ type Libp2pHelperInterface_SendStream_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_SendStream_Future) Struct() (Libp2pHelperInterface_SendStream, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SendStream{s}, err
+	return Libp2pHelperInterface_SendStream(s), err
 }
 
-type Libp2pHelperInterface_SendStream_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_SendStream_Request capnp.Struct
 
 // Libp2pHelperInterface_SendStream_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_SendStream_Request.
 const Libp2pHelperInterface_SendStream_Request_TypeID = 0xf6ac925efcae1dda
 
 func NewLibp2pHelperInterface_SendStream_Request(s *capnp.Segment) (Libp2pHelperInterface_SendStream_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_SendStream_Request{st}, err
+	return Libp2pHelperInterface_SendStream_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_SendStream_Request(s *capnp.Segment) (Libp2pHelperInterface_SendStream_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_SendStream_Request{st}, err
+	return Libp2pHelperInterface_SendStream_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SendStream_Request(msg *capnp.Message) (Libp2pHelperInterface_SendStream_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SendStream_Request{root.Struct()}, err
+	return Libp2pHelperInterface_SendStream_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SendStream_Request) String() string {
-	str, _ := text.Marshal(0xf6ac925efcae1dda, s.Struct)
+	str, _ := text.Marshal(0xf6ac925efcae1dda, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SendStream_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SendStream_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SendStream_Request {
+	return Libp2pHelperInterface_SendStream_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SendStream_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SendStream_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SendStream_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SendStream_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_SendStream_Request) Msg() (StreamMessage, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamMessage{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamMessage(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SendStream_Request) HasMsg() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_SendStream_Request) SetMsg(v StreamMessage) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewMsg sets the msg field to a newly
 // allocated StreamMessage struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_SendStream_Request) NewMsg() (StreamMessage, error) {
-	ss, err := NewStreamMessage(s.Struct.Segment())
+	ss, err := NewStreamMessage(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamMessage{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_SendStream_Request_List is a list of Libp2pHelperInterface_SendStream_Request.
-type Libp2pHelperInterface_SendStream_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_SendStream_Request_List = capnp.StructList[Libp2pHelperInterface_SendStream_Request]
 
 // NewLibp2pHelperInterface_SendStream_Request creates a new list of Libp2pHelperInterface_SendStream_Request.
 func NewLibp2pHelperInterface_SendStream_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SendStream_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_SendStream_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SendStream_Request_List) At(i int) Libp2pHelperInterface_SendStream_Request {
-	return Libp2pHelperInterface_SendStream_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SendStream_Request_List) Set(i int, v Libp2pHelperInterface_SendStream_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SendStream_Request_List) String() string {
-	str, _ := text.MarshalList(0xf6ac925efcae1dda, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SendStream_Request](l), err
 }
 
 // Libp2pHelperInterface_SendStream_Request_Future is a wrapper for a Libp2pHelperInterface_SendStream_Request promised by a client call.
@@ -5464,58 +6204,68 @@ type Libp2pHelperInterface_SendStream_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_SendStream_Request_Future) Struct() (Libp2pHelperInterface_SendStream_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SendStream_Request{s}, err
+	return Libp2pHelperInterface_SendStream_Request(s), err
 }
 
 func (p Libp2pHelperInterface_SendStream_Request_Future) Msg() StreamMessage_Future {
 	return StreamMessage_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_SendStream_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_SendStream_Response capnp.Struct
 
 // Libp2pHelperInterface_SendStream_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_SendStream_Response.
 const Libp2pHelperInterface_SendStream_Response_TypeID = 0x934ce73a7d9d3d3a
 
 func NewLibp2pHelperInterface_SendStream_Response(s *capnp.Segment) (Libp2pHelperInterface_SendStream_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SendStream_Response{st}, err
+	return Libp2pHelperInterface_SendStream_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_SendStream_Response(s *capnp.Segment) (Libp2pHelperInterface_SendStream_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SendStream_Response{st}, err
+	return Libp2pHelperInterface_SendStream_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SendStream_Response(msg *capnp.Message) (Libp2pHelperInterface_SendStream_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SendStream_Response{root.Struct()}, err
+	return Libp2pHelperInterface_SendStream_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SendStream_Response) String() string {
-	str, _ := text.Marshal(0x934ce73a7d9d3d3a, s.Struct)
+	str, _ := text.Marshal(0x934ce73a7d9d3d3a, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SendStream_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SendStream_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SendStream_Response {
+	return Libp2pHelperInterface_SendStream_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SendStream_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SendStream_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SendStream_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SendStream_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_SendStream_Response_List is a list of Libp2pHelperInterface_SendStream_Response.
-type Libp2pHelperInterface_SendStream_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_SendStream_Response_List = capnp.StructList[Libp2pHelperInterface_SendStream_Response]
 
 // NewLibp2pHelperInterface_SendStream_Response creates a new list of Libp2pHelperInterface_SendStream_Response.
 func NewLibp2pHelperInterface_SendStream_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SendStream_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_SendStream_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SendStream_Response_List) At(i int) Libp2pHelperInterface_SendStream_Response {
-	return Libp2pHelperInterface_SendStream_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SendStream_Response_List) Set(i int, v Libp2pHelperInterface_SendStream_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SendStream_Response_List) String() string {
-	str, _ := text.MarshalList(0x934ce73a7d9d3d3a, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SendStream_Response](l), err
 }
 
 // Libp2pHelperInterface_SendStream_Response_Future is a wrapper for a Libp2pHelperInterface_SendStream_Response promised by a client call.
@@ -5523,54 +6273,64 @@ type Libp2pHelperInterface_SendStream_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_SendStream_Response_Future) Struct() (Libp2pHelperInterface_SendStream_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SendStream_Response{s}, err
+	return Libp2pHelperInterface_SendStream_Response(s), err
 }
 
-type Libp2pHelperInterface_SetNodeStatus struct{ capnp.Struct }
+type Libp2pHelperInterface_SetNodeStatus capnp.Struct
 
 // Libp2pHelperInterface_SetNodeStatus_TypeID is the unique identifier for the type Libp2pHelperInterface_SetNodeStatus.
 const Libp2pHelperInterface_SetNodeStatus_TypeID = 0x806d105a074b7e19
 
 func NewLibp2pHelperInterface_SetNodeStatus(s *capnp.Segment) (Libp2pHelperInterface_SetNodeStatus, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetNodeStatus{st}, err
+	return Libp2pHelperInterface_SetNodeStatus(st), err
 }
 
 func NewRootLibp2pHelperInterface_SetNodeStatus(s *capnp.Segment) (Libp2pHelperInterface_SetNodeStatus, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetNodeStatus{st}, err
+	return Libp2pHelperInterface_SetNodeStatus(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SetNodeStatus(msg *capnp.Message) (Libp2pHelperInterface_SetNodeStatus, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SetNodeStatus{root.Struct()}, err
+	return Libp2pHelperInterface_SetNodeStatus(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SetNodeStatus) String() string {
-	str, _ := text.Marshal(0x806d105a074b7e19, s.Struct)
+	str, _ := text.Marshal(0x806d105a074b7e19, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SetNodeStatus) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SetNodeStatus) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SetNodeStatus {
+	return Libp2pHelperInterface_SetNodeStatus(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SetNodeStatus) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_SetNodeStatus_List is a list of Libp2pHelperInterface_SetNodeStatus.
-type Libp2pHelperInterface_SetNodeStatus_List struct{ capnp.List }
+type Libp2pHelperInterface_SetNodeStatus_List = capnp.StructList[Libp2pHelperInterface_SetNodeStatus]
 
 // NewLibp2pHelperInterface_SetNodeStatus creates a new list of Libp2pHelperInterface_SetNodeStatus.
 func NewLibp2pHelperInterface_SetNodeStatus_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SetNodeStatus_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_SetNodeStatus_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_List) At(i int) Libp2pHelperInterface_SetNodeStatus {
-	return Libp2pHelperInterface_SetNodeStatus{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_List) Set(i int, v Libp2pHelperInterface_SetNodeStatus) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_List) String() string {
-	str, _ := text.MarshalList(0x806d105a074b7e19, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SetNodeStatus](l), err
 }
 
 // Libp2pHelperInterface_SetNodeStatus_Future is a wrapper for a Libp2pHelperInterface_SetNodeStatus promised by a client call.
@@ -5578,67 +6338,76 @@ type Libp2pHelperInterface_SetNodeStatus_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_SetNodeStatus_Future) Struct() (Libp2pHelperInterface_SetNodeStatus, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SetNodeStatus{s}, err
+	return Libp2pHelperInterface_SetNodeStatus(s), err
 }
 
-type Libp2pHelperInterface_SetNodeStatus_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_SetNodeStatus_Request capnp.Struct
 
 // Libp2pHelperInterface_SetNodeStatus_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_SetNodeStatus_Request.
 const Libp2pHelperInterface_SetNodeStatus_Request_TypeID = 0xfcf94c0b3ea7ac29
 
 func NewLibp2pHelperInterface_SetNodeStatus_Request(s *capnp.Segment) (Libp2pHelperInterface_SetNodeStatus_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_SetNodeStatus_Request{st}, err
+	return Libp2pHelperInterface_SetNodeStatus_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_SetNodeStatus_Request(s *capnp.Segment) (Libp2pHelperInterface_SetNodeStatus_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_SetNodeStatus_Request{st}, err
+	return Libp2pHelperInterface_SetNodeStatus_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SetNodeStatus_Request(msg *capnp.Message) (Libp2pHelperInterface_SetNodeStatus_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SetNodeStatus_Request{root.Struct()}, err
+	return Libp2pHelperInterface_SetNodeStatus_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SetNodeStatus_Request) String() string {
-	str, _ := text.Marshal(0xfcf94c0b3ea7ac29, s.Struct)
+	str, _ := text.Marshal(0xfcf94c0b3ea7ac29, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SetNodeStatus_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SetNodeStatus_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SetNodeStatus_Request {
+	return Libp2pHelperInterface_SetNodeStatus_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SetNodeStatus_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_SetNodeStatus_Request) Status() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pHelperInterface_SetNodeStatus_Request) HasStatus() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_SetNodeStatus_Request) SetStatus(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 // Libp2pHelperInterface_SetNodeStatus_Request_List is a list of Libp2pHelperInterface_SetNodeStatus_Request.
-type Libp2pHelperInterface_SetNodeStatus_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_SetNodeStatus_Request_List = capnp.StructList[Libp2pHelperInterface_SetNodeStatus_Request]
 
 // NewLibp2pHelperInterface_SetNodeStatus_Request creates a new list of Libp2pHelperInterface_SetNodeStatus_Request.
 func NewLibp2pHelperInterface_SetNodeStatus_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SetNodeStatus_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_SetNodeStatus_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_Request_List) At(i int) Libp2pHelperInterface_SetNodeStatus_Request {
-	return Libp2pHelperInterface_SetNodeStatus_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_Request_List) Set(i int, v Libp2pHelperInterface_SetNodeStatus_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_Request_List) String() string {
-	str, _ := text.MarshalList(0xfcf94c0b3ea7ac29, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SetNodeStatus_Request](l), err
 }
 
 // Libp2pHelperInterface_SetNodeStatus_Request_Future is a wrapper for a Libp2pHelperInterface_SetNodeStatus_Request promised by a client call.
@@ -5646,54 +6415,64 @@ type Libp2pHelperInterface_SetNodeStatus_Request_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_SetNodeStatus_Request_Future) Struct() (Libp2pHelperInterface_SetNodeStatus_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SetNodeStatus_Request{s}, err
+	return Libp2pHelperInterface_SetNodeStatus_Request(s), err
 }
 
-type Libp2pHelperInterface_SetNodeStatus_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_SetNodeStatus_Response capnp.Struct
 
 // Libp2pHelperInterface_SetNodeStatus_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_SetNodeStatus_Response.
 const Libp2pHelperInterface_SetNodeStatus_Response_TypeID = 0xf1a5d120cfd28003
 
 func NewLibp2pHelperInterface_SetNodeStatus_Response(s *capnp.Segment) (Libp2pHelperInterface_SetNodeStatus_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetNodeStatus_Response{st}, err
+	return Libp2pHelperInterface_SetNodeStatus_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_SetNodeStatus_Response(s *capnp.Segment) (Libp2pHelperInterface_SetNodeStatus_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_SetNodeStatus_Response{st}, err
+	return Libp2pHelperInterface_SetNodeStatus_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_SetNodeStatus_Response(msg *capnp.Message) (Libp2pHelperInterface_SetNodeStatus_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_SetNodeStatus_Response{root.Struct()}, err
+	return Libp2pHelperInterface_SetNodeStatus_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_SetNodeStatus_Response) String() string {
-	str, _ := text.Marshal(0xf1a5d120cfd28003, s.Struct)
+	str, _ := text.Marshal(0xf1a5d120cfd28003, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_SetNodeStatus_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_SetNodeStatus_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_SetNodeStatus_Response {
+	return Libp2pHelperInterface_SetNodeStatus_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_SetNodeStatus_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_SetNodeStatus_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_SetNodeStatus_Response_List is a list of Libp2pHelperInterface_SetNodeStatus_Response.
-type Libp2pHelperInterface_SetNodeStatus_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_SetNodeStatus_Response_List = capnp.StructList[Libp2pHelperInterface_SetNodeStatus_Response]
 
 // NewLibp2pHelperInterface_SetNodeStatus_Response creates a new list of Libp2pHelperInterface_SetNodeStatus_Response.
 func NewLibp2pHelperInterface_SetNodeStatus_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_SetNodeStatus_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_SetNodeStatus_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_Response_List) At(i int) Libp2pHelperInterface_SetNodeStatus_Response {
-	return Libp2pHelperInterface_SetNodeStatus_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_Response_List) Set(i int, v Libp2pHelperInterface_SetNodeStatus_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_SetNodeStatus_Response_List) String() string {
-	str, _ := text.MarshalList(0xf1a5d120cfd28003, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_SetNodeStatus_Response](l), err
 }
 
 // Libp2pHelperInterface_SetNodeStatus_Response_Future is a wrapper for a Libp2pHelperInterface_SetNodeStatus_Response promised by a client call.
@@ -5701,54 +6480,64 @@ type Libp2pHelperInterface_SetNodeStatus_Response_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_SetNodeStatus_Response_Future) Struct() (Libp2pHelperInterface_SetNodeStatus_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_SetNodeStatus_Response{s}, err
+	return Libp2pHelperInterface_SetNodeStatus_Response(s), err
 }
 
-type Libp2pHelperInterface_GetPeerNodeStatus struct{ capnp.Struct }
+type Libp2pHelperInterface_GetPeerNodeStatus capnp.Struct
 
 // Libp2pHelperInterface_GetPeerNodeStatus_TypeID is the unique identifier for the type Libp2pHelperInterface_GetPeerNodeStatus.
 const Libp2pHelperInterface_GetPeerNodeStatus_TypeID = 0xd5738b22303fce4e
 
 func NewLibp2pHelperInterface_GetPeerNodeStatus(s *capnp.Segment) (Libp2pHelperInterface_GetPeerNodeStatus, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GetPeerNodeStatus{st}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus(st), err
 }
 
 func NewRootLibp2pHelperInterface_GetPeerNodeStatus(s *capnp.Segment) (Libp2pHelperInterface_GetPeerNodeStatus, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_GetPeerNodeStatus{st}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GetPeerNodeStatus(msg *capnp.Message) (Libp2pHelperInterface_GetPeerNodeStatus, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GetPeerNodeStatus{root.Struct()}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GetPeerNodeStatus) String() string {
-	str, _ := text.Marshal(0xd5738b22303fce4e, s.Struct)
+	str, _ := text.Marshal(0xd5738b22303fce4e, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GetPeerNodeStatus) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GetPeerNodeStatus) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GetPeerNodeStatus {
+	return Libp2pHelperInterface_GetPeerNodeStatus(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GetPeerNodeStatus) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_GetPeerNodeStatus_List is a list of Libp2pHelperInterface_GetPeerNodeStatus.
-type Libp2pHelperInterface_GetPeerNodeStatus_List struct{ capnp.List }
+type Libp2pHelperInterface_GetPeerNodeStatus_List = capnp.StructList[Libp2pHelperInterface_GetPeerNodeStatus]
 
 // NewLibp2pHelperInterface_GetPeerNodeStatus creates a new list of Libp2pHelperInterface_GetPeerNodeStatus.
 func NewLibp2pHelperInterface_GetPeerNodeStatus_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GetPeerNodeStatus_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_GetPeerNodeStatus_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_List) At(i int) Libp2pHelperInterface_GetPeerNodeStatus {
-	return Libp2pHelperInterface_GetPeerNodeStatus{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_List) Set(i int, v Libp2pHelperInterface_GetPeerNodeStatus) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_List) String() string {
-	str, _ := text.MarshalList(0xd5738b22303fce4e, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GetPeerNodeStatus](l), err
 }
 
 // Libp2pHelperInterface_GetPeerNodeStatus_Future is a wrapper for a Libp2pHelperInterface_GetPeerNodeStatus promised by a client call.
@@ -5756,78 +6545,87 @@ type Libp2pHelperInterface_GetPeerNodeStatus_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_GetPeerNodeStatus_Future) Struct() (Libp2pHelperInterface_GetPeerNodeStatus, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GetPeerNodeStatus{s}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus(s), err
 }
 
-type Libp2pHelperInterface_GetPeerNodeStatus_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_GetPeerNodeStatus_Request capnp.Struct
 
 // Libp2pHelperInterface_GetPeerNodeStatus_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_GetPeerNodeStatus_Request.
 const Libp2pHelperInterface_GetPeerNodeStatus_Request_TypeID = 0xeb7b01a9c0a1e9cb
 
 func NewLibp2pHelperInterface_GetPeerNodeStatus_Request(s *capnp.Segment) (Libp2pHelperInterface_GetPeerNodeStatus_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GetPeerNodeStatus_Request{st}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_GetPeerNodeStatus_Request(s *capnp.Segment) (Libp2pHelperInterface_GetPeerNodeStatus_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GetPeerNodeStatus_Request{st}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GetPeerNodeStatus_Request(msg *capnp.Message) (Libp2pHelperInterface_GetPeerNodeStatus_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GetPeerNodeStatus_Request{root.Struct()}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) String() string {
-	str, _ := text.Marshal(0xeb7b01a9c0a1e9cb, s.Struct)
+	str, _ := text.Marshal(0xeb7b01a9c0a1e9cb, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GetPeerNodeStatus_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GetPeerNodeStatus_Request {
+	return Libp2pHelperInterface_GetPeerNodeStatus_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) Peer() (Multiaddr, error) {
-	p, err := s.Struct.Ptr(0)
-	return Multiaddr{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Multiaddr(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) HasPeer() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) SetPeer(v Multiaddr) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPeer sets the peer field to a newly
 // allocated Multiaddr struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Request) NewPeer() (Multiaddr, error) {
-	ss, err := NewMultiaddr(s.Struct.Segment())
+	ss, err := NewMultiaddr(capnp.Struct(s).Segment())
 	if err != nil {
 		return Multiaddr{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_GetPeerNodeStatus_Request_List is a list of Libp2pHelperInterface_GetPeerNodeStatus_Request.
-type Libp2pHelperInterface_GetPeerNodeStatus_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_GetPeerNodeStatus_Request_List = capnp.StructList[Libp2pHelperInterface_GetPeerNodeStatus_Request]
 
 // NewLibp2pHelperInterface_GetPeerNodeStatus_Request creates a new list of Libp2pHelperInterface_GetPeerNodeStatus_Request.
 func NewLibp2pHelperInterface_GetPeerNodeStatus_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GetPeerNodeStatus_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_GetPeerNodeStatus_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_Request_List) At(i int) Libp2pHelperInterface_GetPeerNodeStatus_Request {
-	return Libp2pHelperInterface_GetPeerNodeStatus_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_Request_List) Set(i int, v Libp2pHelperInterface_GetPeerNodeStatus_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_Request_List) String() string {
-	str, _ := text.MarshalList(0xeb7b01a9c0a1e9cb, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GetPeerNodeStatus_Request](l), err
 }
 
 // Libp2pHelperInterface_GetPeerNodeStatus_Request_Future is a wrapper for a Libp2pHelperInterface_GetPeerNodeStatus_Request promised by a client call.
@@ -5835,71 +6633,80 @@ type Libp2pHelperInterface_GetPeerNodeStatus_Request_Future struct{ *capnp.Futur
 
 func (p Libp2pHelperInterface_GetPeerNodeStatus_Request_Future) Struct() (Libp2pHelperInterface_GetPeerNodeStatus_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GetPeerNodeStatus_Request{s}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Request(s), err
 }
 
 func (p Libp2pHelperInterface_GetPeerNodeStatus_Request_Future) Peer() Multiaddr_Future {
 	return Multiaddr_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_GetPeerNodeStatus_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_GetPeerNodeStatus_Response capnp.Struct
 
 // Libp2pHelperInterface_GetPeerNodeStatus_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_GetPeerNodeStatus_Response.
 const Libp2pHelperInterface_GetPeerNodeStatus_Response_TypeID = 0xfb9439112386d425
 
 func NewLibp2pHelperInterface_GetPeerNodeStatus_Response(s *capnp.Segment) (Libp2pHelperInterface_GetPeerNodeStatus_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GetPeerNodeStatus_Response{st}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_GetPeerNodeStatus_Response(s *capnp.Segment) (Libp2pHelperInterface_GetPeerNodeStatus_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_GetPeerNodeStatus_Response{st}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_GetPeerNodeStatus_Response(msg *capnp.Message) (Libp2pHelperInterface_GetPeerNodeStatus_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_GetPeerNodeStatus_Response{root.Struct()}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) String() string {
-	str, _ := text.Marshal(0xfb9439112386d425, s.Struct)
+	str, _ := text.Marshal(0xfb9439112386d425, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_GetPeerNodeStatus_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_GetPeerNodeStatus_Response {
+	return Libp2pHelperInterface_GetPeerNodeStatus_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) Result() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) HasResult() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_GetPeerNodeStatus_Response) SetResult(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 // Libp2pHelperInterface_GetPeerNodeStatus_Response_List is a list of Libp2pHelperInterface_GetPeerNodeStatus_Response.
-type Libp2pHelperInterface_GetPeerNodeStatus_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_GetPeerNodeStatus_Response_List = capnp.StructList[Libp2pHelperInterface_GetPeerNodeStatus_Response]
 
 // NewLibp2pHelperInterface_GetPeerNodeStatus_Response creates a new list of Libp2pHelperInterface_GetPeerNodeStatus_Response.
 func NewLibp2pHelperInterface_GetPeerNodeStatus_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_GetPeerNodeStatus_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_GetPeerNodeStatus_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_Response_List) At(i int) Libp2pHelperInterface_GetPeerNodeStatus_Response {
-	return Libp2pHelperInterface_GetPeerNodeStatus_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_Response_List) Set(i int, v Libp2pHelperInterface_GetPeerNodeStatus_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_GetPeerNodeStatus_Response_List) String() string {
-	str, _ := text.MarshalList(0xfb9439112386d425, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_GetPeerNodeStatus_Response](l), err
 }
 
 // Libp2pHelperInterface_GetPeerNodeStatus_Response_Future is a wrapper for a Libp2pHelperInterface_GetPeerNodeStatus_Response promised by a client call.
@@ -5907,54 +6714,64 @@ type Libp2pHelperInterface_GetPeerNodeStatus_Response_Future struct{ *capnp.Futu
 
 func (p Libp2pHelperInterface_GetPeerNodeStatus_Response_Future) Struct() (Libp2pHelperInterface_GetPeerNodeStatus_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_GetPeerNodeStatus_Response{s}, err
+	return Libp2pHelperInterface_GetPeerNodeStatus_Response(s), err
 }
 
-type Libp2pHelperInterface_TestDecodeBitswapBlocks struct{ capnp.Struct }
+type Libp2pHelperInterface_TestDecodeBitswapBlocks capnp.Struct
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_TypeID is the unique identifier for the type Libp2pHelperInterface_TestDecodeBitswapBlocks.
 const Libp2pHelperInterface_TestDecodeBitswapBlocks_TypeID = 0xe5780789678719ec
 
 func NewLibp2pHelperInterface_TestDecodeBitswapBlocks(s *capnp.Segment) (Libp2pHelperInterface_TestDecodeBitswapBlocks, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks{st}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks(st), err
 }
 
 func NewRootLibp2pHelperInterface_TestDecodeBitswapBlocks(s *capnp.Segment) (Libp2pHelperInterface_TestDecodeBitswapBlocks, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks{st}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks(st), err
 }
 
 func ReadRootLibp2pHelperInterface_TestDecodeBitswapBlocks(msg *capnp.Message) (Libp2pHelperInterface_TestDecodeBitswapBlocks, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks{root.Struct()}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks) String() string {
-	str, _ := text.Marshal(0xe5780789678719ec, s.Struct)
+	str, _ := text.Marshal(0xe5780789678719ec, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_TestDecodeBitswapBlocks) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_TestDecodeBitswapBlocks {
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_List is a list of Libp2pHelperInterface_TestDecodeBitswapBlocks.
-type Libp2pHelperInterface_TestDecodeBitswapBlocks_List struct{ capnp.List }
+type Libp2pHelperInterface_TestDecodeBitswapBlocks_List = capnp.StructList[Libp2pHelperInterface_TestDecodeBitswapBlocks]
 
 // NewLibp2pHelperInterface_TestDecodeBitswapBlocks creates a new list of Libp2pHelperInterface_TestDecodeBitswapBlocks.
 func NewLibp2pHelperInterface_TestDecodeBitswapBlocks_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_TestDecodeBitswapBlocks_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_List{l}, err
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_List) At(i int) Libp2pHelperInterface_TestDecodeBitswapBlocks {
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_List) Set(i int, v Libp2pHelperInterface_TestDecodeBitswapBlocks) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_List) String() string {
-	str, _ := text.MarshalList(0xe5780789678719ec, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_TestDecodeBitswapBlocks](l), err
 }
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_Future is a wrapper for a Libp2pHelperInterface_TestDecodeBitswapBlocks promised by a client call.
@@ -5962,102 +6779,111 @@ type Libp2pHelperInterface_TestDecodeBitswapBlocks_Future struct{ *capnp.Future 
 
 func (p Libp2pHelperInterface_TestDecodeBitswapBlocks_Future) Struct() (Libp2pHelperInterface_TestDecodeBitswapBlocks, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks{s}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks(s), err
 }
 
-type Libp2pHelperInterface_TestDecodeBitswapBlocks_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_TestDecodeBitswapBlocks_Request capnp.Struct
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_TestDecodeBitswapBlocks_Request.
 const Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_TypeID = 0x8050be5b024b71ef
 
 func NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Request(s *capnp.Segment) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request{st}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_TestDecodeBitswapBlocks_Request(s *capnp.Segment) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request{st}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_TestDecodeBitswapBlocks_Request(msg *capnp.Message) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request{root.Struct()}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) String() string {
-	str, _ := text.Marshal(0x8050be5b024b71ef, s.Struct)
+	str, _ := text.Marshal(0x8050be5b024b71ef, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_TestDecodeBitswapBlocks_Request {
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) Blocks() (BlockWithId_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return BlockWithId_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return BlockWithId_List(p.List()), err
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) HasBlocks() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) SetBlocks(v BlockWithId_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewBlocks sets the blocks field to a newly
 // allocated BlockWithId_List, preferring placement in s's segment.
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) NewBlocks(n int32) (BlockWithId_List, error) {
-	l, err := NewBlockWithId_List(s.Struct.Segment(), n)
+	l, err := NewBlockWithId_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return BlockWithId_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) RootBlockId() (RootBlockId, error) {
-	p, err := s.Struct.Ptr(1)
-	return RootBlockId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return RootBlockId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) HasRootBlockId() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) SetRootBlockId(v RootBlockId) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewRootBlockId sets the rootBlockId field to a newly
 // allocated RootBlockId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) NewRootBlockId() (RootBlockId, error) {
-	ss, err := NewRootBlockId(s.Struct.Segment())
+	ss, err := NewRootBlockId(capnp.Struct(s).Segment())
 	if err != nil {
 		return RootBlockId{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List is a list of Libp2pHelperInterface_TestDecodeBitswapBlocks_Request.
-type Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List = capnp.StructList[Libp2pHelperInterface_TestDecodeBitswapBlocks_Request]
 
 // NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Request creates a new list of Libp2pHelperInterface_TestDecodeBitswapBlocks_Request.
 func NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List) At(i int) Libp2pHelperInterface_TestDecodeBitswapBlocks_Request {
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List) Set(i int, v Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_List) String() string {
-	str, _ := text.MarshalList(0x8050be5b024b71ef, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_TestDecodeBitswapBlocks_Request](l), err
 }
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_Future is a wrapper for a Libp2pHelperInterface_TestDecodeBitswapBlocks_Request promised by a client call.
@@ -6065,71 +6891,80 @@ type Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_Future struct{ *capnp
 
 func (p Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_Future) Struct() (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request{s}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request(s), err
 }
 
 func (p Libp2pHelperInterface_TestDecodeBitswapBlocks_Request_Future) RootBlockId() RootBlockId_Future {
 	return RootBlockId_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface_TestDecodeBitswapBlocks_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_TestDecodeBitswapBlocks_Response capnp.Struct
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_TestDecodeBitswapBlocks_Response.
 const Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_TypeID = 0xb0506afb32106477
 
 func NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Response(s *capnp.Segment) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response{st}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_TestDecodeBitswapBlocks_Response(s *capnp.Segment) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response{st}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_TestDecodeBitswapBlocks_Response(msg *capnp.Message) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response{root.Struct()}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) String() string {
-	str, _ := text.Marshal(0xb0506afb32106477, s.Struct)
+	str, _ := text.Marshal(0xb0506afb32106477, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_TestDecodeBitswapBlocks_Response {
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) DecodedData() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) HasDecodedData() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) SetDecodedData(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List is a list of Libp2pHelperInterface_TestDecodeBitswapBlocks_Response.
-type Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List = capnp.StructList[Libp2pHelperInterface_TestDecodeBitswapBlocks_Response]
 
 // NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Response creates a new list of Libp2pHelperInterface_TestDecodeBitswapBlocks_Response.
 func NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List) At(i int) Libp2pHelperInterface_TestDecodeBitswapBlocks_Response {
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List) Set(i int, v Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_List) String() string {
-	str, _ := text.MarshalList(0xb0506afb32106477, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_TestDecodeBitswapBlocks_Response](l), err
 }
 
 // Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_Future is a wrapper for a Libp2pHelperInterface_TestDecodeBitswapBlocks_Response promised by a client call.
@@ -6137,54 +6972,64 @@ type Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_Future struct{ *capn
 
 func (p Libp2pHelperInterface_TestDecodeBitswapBlocks_Response_Future) Struct() (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response{s}, err
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response(s), err
 }
 
-type Libp2pHelperInterface_TestEncodeBitswapBlocks struct{ capnp.Struct }
+type Libp2pHelperInterface_TestEncodeBitswapBlocks capnp.Struct
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_TypeID is the unique identifier for the type Libp2pHelperInterface_TestEncodeBitswapBlocks.
 const Libp2pHelperInterface_TestEncodeBitswapBlocks_TypeID = 0xfdbea00423ed6c49
 
 func NewLibp2pHelperInterface_TestEncodeBitswapBlocks(s *capnp.Segment) (Libp2pHelperInterface_TestEncodeBitswapBlocks, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks{st}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks(st), err
 }
 
 func NewRootLibp2pHelperInterface_TestEncodeBitswapBlocks(s *capnp.Segment) (Libp2pHelperInterface_TestEncodeBitswapBlocks, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks{st}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks(st), err
 }
 
 func ReadRootLibp2pHelperInterface_TestEncodeBitswapBlocks(msg *capnp.Message) (Libp2pHelperInterface_TestEncodeBitswapBlocks, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks{root.Struct()}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks) String() string {
-	str, _ := text.Marshal(0xfdbea00423ed6c49, s.Struct)
+	str, _ := text.Marshal(0xfdbea00423ed6c49, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_TestEncodeBitswapBlocks) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_TestEncodeBitswapBlocks {
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_List is a list of Libp2pHelperInterface_TestEncodeBitswapBlocks.
-type Libp2pHelperInterface_TestEncodeBitswapBlocks_List struct{ capnp.List }
+type Libp2pHelperInterface_TestEncodeBitswapBlocks_List = capnp.StructList[Libp2pHelperInterface_TestEncodeBitswapBlocks]
 
 // NewLibp2pHelperInterface_TestEncodeBitswapBlocks creates a new list of Libp2pHelperInterface_TestEncodeBitswapBlocks.
 func NewLibp2pHelperInterface_TestEncodeBitswapBlocks_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_TestEncodeBitswapBlocks_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_List{l}, err
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_List) At(i int) Libp2pHelperInterface_TestEncodeBitswapBlocks {
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_List) Set(i int, v Libp2pHelperInterface_TestEncodeBitswapBlocks) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_List) String() string {
-	str, _ := text.MarshalList(0xfdbea00423ed6c49, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_TestEncodeBitswapBlocks](l), err
 }
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_Future is a wrapper for a Libp2pHelperInterface_TestEncodeBitswapBlocks promised by a client call.
@@ -6192,75 +7037,84 @@ type Libp2pHelperInterface_TestEncodeBitswapBlocks_Future struct{ *capnp.Future 
 
 func (p Libp2pHelperInterface_TestEncodeBitswapBlocks_Future) Struct() (Libp2pHelperInterface_TestEncodeBitswapBlocks, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks{s}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks(s), err
 }
 
-type Libp2pHelperInterface_TestEncodeBitswapBlocks_Request struct{ capnp.Struct }
+type Libp2pHelperInterface_TestEncodeBitswapBlocks_Request capnp.Struct
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_TypeID is the unique identifier for the type Libp2pHelperInterface_TestEncodeBitswapBlocks_Request.
 const Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_TypeID = 0xa6a24bb291f80ca6
 
 func NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Request(s *capnp.Segment) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request{st}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request(st), err
 }
 
 func NewRootLibp2pHelperInterface_TestEncodeBitswapBlocks_Request(s *capnp.Segment) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request{st}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request(st), err
 }
 
 func ReadRootLibp2pHelperInterface_TestEncodeBitswapBlocks_Request(msg *capnp.Message) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request{root.Struct()}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) String() string {
-	str, _ := text.Marshal(0xa6a24bb291f80ca6, s.Struct)
+	str, _ := text.Marshal(0xa6a24bb291f80ca6, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_TestEncodeBitswapBlocks_Request {
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) Data() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) HasData() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) SetData(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) MaxBlockSize() int64 {
-	return int64(s.Struct.Uint64(0))
+	return int64(capnp.Struct(s).Uint64(0))
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) SetMaxBlockSize(v int64) {
-	s.Struct.SetUint64(0, uint64(v))
+	capnp.Struct(s).SetUint64(0, uint64(v))
 }
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List is a list of Libp2pHelperInterface_TestEncodeBitswapBlocks_Request.
-type Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List struct{ capnp.List }
+type Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List = capnp.StructList[Libp2pHelperInterface_TestEncodeBitswapBlocks_Request]
 
 // NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Request creates a new list of Libp2pHelperInterface_TestEncodeBitswapBlocks_Request.
 func NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Request_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List{l}, err
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List) At(i int) Libp2pHelperInterface_TestEncodeBitswapBlocks_Request {
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List) Set(i int, v Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_List) String() string {
-	str, _ := text.MarshalList(0xa6a24bb291f80ca6, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_TestEncodeBitswapBlocks_Request](l), err
 }
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_Future is a wrapper for a Libp2pHelperInterface_TestEncodeBitswapBlocks_Request promised by a client call.
@@ -6268,102 +7122,111 @@ type Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_Future struct{ *capnp
 
 func (p Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_Future) Struct() (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request{s}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request(s), err
 }
 
-type Libp2pHelperInterface_TestEncodeBitswapBlocks_Response struct{ capnp.Struct }
+type Libp2pHelperInterface_TestEncodeBitswapBlocks_Response capnp.Struct
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_TypeID is the unique identifier for the type Libp2pHelperInterface_TestEncodeBitswapBlocks_Response.
 const Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_TypeID = 0xc2cfafb29b55e5d3
 
 func NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Response(s *capnp.Segment) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response{st}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response(st), err
 }
 
 func NewRootLibp2pHelperInterface_TestEncodeBitswapBlocks_Response(s *capnp.Segment) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response{st}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response(st), err
 }
 
 func ReadRootLibp2pHelperInterface_TestEncodeBitswapBlocks_Response(msg *capnp.Message) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response{root.Struct()}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) String() string {
-	str, _ := text.Marshal(0xc2cfafb29b55e5d3, s.Struct)
+	str, _ := text.Marshal(0xc2cfafb29b55e5d3, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_TestEncodeBitswapBlocks_Response {
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) Blocks() (BlockWithId_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return BlockWithId_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return BlockWithId_List(p.List()), err
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) HasBlocks() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) SetBlocks(v BlockWithId_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewBlocks sets the blocks field to a newly
 // allocated BlockWithId_List, preferring placement in s's segment.
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) NewBlocks(n int32) (BlockWithId_List, error) {
-	l, err := NewBlockWithId_List(s.Struct.Segment(), n)
+	l, err := NewBlockWithId_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return BlockWithId_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) RootBlockId() (RootBlockId, error) {
-	p, err := s.Struct.Ptr(1)
-	return RootBlockId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return RootBlockId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) HasRootBlockId() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) SetRootBlockId(v RootBlockId) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewRootBlockId sets the rootBlockId field to a newly
 // allocated RootBlockId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) NewRootBlockId() (RootBlockId, error) {
-	ss, err := NewRootBlockId(s.Struct.Segment())
+	ss, err := NewRootBlockId(capnp.Struct(s).Segment())
 	if err != nil {
 		return RootBlockId{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List is a list of Libp2pHelperInterface_TestEncodeBitswapBlocks_Response.
-type Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List struct{ capnp.List }
+type Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List = capnp.StructList[Libp2pHelperInterface_TestEncodeBitswapBlocks_Response]
 
 // NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Response creates a new list of Libp2pHelperInterface_TestEncodeBitswapBlocks_Response.
 func NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Response_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List{l}, err
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List) At(i int) Libp2pHelperInterface_TestEncodeBitswapBlocks_Response {
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List) Set(i int, v Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_List) String() string {
-	str, _ := text.MarshalList(0xc2cfafb29b55e5d3, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_TestEncodeBitswapBlocks_Response](l), err
 }
 
 // Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_Future is a wrapper for a Libp2pHelperInterface_TestEncodeBitswapBlocks_Response promised by a client call.
@@ -6371,90 +7234,99 @@ type Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_Future struct{ *capn
 
 func (p Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_Future) Struct() (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response{s}, err
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response(s), err
 }
 
 func (p Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_Future) RootBlockId() RootBlockId_Future {
 	return RootBlockId_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface_Validation struct{ capnp.Struct }
+type Libp2pHelperInterface_Validation capnp.Struct
 
 // Libp2pHelperInterface_Validation_TypeID is the unique identifier for the type Libp2pHelperInterface_Validation.
 const Libp2pHelperInterface_Validation_TypeID = 0x89d8e42d7f3a4f67
 
 func NewLibp2pHelperInterface_Validation(s *capnp.Segment) (Libp2pHelperInterface_Validation, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_Validation{st}, err
+	return Libp2pHelperInterface_Validation(st), err
 }
 
 func NewRootLibp2pHelperInterface_Validation(s *capnp.Segment) (Libp2pHelperInterface_Validation, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_Validation{st}, err
+	return Libp2pHelperInterface_Validation(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Validation(msg *capnp.Message) (Libp2pHelperInterface_Validation, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Validation{root.Struct()}, err
+	return Libp2pHelperInterface_Validation(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Validation) String() string {
-	str, _ := text.Marshal(0x89d8e42d7f3a4f67, s.Struct)
+	str, _ := text.Marshal(0x89d8e42d7f3a4f67, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Validation) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Validation) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Validation {
+	return Libp2pHelperInterface_Validation(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Validation) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_Validation) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Validation) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Validation) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_Validation) ValidationId() (ValidationId, error) {
-	p, err := s.Struct.Ptr(0)
-	return ValidationId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return ValidationId(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Validation) HasValidationId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Validation) SetValidationId(v ValidationId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewValidationId sets the validationId field to a newly
 // allocated ValidationId struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Validation) NewValidationId() (ValidationId, error) {
-	ss, err := NewValidationId(s.Struct.Segment())
+	ss, err := NewValidationId(capnp.Struct(s).Segment())
 	if err != nil {
 		return ValidationId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_Validation) Result() ValidationResult {
-	return ValidationResult(s.Struct.Uint16(0))
+	return ValidationResult(capnp.Struct(s).Uint16(0))
 }
 
 func (s Libp2pHelperInterface_Validation) SetResult(v ValidationResult) {
-	s.Struct.SetUint16(0, uint16(v))
+	capnp.Struct(s).SetUint16(0, uint16(v))
 }
 
 // Libp2pHelperInterface_Validation_List is a list of Libp2pHelperInterface_Validation.
-type Libp2pHelperInterface_Validation_List struct{ capnp.List }
+type Libp2pHelperInterface_Validation_List = capnp.StructList[Libp2pHelperInterface_Validation]
 
 // NewLibp2pHelperInterface_Validation creates a new list of Libp2pHelperInterface_Validation.
 func NewLibp2pHelperInterface_Validation_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Validation_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_Validation_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Validation_List) At(i int) Libp2pHelperInterface_Validation {
-	return Libp2pHelperInterface_Validation{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Validation_List) Set(i int, v Libp2pHelperInterface_Validation) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Validation_List) String() string {
-	str, _ := text.MarshalList(0x89d8e42d7f3a4f67, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Validation](l), err
 }
 
 // Libp2pHelperInterface_Validation_Future is a wrapper for a Libp2pHelperInterface_Validation promised by a client call.
@@ -6462,82 +7334,91 @@ type Libp2pHelperInterface_Validation_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Validation_Future) Struct() (Libp2pHelperInterface_Validation, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Validation{s}, err
+	return Libp2pHelperInterface_Validation(s), err
 }
 
 func (p Libp2pHelperInterface_Validation_Future) ValidationId() ValidationId_Future {
 	return ValidationId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_DeleteResource struct{ capnp.Struct }
+type Libp2pHelperInterface_DeleteResource capnp.Struct
 
 // Libp2pHelperInterface_DeleteResource_TypeID is the unique identifier for the type Libp2pHelperInterface_DeleteResource.
 const Libp2pHelperInterface_DeleteResource_TypeID = 0x86badb3b545b9790
 
 func NewLibp2pHelperInterface_DeleteResource(s *capnp.Segment) (Libp2pHelperInterface_DeleteResource, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_DeleteResource{st}, err
+	return Libp2pHelperInterface_DeleteResource(st), err
 }
 
 func NewRootLibp2pHelperInterface_DeleteResource(s *capnp.Segment) (Libp2pHelperInterface_DeleteResource, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return Libp2pHelperInterface_DeleteResource{st}, err
+	return Libp2pHelperInterface_DeleteResource(st), err
 }
 
 func ReadRootLibp2pHelperInterface_DeleteResource(msg *capnp.Message) (Libp2pHelperInterface_DeleteResource, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_DeleteResource{root.Struct()}, err
+	return Libp2pHelperInterface_DeleteResource(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_DeleteResource) String() string {
-	str, _ := text.Marshal(0x86badb3b545b9790, s.Struct)
+	str, _ := text.Marshal(0x86badb3b545b9790, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_DeleteResource) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_DeleteResource) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_DeleteResource {
+	return Libp2pHelperInterface_DeleteResource(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_DeleteResource) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_DeleteResource) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_DeleteResource) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_DeleteResource) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_DeleteResource) Ids() (RootBlockId_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return RootBlockId_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return RootBlockId_List(p.List()), err
 }
 
 func (s Libp2pHelperInterface_DeleteResource) HasIds() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_DeleteResource) SetIds(v RootBlockId_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewIds sets the ids field to a newly
 // allocated RootBlockId_List, preferring placement in s's segment.
 func (s Libp2pHelperInterface_DeleteResource) NewIds(n int32) (RootBlockId_List, error) {
-	l, err := NewRootBlockId_List(s.Struct.Segment(), n)
+	l, err := NewRootBlockId_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return RootBlockId_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 // Libp2pHelperInterface_DeleteResource_List is a list of Libp2pHelperInterface_DeleteResource.
-type Libp2pHelperInterface_DeleteResource_List struct{ capnp.List }
+type Libp2pHelperInterface_DeleteResource_List = capnp.StructList[Libp2pHelperInterface_DeleteResource]
 
 // NewLibp2pHelperInterface_DeleteResource creates a new list of Libp2pHelperInterface_DeleteResource.
 func NewLibp2pHelperInterface_DeleteResource_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_DeleteResource_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_DeleteResource_List{l}, err
-}
-
-func (s Libp2pHelperInterface_DeleteResource_List) At(i int) Libp2pHelperInterface_DeleteResource {
-	return Libp2pHelperInterface_DeleteResource{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_DeleteResource_List) Set(i int, v Libp2pHelperInterface_DeleteResource) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_DeleteResource_List) String() string {
-	str, _ := text.MarshalList(0x86badb3b545b9790, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_DeleteResource](l), err
 }
 
 // Libp2pHelperInterface_DeleteResource_Future is a wrapper for a Libp2pHelperInterface_DeleteResource promised by a client call.
@@ -6545,86 +7426,187 @@ type Libp2pHelperInterface_DeleteResource_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_DeleteResource_Future) Struct() (Libp2pHelperInterface_DeleteResource, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_DeleteResource{s}, err
+	return Libp2pHelperInterface_DeleteResource(s), err
 }
 
-type Libp2pHelperInterface_DownloadResource struct{ capnp.Struct }
+type Libp2pHelperInterface_HeartbeatPeer capnp.Struct
+
+// Libp2pHelperInterface_HeartbeatPeer_TypeID is the unique identifier for the type Libp2pHelperInterface_HeartbeatPeer.
+const Libp2pHelperInterface_HeartbeatPeer_TypeID = 0xa2ca930f070de840
+
+func NewLibp2pHelperInterface_HeartbeatPeer(s *capnp.Segment) (Libp2pHelperInterface_HeartbeatPeer, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
+	return Libp2pHelperInterface_HeartbeatPeer(st), err
+}
+
+func NewRootLibp2pHelperInterface_HeartbeatPeer(s *capnp.Segment) (Libp2pHelperInterface_HeartbeatPeer, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
+	return Libp2pHelperInterface_HeartbeatPeer(st), err
+}
+
+func ReadRootLibp2pHelperInterface_HeartbeatPeer(msg *capnp.Message) (Libp2pHelperInterface_HeartbeatPeer, error) {
+	root, err := msg.Root()
+	return Libp2pHelperInterface_HeartbeatPeer(root.Struct()), err
+}
+
+func (s Libp2pHelperInterface_HeartbeatPeer) String() string {
+	str, _ := text.Marshal(0xa2ca930f070de840, capnp.Struct(s))
+	return str
+}
+
+func (s Libp2pHelperInterface_HeartbeatPeer) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_HeartbeatPeer) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_HeartbeatPeer {
+	return Libp2pHelperInterface_HeartbeatPeer(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_HeartbeatPeer) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_HeartbeatPeer) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_HeartbeatPeer) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_HeartbeatPeer) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+func (s Libp2pHelperInterface_HeartbeatPeer) Id() (PeerId, error) {
+	p, err := capnp.Struct(s).Ptr(0)
+	return PeerId(p.Struct()), err
+}
+
+func (s Libp2pHelperInterface_HeartbeatPeer) HasId() bool {
+	return capnp.Struct(s).HasPtr(0)
+}
+
+func (s Libp2pHelperInterface_HeartbeatPeer) SetId(v PeerId) error {
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
+}
+
+// NewId sets the id field to a newly
+// allocated PeerId struct, preferring placement in s's segment.
+func (s Libp2pHelperInterface_HeartbeatPeer) NewId() (PeerId, error) {
+	ss, err := NewPeerId(capnp.Struct(s).Segment())
+	if err != nil {
+		return PeerId{}, err
+	}
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+// Libp2pHelperInterface_HeartbeatPeer_List is a list of Libp2pHelperInterface_HeartbeatPeer.
+type Libp2pHelperInterface_HeartbeatPeer_List = capnp.StructList[Libp2pHelperInterface_HeartbeatPeer]
+
+// NewLibp2pHelperInterface_HeartbeatPeer creates a new list of Libp2pHelperInterface_HeartbeatPeer.
+func NewLibp2pHelperInterface_HeartbeatPeer_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_HeartbeatPeer_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
+	return capnp.StructList[Libp2pHelperInterface_HeartbeatPeer](l), err
+}
+
+// Libp2pHelperInterface_HeartbeatPeer_Future is a wrapper for a Libp2pHelperInterface_HeartbeatPeer promised by a client call.
+type Libp2pHelperInterface_HeartbeatPeer_Future struct{ *capnp.Future }
+
+func (p Libp2pHelperInterface_HeartbeatPeer_Future) Struct() (Libp2pHelperInterface_HeartbeatPeer, error) {
+	s, err := p.Future.Struct()
+	return Libp2pHelperInterface_HeartbeatPeer(s), err
+}
+
+func (p Libp2pHelperInterface_HeartbeatPeer_Future) Id() PeerId_Future {
+	return PeerId_Future{Future: p.Future.Field(0, nil)}
+}
+
+type Libp2pHelperInterface_DownloadResource capnp.Struct
 
 // Libp2pHelperInterface_DownloadResource_TypeID is the unique identifier for the type Libp2pHelperInterface_DownloadResource.
 const Libp2pHelperInterface_DownloadResource_TypeID = 0xe2fe4f9a5e1a5358
 
 func NewLibp2pHelperInterface_DownloadResource(s *capnp.Segment) (Libp2pHelperInterface_DownloadResource, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_DownloadResource{st}, err
+	return Libp2pHelperInterface_DownloadResource(st), err
 }
 
 func NewRootLibp2pHelperInterface_DownloadResource(s *capnp.Segment) (Libp2pHelperInterface_DownloadResource, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_DownloadResource{st}, err
+	return Libp2pHelperInterface_DownloadResource(st), err
 }
 
 func ReadRootLibp2pHelperInterface_DownloadResource(msg *capnp.Message) (Libp2pHelperInterface_DownloadResource, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_DownloadResource{root.Struct()}, err
+	return Libp2pHelperInterface_DownloadResource(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_DownloadResource) String() string {
-	str, _ := text.Marshal(0xe2fe4f9a5e1a5358, s.Struct)
+	str, _ := text.Marshal(0xe2fe4f9a5e1a5358, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_DownloadResource) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_DownloadResource) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_DownloadResource {
+	return Libp2pHelperInterface_DownloadResource(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_DownloadResource) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_DownloadResource) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_DownloadResource) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_DownloadResource) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_DownloadResource) Tag() uint8 {
-	return s.Struct.Uint8(0)
+	return capnp.Struct(s).Uint8(0)
 }
 
 func (s Libp2pHelperInterface_DownloadResource) SetTag(v uint8) {
-	s.Struct.SetUint8(0, v)
+	capnp.Struct(s).SetUint8(0, v)
 }
 
 func (s Libp2pHelperInterface_DownloadResource) Ids() (RootBlockId_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return RootBlockId_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return RootBlockId_List(p.List()), err
 }
 
 func (s Libp2pHelperInterface_DownloadResource) HasIds() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_DownloadResource) SetIds(v RootBlockId_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewIds sets the ids field to a newly
 // allocated RootBlockId_List, preferring placement in s's segment.
 func (s Libp2pHelperInterface_DownloadResource) NewIds(n int32) (RootBlockId_List, error) {
-	l, err := NewRootBlockId_List(s.Struct.Segment(), n)
+	l, err := NewRootBlockId_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return RootBlockId_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 // Libp2pHelperInterface_DownloadResource_List is a list of Libp2pHelperInterface_DownloadResource.
-type Libp2pHelperInterface_DownloadResource_List struct{ capnp.List }
+type Libp2pHelperInterface_DownloadResource_List = capnp.StructList[Libp2pHelperInterface_DownloadResource]
 
 // NewLibp2pHelperInterface_DownloadResource creates a new list of Libp2pHelperInterface_DownloadResource.
 func NewLibp2pHelperInterface_DownloadResource_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_DownloadResource_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_DownloadResource_List{l}, err
-}
-
-func (s Libp2pHelperInterface_DownloadResource_List) At(i int) Libp2pHelperInterface_DownloadResource {
-	return Libp2pHelperInterface_DownloadResource{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_DownloadResource_List) Set(i int, v Libp2pHelperInterface_DownloadResource) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_DownloadResource_List) String() string {
-	str, _ := text.MarshalList(0xe2fe4f9a5e1a5358, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_DownloadResource](l), err
 }
 
 // Libp2pHelperInterface_DownloadResource_Future is a wrapper for a Libp2pHelperInterface_DownloadResource promised by a client call.
@@ -6632,75 +7614,84 @@ type Libp2pHelperInterface_DownloadResource_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_DownloadResource_Future) Struct() (Libp2pHelperInterface_DownloadResource, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_DownloadResource{s}, err
+	return Libp2pHelperInterface_DownloadResource(s), err
 }
 
-type Libp2pHelperInterface_AddResource struct{ capnp.Struct }
+type Libp2pHelperInterface_AddResource capnp.Struct
 
 // Libp2pHelperInterface_AddResource_TypeID is the unique identifier for the type Libp2pHelperInterface_AddResource.
 const Libp2pHelperInterface_AddResource_TypeID = 0xb28801bad1dacef0
 
 func NewLibp2pHelperInterface_AddResource(s *capnp.Segment) (Libp2pHelperInterface_AddResource, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_AddResource{st}, err
+	return Libp2pHelperInterface_AddResource(st), err
 }
 
 func NewRootLibp2pHelperInterface_AddResource(s *capnp.Segment) (Libp2pHelperInterface_AddResource, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_AddResource{st}, err
+	return Libp2pHelperInterface_AddResource(st), err
 }
 
 func ReadRootLibp2pHelperInterface_AddResource(msg *capnp.Message) (Libp2pHelperInterface_AddResource, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_AddResource{root.Struct()}, err
+	return Libp2pHelperInterface_AddResource(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_AddResource) String() string {
-	str, _ := text.Marshal(0xb28801bad1dacef0, s.Struct)
+	str, _ := text.Marshal(0xb28801bad1dacef0, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_AddResource) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_AddResource) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_AddResource {
+	return Libp2pHelperInterface_AddResource(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_AddResource) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s Libp2pHelperInterface_AddResource) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_AddResource) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_AddResource) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s Libp2pHelperInterface_AddResource) Tag() uint8 {
-	return s.Struct.Uint8(0)
+	return capnp.Struct(s).Uint8(0)
 }
 
 func (s Libp2pHelperInterface_AddResource) SetTag(v uint8) {
-	s.Struct.SetUint8(0, v)
+	capnp.Struct(s).SetUint8(0, v)
 }
 
 func (s Libp2pHelperInterface_AddResource) Data() ([]byte, error) {
-	p, err := s.Struct.Ptr(0)
+	p, err := capnp.Struct(s).Ptr(0)
 	return []byte(p.Data()), err
 }
 
 func (s Libp2pHelperInterface_AddResource) HasData() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_AddResource) SetData(v []byte) error {
-	return s.Struct.SetData(0, v)
+	return capnp.Struct(s).SetData(0, v)
 }
 
 // Libp2pHelperInterface_AddResource_List is a list of Libp2pHelperInterface_AddResource.
-type Libp2pHelperInterface_AddResource_List struct{ capnp.List }
+type Libp2pHelperInterface_AddResource_List = capnp.StructList[Libp2pHelperInterface_AddResource]
 
 // NewLibp2pHelperInterface_AddResource creates a new list of Libp2pHelperInterface_AddResource.
 func NewLibp2pHelperInterface_AddResource_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_AddResource_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_AddResource_List{l}, err
-}
-
-func (s Libp2pHelperInterface_AddResource_List) At(i int) Libp2pHelperInterface_AddResource {
-	return Libp2pHelperInterface_AddResource{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_AddResource_List) Set(i int, v Libp2pHelperInterface_AddResource) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_AddResource_List) String() string {
-	str, _ := text.MarshalList(0xb28801bad1dacef0, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_AddResource](l), err
 }
 
 // Libp2pHelperInterface_AddResource_Future is a wrapper for a Libp2pHelperInterface_AddResource promised by a client call.
@@ -6708,10 +7699,10 @@ type Libp2pHelperInterface_AddResource_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_AddResource_Future) Struct() (Libp2pHelperInterface_AddResource, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_AddResource{s}, err
+	return Libp2pHelperInterface_AddResource(s), err
 }
 
-type Libp2pHelperInterface_RpcRequest struct{ capnp.Struct }
+type Libp2pHelperInterface_RpcRequest capnp.Struct
 type Libp2pHelperInterface_RpcRequest_Which uint16
 
 const (
@@ -6796,775 +7787,785 @@ const Libp2pHelperInterface_RpcRequest_TypeID = 0xe448fafba2ab92e3
 
 func NewLibp2pHelperInterface_RpcRequest(s *capnp.Segment) (Libp2pHelperInterface_RpcRequest, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return Libp2pHelperInterface_RpcRequest{st}, err
+	return Libp2pHelperInterface_RpcRequest(st), err
 }
 
 func NewRootLibp2pHelperInterface_RpcRequest(s *capnp.Segment) (Libp2pHelperInterface_RpcRequest, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return Libp2pHelperInterface_RpcRequest{st}, err
+	return Libp2pHelperInterface_RpcRequest(st), err
 }
 
 func ReadRootLibp2pHelperInterface_RpcRequest(msg *capnp.Message) (Libp2pHelperInterface_RpcRequest, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_RpcRequest{root.Struct()}, err
+	return Libp2pHelperInterface_RpcRequest(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) String() string {
-	str, _ := text.Marshal(0xe448fafba2ab92e3, s.Struct)
+	str, _ := text.Marshal(0xe448fafba2ab92e3, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_RpcRequest) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_RpcRequest) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_RpcRequest {
+	return Libp2pHelperInterface_RpcRequest(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_RpcRequest) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
 func (s Libp2pHelperInterface_RpcRequest) Which() Libp2pHelperInterface_RpcRequest_Which {
-	return Libp2pHelperInterface_RpcRequest_Which(s.Struct.Uint16(0))
+	return Libp2pHelperInterface_RpcRequest_Which(capnp.Struct(s).Uint16(0))
+}
+func (s Libp2pHelperInterface_RpcRequest) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_RpcRequest) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_RpcRequest) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
 }
 func (s Libp2pHelperInterface_RpcRequest) Header() (RpcMessageHeader, error) {
-	p, err := s.Struct.Ptr(0)
-	return RpcMessageHeader{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return RpcMessageHeader(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasHeader() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetHeader(v RpcMessageHeader) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewHeader sets the header field to a newly
 // allocated RpcMessageHeader struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewHeader() (RpcMessageHeader, error) {
-	ss, err := NewRpcMessageHeader(s.Struct.Segment())
+	ss, err := NewRpcMessageHeader(capnp.Struct(s).Segment())
 	if err != nil {
 		return RpcMessageHeader{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) Configure() (Libp2pHelperInterface_Configure_Request, error) {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		panic("Which() != configure")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_Configure_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_Configure_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasConfigure() bool {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetConfigure(v Libp2pHelperInterface_Configure_Request) error {
-	s.Struct.SetUint16(0, 0)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewConfigure sets the configure field to a newly
 // allocated Libp2pHelperInterface_Configure_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewConfigure() (Libp2pHelperInterface_Configure_Request, error) {
-	s.Struct.SetUint16(0, 0)
-	ss, err := NewLibp2pHelperInterface_Configure_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 0)
+	ss, err := NewLibp2pHelperInterface_Configure_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Configure_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetGatingConfig() (Libp2pHelperInterface_SetGatingConfig_Request, error) {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != setGatingConfig")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_SetGatingConfig_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_SetGatingConfig_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasSetGatingConfig() bool {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetSetGatingConfig(v Libp2pHelperInterface_SetGatingConfig_Request) error {
-	s.Struct.SetUint16(0, 1)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSetGatingConfig sets the setGatingConfig field to a newly
 // allocated Libp2pHelperInterface_SetGatingConfig_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewSetGatingConfig() (Libp2pHelperInterface_SetGatingConfig_Request, error) {
-	s.Struct.SetUint16(0, 1)
-	ss, err := NewLibp2pHelperInterface_SetGatingConfig_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewLibp2pHelperInterface_SetGatingConfig_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_SetGatingConfig_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) Listen() (Libp2pHelperInterface_Listen_Request, error) {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		panic("Which() != listen")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_Listen_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_Listen_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasListen() bool {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetListen(v Libp2pHelperInterface_Listen_Request) error {
-	s.Struct.SetUint16(0, 2)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 2)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewListen sets the listen field to a newly
 // allocated Libp2pHelperInterface_Listen_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewListen() (Libp2pHelperInterface_Listen_Request, error) {
-	s.Struct.SetUint16(0, 2)
-	ss, err := NewLibp2pHelperInterface_Listen_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 2)
+	ss, err := NewLibp2pHelperInterface_Listen_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Listen_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) GetListeningAddrs() (Libp2pHelperInterface_GetListeningAddrs_Request, error) {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		panic("Which() != getListeningAddrs")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_GetListeningAddrs_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_GetListeningAddrs_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasGetListeningAddrs() bool {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetGetListeningAddrs(v Libp2pHelperInterface_GetListeningAddrs_Request) error {
-	s.Struct.SetUint16(0, 3)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 3)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewGetListeningAddrs sets the getListeningAddrs field to a newly
 // allocated Libp2pHelperInterface_GetListeningAddrs_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewGetListeningAddrs() (Libp2pHelperInterface_GetListeningAddrs_Request, error) {
-	s.Struct.SetUint16(0, 3)
-	ss, err := NewLibp2pHelperInterface_GetListeningAddrs_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 3)
+	ss, err := NewLibp2pHelperInterface_GetListeningAddrs_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_GetListeningAddrs_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) BeginAdvertising() (Libp2pHelperInterface_BeginAdvertising_Request, error) {
-	if s.Struct.Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		panic("Which() != beginAdvertising")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_BeginAdvertising_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_BeginAdvertising_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasBeginAdvertising() bool {
-	if s.Struct.Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetBeginAdvertising(v Libp2pHelperInterface_BeginAdvertising_Request) error {
-	s.Struct.SetUint16(0, 4)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 4)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewBeginAdvertising sets the beginAdvertising field to a newly
 // allocated Libp2pHelperInterface_BeginAdvertising_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewBeginAdvertising() (Libp2pHelperInterface_BeginAdvertising_Request, error) {
-	s.Struct.SetUint16(0, 4)
-	ss, err := NewLibp2pHelperInterface_BeginAdvertising_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 4)
+	ss, err := NewLibp2pHelperInterface_BeginAdvertising_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_BeginAdvertising_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) AddPeer() (Libp2pHelperInterface_AddPeer_Request, error) {
-	if s.Struct.Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 5 {
 		panic("Which() != addPeer")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_AddPeer_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_AddPeer_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasAddPeer() bool {
-	if s.Struct.Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 5 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetAddPeer(v Libp2pHelperInterface_AddPeer_Request) error {
-	s.Struct.SetUint16(0, 5)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 5)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewAddPeer sets the addPeer field to a newly
 // allocated Libp2pHelperInterface_AddPeer_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewAddPeer() (Libp2pHelperInterface_AddPeer_Request, error) {
-	s.Struct.SetUint16(0, 5)
-	ss, err := NewLibp2pHelperInterface_AddPeer_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 5)
+	ss, err := NewLibp2pHelperInterface_AddPeer_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_AddPeer_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) ListPeers() (Libp2pHelperInterface_ListPeers_Request, error) {
-	if s.Struct.Uint16(0) != 6 {
+	if capnp.Struct(s).Uint16(0) != 6 {
 		panic("Which() != listPeers")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_ListPeers_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_ListPeers_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasListPeers() bool {
-	if s.Struct.Uint16(0) != 6 {
+	if capnp.Struct(s).Uint16(0) != 6 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetListPeers(v Libp2pHelperInterface_ListPeers_Request) error {
-	s.Struct.SetUint16(0, 6)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 6)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewListPeers sets the listPeers field to a newly
 // allocated Libp2pHelperInterface_ListPeers_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewListPeers() (Libp2pHelperInterface_ListPeers_Request, error) {
-	s.Struct.SetUint16(0, 6)
-	ss, err := NewLibp2pHelperInterface_ListPeers_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 6)
+	ss, err := NewLibp2pHelperInterface_ListPeers_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_ListPeers_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) GenerateKeypair() (Libp2pHelperInterface_GenerateKeypair_Request, error) {
-	if s.Struct.Uint16(0) != 7 {
+	if capnp.Struct(s).Uint16(0) != 7 {
 		panic("Which() != generateKeypair")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_GenerateKeypair_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_GenerateKeypair_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasGenerateKeypair() bool {
-	if s.Struct.Uint16(0) != 7 {
+	if capnp.Struct(s).Uint16(0) != 7 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetGenerateKeypair(v Libp2pHelperInterface_GenerateKeypair_Request) error {
-	s.Struct.SetUint16(0, 7)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 7)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewGenerateKeypair sets the generateKeypair field to a newly
 // allocated Libp2pHelperInterface_GenerateKeypair_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewGenerateKeypair() (Libp2pHelperInterface_GenerateKeypair_Request, error) {
-	s.Struct.SetUint16(0, 7)
-	ss, err := NewLibp2pHelperInterface_GenerateKeypair_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 7)
+	ss, err := NewLibp2pHelperInterface_GenerateKeypair_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_GenerateKeypair_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) Publish() (Libp2pHelperInterface_Publish_Request, error) {
-	if s.Struct.Uint16(0) != 8 {
+	if capnp.Struct(s).Uint16(0) != 8 {
 		panic("Which() != publish")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_Publish_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_Publish_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasPublish() bool {
-	if s.Struct.Uint16(0) != 8 {
+	if capnp.Struct(s).Uint16(0) != 8 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetPublish(v Libp2pHelperInterface_Publish_Request) error {
-	s.Struct.SetUint16(0, 8)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 8)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewPublish sets the publish field to a newly
 // allocated Libp2pHelperInterface_Publish_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewPublish() (Libp2pHelperInterface_Publish_Request, error) {
-	s.Struct.SetUint16(0, 8)
-	ss, err := NewLibp2pHelperInterface_Publish_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 8)
+	ss, err := NewLibp2pHelperInterface_Publish_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Publish_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) Subscribe() (Libp2pHelperInterface_Subscribe_Request, error) {
-	if s.Struct.Uint16(0) != 9 {
+	if capnp.Struct(s).Uint16(0) != 9 {
 		panic("Which() != subscribe")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_Subscribe_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_Subscribe_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasSubscribe() bool {
-	if s.Struct.Uint16(0) != 9 {
+	if capnp.Struct(s).Uint16(0) != 9 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetSubscribe(v Libp2pHelperInterface_Subscribe_Request) error {
-	s.Struct.SetUint16(0, 9)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 9)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSubscribe sets the subscribe field to a newly
 // allocated Libp2pHelperInterface_Subscribe_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewSubscribe() (Libp2pHelperInterface_Subscribe_Request, error) {
-	s.Struct.SetUint16(0, 9)
-	ss, err := NewLibp2pHelperInterface_Subscribe_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 9)
+	ss, err := NewLibp2pHelperInterface_Subscribe_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Subscribe_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) Unsubscribe() (Libp2pHelperInterface_Unsubscribe_Request, error) {
-	if s.Struct.Uint16(0) != 10 {
+	if capnp.Struct(s).Uint16(0) != 10 {
 		panic("Which() != unsubscribe")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_Unsubscribe_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_Unsubscribe_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasUnsubscribe() bool {
-	if s.Struct.Uint16(0) != 10 {
+	if capnp.Struct(s).Uint16(0) != 10 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetUnsubscribe(v Libp2pHelperInterface_Unsubscribe_Request) error {
-	s.Struct.SetUint16(0, 10)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 10)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewUnsubscribe sets the unsubscribe field to a newly
 // allocated Libp2pHelperInterface_Unsubscribe_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewUnsubscribe() (Libp2pHelperInterface_Unsubscribe_Request, error) {
-	s.Struct.SetUint16(0, 10)
-	ss, err := NewLibp2pHelperInterface_Unsubscribe_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 10)
+	ss, err := NewLibp2pHelperInterface_Unsubscribe_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Unsubscribe_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) AddStreamHandler() (Libp2pHelperInterface_AddStreamHandler_Request, error) {
-	if s.Struct.Uint16(0) != 11 {
+	if capnp.Struct(s).Uint16(0) != 11 {
 		panic("Which() != addStreamHandler")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_AddStreamHandler_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_AddStreamHandler_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasAddStreamHandler() bool {
-	if s.Struct.Uint16(0) != 11 {
+	if capnp.Struct(s).Uint16(0) != 11 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetAddStreamHandler(v Libp2pHelperInterface_AddStreamHandler_Request) error {
-	s.Struct.SetUint16(0, 11)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 11)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewAddStreamHandler sets the addStreamHandler field to a newly
 // allocated Libp2pHelperInterface_AddStreamHandler_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewAddStreamHandler() (Libp2pHelperInterface_AddStreamHandler_Request, error) {
-	s.Struct.SetUint16(0, 11)
-	ss, err := NewLibp2pHelperInterface_AddStreamHandler_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 11)
+	ss, err := NewLibp2pHelperInterface_AddStreamHandler_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_AddStreamHandler_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) RemoveStreamHandler() (Libp2pHelperInterface_RemoveStreamHandler_Request, error) {
-	if s.Struct.Uint16(0) != 12 {
+	if capnp.Struct(s).Uint16(0) != 12 {
 		panic("Which() != removeStreamHandler")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_RemoveStreamHandler_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_RemoveStreamHandler_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasRemoveStreamHandler() bool {
-	if s.Struct.Uint16(0) != 12 {
+	if capnp.Struct(s).Uint16(0) != 12 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetRemoveStreamHandler(v Libp2pHelperInterface_RemoveStreamHandler_Request) error {
-	s.Struct.SetUint16(0, 12)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 12)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewRemoveStreamHandler sets the removeStreamHandler field to a newly
 // allocated Libp2pHelperInterface_RemoveStreamHandler_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewRemoveStreamHandler() (Libp2pHelperInterface_RemoveStreamHandler_Request, error) {
-	s.Struct.SetUint16(0, 12)
-	ss, err := NewLibp2pHelperInterface_RemoveStreamHandler_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 12)
+	ss, err := NewLibp2pHelperInterface_RemoveStreamHandler_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_RemoveStreamHandler_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) OpenStream() (Libp2pHelperInterface_OpenStream_Request, error) {
-	if s.Struct.Uint16(0) != 13 {
+	if capnp.Struct(s).Uint16(0) != 13 {
 		panic("Which() != openStream")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_OpenStream_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_OpenStream_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasOpenStream() bool {
-	if s.Struct.Uint16(0) != 13 {
+	if capnp.Struct(s).Uint16(0) != 13 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetOpenStream(v Libp2pHelperInterface_OpenStream_Request) error {
-	s.Struct.SetUint16(0, 13)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 13)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewOpenStream sets the openStream field to a newly
 // allocated Libp2pHelperInterface_OpenStream_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewOpenStream() (Libp2pHelperInterface_OpenStream_Request, error) {
-	s.Struct.SetUint16(0, 13)
-	ss, err := NewLibp2pHelperInterface_OpenStream_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 13)
+	ss, err := NewLibp2pHelperInterface_OpenStream_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_OpenStream_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) CloseStream() (Libp2pHelperInterface_CloseStream_Request, error) {
-	if s.Struct.Uint16(0) != 14 {
+	if capnp.Struct(s).Uint16(0) != 14 {
 		panic("Which() != closeStream")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_CloseStream_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_CloseStream_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasCloseStream() bool {
-	if s.Struct.Uint16(0) != 14 {
+	if capnp.Struct(s).Uint16(0) != 14 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetCloseStream(v Libp2pHelperInterface_CloseStream_Request) error {
-	s.Struct.SetUint16(0, 14)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 14)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewCloseStream sets the closeStream field to a newly
 // allocated Libp2pHelperInterface_CloseStream_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewCloseStream() (Libp2pHelperInterface_CloseStream_Request, error) {
-	s.Struct.SetUint16(0, 14)
-	ss, err := NewLibp2pHelperInterface_CloseStream_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 14)
+	ss, err := NewLibp2pHelperInterface_CloseStream_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_CloseStream_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) ResetStream() (Libp2pHelperInterface_ResetStream_Request, error) {
-	if s.Struct.Uint16(0) != 15 {
+	if capnp.Struct(s).Uint16(0) != 15 {
 		panic("Which() != resetStream")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_ResetStream_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_ResetStream_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasResetStream() bool {
-	if s.Struct.Uint16(0) != 15 {
+	if capnp.Struct(s).Uint16(0) != 15 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetResetStream(v Libp2pHelperInterface_ResetStream_Request) error {
-	s.Struct.SetUint16(0, 15)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 15)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewResetStream sets the resetStream field to a newly
 // allocated Libp2pHelperInterface_ResetStream_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewResetStream() (Libp2pHelperInterface_ResetStream_Request, error) {
-	s.Struct.SetUint16(0, 15)
-	ss, err := NewLibp2pHelperInterface_ResetStream_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 15)
+	ss, err := NewLibp2pHelperInterface_ResetStream_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_ResetStream_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SendStream() (Libp2pHelperInterface_SendStream_Request, error) {
-	if s.Struct.Uint16(0) != 16 {
+	if capnp.Struct(s).Uint16(0) != 16 {
 		panic("Which() != sendStream")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_SendStream_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_SendStream_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasSendStream() bool {
-	if s.Struct.Uint16(0) != 16 {
+	if capnp.Struct(s).Uint16(0) != 16 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetSendStream(v Libp2pHelperInterface_SendStream_Request) error {
-	s.Struct.SetUint16(0, 16)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 16)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSendStream sets the sendStream field to a newly
 // allocated Libp2pHelperInterface_SendStream_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewSendStream() (Libp2pHelperInterface_SendStream_Request, error) {
-	s.Struct.SetUint16(0, 16)
-	ss, err := NewLibp2pHelperInterface_SendStream_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 16)
+	ss, err := NewLibp2pHelperInterface_SendStream_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_SendStream_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetNodeStatus() (Libp2pHelperInterface_SetNodeStatus_Request, error) {
-	if s.Struct.Uint16(0) != 17 {
+	if capnp.Struct(s).Uint16(0) != 17 {
 		panic("Which() != setNodeStatus")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_SetNodeStatus_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_SetNodeStatus_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasSetNodeStatus() bool {
-	if s.Struct.Uint16(0) != 17 {
+	if capnp.Struct(s).Uint16(0) != 17 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetSetNodeStatus(v Libp2pHelperInterface_SetNodeStatus_Request) error {
-	s.Struct.SetUint16(0, 17)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 17)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSetNodeStatus sets the setNodeStatus field to a newly
 // allocated Libp2pHelperInterface_SetNodeStatus_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewSetNodeStatus() (Libp2pHelperInterface_SetNodeStatus_Request, error) {
-	s.Struct.SetUint16(0, 17)
-	ss, err := NewLibp2pHelperInterface_SetNodeStatus_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 17)
+	ss, err := NewLibp2pHelperInterface_SetNodeStatus_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_SetNodeStatus_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) GetPeerNodeStatus() (Libp2pHelperInterface_GetPeerNodeStatus_Request, error) {
-	if s.Struct.Uint16(0) != 18 {
+	if capnp.Struct(s).Uint16(0) != 18 {
 		panic("Which() != getPeerNodeStatus")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_GetPeerNodeStatus_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_GetPeerNodeStatus_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasGetPeerNodeStatus() bool {
-	if s.Struct.Uint16(0) != 18 {
+	if capnp.Struct(s).Uint16(0) != 18 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetGetPeerNodeStatus(v Libp2pHelperInterface_GetPeerNodeStatus_Request) error {
-	s.Struct.SetUint16(0, 18)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 18)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewGetPeerNodeStatus sets the getPeerNodeStatus field to a newly
 // allocated Libp2pHelperInterface_GetPeerNodeStatus_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewGetPeerNodeStatus() (Libp2pHelperInterface_GetPeerNodeStatus_Request, error) {
-	s.Struct.SetUint16(0, 18)
-	ss, err := NewLibp2pHelperInterface_GetPeerNodeStatus_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 18)
+	ss, err := NewLibp2pHelperInterface_GetPeerNodeStatus_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_GetPeerNodeStatus_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) BandwidthInfo() (Libp2pHelperInterface_BandwidthInfo_Request, error) {
-	if s.Struct.Uint16(0) != 19 {
+	if capnp.Struct(s).Uint16(0) != 19 {
 		panic("Which() != bandwidthInfo")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_BandwidthInfo_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_BandwidthInfo_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasBandwidthInfo() bool {
-	if s.Struct.Uint16(0) != 19 {
+	if capnp.Struct(s).Uint16(0) != 19 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetBandwidthInfo(v Libp2pHelperInterface_BandwidthInfo_Request) error {
-	s.Struct.SetUint16(0, 19)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 19)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewBandwidthInfo sets the bandwidthInfo field to a newly
 // allocated Libp2pHelperInterface_BandwidthInfo_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewBandwidthInfo() (Libp2pHelperInterface_BandwidthInfo_Request, error) {
-	s.Struct.SetUint16(0, 19)
-	ss, err := NewLibp2pHelperInterface_BandwidthInfo_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 19)
+	ss, err := NewLibp2pHelperInterface_BandwidthInfo_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_BandwidthInfo_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) TestDecodeBitswapBlocks() (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request, error) {
-	if s.Struct.Uint16(0) != 20 {
+	if capnp.Struct(s).Uint16(0) != 20 {
 		panic("Which() != testDecodeBitswapBlocks")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasTestDecodeBitswapBlocks() bool {
-	if s.Struct.Uint16(0) != 20 {
+	if capnp.Struct(s).Uint16(0) != 20 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetTestDecodeBitswapBlocks(v Libp2pHelperInterface_TestDecodeBitswapBlocks_Request) error {
-	s.Struct.SetUint16(0, 20)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 20)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewTestDecodeBitswapBlocks sets the testDecodeBitswapBlocks field to a newly
 // allocated Libp2pHelperInterface_TestDecodeBitswapBlocks_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewTestDecodeBitswapBlocks() (Libp2pHelperInterface_TestDecodeBitswapBlocks_Request, error) {
-	s.Struct.SetUint16(0, 20)
-	ss, err := NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 20)
+	ss, err := NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_TestDecodeBitswapBlocks_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) TestEncodeBitswapBlocks() (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request, error) {
-	if s.Struct.Uint16(0) != 21 {
+	if capnp.Struct(s).Uint16(0) != 21 {
 		panic("Which() != testEncodeBitswapBlocks")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcRequest) HasTestEncodeBitswapBlocks() bool {
-	if s.Struct.Uint16(0) != 21 {
+	if capnp.Struct(s).Uint16(0) != 21 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcRequest) SetTestEncodeBitswapBlocks(v Libp2pHelperInterface_TestEncodeBitswapBlocks_Request) error {
-	s.Struct.SetUint16(0, 21)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 21)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewTestEncodeBitswapBlocks sets the testEncodeBitswapBlocks field to a newly
 // allocated Libp2pHelperInterface_TestEncodeBitswapBlocks_Request struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcRequest) NewTestEncodeBitswapBlocks() (Libp2pHelperInterface_TestEncodeBitswapBlocks_Request, error) {
-	s.Struct.SetUint16(0, 21)
-	ss, err := NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Request(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 21)
+	ss, err := NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Request(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_RpcRequest_List is a list of Libp2pHelperInterface_RpcRequest.
-type Libp2pHelperInterface_RpcRequest_List struct{ capnp.List }
+type Libp2pHelperInterface_RpcRequest_List = capnp.StructList[Libp2pHelperInterface_RpcRequest]
 
 // NewLibp2pHelperInterface_RpcRequest creates a new list of Libp2pHelperInterface_RpcRequest.
 func NewLibp2pHelperInterface_RpcRequest_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_RpcRequest_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_RpcRequest_List{l}, err
-}
-
-func (s Libp2pHelperInterface_RpcRequest_List) At(i int) Libp2pHelperInterface_RpcRequest {
-	return Libp2pHelperInterface_RpcRequest{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_RpcRequest_List) Set(i int, v Libp2pHelperInterface_RpcRequest) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_RpcRequest_List) String() string {
-	str, _ := text.MarshalList(0xe448fafba2ab92e3, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_RpcRequest](l), err
 }
 
 // Libp2pHelperInterface_RpcRequest_Future is a wrapper for a Libp2pHelperInterface_RpcRequest promised by a client call.
@@ -7572,7 +8573,7 @@ type Libp2pHelperInterface_RpcRequest_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_RpcRequest_Future) Struct() (Libp2pHelperInterface_RpcRequest, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_RpcRequest{s}, err
+	return Libp2pHelperInterface_RpcRequest(s), err
 }
 
 func (p Libp2pHelperInterface_RpcRequest_Future) Header() RpcMessageHeader_Future {
@@ -7667,7 +8668,7 @@ func (p Libp2pHelperInterface_RpcRequest_Future) TestEncodeBitswapBlocks() Libp2
 	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Request_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface_RpcResponseSuccess struct{ capnp.Struct }
+type Libp2pHelperInterface_RpcResponseSuccess capnp.Struct
 type Libp2pHelperInterface_RpcResponseSuccess_Which uint16
 
 const (
@@ -7752,751 +8753,761 @@ const Libp2pHelperInterface_RpcResponseSuccess_TypeID = 0xaa166667db5b6b9d
 
 func NewLibp2pHelperInterface_RpcResponseSuccess(s *capnp.Segment) (Libp2pHelperInterface_RpcResponseSuccess, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_RpcResponseSuccess{st}, err
+	return Libp2pHelperInterface_RpcResponseSuccess(st), err
 }
 
 func NewRootLibp2pHelperInterface_RpcResponseSuccess(s *capnp.Segment) (Libp2pHelperInterface_RpcResponseSuccess, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_RpcResponseSuccess{st}, err
+	return Libp2pHelperInterface_RpcResponseSuccess(st), err
 }
 
 func ReadRootLibp2pHelperInterface_RpcResponseSuccess(msg *capnp.Message) (Libp2pHelperInterface_RpcResponseSuccess, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_RpcResponseSuccess{root.Struct()}, err
+	return Libp2pHelperInterface_RpcResponseSuccess(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) String() string {
-	str, _ := text.Marshal(0xaa166667db5b6b9d, s.Struct)
+	str, _ := text.Marshal(0xaa166667db5b6b9d, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_RpcResponseSuccess) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_RpcResponseSuccess) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_RpcResponseSuccess {
+	return Libp2pHelperInterface_RpcResponseSuccess(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_RpcResponseSuccess) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
 func (s Libp2pHelperInterface_RpcResponseSuccess) Which() Libp2pHelperInterface_RpcResponseSuccess_Which {
-	return Libp2pHelperInterface_RpcResponseSuccess_Which(s.Struct.Uint16(0))
+	return Libp2pHelperInterface_RpcResponseSuccess_Which(capnp.Struct(s).Uint16(0))
+}
+func (s Libp2pHelperInterface_RpcResponseSuccess) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_RpcResponseSuccess) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_RpcResponseSuccess) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
 }
 func (s Libp2pHelperInterface_RpcResponseSuccess) Configure() (Libp2pHelperInterface_Configure_Response, error) {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		panic("Which() != configure")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_Configure_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_Configure_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasConfigure() bool {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetConfigure(v Libp2pHelperInterface_Configure_Response) error {
-	s.Struct.SetUint16(0, 0)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewConfigure sets the configure field to a newly
 // allocated Libp2pHelperInterface_Configure_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewConfigure() (Libp2pHelperInterface_Configure_Response, error) {
-	s.Struct.SetUint16(0, 0)
-	ss, err := NewLibp2pHelperInterface_Configure_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 0)
+	ss, err := NewLibp2pHelperInterface_Configure_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Configure_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetGatingConfig() (Libp2pHelperInterface_SetGatingConfig_Response, error) {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != setGatingConfig")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_SetGatingConfig_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_SetGatingConfig_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasSetGatingConfig() bool {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetSetGatingConfig(v Libp2pHelperInterface_SetGatingConfig_Response) error {
-	s.Struct.SetUint16(0, 1)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewSetGatingConfig sets the setGatingConfig field to a newly
 // allocated Libp2pHelperInterface_SetGatingConfig_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewSetGatingConfig() (Libp2pHelperInterface_SetGatingConfig_Response, error) {
-	s.Struct.SetUint16(0, 1)
-	ss, err := NewLibp2pHelperInterface_SetGatingConfig_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewLibp2pHelperInterface_SetGatingConfig_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_SetGatingConfig_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) Listen() (Libp2pHelperInterface_Listen_Response, error) {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		panic("Which() != listen")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_Listen_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_Listen_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasListen() bool {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetListen(v Libp2pHelperInterface_Listen_Response) error {
-	s.Struct.SetUint16(0, 2)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 2)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewListen sets the listen field to a newly
 // allocated Libp2pHelperInterface_Listen_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewListen() (Libp2pHelperInterface_Listen_Response, error) {
-	s.Struct.SetUint16(0, 2)
-	ss, err := NewLibp2pHelperInterface_Listen_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 2)
+	ss, err := NewLibp2pHelperInterface_Listen_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Listen_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) GetListeningAddrs() (Libp2pHelperInterface_GetListeningAddrs_Response, error) {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		panic("Which() != getListeningAddrs")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_GetListeningAddrs_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_GetListeningAddrs_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasGetListeningAddrs() bool {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetGetListeningAddrs(v Libp2pHelperInterface_GetListeningAddrs_Response) error {
-	s.Struct.SetUint16(0, 3)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 3)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewGetListeningAddrs sets the getListeningAddrs field to a newly
 // allocated Libp2pHelperInterface_GetListeningAddrs_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewGetListeningAddrs() (Libp2pHelperInterface_GetListeningAddrs_Response, error) {
-	s.Struct.SetUint16(0, 3)
-	ss, err := NewLibp2pHelperInterface_GetListeningAddrs_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 3)
+	ss, err := NewLibp2pHelperInterface_GetListeningAddrs_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_GetListeningAddrs_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) BeginAdvertising() (Libp2pHelperInterface_BeginAdvertising_Response, error) {
-	if s.Struct.Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		panic("Which() != beginAdvertising")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_BeginAdvertising_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_BeginAdvertising_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasBeginAdvertising() bool {
-	if s.Struct.Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetBeginAdvertising(v Libp2pHelperInterface_BeginAdvertising_Response) error {
-	s.Struct.SetUint16(0, 4)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 4)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewBeginAdvertising sets the beginAdvertising field to a newly
 // allocated Libp2pHelperInterface_BeginAdvertising_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewBeginAdvertising() (Libp2pHelperInterface_BeginAdvertising_Response, error) {
-	s.Struct.SetUint16(0, 4)
-	ss, err := NewLibp2pHelperInterface_BeginAdvertising_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 4)
+	ss, err := NewLibp2pHelperInterface_BeginAdvertising_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_BeginAdvertising_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) AddPeer() (Libp2pHelperInterface_AddPeer_Response, error) {
-	if s.Struct.Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 5 {
 		panic("Which() != addPeer")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_AddPeer_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_AddPeer_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasAddPeer() bool {
-	if s.Struct.Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 5 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetAddPeer(v Libp2pHelperInterface_AddPeer_Response) error {
-	s.Struct.SetUint16(0, 5)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 5)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewAddPeer sets the addPeer field to a newly
 // allocated Libp2pHelperInterface_AddPeer_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewAddPeer() (Libp2pHelperInterface_AddPeer_Response, error) {
-	s.Struct.SetUint16(0, 5)
-	ss, err := NewLibp2pHelperInterface_AddPeer_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 5)
+	ss, err := NewLibp2pHelperInterface_AddPeer_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_AddPeer_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) ListPeers() (Libp2pHelperInterface_ListPeers_Response, error) {
-	if s.Struct.Uint16(0) != 6 {
+	if capnp.Struct(s).Uint16(0) != 6 {
 		panic("Which() != listPeers")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_ListPeers_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_ListPeers_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasListPeers() bool {
-	if s.Struct.Uint16(0) != 6 {
+	if capnp.Struct(s).Uint16(0) != 6 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetListPeers(v Libp2pHelperInterface_ListPeers_Response) error {
-	s.Struct.SetUint16(0, 6)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 6)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewListPeers sets the listPeers field to a newly
 // allocated Libp2pHelperInterface_ListPeers_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewListPeers() (Libp2pHelperInterface_ListPeers_Response, error) {
-	s.Struct.SetUint16(0, 6)
-	ss, err := NewLibp2pHelperInterface_ListPeers_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 6)
+	ss, err := NewLibp2pHelperInterface_ListPeers_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_ListPeers_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) GenerateKeypair() (Libp2pHelperInterface_GenerateKeypair_Response, error) {
-	if s.Struct.Uint16(0) != 7 {
+	if capnp.Struct(s).Uint16(0) != 7 {
 		panic("Which() != generateKeypair")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_GenerateKeypair_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_GenerateKeypair_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasGenerateKeypair() bool {
-	if s.Struct.Uint16(0) != 7 {
+	if capnp.Struct(s).Uint16(0) != 7 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetGenerateKeypair(v Libp2pHelperInterface_GenerateKeypair_Response) error {
-	s.Struct.SetUint16(0, 7)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 7)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewGenerateKeypair sets the generateKeypair field to a newly
 // allocated Libp2pHelperInterface_GenerateKeypair_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewGenerateKeypair() (Libp2pHelperInterface_GenerateKeypair_Response, error) {
-	s.Struct.SetUint16(0, 7)
-	ss, err := NewLibp2pHelperInterface_GenerateKeypair_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 7)
+	ss, err := NewLibp2pHelperInterface_GenerateKeypair_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_GenerateKeypair_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) Publish() (Libp2pHelperInterface_Publish_Response, error) {
-	if s.Struct.Uint16(0) != 8 {
+	if capnp.Struct(s).Uint16(0) != 8 {
 		panic("Which() != publish")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_Publish_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_Publish_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasPublish() bool {
-	if s.Struct.Uint16(0) != 8 {
+	if capnp.Struct(s).Uint16(0) != 8 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetPublish(v Libp2pHelperInterface_Publish_Response) error {
-	s.Struct.SetUint16(0, 8)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 8)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPublish sets the publish field to a newly
 // allocated Libp2pHelperInterface_Publish_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewPublish() (Libp2pHelperInterface_Publish_Response, error) {
-	s.Struct.SetUint16(0, 8)
-	ss, err := NewLibp2pHelperInterface_Publish_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 8)
+	ss, err := NewLibp2pHelperInterface_Publish_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Publish_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) Subscribe() (Libp2pHelperInterface_Subscribe_Response, error) {
-	if s.Struct.Uint16(0) != 9 {
+	if capnp.Struct(s).Uint16(0) != 9 {
 		panic("Which() != subscribe")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_Subscribe_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_Subscribe_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasSubscribe() bool {
-	if s.Struct.Uint16(0) != 9 {
+	if capnp.Struct(s).Uint16(0) != 9 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetSubscribe(v Libp2pHelperInterface_Subscribe_Response) error {
-	s.Struct.SetUint16(0, 9)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 9)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewSubscribe sets the subscribe field to a newly
 // allocated Libp2pHelperInterface_Subscribe_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewSubscribe() (Libp2pHelperInterface_Subscribe_Response, error) {
-	s.Struct.SetUint16(0, 9)
-	ss, err := NewLibp2pHelperInterface_Subscribe_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 9)
+	ss, err := NewLibp2pHelperInterface_Subscribe_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Subscribe_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) Unsubscribe() (Libp2pHelperInterface_Unsubscribe_Response, error) {
-	if s.Struct.Uint16(0) != 10 {
+	if capnp.Struct(s).Uint16(0) != 10 {
 		panic("Which() != unsubscribe")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_Unsubscribe_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_Unsubscribe_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasUnsubscribe() bool {
-	if s.Struct.Uint16(0) != 10 {
+	if capnp.Struct(s).Uint16(0) != 10 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetUnsubscribe(v Libp2pHelperInterface_Unsubscribe_Response) error {
-	s.Struct.SetUint16(0, 10)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 10)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewUnsubscribe sets the unsubscribe field to a newly
 // allocated Libp2pHelperInterface_Unsubscribe_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewUnsubscribe() (Libp2pHelperInterface_Unsubscribe_Response, error) {
-	s.Struct.SetUint16(0, 10)
-	ss, err := NewLibp2pHelperInterface_Unsubscribe_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 10)
+	ss, err := NewLibp2pHelperInterface_Unsubscribe_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Unsubscribe_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) AddStreamHandler() (Libp2pHelperInterface_AddStreamHandler_Response, error) {
-	if s.Struct.Uint16(0) != 11 {
+	if capnp.Struct(s).Uint16(0) != 11 {
 		panic("Which() != addStreamHandler")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_AddStreamHandler_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_AddStreamHandler_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasAddStreamHandler() bool {
-	if s.Struct.Uint16(0) != 11 {
+	if capnp.Struct(s).Uint16(0) != 11 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetAddStreamHandler(v Libp2pHelperInterface_AddStreamHandler_Response) error {
-	s.Struct.SetUint16(0, 11)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 11)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewAddStreamHandler sets the addStreamHandler field to a newly
 // allocated Libp2pHelperInterface_AddStreamHandler_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewAddStreamHandler() (Libp2pHelperInterface_AddStreamHandler_Response, error) {
-	s.Struct.SetUint16(0, 11)
-	ss, err := NewLibp2pHelperInterface_AddStreamHandler_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 11)
+	ss, err := NewLibp2pHelperInterface_AddStreamHandler_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_AddStreamHandler_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) RemoveStreamHandler() (Libp2pHelperInterface_RemoveStreamHandler_Response, error) {
-	if s.Struct.Uint16(0) != 12 {
+	if capnp.Struct(s).Uint16(0) != 12 {
 		panic("Which() != removeStreamHandler")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_RemoveStreamHandler_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_RemoveStreamHandler_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasRemoveStreamHandler() bool {
-	if s.Struct.Uint16(0) != 12 {
+	if capnp.Struct(s).Uint16(0) != 12 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetRemoveStreamHandler(v Libp2pHelperInterface_RemoveStreamHandler_Response) error {
-	s.Struct.SetUint16(0, 12)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 12)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewRemoveStreamHandler sets the removeStreamHandler field to a newly
 // allocated Libp2pHelperInterface_RemoveStreamHandler_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewRemoveStreamHandler() (Libp2pHelperInterface_RemoveStreamHandler_Response, error) {
-	s.Struct.SetUint16(0, 12)
-	ss, err := NewLibp2pHelperInterface_RemoveStreamHandler_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 12)
+	ss, err := NewLibp2pHelperInterface_RemoveStreamHandler_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_RemoveStreamHandler_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) OpenStream() (Libp2pHelperInterface_OpenStream_Response, error) {
-	if s.Struct.Uint16(0) != 13 {
+	if capnp.Struct(s).Uint16(0) != 13 {
 		panic("Which() != openStream")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_OpenStream_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_OpenStream_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasOpenStream() bool {
-	if s.Struct.Uint16(0) != 13 {
+	if capnp.Struct(s).Uint16(0) != 13 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetOpenStream(v Libp2pHelperInterface_OpenStream_Response) error {
-	s.Struct.SetUint16(0, 13)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 13)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewOpenStream sets the openStream field to a newly
 // allocated Libp2pHelperInterface_OpenStream_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewOpenStream() (Libp2pHelperInterface_OpenStream_Response, error) {
-	s.Struct.SetUint16(0, 13)
-	ss, err := NewLibp2pHelperInterface_OpenStream_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 13)
+	ss, err := NewLibp2pHelperInterface_OpenStream_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_OpenStream_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) CloseStream() (Libp2pHelperInterface_CloseStream_Response, error) {
-	if s.Struct.Uint16(0) != 14 {
+	if capnp.Struct(s).Uint16(0) != 14 {
 		panic("Which() != closeStream")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_CloseStream_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_CloseStream_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasCloseStream() bool {
-	if s.Struct.Uint16(0) != 14 {
+	if capnp.Struct(s).Uint16(0) != 14 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetCloseStream(v Libp2pHelperInterface_CloseStream_Response) error {
-	s.Struct.SetUint16(0, 14)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 14)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewCloseStream sets the closeStream field to a newly
 // allocated Libp2pHelperInterface_CloseStream_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewCloseStream() (Libp2pHelperInterface_CloseStream_Response, error) {
-	s.Struct.SetUint16(0, 14)
-	ss, err := NewLibp2pHelperInterface_CloseStream_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 14)
+	ss, err := NewLibp2pHelperInterface_CloseStream_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_CloseStream_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) ResetStream() (Libp2pHelperInterface_ResetStream_Response, error) {
-	if s.Struct.Uint16(0) != 15 {
+	if capnp.Struct(s).Uint16(0) != 15 {
 		panic("Which() != resetStream")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_ResetStream_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_ResetStream_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasResetStream() bool {
-	if s.Struct.Uint16(0) != 15 {
+	if capnp.Struct(s).Uint16(0) != 15 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetResetStream(v Libp2pHelperInterface_ResetStream_Response) error {
-	s.Struct.SetUint16(0, 15)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 15)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewResetStream sets the resetStream field to a newly
 // allocated Libp2pHelperInterface_ResetStream_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewResetStream() (Libp2pHelperInterface_ResetStream_Response, error) {
-	s.Struct.SetUint16(0, 15)
-	ss, err := NewLibp2pHelperInterface_ResetStream_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 15)
+	ss, err := NewLibp2pHelperInterface_ResetStream_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_ResetStream_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SendStream() (Libp2pHelperInterface_SendStream_Response, error) {
-	if s.Struct.Uint16(0) != 16 {
+	if capnp.Struct(s).Uint16(0) != 16 {
 		panic("Which() != sendStream")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_SendStream_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_SendStream_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasSendStream() bool {
-	if s.Struct.Uint16(0) != 16 {
+	if capnp.Struct(s).Uint16(0) != 16 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetSendStream(v Libp2pHelperInterface_SendStream_Response) error {
-	s.Struct.SetUint16(0, 16)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 16)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewSendStream sets the sendStream field to a newly
 // allocated Libp2pHelperInterface_SendStream_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewSendStream() (Libp2pHelperInterface_SendStream_Response, error) {
-	s.Struct.SetUint16(0, 16)
-	ss, err := NewLibp2pHelperInterface_SendStream_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 16)
+	ss, err := NewLibp2pHelperInterface_SendStream_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_SendStream_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetNodeStatus() (Libp2pHelperInterface_SetNodeStatus_Response, error) {
-	if s.Struct.Uint16(0) != 17 {
+	if capnp.Struct(s).Uint16(0) != 17 {
 		panic("Which() != setNodeStatus")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_SetNodeStatus_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_SetNodeStatus_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasSetNodeStatus() bool {
-	if s.Struct.Uint16(0) != 17 {
+	if capnp.Struct(s).Uint16(0) != 17 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetSetNodeStatus(v Libp2pHelperInterface_SetNodeStatus_Response) error {
-	s.Struct.SetUint16(0, 17)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 17)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewSetNodeStatus sets the setNodeStatus field to a newly
 // allocated Libp2pHelperInterface_SetNodeStatus_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewSetNodeStatus() (Libp2pHelperInterface_SetNodeStatus_Response, error) {
-	s.Struct.SetUint16(0, 17)
-	ss, err := NewLibp2pHelperInterface_SetNodeStatus_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 17)
+	ss, err := NewLibp2pHelperInterface_SetNodeStatus_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_SetNodeStatus_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) GetPeerNodeStatus() (Libp2pHelperInterface_GetPeerNodeStatus_Response, error) {
-	if s.Struct.Uint16(0) != 18 {
+	if capnp.Struct(s).Uint16(0) != 18 {
 		panic("Which() != getPeerNodeStatus")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_GetPeerNodeStatus_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_GetPeerNodeStatus_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasGetPeerNodeStatus() bool {
-	if s.Struct.Uint16(0) != 18 {
+	if capnp.Struct(s).Uint16(0) != 18 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetGetPeerNodeStatus(v Libp2pHelperInterface_GetPeerNodeStatus_Response) error {
-	s.Struct.SetUint16(0, 18)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 18)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewGetPeerNodeStatus sets the getPeerNodeStatus field to a newly
 // allocated Libp2pHelperInterface_GetPeerNodeStatus_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewGetPeerNodeStatus() (Libp2pHelperInterface_GetPeerNodeStatus_Response, error) {
-	s.Struct.SetUint16(0, 18)
-	ss, err := NewLibp2pHelperInterface_GetPeerNodeStatus_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 18)
+	ss, err := NewLibp2pHelperInterface_GetPeerNodeStatus_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_GetPeerNodeStatus_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) BandwidthInfo() (Libp2pHelperInterface_BandwidthInfo_Response, error) {
-	if s.Struct.Uint16(0) != 19 {
+	if capnp.Struct(s).Uint16(0) != 19 {
 		panic("Which() != bandwidthInfo")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_BandwidthInfo_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_BandwidthInfo_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasBandwidthInfo() bool {
-	if s.Struct.Uint16(0) != 19 {
+	if capnp.Struct(s).Uint16(0) != 19 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetBandwidthInfo(v Libp2pHelperInterface_BandwidthInfo_Response) error {
-	s.Struct.SetUint16(0, 19)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 19)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewBandwidthInfo sets the bandwidthInfo field to a newly
 // allocated Libp2pHelperInterface_BandwidthInfo_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewBandwidthInfo() (Libp2pHelperInterface_BandwidthInfo_Response, error) {
-	s.Struct.SetUint16(0, 19)
-	ss, err := NewLibp2pHelperInterface_BandwidthInfo_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 19)
+	ss, err := NewLibp2pHelperInterface_BandwidthInfo_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_BandwidthInfo_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) TestDecodeBitswapBlocks() (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response, error) {
-	if s.Struct.Uint16(0) != 20 {
+	if capnp.Struct(s).Uint16(0) != 20 {
 		panic("Which() != testDecodeBitswapBlocks")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasTestDecodeBitswapBlocks() bool {
-	if s.Struct.Uint16(0) != 20 {
+	if capnp.Struct(s).Uint16(0) != 20 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetTestDecodeBitswapBlocks(v Libp2pHelperInterface_TestDecodeBitswapBlocks_Response) error {
-	s.Struct.SetUint16(0, 20)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 20)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewTestDecodeBitswapBlocks sets the testDecodeBitswapBlocks field to a newly
 // allocated Libp2pHelperInterface_TestDecodeBitswapBlocks_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewTestDecodeBitswapBlocks() (Libp2pHelperInterface_TestDecodeBitswapBlocks_Response, error) {
-	s.Struct.SetUint16(0, 20)
-	ss, err := NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 20)
+	ss, err := NewLibp2pHelperInterface_TestDecodeBitswapBlocks_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_TestDecodeBitswapBlocks_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) TestEncodeBitswapBlocks() (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response, error) {
-	if s.Struct.Uint16(0) != 21 {
+	if capnp.Struct(s).Uint16(0) != 21 {
 		panic("Which() != testEncodeBitswapBlocks")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) HasTestEncodeBitswapBlocks() bool {
-	if s.Struct.Uint16(0) != 21 {
+	if capnp.Struct(s).Uint16(0) != 21 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponseSuccess) SetTestEncodeBitswapBlocks(v Libp2pHelperInterface_TestEncodeBitswapBlocks_Response) error {
-	s.Struct.SetUint16(0, 21)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 21)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewTestEncodeBitswapBlocks sets the testEncodeBitswapBlocks field to a newly
 // allocated Libp2pHelperInterface_TestEncodeBitswapBlocks_Response struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponseSuccess) NewTestEncodeBitswapBlocks() (Libp2pHelperInterface_TestEncodeBitswapBlocks_Response, error) {
-	s.Struct.SetUint16(0, 21)
-	ss, err := NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Response(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 21)
+	ss, err := NewLibp2pHelperInterface_TestEncodeBitswapBlocks_Response(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_RpcResponseSuccess_List is a list of Libp2pHelperInterface_RpcResponseSuccess.
-type Libp2pHelperInterface_RpcResponseSuccess_List struct{ capnp.List }
+type Libp2pHelperInterface_RpcResponseSuccess_List = capnp.StructList[Libp2pHelperInterface_RpcResponseSuccess]
 
 // NewLibp2pHelperInterface_RpcResponseSuccess creates a new list of Libp2pHelperInterface_RpcResponseSuccess.
 func NewLibp2pHelperInterface_RpcResponseSuccess_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_RpcResponseSuccess_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_RpcResponseSuccess_List{l}, err
-}
-
-func (s Libp2pHelperInterface_RpcResponseSuccess_List) At(i int) Libp2pHelperInterface_RpcResponseSuccess {
-	return Libp2pHelperInterface_RpcResponseSuccess{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_RpcResponseSuccess_List) Set(i int, v Libp2pHelperInterface_RpcResponseSuccess) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_RpcResponseSuccess_List) String() string {
-	str, _ := text.MarshalList(0xaa166667db5b6b9d, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_RpcResponseSuccess](l), err
 }
 
 // Libp2pHelperInterface_RpcResponseSuccess_Future is a wrapper for a Libp2pHelperInterface_RpcResponseSuccess promised by a client call.
@@ -8504,7 +9515,7 @@ type Libp2pHelperInterface_RpcResponseSuccess_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_RpcResponseSuccess_Future) Struct() (Libp2pHelperInterface_RpcResponseSuccess, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_RpcResponseSuccess{s}, err
+	return Libp2pHelperInterface_RpcResponseSuccess(s), err
 }
 
 func (p Libp2pHelperInterface_RpcResponseSuccess_Future) Configure() Libp2pHelperInterface_Configure_Response_Future {
@@ -8595,7 +9606,7 @@ func (p Libp2pHelperInterface_RpcResponseSuccess_Future) TestEncodeBitswapBlocks
 	return Libp2pHelperInterface_TestEncodeBitswapBlocks_Response_Future{Future: p.Future.Field(0, nil)}
 }
 
-type Libp2pHelperInterface_RpcResponse struct{ capnp.Struct }
+type Libp2pHelperInterface_RpcResponse capnp.Struct
 type Libp2pHelperInterface_RpcResponse_Which uint16
 
 const (
@@ -8620,128 +9631,138 @@ const Libp2pHelperInterface_RpcResponse_TypeID = 0x824dae3760b93d5d
 
 func NewLibp2pHelperInterface_RpcResponse(s *capnp.Segment) (Libp2pHelperInterface_RpcResponse, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return Libp2pHelperInterface_RpcResponse{st}, err
+	return Libp2pHelperInterface_RpcResponse(st), err
 }
 
 func NewRootLibp2pHelperInterface_RpcResponse(s *capnp.Segment) (Libp2pHelperInterface_RpcResponse, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return Libp2pHelperInterface_RpcResponse{st}, err
+	return Libp2pHelperInterface_RpcResponse(st), err
 }
 
 func ReadRootLibp2pHelperInterface_RpcResponse(msg *capnp.Message) (Libp2pHelperInterface_RpcResponse, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_RpcResponse{root.Struct()}, err
+	return Libp2pHelperInterface_RpcResponse(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponse) String() string {
-	str, _ := text.Marshal(0x824dae3760b93d5d, s.Struct)
+	str, _ := text.Marshal(0x824dae3760b93d5d, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_RpcResponse) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_RpcResponse) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_RpcResponse {
+	return Libp2pHelperInterface_RpcResponse(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_RpcResponse) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
 func (s Libp2pHelperInterface_RpcResponse) Which() Libp2pHelperInterface_RpcResponse_Which {
-	return Libp2pHelperInterface_RpcResponse_Which(s.Struct.Uint16(0))
+	return Libp2pHelperInterface_RpcResponse_Which(capnp.Struct(s).Uint16(0))
+}
+func (s Libp2pHelperInterface_RpcResponse) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_RpcResponse) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_RpcResponse) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
 }
 func (s Libp2pHelperInterface_RpcResponse) Header() (RpcMessageHeader, error) {
-	p, err := s.Struct.Ptr(0)
-	return RpcMessageHeader{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return RpcMessageHeader(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponse) HasHeader() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_RpcResponse) SetHeader(v RpcMessageHeader) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewHeader sets the header field to a newly
 // allocated RpcMessageHeader struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponse) NewHeader() (RpcMessageHeader, error) {
-	ss, err := NewRpcMessageHeader(s.Struct.Segment())
+	ss, err := NewRpcMessageHeader(capnp.Struct(s).Segment())
 	if err != nil {
 		return RpcMessageHeader{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_RpcResponse) Error() (string, error) {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		panic("Which() != error")
 	}
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return p.Text(), err
 }
 
 func (s Libp2pHelperInterface_RpcResponse) HasError() bool {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcResponse) ErrorBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return p.TextBytes(), err
 }
 
 func (s Libp2pHelperInterface_RpcResponse) SetError(v string) error {
-	s.Struct.SetUint16(0, 0)
-	return s.Struct.SetText(1, v)
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetText(1, v)
 }
 
 func (s Libp2pHelperInterface_RpcResponse) Success() (Libp2pHelperInterface_RpcResponseSuccess, error) {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != success")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_RpcResponseSuccess{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_RpcResponseSuccess(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_RpcResponse) HasSuccess() bool {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_RpcResponse) SetSuccess(v Libp2pHelperInterface_RpcResponseSuccess) error {
-	s.Struct.SetUint16(0, 1)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSuccess sets the success field to a newly
 // allocated Libp2pHelperInterface_RpcResponseSuccess struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_RpcResponse) NewSuccess() (Libp2pHelperInterface_RpcResponseSuccess, error) {
-	s.Struct.SetUint16(0, 1)
-	ss, err := NewLibp2pHelperInterface_RpcResponseSuccess(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewLibp2pHelperInterface_RpcResponseSuccess(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_RpcResponseSuccess{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_RpcResponse_List is a list of Libp2pHelperInterface_RpcResponse.
-type Libp2pHelperInterface_RpcResponse_List struct{ capnp.List }
+type Libp2pHelperInterface_RpcResponse_List = capnp.StructList[Libp2pHelperInterface_RpcResponse]
 
 // NewLibp2pHelperInterface_RpcResponse creates a new list of Libp2pHelperInterface_RpcResponse.
 func NewLibp2pHelperInterface_RpcResponse_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_RpcResponse_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_RpcResponse_List{l}, err
-}
-
-func (s Libp2pHelperInterface_RpcResponse_List) At(i int) Libp2pHelperInterface_RpcResponse {
-	return Libp2pHelperInterface_RpcResponse{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_RpcResponse_List) Set(i int, v Libp2pHelperInterface_RpcResponse) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_RpcResponse_List) String() string {
-	str, _ := text.MarshalList(0x824dae3760b93d5d, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_RpcResponse](l), err
 }
 
 // Libp2pHelperInterface_RpcResponse_Future is a wrapper for a Libp2pHelperInterface_RpcResponse promised by a client call.
@@ -8749,7 +9770,7 @@ type Libp2pHelperInterface_RpcResponse_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_RpcResponse_Future) Struct() (Libp2pHelperInterface_RpcResponse, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_RpcResponse{s}, err
+	return Libp2pHelperInterface_RpcResponse(s), err
 }
 
 func (p Libp2pHelperInterface_RpcResponse_Future) Header() RpcMessageHeader_Future {
@@ -8760,7 +9781,7 @@ func (p Libp2pHelperInterface_RpcResponse_Future) Success() Libp2pHelperInterfac
 	return Libp2pHelperInterface_RpcResponseSuccess_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface_PushMessage struct{ capnp.Struct }
+type Libp2pHelperInterface_PushMessage capnp.Struct
 type Libp2pHelperInterface_PushMessage_Which uint16
 
 const (
@@ -8768,10 +9789,11 @@ const (
 	Libp2pHelperInterface_PushMessage_Which_addResource      Libp2pHelperInterface_PushMessage_Which = 1
 	Libp2pHelperInterface_PushMessage_Which_deleteResource   Libp2pHelperInterface_PushMessage_Which = 2
 	Libp2pHelperInterface_PushMessage_Which_downloadResource Libp2pHelperInterface_PushMessage_Which = 3
+	Libp2pHelperInterface_PushMessage_Which_heartbeatPeer    Libp2pHelperInterface_PushMessage_Which = 4
 )
 
 func (w Libp2pHelperInterface_PushMessage_Which) String() string {
-	const s = "validationaddResourcedeleteResourcedownloadResource"
+	const s = "validationaddResourcedeleteResourcedownloadResourceheartbeatPeer"
 	switch w {
 	case Libp2pHelperInterface_PushMessage_Which_validation:
 		return s[0:10]
@@ -8781,6 +9803,8 @@ func (w Libp2pHelperInterface_PushMessage_Which) String() string {
 		return s[21:35]
 	case Libp2pHelperInterface_PushMessage_Which_downloadResource:
 		return s[35:51]
+	case Libp2pHelperInterface_PushMessage_Which_heartbeatPeer:
+		return s[51:64]
 
 	}
 	return "Libp2pHelperInterface_PushMessage_Which(" + strconv.FormatUint(uint64(w), 10) + ")"
@@ -8791,199 +9815,241 @@ const Libp2pHelperInterface_PushMessage_TypeID = 0xbcc32e2f197831bb
 
 func NewLibp2pHelperInterface_PushMessage(s *capnp.Segment) (Libp2pHelperInterface_PushMessage, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return Libp2pHelperInterface_PushMessage{st}, err
+	return Libp2pHelperInterface_PushMessage(st), err
 }
 
 func NewRootLibp2pHelperInterface_PushMessage(s *capnp.Segment) (Libp2pHelperInterface_PushMessage, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return Libp2pHelperInterface_PushMessage{st}, err
+	return Libp2pHelperInterface_PushMessage(st), err
 }
 
 func ReadRootLibp2pHelperInterface_PushMessage(msg *capnp.Message) (Libp2pHelperInterface_PushMessage, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_PushMessage{root.Struct()}, err
+	return Libp2pHelperInterface_PushMessage(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_PushMessage) String() string {
-	str, _ := text.Marshal(0xbcc32e2f197831bb, s.Struct)
+	str, _ := text.Marshal(0xbcc32e2f197831bb, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_PushMessage) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_PushMessage) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_PushMessage {
+	return Libp2pHelperInterface_PushMessage(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_PushMessage) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
 func (s Libp2pHelperInterface_PushMessage) Which() Libp2pHelperInterface_PushMessage_Which {
-	return Libp2pHelperInterface_PushMessage_Which(s.Struct.Uint16(0))
+	return Libp2pHelperInterface_PushMessage_Which(capnp.Struct(s).Uint16(0))
+}
+func (s Libp2pHelperInterface_PushMessage) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_PushMessage) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_PushMessage) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
 }
 func (s Libp2pHelperInterface_PushMessage) Header() (PushMessageHeader, error) {
-	p, err := s.Struct.Ptr(0)
-	return PushMessageHeader{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PushMessageHeader(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_PushMessage) HasHeader() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_PushMessage) SetHeader(v PushMessageHeader) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewHeader sets the header field to a newly
 // allocated PushMessageHeader struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_PushMessage) NewHeader() (PushMessageHeader, error) {
-	ss, err := NewPushMessageHeader(s.Struct.Segment())
+	ss, err := NewPushMessageHeader(capnp.Struct(s).Segment())
 	if err != nil {
 		return PushMessageHeader{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_PushMessage) Validation() (Libp2pHelperInterface_Validation, error) {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		panic("Which() != validation")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_Validation{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_Validation(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_PushMessage) HasValidation() bool {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_PushMessage) SetValidation(v Libp2pHelperInterface_Validation) error {
-	s.Struct.SetUint16(0, 0)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewValidation sets the validation field to a newly
 // allocated Libp2pHelperInterface_Validation struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_PushMessage) NewValidation() (Libp2pHelperInterface_Validation, error) {
-	s.Struct.SetUint16(0, 0)
-	ss, err := NewLibp2pHelperInterface_Validation(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 0)
+	ss, err := NewLibp2pHelperInterface_Validation(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_Validation{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_PushMessage) AddResource() (Libp2pHelperInterface_AddResource, error) {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != addResource")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_AddResource{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_AddResource(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_PushMessage) HasAddResource() bool {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_PushMessage) SetAddResource(v Libp2pHelperInterface_AddResource) error {
-	s.Struct.SetUint16(0, 1)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewAddResource sets the addResource field to a newly
 // allocated Libp2pHelperInterface_AddResource struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_PushMessage) NewAddResource() (Libp2pHelperInterface_AddResource, error) {
-	s.Struct.SetUint16(0, 1)
-	ss, err := NewLibp2pHelperInterface_AddResource(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewLibp2pHelperInterface_AddResource(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_AddResource{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_PushMessage) DeleteResource() (Libp2pHelperInterface_DeleteResource, error) {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		panic("Which() != deleteResource")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_DeleteResource{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_DeleteResource(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_PushMessage) HasDeleteResource() bool {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_PushMessage) SetDeleteResource(v Libp2pHelperInterface_DeleteResource) error {
-	s.Struct.SetUint16(0, 2)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 2)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewDeleteResource sets the deleteResource field to a newly
 // allocated Libp2pHelperInterface_DeleteResource struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_PushMessage) NewDeleteResource() (Libp2pHelperInterface_DeleteResource, error) {
-	s.Struct.SetUint16(0, 2)
-	ss, err := NewLibp2pHelperInterface_DeleteResource(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 2)
+	ss, err := NewLibp2pHelperInterface_DeleteResource(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_DeleteResource{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_PushMessage) DownloadResource() (Libp2pHelperInterface_DownloadResource, error) {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		panic("Which() != downloadResource")
 	}
-	p, err := s.Struct.Ptr(1)
-	return Libp2pHelperInterface_DownloadResource{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_DownloadResource(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_PushMessage) HasDownloadResource() bool {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s Libp2pHelperInterface_PushMessage) SetDownloadResource(v Libp2pHelperInterface_DownloadResource) error {
-	s.Struct.SetUint16(0, 3)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 3)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewDownloadResource sets the downloadResource field to a newly
 // allocated Libp2pHelperInterface_DownloadResource struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_PushMessage) NewDownloadResource() (Libp2pHelperInterface_DownloadResource, error) {
-	s.Struct.SetUint16(0, 3)
-	ss, err := NewLibp2pHelperInterface_DownloadResource(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 3)
+	ss, err := NewLibp2pHelperInterface_DownloadResource(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_DownloadResource{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
+	return ss, err
+}
+
+func (s Libp2pHelperInterface_PushMessage) HeartbeatPeer() (Libp2pHelperInterface_HeartbeatPeer, error) {
+	if capnp.Struct(s).Uint16(0) != 4 {
+		panic("Which() != heartbeatPeer")
+	}
+	p, err := capnp.Struct(s).Ptr(1)
+	return Libp2pHelperInterface_HeartbeatPeer(p.Struct()), err
+}
+
+func (s Libp2pHelperInterface_PushMessage) HasHeartbeatPeer() bool {
+	if capnp.Struct(s).Uint16(0) != 4 {
+		return false
+	}
+	return capnp.Struct(s).HasPtr(1)
+}
+
+func (s Libp2pHelperInterface_PushMessage) SetHeartbeatPeer(v Libp2pHelperInterface_HeartbeatPeer) error {
+	capnp.Struct(s).SetUint16(0, 4)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
+}
+
+// NewHeartbeatPeer sets the heartbeatPeer field to a newly
+// allocated Libp2pHelperInterface_HeartbeatPeer struct, preferring placement in s's segment.
+func (s Libp2pHelperInterface_PushMessage) NewHeartbeatPeer() (Libp2pHelperInterface_HeartbeatPeer, error) {
+	capnp.Struct(s).SetUint16(0, 4)
+	ss, err := NewLibp2pHelperInterface_HeartbeatPeer(capnp.Struct(s).Segment())
+	if err != nil {
+		return Libp2pHelperInterface_HeartbeatPeer{}, err
+	}
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_PushMessage_List is a list of Libp2pHelperInterface_PushMessage.
-type Libp2pHelperInterface_PushMessage_List struct{ capnp.List }
+type Libp2pHelperInterface_PushMessage_List = capnp.StructList[Libp2pHelperInterface_PushMessage]
 
 // NewLibp2pHelperInterface_PushMessage creates a new list of Libp2pHelperInterface_PushMessage.
 func NewLibp2pHelperInterface_PushMessage_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_PushMessage_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2}, sz)
-	return Libp2pHelperInterface_PushMessage_List{l}, err
-}
-
-func (s Libp2pHelperInterface_PushMessage_List) At(i int) Libp2pHelperInterface_PushMessage {
-	return Libp2pHelperInterface_PushMessage{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_PushMessage_List) Set(i int, v Libp2pHelperInterface_PushMessage) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_PushMessage_List) String() string {
-	str, _ := text.MarshalList(0xbcc32e2f197831bb, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_PushMessage](l), err
 }
 
 // Libp2pHelperInterface_PushMessage_Future is a wrapper for a Libp2pHelperInterface_PushMessage promised by a client call.
@@ -8991,7 +10057,7 @@ type Libp2pHelperInterface_PushMessage_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_PushMessage_Future) Struct() (Libp2pHelperInterface_PushMessage, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_PushMessage{s}, err
+	return Libp2pHelperInterface_PushMessage(s), err
 }
 
 func (p Libp2pHelperInterface_PushMessage_Future) Header() PushMessageHeader_Future {
@@ -9014,7 +10080,11 @@ func (p Libp2pHelperInterface_PushMessage_Future) DownloadResource() Libp2pHelpe
 	return Libp2pHelperInterface_DownloadResource_Future{Future: p.Future.Field(1, nil)}
 }
 
-type Libp2pHelperInterface_Message struct{ capnp.Struct }
+func (p Libp2pHelperInterface_PushMessage_Future) HeartbeatPeer() Libp2pHelperInterface_HeartbeatPeer_Future {
+	return Libp2pHelperInterface_HeartbeatPeer_Future{Future: p.Future.Field(1, nil)}
+}
+
+type Libp2pHelperInterface_Message capnp.Struct
 type Libp2pHelperInterface_Message_Which uint16
 
 const (
@@ -9039,111 +10109,121 @@ const Libp2pHelperInterface_Message_TypeID = 0xdd721cc91936b5d8
 
 func NewLibp2pHelperInterface_Message(s *capnp.Segment) (Libp2pHelperInterface_Message, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_Message{st}, err
+	return Libp2pHelperInterface_Message(st), err
 }
 
 func NewRootLibp2pHelperInterface_Message(s *capnp.Segment) (Libp2pHelperInterface_Message, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return Libp2pHelperInterface_Message{st}, err
+	return Libp2pHelperInterface_Message(st), err
 }
 
 func ReadRootLibp2pHelperInterface_Message(msg *capnp.Message) (Libp2pHelperInterface_Message, error) {
 	root, err := msg.Root()
-	return Libp2pHelperInterface_Message{root.Struct()}, err
+	return Libp2pHelperInterface_Message(root.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Message) String() string {
-	str, _ := text.Marshal(0xdd721cc91936b5d8, s.Struct)
+	str, _ := text.Marshal(0xdd721cc91936b5d8, capnp.Struct(s))
 	return str
 }
 
+func (s Libp2pHelperInterface_Message) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (Libp2pHelperInterface_Message) DecodeFromPtr(p capnp.Ptr) Libp2pHelperInterface_Message {
+	return Libp2pHelperInterface_Message(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s Libp2pHelperInterface_Message) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
 func (s Libp2pHelperInterface_Message) Which() Libp2pHelperInterface_Message_Which {
-	return Libp2pHelperInterface_Message_Which(s.Struct.Uint16(0))
+	return Libp2pHelperInterface_Message_Which(capnp.Struct(s).Uint16(0))
+}
+func (s Libp2pHelperInterface_Message) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s Libp2pHelperInterface_Message) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s Libp2pHelperInterface_Message) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
 }
 func (s Libp2pHelperInterface_Message) RpcRequest() (Libp2pHelperInterface_RpcRequest, error) {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		panic("Which() != rpcRequest")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_RpcRequest{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_RpcRequest(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Message) HasRpcRequest() bool {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Message) SetRpcRequest(v Libp2pHelperInterface_RpcRequest) error {
-	s.Struct.SetUint16(0, 0)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewRpcRequest sets the rpcRequest field to a newly
 // allocated Libp2pHelperInterface_RpcRequest struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Message) NewRpcRequest() (Libp2pHelperInterface_RpcRequest, error) {
-	s.Struct.SetUint16(0, 0)
-	ss, err := NewLibp2pHelperInterface_RpcRequest(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 0)
+	ss, err := NewLibp2pHelperInterface_RpcRequest(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_RpcRequest{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s Libp2pHelperInterface_Message) PushMessage() (Libp2pHelperInterface_PushMessage, error) {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != pushMessage")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_PushMessage{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_PushMessage(p.Struct()), err
 }
 
 func (s Libp2pHelperInterface_Message) HasPushMessage() bool {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s Libp2pHelperInterface_Message) SetPushMessage(v Libp2pHelperInterface_PushMessage) error {
-	s.Struct.SetUint16(0, 1)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPushMessage sets the pushMessage field to a newly
 // allocated Libp2pHelperInterface_PushMessage struct, preferring placement in s's segment.
 func (s Libp2pHelperInterface_Message) NewPushMessage() (Libp2pHelperInterface_PushMessage, error) {
-	s.Struct.SetUint16(0, 1)
-	ss, err := NewLibp2pHelperInterface_PushMessage(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewLibp2pHelperInterface_PushMessage(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_PushMessage{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // Libp2pHelperInterface_Message_List is a list of Libp2pHelperInterface_Message.
-type Libp2pHelperInterface_Message_List struct{ capnp.List }
+type Libp2pHelperInterface_Message_List = capnp.StructList[Libp2pHelperInterface_Message]
 
 // NewLibp2pHelperInterface_Message creates a new list of Libp2pHelperInterface_Message.
 func NewLibp2pHelperInterface_Message_List(s *capnp.Segment, sz int32) (Libp2pHelperInterface_Message_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return Libp2pHelperInterface_Message_List{l}, err
-}
-
-func (s Libp2pHelperInterface_Message_List) At(i int) Libp2pHelperInterface_Message {
-	return Libp2pHelperInterface_Message{s.List.Struct(i)}
-}
-
-func (s Libp2pHelperInterface_Message_List) Set(i int, v Libp2pHelperInterface_Message) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s Libp2pHelperInterface_Message_List) String() string {
-	str, _ := text.MarshalList(0xdd721cc91936b5d8, s.List)
-	return str
+	return capnp.StructList[Libp2pHelperInterface_Message](l), err
 }
 
 // Libp2pHelperInterface_Message_Future is a wrapper for a Libp2pHelperInterface_Message promised by a client call.
@@ -9151,7 +10231,7 @@ type Libp2pHelperInterface_Message_Future struct{ *capnp.Future }
 
 func (p Libp2pHelperInterface_Message_Future) Struct() (Libp2pHelperInterface_Message, error) {
 	s, err := p.Future.Struct()
-	return Libp2pHelperInterface_Message{s}, err
+	return Libp2pHelperInterface_Message(s), err
 }
 
 func (p Libp2pHelperInterface_Message_Future) RpcRequest() Libp2pHelperInterface_RpcRequest_Future {
@@ -9162,49 +10242,61 @@ func (p Libp2pHelperInterface_Message_Future) PushMessage() Libp2pHelperInterfac
 	return Libp2pHelperInterface_PushMessage_Future{Future: p.Future.Field(0, nil)}
 }
 
-type DaemonInterface struct{ capnp.Struct }
+type DaemonInterface capnp.Struct
 
 // DaemonInterface_TypeID is the unique identifier for the type DaemonInterface.
 const DaemonInterface_TypeID = 0xaa8c38390c8a53b0
 
 func NewDaemonInterface(s *capnp.Segment) (DaemonInterface, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return DaemonInterface{st}, err
+	return DaemonInterface(st), err
 }
 
 func NewRootDaemonInterface(s *capnp.Segment) (DaemonInterface, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
-	return DaemonInterface{st}, err
+	return DaemonInterface(st), err
 }
 
 func ReadRootDaemonInterface(msg *capnp.Message) (DaemonInterface, error) {
 	root, err := msg.Root()
-	return DaemonInterface{root.Struct()}, err
+	return DaemonInterface(root.Struct()), err
 }
 
 func (s DaemonInterface) String() string {
-	str, _ := text.Marshal(0xaa8c38390c8a53b0, s.Struct)
+	str, _ := text.Marshal(0xaa8c38390c8a53b0, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface) DecodeFromPtr(p capnp.Ptr) DaemonInterface {
+	return DaemonInterface(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
+
 // DaemonInterface_List is a list of DaemonInterface.
-type DaemonInterface_List struct{ capnp.List }
+type DaemonInterface_List = capnp.StructList[DaemonInterface]
 
 // NewDaemonInterface creates a new list of DaemonInterface.
 func NewDaemonInterface_List(s *capnp.Segment, sz int32) (DaemonInterface_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
-	return DaemonInterface_List{l}, err
-}
-
-func (s DaemonInterface_List) At(i int) DaemonInterface { return DaemonInterface{s.List.Struct(i)} }
-
-func (s DaemonInterface_List) Set(i int, v DaemonInterface) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_List) String() string {
-	str, _ := text.MarshalList(0xaa8c38390c8a53b0, s.List)
-	return str
+	return capnp.StructList[DaemonInterface](l), err
 }
 
 // DaemonInterface_Future is a wrapper for a DaemonInterface promised by a client call.
@@ -9212,78 +10304,87 @@ type DaemonInterface_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_Future) Struct() (DaemonInterface, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface{s}, err
+	return DaemonInterface(s), err
 }
 
-type DaemonInterface_PeerConnected struct{ capnp.Struct }
+type DaemonInterface_PeerConnected capnp.Struct
 
 // DaemonInterface_PeerConnected_TypeID is the unique identifier for the type DaemonInterface_PeerConnected.
 const DaemonInterface_PeerConnected_TypeID = 0x82b1f9dcfa3ef5b8
 
 func NewDaemonInterface_PeerConnected(s *capnp.Segment) (DaemonInterface_PeerConnected, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_PeerConnected{st}, err
+	return DaemonInterface_PeerConnected(st), err
 }
 
 func NewRootDaemonInterface_PeerConnected(s *capnp.Segment) (DaemonInterface_PeerConnected, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_PeerConnected{st}, err
+	return DaemonInterface_PeerConnected(st), err
 }
 
 func ReadRootDaemonInterface_PeerConnected(msg *capnp.Message) (DaemonInterface_PeerConnected, error) {
 	root, err := msg.Root()
-	return DaemonInterface_PeerConnected{root.Struct()}, err
+	return DaemonInterface_PeerConnected(root.Struct()), err
 }
 
 func (s DaemonInterface_PeerConnected) String() string {
-	str, _ := text.Marshal(0x82b1f9dcfa3ef5b8, s.Struct)
+	str, _ := text.Marshal(0x82b1f9dcfa3ef5b8, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_PeerConnected) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_PeerConnected) DecodeFromPtr(p capnp.Ptr) DaemonInterface_PeerConnected {
+	return DaemonInterface_PeerConnected(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_PeerConnected) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_PeerConnected) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_PeerConnected) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_PeerConnected) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_PeerConnected) PeerId() (PeerId, error) {
-	p, err := s.Struct.Ptr(0)
-	return PeerId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PeerId(p.Struct()), err
 }
 
 func (s DaemonInterface_PeerConnected) HasPeerId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_PeerConnected) SetPeerId(v PeerId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPeerId sets the peerId field to a newly
 // allocated PeerId struct, preferring placement in s's segment.
 func (s DaemonInterface_PeerConnected) NewPeerId() (PeerId, error) {
-	ss, err := NewPeerId(s.Struct.Segment())
+	ss, err := NewPeerId(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // DaemonInterface_PeerConnected_List is a list of DaemonInterface_PeerConnected.
-type DaemonInterface_PeerConnected_List struct{ capnp.List }
+type DaemonInterface_PeerConnected_List = capnp.StructList[DaemonInterface_PeerConnected]
 
 // NewDaemonInterface_PeerConnected creates a new list of DaemonInterface_PeerConnected.
 func NewDaemonInterface_PeerConnected_List(s *capnp.Segment, sz int32) (DaemonInterface_PeerConnected_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return DaemonInterface_PeerConnected_List{l}, err
-}
-
-func (s DaemonInterface_PeerConnected_List) At(i int) DaemonInterface_PeerConnected {
-	return DaemonInterface_PeerConnected{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_PeerConnected_List) Set(i int, v DaemonInterface_PeerConnected) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_PeerConnected_List) String() string {
-	str, _ := text.MarshalList(0x82b1f9dcfa3ef5b8, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_PeerConnected](l), err
 }
 
 // DaemonInterface_PeerConnected_Future is a wrapper for a DaemonInterface_PeerConnected promised by a client call.
@@ -9291,82 +10392,91 @@ type DaemonInterface_PeerConnected_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_PeerConnected_Future) Struct() (DaemonInterface_PeerConnected, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_PeerConnected{s}, err
+	return DaemonInterface_PeerConnected(s), err
 }
 
 func (p DaemonInterface_PeerConnected_Future) PeerId() PeerId_Future {
 	return PeerId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type DaemonInterface_PeerDisconnected struct{ capnp.Struct }
+type DaemonInterface_PeerDisconnected capnp.Struct
 
 // DaemonInterface_PeerDisconnected_TypeID is the unique identifier for the type DaemonInterface_PeerDisconnected.
 const DaemonInterface_PeerDisconnected_TypeID = 0xfb7ab58e17fecacc
 
 func NewDaemonInterface_PeerDisconnected(s *capnp.Segment) (DaemonInterface_PeerDisconnected, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_PeerDisconnected{st}, err
+	return DaemonInterface_PeerDisconnected(st), err
 }
 
 func NewRootDaemonInterface_PeerDisconnected(s *capnp.Segment) (DaemonInterface_PeerDisconnected, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_PeerDisconnected{st}, err
+	return DaemonInterface_PeerDisconnected(st), err
 }
 
 func ReadRootDaemonInterface_PeerDisconnected(msg *capnp.Message) (DaemonInterface_PeerDisconnected, error) {
 	root, err := msg.Root()
-	return DaemonInterface_PeerDisconnected{root.Struct()}, err
+	return DaemonInterface_PeerDisconnected(root.Struct()), err
 }
 
 func (s DaemonInterface_PeerDisconnected) String() string {
-	str, _ := text.Marshal(0xfb7ab58e17fecacc, s.Struct)
+	str, _ := text.Marshal(0xfb7ab58e17fecacc, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_PeerDisconnected) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_PeerDisconnected) DecodeFromPtr(p capnp.Ptr) DaemonInterface_PeerDisconnected {
+	return DaemonInterface_PeerDisconnected(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_PeerDisconnected) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_PeerDisconnected) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_PeerDisconnected) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_PeerDisconnected) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_PeerDisconnected) PeerId() (PeerId, error) {
-	p, err := s.Struct.Ptr(0)
-	return PeerId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PeerId(p.Struct()), err
 }
 
 func (s DaemonInterface_PeerDisconnected) HasPeerId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_PeerDisconnected) SetPeerId(v PeerId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPeerId sets the peerId field to a newly
 // allocated PeerId struct, preferring placement in s's segment.
 func (s DaemonInterface_PeerDisconnected) NewPeerId() (PeerId, error) {
-	ss, err := NewPeerId(s.Struct.Segment())
+	ss, err := NewPeerId(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // DaemonInterface_PeerDisconnected_List is a list of DaemonInterface_PeerDisconnected.
-type DaemonInterface_PeerDisconnected_List struct{ capnp.List }
+type DaemonInterface_PeerDisconnected_List = capnp.StructList[DaemonInterface_PeerDisconnected]
 
 // NewDaemonInterface_PeerDisconnected creates a new list of DaemonInterface_PeerDisconnected.
 func NewDaemonInterface_PeerDisconnected_List(s *capnp.Segment, sz int32) (DaemonInterface_PeerDisconnected_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return DaemonInterface_PeerDisconnected_List{l}, err
-}
-
-func (s DaemonInterface_PeerDisconnected_List) At(i int) DaemonInterface_PeerDisconnected {
-	return DaemonInterface_PeerDisconnected{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_PeerDisconnected_List) Set(i int, v DaemonInterface_PeerDisconnected) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_PeerDisconnected_List) String() string {
-	str, _ := text.MarshalList(0xfb7ab58e17fecacc, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_PeerDisconnected](l), err
 }
 
 // DaemonInterface_PeerDisconnected_Future is a wrapper for a DaemonInterface_PeerDisconnected promised by a client call.
@@ -9374,191 +10484,200 @@ type DaemonInterface_PeerDisconnected_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_PeerDisconnected_Future) Struct() (DaemonInterface_PeerDisconnected, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_PeerDisconnected{s}, err
+	return DaemonInterface_PeerDisconnected(s), err
 }
 
 func (p DaemonInterface_PeerDisconnected_Future) PeerId() PeerId_Future {
 	return PeerId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type DaemonInterface_GossipReceived struct{ capnp.Struct }
+type DaemonInterface_GossipReceived capnp.Struct
 
 // DaemonInterface_GossipReceived_TypeID is the unique identifier for the type DaemonInterface_GossipReceived.
 const DaemonInterface_GossipReceived_TypeID = 0x8128c52d5468fe3b
 
 func NewDaemonInterface_GossipReceived(s *capnp.Segment) (DaemonInterface_GossipReceived, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 6})
-	return DaemonInterface_GossipReceived{st}, err
+	return DaemonInterface_GossipReceived(st), err
 }
 
 func NewRootDaemonInterface_GossipReceived(s *capnp.Segment) (DaemonInterface_GossipReceived, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 6})
-	return DaemonInterface_GossipReceived{st}, err
+	return DaemonInterface_GossipReceived(st), err
 }
 
 func ReadRootDaemonInterface_GossipReceived(msg *capnp.Message) (DaemonInterface_GossipReceived, error) {
 	root, err := msg.Root()
-	return DaemonInterface_GossipReceived{root.Struct()}, err
+	return DaemonInterface_GossipReceived(root.Struct()), err
 }
 
 func (s DaemonInterface_GossipReceived) String() string {
-	str, _ := text.Marshal(0x8128c52d5468fe3b, s.Struct)
+	str, _ := text.Marshal(0x8128c52d5468fe3b, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_GossipReceived) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_GossipReceived) DecodeFromPtr(p capnp.Ptr) DaemonInterface_GossipReceived {
+	return DaemonInterface_GossipReceived(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_GossipReceived) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_GossipReceived) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_GossipReceived) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_GossipReceived) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_GossipReceived) Sender() (PeerInfo, error) {
-	p, err := s.Struct.Ptr(0)
-	return PeerInfo{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PeerInfo(p.Struct()), err
 }
 
 func (s DaemonInterface_GossipReceived) HasSender() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_GossipReceived) SetSender(v PeerInfo) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewSender sets the sender field to a newly
 // allocated PeerInfo struct, preferring placement in s's segment.
 func (s DaemonInterface_GossipReceived) NewSender() (PeerInfo, error) {
-	ss, err := NewPeerInfo(s.Struct.Segment())
+	ss, err := NewPeerInfo(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerInfo{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_GossipReceived) SeenAt() (UnixNano, error) {
-	p, err := s.Struct.Ptr(1)
-	return UnixNano{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return UnixNano(p.Struct()), err
 }
 
 func (s DaemonInterface_GossipReceived) HasSeenAt() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_GossipReceived) SetSeenAt(v UnixNano) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewSeenAt sets the seenAt field to a newly
 // allocated UnixNano struct, preferring placement in s's segment.
 func (s DaemonInterface_GossipReceived) NewSeenAt() (UnixNano, error) {
-	ss, err := NewUnixNano(s.Struct.Segment())
+	ss, err := NewUnixNano(capnp.Struct(s).Segment())
 	if err != nil {
 		return UnixNano{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_GossipReceived) Expiration() (UnixNano, error) {
-	p, err := s.Struct.Ptr(2)
-	return UnixNano{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(2)
+	return UnixNano(p.Struct()), err
 }
 
 func (s DaemonInterface_GossipReceived) HasExpiration() bool {
-	return s.Struct.HasPtr(2)
+	return capnp.Struct(s).HasPtr(2)
 }
 
 func (s DaemonInterface_GossipReceived) SetExpiration(v UnixNano) error {
-	return s.Struct.SetPtr(2, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(2, capnp.Struct(v).ToPtr())
 }
 
 // NewExpiration sets the expiration field to a newly
 // allocated UnixNano struct, preferring placement in s's segment.
 func (s DaemonInterface_GossipReceived) NewExpiration() (UnixNano, error) {
-	ss, err := NewUnixNano(s.Struct.Segment())
+	ss, err := NewUnixNano(capnp.Struct(s).Segment())
 	if err != nil {
 		return UnixNano{}, err
 	}
-	err = s.Struct.SetPtr(2, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(2, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_GossipReceived) SubscriptionId() (SubscriptionId, error) {
-	p, err := s.Struct.Ptr(3)
-	return SubscriptionId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(3)
+	return SubscriptionId(p.Struct()), err
 }
 
 func (s DaemonInterface_GossipReceived) HasSubscriptionId() bool {
-	return s.Struct.HasPtr(3)
+	return capnp.Struct(s).HasPtr(3)
 }
 
 func (s DaemonInterface_GossipReceived) SetSubscriptionId(v SubscriptionId) error {
-	return s.Struct.SetPtr(3, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(3, capnp.Struct(v).ToPtr())
 }
 
 // NewSubscriptionId sets the subscriptionId field to a newly
 // allocated SubscriptionId struct, preferring placement in s's segment.
 func (s DaemonInterface_GossipReceived) NewSubscriptionId() (SubscriptionId, error) {
-	ss, err := NewSubscriptionId(s.Struct.Segment())
+	ss, err := NewSubscriptionId(capnp.Struct(s).Segment())
 	if err != nil {
 		return SubscriptionId{}, err
 	}
-	err = s.Struct.SetPtr(3, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(3, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_GossipReceived) ValidationId() (ValidationId, error) {
-	p, err := s.Struct.Ptr(4)
-	return ValidationId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(4)
+	return ValidationId(p.Struct()), err
 }
 
 func (s DaemonInterface_GossipReceived) HasValidationId() bool {
-	return s.Struct.HasPtr(4)
+	return capnp.Struct(s).HasPtr(4)
 }
 
 func (s DaemonInterface_GossipReceived) SetValidationId(v ValidationId) error {
-	return s.Struct.SetPtr(4, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(4, capnp.Struct(v).ToPtr())
 }
 
 // NewValidationId sets the validationId field to a newly
 // allocated ValidationId struct, preferring placement in s's segment.
 func (s DaemonInterface_GossipReceived) NewValidationId() (ValidationId, error) {
-	ss, err := NewValidationId(s.Struct.Segment())
+	ss, err := NewValidationId(capnp.Struct(s).Segment())
 	if err != nil {
 		return ValidationId{}, err
 	}
-	err = s.Struct.SetPtr(4, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(4, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_GossipReceived) Data() ([]byte, error) {
-	p, err := s.Struct.Ptr(5)
+	p, err := capnp.Struct(s).Ptr(5)
 	return []byte(p.Data()), err
 }
 
 func (s DaemonInterface_GossipReceived) HasData() bool {
-	return s.Struct.HasPtr(5)
+	return capnp.Struct(s).HasPtr(5)
 }
 
 func (s DaemonInterface_GossipReceived) SetData(v []byte) error {
-	return s.Struct.SetData(5, v)
+	return capnp.Struct(s).SetData(5, v)
 }
 
 // DaemonInterface_GossipReceived_List is a list of DaemonInterface_GossipReceived.
-type DaemonInterface_GossipReceived_List struct{ capnp.List }
+type DaemonInterface_GossipReceived_List = capnp.StructList[DaemonInterface_GossipReceived]
 
 // NewDaemonInterface_GossipReceived creates a new list of DaemonInterface_GossipReceived.
 func NewDaemonInterface_GossipReceived_List(s *capnp.Segment, sz int32) (DaemonInterface_GossipReceived_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 6}, sz)
-	return DaemonInterface_GossipReceived_List{l}, err
-}
-
-func (s DaemonInterface_GossipReceived_List) At(i int) DaemonInterface_GossipReceived {
-	return DaemonInterface_GossipReceived{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_GossipReceived_List) Set(i int, v DaemonInterface_GossipReceived) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_GossipReceived_List) String() string {
-	str, _ := text.MarshalList(0x8128c52d5468fe3b, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_GossipReceived](l), err
 }
 
 // DaemonInterface_GossipReceived_Future is a wrapper for a DaemonInterface_GossipReceived promised by a client call.
@@ -9566,7 +10685,7 @@ type DaemonInterface_GossipReceived_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_GossipReceived_Future) Struct() (DaemonInterface_GossipReceived, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_GossipReceived{s}, err
+	return DaemonInterface_GossipReceived(s), err
 }
 
 func (p DaemonInterface_GossipReceived_Future) Sender() PeerInfo_Future {
@@ -9589,117 +10708,126 @@ func (p DaemonInterface_GossipReceived_Future) ValidationId() ValidationId_Futur
 	return ValidationId_Future{Future: p.Future.Field(4, nil)}
 }
 
-type DaemonInterface_IncomingStream struct{ capnp.Struct }
+type DaemonInterface_IncomingStream capnp.Struct
 
 // DaemonInterface_IncomingStream_TypeID is the unique identifier for the type DaemonInterface_IncomingStream.
 const DaemonInterface_IncomingStream_TypeID = 0xc5ea3ac9fb462264
 
 func NewDaemonInterface_IncomingStream(s *capnp.Segment) (DaemonInterface_IncomingStream, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 3})
-	return DaemonInterface_IncomingStream{st}, err
+	return DaemonInterface_IncomingStream(st), err
 }
 
 func NewRootDaemonInterface_IncomingStream(s *capnp.Segment) (DaemonInterface_IncomingStream, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 3})
-	return DaemonInterface_IncomingStream{st}, err
+	return DaemonInterface_IncomingStream(st), err
 }
 
 func ReadRootDaemonInterface_IncomingStream(msg *capnp.Message) (DaemonInterface_IncomingStream, error) {
 	root, err := msg.Root()
-	return DaemonInterface_IncomingStream{root.Struct()}, err
+	return DaemonInterface_IncomingStream(root.Struct()), err
 }
 
 func (s DaemonInterface_IncomingStream) String() string {
-	str, _ := text.Marshal(0xc5ea3ac9fb462264, s.Struct)
+	str, _ := text.Marshal(0xc5ea3ac9fb462264, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_IncomingStream) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_IncomingStream) DecodeFromPtr(p capnp.Ptr) DaemonInterface_IncomingStream {
+	return DaemonInterface_IncomingStream(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_IncomingStream) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_IncomingStream) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_IncomingStream) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_IncomingStream) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_IncomingStream) StreamId() (StreamId, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamId(p.Struct()), err
 }
 
 func (s DaemonInterface_IncomingStream) HasStreamId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_IncomingStream) SetStreamId(v StreamId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamId sets the streamId field to a newly
 // allocated StreamId struct, preferring placement in s's segment.
 func (s DaemonInterface_IncomingStream) NewStreamId() (StreamId, error) {
-	ss, err := NewStreamId(s.Struct.Segment())
+	ss, err := NewStreamId(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_IncomingStream) Peer() (PeerInfo, error) {
-	p, err := s.Struct.Ptr(1)
-	return PeerInfo{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return PeerInfo(p.Struct()), err
 }
 
 func (s DaemonInterface_IncomingStream) HasPeer() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_IncomingStream) SetPeer(v PeerInfo) error {
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewPeer sets the peer field to a newly
 // allocated PeerInfo struct, preferring placement in s's segment.
 func (s DaemonInterface_IncomingStream) NewPeer() (PeerInfo, error) {
-	ss, err := NewPeerInfo(s.Struct.Segment())
+	ss, err := NewPeerInfo(capnp.Struct(s).Segment())
 	if err != nil {
 		return PeerInfo{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_IncomingStream) Protocol() (string, error) {
-	p, err := s.Struct.Ptr(2)
+	p, err := capnp.Struct(s).Ptr(2)
 	return p.Text(), err
 }
 
 func (s DaemonInterface_IncomingStream) HasProtocol() bool {
-	return s.Struct.HasPtr(2)
+	return capnp.Struct(s).HasPtr(2)
 }
 
 func (s DaemonInterface_IncomingStream) ProtocolBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(2)
+	p, err := capnp.Struct(s).Ptr(2)
 	return p.TextBytes(), err
 }
 
 func (s DaemonInterface_IncomingStream) SetProtocol(v string) error {
-	return s.Struct.SetText(2, v)
+	return capnp.Struct(s).SetText(2, v)
 }
 
 // DaemonInterface_IncomingStream_List is a list of DaemonInterface_IncomingStream.
-type DaemonInterface_IncomingStream_List struct{ capnp.List }
+type DaemonInterface_IncomingStream_List = capnp.StructList[DaemonInterface_IncomingStream]
 
 // NewDaemonInterface_IncomingStream creates a new list of DaemonInterface_IncomingStream.
 func NewDaemonInterface_IncomingStream_List(s *capnp.Segment, sz int32) (DaemonInterface_IncomingStream_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 3}, sz)
-	return DaemonInterface_IncomingStream_List{l}, err
-}
-
-func (s DaemonInterface_IncomingStream_List) At(i int) DaemonInterface_IncomingStream {
-	return DaemonInterface_IncomingStream{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_IncomingStream_List) Set(i int, v DaemonInterface_IncomingStream) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_IncomingStream_List) String() string {
-	str, _ := text.MarshalList(0xc5ea3ac9fb462264, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_IncomingStream](l), err
 }
 
 // DaemonInterface_IncomingStream_Future is a wrapper for a DaemonInterface_IncomingStream promised by a client call.
@@ -9707,7 +10835,7 @@ type DaemonInterface_IncomingStream_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_IncomingStream_Future) Struct() (DaemonInterface_IncomingStream, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_IncomingStream{s}, err
+	return DaemonInterface_IncomingStream(s), err
 }
 
 func (p DaemonInterface_IncomingStream_Future) StreamId() StreamId_Future {
@@ -9718,93 +10846,102 @@ func (p DaemonInterface_IncomingStream_Future) Peer() PeerInfo_Future {
 	return PeerInfo_Future{Future: p.Future.Field(1, nil)}
 }
 
-type DaemonInterface_StreamLost struct{ capnp.Struct }
+type DaemonInterface_StreamLost capnp.Struct
 
 // DaemonInterface_StreamLost_TypeID is the unique identifier for the type DaemonInterface_StreamLost.
 const DaemonInterface_StreamLost_TypeID = 0xa2eea71b4749c940
 
 func NewDaemonInterface_StreamLost(s *capnp.Segment) (DaemonInterface_StreamLost, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return DaemonInterface_StreamLost{st}, err
+	return DaemonInterface_StreamLost(st), err
 }
 
 func NewRootDaemonInterface_StreamLost(s *capnp.Segment) (DaemonInterface_StreamLost, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
-	return DaemonInterface_StreamLost{st}, err
+	return DaemonInterface_StreamLost(st), err
 }
 
 func ReadRootDaemonInterface_StreamLost(msg *capnp.Message) (DaemonInterface_StreamLost, error) {
 	root, err := msg.Root()
-	return DaemonInterface_StreamLost{root.Struct()}, err
+	return DaemonInterface_StreamLost(root.Struct()), err
 }
 
 func (s DaemonInterface_StreamLost) String() string {
-	str, _ := text.Marshal(0xa2eea71b4749c940, s.Struct)
+	str, _ := text.Marshal(0xa2eea71b4749c940, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_StreamLost) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_StreamLost) DecodeFromPtr(p capnp.Ptr) DaemonInterface_StreamLost {
+	return DaemonInterface_StreamLost(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_StreamLost) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_StreamLost) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_StreamLost) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_StreamLost) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_StreamLost) StreamId() (StreamId, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamId(p.Struct()), err
 }
 
 func (s DaemonInterface_StreamLost) HasStreamId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_StreamLost) SetStreamId(v StreamId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamId sets the streamId field to a newly
 // allocated StreamId struct, preferring placement in s's segment.
 func (s DaemonInterface_StreamLost) NewStreamId() (StreamId, error) {
-	ss, err := NewStreamId(s.Struct.Segment())
+	ss, err := NewStreamId(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_StreamLost) Reason() (string, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return p.Text(), err
 }
 
 func (s DaemonInterface_StreamLost) HasReason() bool {
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_StreamLost) ReasonBytes() ([]byte, error) {
-	p, err := s.Struct.Ptr(1)
+	p, err := capnp.Struct(s).Ptr(1)
 	return p.TextBytes(), err
 }
 
 func (s DaemonInterface_StreamLost) SetReason(v string) error {
-	return s.Struct.SetText(1, v)
+	return capnp.Struct(s).SetText(1, v)
 }
 
 // DaemonInterface_StreamLost_List is a list of DaemonInterface_StreamLost.
-type DaemonInterface_StreamLost_List struct{ capnp.List }
+type DaemonInterface_StreamLost_List = capnp.StructList[DaemonInterface_StreamLost]
 
 // NewDaemonInterface_StreamLost creates a new list of DaemonInterface_StreamLost.
 func NewDaemonInterface_StreamLost_List(s *capnp.Segment, sz int32) (DaemonInterface_StreamLost_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
-	return DaemonInterface_StreamLost_List{l}, err
-}
-
-func (s DaemonInterface_StreamLost_List) At(i int) DaemonInterface_StreamLost {
-	return DaemonInterface_StreamLost{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_StreamLost_List) Set(i int, v DaemonInterface_StreamLost) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_StreamLost_List) String() string {
-	str, _ := text.MarshalList(0xa2eea71b4749c940, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_StreamLost](l), err
 }
 
 // DaemonInterface_StreamLost_Future is a wrapper for a DaemonInterface_StreamLost promised by a client call.
@@ -9812,82 +10949,91 @@ type DaemonInterface_StreamLost_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_StreamLost_Future) Struct() (DaemonInterface_StreamLost, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_StreamLost{s}, err
+	return DaemonInterface_StreamLost(s), err
 }
 
 func (p DaemonInterface_StreamLost_Future) StreamId() StreamId_Future {
 	return StreamId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type DaemonInterface_StreamComplete struct{ capnp.Struct }
+type DaemonInterface_StreamComplete capnp.Struct
 
 // DaemonInterface_StreamComplete_TypeID is the unique identifier for the type DaemonInterface_StreamComplete.
 const DaemonInterface_StreamComplete_TypeID = 0xbec4cf678af6fe9d
 
 func NewDaemonInterface_StreamComplete(s *capnp.Segment) (DaemonInterface_StreamComplete, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_StreamComplete{st}, err
+	return DaemonInterface_StreamComplete(st), err
 }
 
 func NewRootDaemonInterface_StreamComplete(s *capnp.Segment) (DaemonInterface_StreamComplete, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_StreamComplete{st}, err
+	return DaemonInterface_StreamComplete(st), err
 }
 
 func ReadRootDaemonInterface_StreamComplete(msg *capnp.Message) (DaemonInterface_StreamComplete, error) {
 	root, err := msg.Root()
-	return DaemonInterface_StreamComplete{root.Struct()}, err
+	return DaemonInterface_StreamComplete(root.Struct()), err
 }
 
 func (s DaemonInterface_StreamComplete) String() string {
-	str, _ := text.Marshal(0xbec4cf678af6fe9d, s.Struct)
+	str, _ := text.Marshal(0xbec4cf678af6fe9d, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_StreamComplete) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_StreamComplete) DecodeFromPtr(p capnp.Ptr) DaemonInterface_StreamComplete {
+	return DaemonInterface_StreamComplete(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_StreamComplete) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_StreamComplete) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_StreamComplete) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_StreamComplete) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_StreamComplete) StreamId() (StreamId, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamId{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamId(p.Struct()), err
 }
 
 func (s DaemonInterface_StreamComplete) HasStreamId() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_StreamComplete) SetStreamId(v StreamId) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamId sets the streamId field to a newly
 // allocated StreamId struct, preferring placement in s's segment.
 func (s DaemonInterface_StreamComplete) NewStreamId() (StreamId, error) {
-	ss, err := NewStreamId(s.Struct.Segment())
+	ss, err := NewStreamId(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamId{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // DaemonInterface_StreamComplete_List is a list of DaemonInterface_StreamComplete.
-type DaemonInterface_StreamComplete_List struct{ capnp.List }
+type DaemonInterface_StreamComplete_List = capnp.StructList[DaemonInterface_StreamComplete]
 
 // NewDaemonInterface_StreamComplete creates a new list of DaemonInterface_StreamComplete.
 func NewDaemonInterface_StreamComplete_List(s *capnp.Segment, sz int32) (DaemonInterface_StreamComplete_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return DaemonInterface_StreamComplete_List{l}, err
-}
-
-func (s DaemonInterface_StreamComplete_List) At(i int) DaemonInterface_StreamComplete {
-	return DaemonInterface_StreamComplete{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_StreamComplete_List) Set(i int, v DaemonInterface_StreamComplete) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_StreamComplete_List) String() string {
-	str, _ := text.MarshalList(0xbec4cf678af6fe9d, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_StreamComplete](l), err
 }
 
 // DaemonInterface_StreamComplete_Future is a wrapper for a DaemonInterface_StreamComplete promised by a client call.
@@ -9895,82 +11041,91 @@ type DaemonInterface_StreamComplete_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_StreamComplete_Future) Struct() (DaemonInterface_StreamComplete, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_StreamComplete{s}, err
+	return DaemonInterface_StreamComplete(s), err
 }
 
 func (p DaemonInterface_StreamComplete_Future) StreamId() StreamId_Future {
 	return StreamId_Future{Future: p.Future.Field(0, nil)}
 }
 
-type DaemonInterface_StreamMessageReceived struct{ capnp.Struct }
+type DaemonInterface_StreamMessageReceived capnp.Struct
 
 // DaemonInterface_StreamMessageReceived_TypeID is the unique identifier for the type DaemonInterface_StreamMessageReceived.
 const DaemonInterface_StreamMessageReceived_TypeID = 0xfe6afa3ac9731c83
 
 func NewDaemonInterface_StreamMessageReceived(s *capnp.Segment) (DaemonInterface_StreamMessageReceived, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_StreamMessageReceived{st}, err
+	return DaemonInterface_StreamMessageReceived(st), err
 }
 
 func NewRootDaemonInterface_StreamMessageReceived(s *capnp.Segment) (DaemonInterface_StreamMessageReceived, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
-	return DaemonInterface_StreamMessageReceived{st}, err
+	return DaemonInterface_StreamMessageReceived(st), err
 }
 
 func ReadRootDaemonInterface_StreamMessageReceived(msg *capnp.Message) (DaemonInterface_StreamMessageReceived, error) {
 	root, err := msg.Root()
-	return DaemonInterface_StreamMessageReceived{root.Struct()}, err
+	return DaemonInterface_StreamMessageReceived(root.Struct()), err
 }
 
 func (s DaemonInterface_StreamMessageReceived) String() string {
-	str, _ := text.Marshal(0xfe6afa3ac9731c83, s.Struct)
+	str, _ := text.Marshal(0xfe6afa3ac9731c83, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_StreamMessageReceived) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_StreamMessageReceived) DecodeFromPtr(p capnp.Ptr) DaemonInterface_StreamMessageReceived {
+	return DaemonInterface_StreamMessageReceived(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_StreamMessageReceived) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_StreamMessageReceived) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_StreamMessageReceived) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_StreamMessageReceived) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_StreamMessageReceived) Msg() (StreamMessage, error) {
-	p, err := s.Struct.Ptr(0)
-	return StreamMessage{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return StreamMessage(p.Struct()), err
 }
 
 func (s DaemonInterface_StreamMessageReceived) HasMsg() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_StreamMessageReceived) SetMsg(v StreamMessage) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewMsg sets the msg field to a newly
 // allocated StreamMessage struct, preferring placement in s's segment.
 func (s DaemonInterface_StreamMessageReceived) NewMsg() (StreamMessage, error) {
-	ss, err := NewStreamMessage(s.Struct.Segment())
+	ss, err := NewStreamMessage(capnp.Struct(s).Segment())
 	if err != nil {
 		return StreamMessage{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // DaemonInterface_StreamMessageReceived_List is a list of DaemonInterface_StreamMessageReceived.
-type DaemonInterface_StreamMessageReceived_List struct{ capnp.List }
+type DaemonInterface_StreamMessageReceived_List = capnp.StructList[DaemonInterface_StreamMessageReceived]
 
 // NewDaemonInterface_StreamMessageReceived creates a new list of DaemonInterface_StreamMessageReceived.
 func NewDaemonInterface_StreamMessageReceived_List(s *capnp.Segment, sz int32) (DaemonInterface_StreamMessageReceived_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
-	return DaemonInterface_StreamMessageReceived_List{l}, err
-}
-
-func (s DaemonInterface_StreamMessageReceived_List) At(i int) DaemonInterface_StreamMessageReceived {
-	return DaemonInterface_StreamMessageReceived{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_StreamMessageReceived_List) Set(i int, v DaemonInterface_StreamMessageReceived) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_StreamMessageReceived_List) String() string {
-	str, _ := text.MarshalList(0xfe6afa3ac9731c83, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_StreamMessageReceived](l), err
 }
 
 // DaemonInterface_StreamMessageReceived_Future is a wrapper for a DaemonInterface_StreamMessageReceived promised by a client call.
@@ -9978,90 +11133,99 @@ type DaemonInterface_StreamMessageReceived_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_StreamMessageReceived_Future) Struct() (DaemonInterface_StreamMessageReceived, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_StreamMessageReceived{s}, err
+	return DaemonInterface_StreamMessageReceived(s), err
 }
 
 func (p DaemonInterface_StreamMessageReceived_Future) Msg() StreamMessage_Future {
 	return StreamMessage_Future{Future: p.Future.Field(0, nil)}
 }
 
-type DaemonInterface_ResourceUpdate struct{ capnp.Struct }
+type DaemonInterface_ResourceUpdate capnp.Struct
 
 // DaemonInterface_ResourceUpdate_TypeID is the unique identifier for the type DaemonInterface_ResourceUpdate.
 const DaemonInterface_ResourceUpdate_TypeID = 0xedec79530db7ca8e
 
 func NewDaemonInterface_ResourceUpdate(s *capnp.Segment) (DaemonInterface_ResourceUpdate, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return DaemonInterface_ResourceUpdate{st}, err
+	return DaemonInterface_ResourceUpdate(st), err
 }
 
 func NewRootDaemonInterface_ResourceUpdate(s *capnp.Segment) (DaemonInterface_ResourceUpdate, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return DaemonInterface_ResourceUpdate{st}, err
+	return DaemonInterface_ResourceUpdate(st), err
 }
 
 func ReadRootDaemonInterface_ResourceUpdate(msg *capnp.Message) (DaemonInterface_ResourceUpdate, error) {
 	root, err := msg.Root()
-	return DaemonInterface_ResourceUpdate{root.Struct()}, err
+	return DaemonInterface_ResourceUpdate(root.Struct()), err
 }
 
 func (s DaemonInterface_ResourceUpdate) String() string {
-	str, _ := text.Marshal(0xedec79530db7ca8e, s.Struct)
+	str, _ := text.Marshal(0xedec79530db7ca8e, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_ResourceUpdate) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_ResourceUpdate) DecodeFromPtr(p capnp.Ptr) DaemonInterface_ResourceUpdate {
+	return DaemonInterface_ResourceUpdate(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_ResourceUpdate) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+func (s DaemonInterface_ResourceUpdate) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_ResourceUpdate) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_ResourceUpdate) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
+}
 func (s DaemonInterface_ResourceUpdate) Type() ResourceUpdateType {
-	return ResourceUpdateType(s.Struct.Uint16(0))
+	return ResourceUpdateType(capnp.Struct(s).Uint16(0))
 }
 
 func (s DaemonInterface_ResourceUpdate) SetType(v ResourceUpdateType) {
-	s.Struct.SetUint16(0, uint16(v))
+	capnp.Struct(s).SetUint16(0, uint16(v))
 }
 
 func (s DaemonInterface_ResourceUpdate) Ids() (RootBlockId_List, error) {
-	p, err := s.Struct.Ptr(0)
-	return RootBlockId_List{List: p.List()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return RootBlockId_List(p.List()), err
 }
 
 func (s DaemonInterface_ResourceUpdate) HasIds() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_ResourceUpdate) SetIds(v RootBlockId_List) error {
-	return s.Struct.SetPtr(0, v.List.ToPtr())
+	return capnp.Struct(s).SetPtr(0, v.ToPtr())
 }
 
 // NewIds sets the ids field to a newly
 // allocated RootBlockId_List, preferring placement in s's segment.
 func (s DaemonInterface_ResourceUpdate) NewIds(n int32) (RootBlockId_List, error) {
-	l, err := NewRootBlockId_List(s.Struct.Segment(), n)
+	l, err := NewRootBlockId_List(capnp.Struct(s).Segment(), n)
 	if err != nil {
 		return RootBlockId_List{}, err
 	}
-	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, l.ToPtr())
 	return l, err
 }
 
 // DaemonInterface_ResourceUpdate_List is a list of DaemonInterface_ResourceUpdate.
-type DaemonInterface_ResourceUpdate_List struct{ capnp.List }
+type DaemonInterface_ResourceUpdate_List = capnp.StructList[DaemonInterface_ResourceUpdate]
 
 // NewDaemonInterface_ResourceUpdate creates a new list of DaemonInterface_ResourceUpdate.
 func NewDaemonInterface_ResourceUpdate_List(s *capnp.Segment, sz int32) (DaemonInterface_ResourceUpdate_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return DaemonInterface_ResourceUpdate_List{l}, err
-}
-
-func (s DaemonInterface_ResourceUpdate_List) At(i int) DaemonInterface_ResourceUpdate {
-	return DaemonInterface_ResourceUpdate{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_ResourceUpdate_List) Set(i int, v DaemonInterface_ResourceUpdate) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_ResourceUpdate_List) String() string {
-	str, _ := text.MarshalList(0xedec79530db7ca8e, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_ResourceUpdate](l), err
 }
 
 // DaemonInterface_ResourceUpdate_Future is a wrapper for a DaemonInterface_ResourceUpdate promised by a client call.
@@ -10069,10 +11233,10 @@ type DaemonInterface_ResourceUpdate_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_ResourceUpdate_Future) Struct() (DaemonInterface_ResourceUpdate, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_ResourceUpdate{s}, err
+	return DaemonInterface_ResourceUpdate(s), err
 }
 
-type DaemonInterface_PushMessage struct{ capnp.Struct }
+type DaemonInterface_PushMessage capnp.Struct
 type DaemonInterface_PushMessage_Which uint16
 
 const (
@@ -10115,327 +11279,337 @@ const DaemonInterface_PushMessage_TypeID = 0x8ec8fa620071fa9f
 
 func NewDaemonInterface_PushMessage(s *capnp.Segment) (DaemonInterface_PushMessage, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return DaemonInterface_PushMessage{st}, err
+	return DaemonInterface_PushMessage(st), err
 }
 
 func NewRootDaemonInterface_PushMessage(s *capnp.Segment) (DaemonInterface_PushMessage, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
-	return DaemonInterface_PushMessage{st}, err
+	return DaemonInterface_PushMessage(st), err
 }
 
 func ReadRootDaemonInterface_PushMessage(msg *capnp.Message) (DaemonInterface_PushMessage, error) {
 	root, err := msg.Root()
-	return DaemonInterface_PushMessage{root.Struct()}, err
+	return DaemonInterface_PushMessage(root.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) String() string {
-	str, _ := text.Marshal(0x8ec8fa620071fa9f, s.Struct)
+	str, _ := text.Marshal(0x8ec8fa620071fa9f, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_PushMessage) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_PushMessage) DecodeFromPtr(p capnp.Ptr) DaemonInterface_PushMessage {
+	return DaemonInterface_PushMessage(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_PushMessage) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
 func (s DaemonInterface_PushMessage) Which() DaemonInterface_PushMessage_Which {
-	return DaemonInterface_PushMessage_Which(s.Struct.Uint16(0))
+	return DaemonInterface_PushMessage_Which(capnp.Struct(s).Uint16(0))
+}
+func (s DaemonInterface_PushMessage) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_PushMessage) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_PushMessage) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
 }
 func (s DaemonInterface_PushMessage) Header() (PushMessageHeader, error) {
-	p, err := s.Struct.Ptr(0)
-	return PushMessageHeader{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return PushMessageHeader(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasHeader() bool {
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_PushMessage) SetHeader(v PushMessageHeader) error {
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewHeader sets the header field to a newly
 // allocated PushMessageHeader struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewHeader() (PushMessageHeader, error) {
-	ss, err := NewPushMessageHeader(s.Struct.Segment())
+	ss, err := NewPushMessageHeader(capnp.Struct(s).Segment())
 	if err != nil {
 		return PushMessageHeader{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) PeerConnected() (DaemonInterface_PeerConnected, error) {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		panic("Which() != peerConnected")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_PeerConnected{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_PeerConnected(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasPeerConnected() bool {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetPeerConnected(v DaemonInterface_PeerConnected) error {
-	s.Struct.SetUint16(0, 0)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewPeerConnected sets the peerConnected field to a newly
 // allocated DaemonInterface_PeerConnected struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewPeerConnected() (DaemonInterface_PeerConnected, error) {
-	s.Struct.SetUint16(0, 0)
-	ss, err := NewDaemonInterface_PeerConnected(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 0)
+	ss, err := NewDaemonInterface_PeerConnected(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_PeerConnected{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) PeerDisconnected() (DaemonInterface_PeerDisconnected, error) {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != peerDisconnected")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_PeerDisconnected{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_PeerDisconnected(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasPeerDisconnected() bool {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetPeerDisconnected(v DaemonInterface_PeerDisconnected) error {
-	s.Struct.SetUint16(0, 1)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewPeerDisconnected sets the peerDisconnected field to a newly
 // allocated DaemonInterface_PeerDisconnected struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewPeerDisconnected() (DaemonInterface_PeerDisconnected, error) {
-	s.Struct.SetUint16(0, 1)
-	ss, err := NewDaemonInterface_PeerDisconnected(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewDaemonInterface_PeerDisconnected(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_PeerDisconnected{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) GossipReceived() (DaemonInterface_GossipReceived, error) {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		panic("Which() != gossipReceived")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_GossipReceived{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_GossipReceived(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasGossipReceived() bool {
-	if s.Struct.Uint16(0) != 2 {
+	if capnp.Struct(s).Uint16(0) != 2 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetGossipReceived(v DaemonInterface_GossipReceived) error {
-	s.Struct.SetUint16(0, 2)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 2)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewGossipReceived sets the gossipReceived field to a newly
 // allocated DaemonInterface_GossipReceived struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewGossipReceived() (DaemonInterface_GossipReceived, error) {
-	s.Struct.SetUint16(0, 2)
-	ss, err := NewDaemonInterface_GossipReceived(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 2)
+	ss, err := NewDaemonInterface_GossipReceived(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_GossipReceived{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) IncomingStream() (DaemonInterface_IncomingStream, error) {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		panic("Which() != incomingStream")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_IncomingStream{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_IncomingStream(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasIncomingStream() bool {
-	if s.Struct.Uint16(0) != 3 {
+	if capnp.Struct(s).Uint16(0) != 3 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetIncomingStream(v DaemonInterface_IncomingStream) error {
-	s.Struct.SetUint16(0, 3)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 3)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewIncomingStream sets the incomingStream field to a newly
 // allocated DaemonInterface_IncomingStream struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewIncomingStream() (DaemonInterface_IncomingStream, error) {
-	s.Struct.SetUint16(0, 3)
-	ss, err := NewDaemonInterface_IncomingStream(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 3)
+	ss, err := NewDaemonInterface_IncomingStream(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_IncomingStream{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) StreamLost() (DaemonInterface_StreamLost, error) {
-	if s.Struct.Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		panic("Which() != streamLost")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_StreamLost{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_StreamLost(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasStreamLost() bool {
-	if s.Struct.Uint16(0) != 4 {
+	if capnp.Struct(s).Uint16(0) != 4 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetStreamLost(v DaemonInterface_StreamLost) error {
-	s.Struct.SetUint16(0, 4)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 4)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamLost sets the streamLost field to a newly
 // allocated DaemonInterface_StreamLost struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewStreamLost() (DaemonInterface_StreamLost, error) {
-	s.Struct.SetUint16(0, 4)
-	ss, err := NewDaemonInterface_StreamLost(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 4)
+	ss, err := NewDaemonInterface_StreamLost(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_StreamLost{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) StreamComplete() (DaemonInterface_StreamComplete, error) {
-	if s.Struct.Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 5 {
 		panic("Which() != streamComplete")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_StreamComplete{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_StreamComplete(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasStreamComplete() bool {
-	if s.Struct.Uint16(0) != 5 {
+	if capnp.Struct(s).Uint16(0) != 5 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetStreamComplete(v DaemonInterface_StreamComplete) error {
-	s.Struct.SetUint16(0, 5)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 5)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamComplete sets the streamComplete field to a newly
 // allocated DaemonInterface_StreamComplete struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewStreamComplete() (DaemonInterface_StreamComplete, error) {
-	s.Struct.SetUint16(0, 5)
-	ss, err := NewDaemonInterface_StreamComplete(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 5)
+	ss, err := NewDaemonInterface_StreamComplete(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_StreamComplete{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) StreamMessageReceived() (DaemonInterface_StreamMessageReceived, error) {
-	if s.Struct.Uint16(0) != 6 {
+	if capnp.Struct(s).Uint16(0) != 6 {
 		panic("Which() != streamMessageReceived")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_StreamMessageReceived{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_StreamMessageReceived(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasStreamMessageReceived() bool {
-	if s.Struct.Uint16(0) != 6 {
+	if capnp.Struct(s).Uint16(0) != 6 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetStreamMessageReceived(v DaemonInterface_StreamMessageReceived) error {
-	s.Struct.SetUint16(0, 6)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 6)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewStreamMessageReceived sets the streamMessageReceived field to a newly
 // allocated DaemonInterface_StreamMessageReceived struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewStreamMessageReceived() (DaemonInterface_StreamMessageReceived, error) {
-	s.Struct.SetUint16(0, 6)
-	ss, err := NewDaemonInterface_StreamMessageReceived(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 6)
+	ss, err := NewDaemonInterface_StreamMessageReceived(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_StreamMessageReceived{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_PushMessage) ResourceUpdated() (DaemonInterface_ResourceUpdate, error) {
-	if s.Struct.Uint16(0) != 7 {
+	if capnp.Struct(s).Uint16(0) != 7 {
 		panic("Which() != resourceUpdated")
 	}
-	p, err := s.Struct.Ptr(1)
-	return DaemonInterface_ResourceUpdate{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(1)
+	return DaemonInterface_ResourceUpdate(p.Struct()), err
 }
 
 func (s DaemonInterface_PushMessage) HasResourceUpdated() bool {
-	if s.Struct.Uint16(0) != 7 {
+	if capnp.Struct(s).Uint16(0) != 7 {
 		return false
 	}
-	return s.Struct.HasPtr(1)
+	return capnp.Struct(s).HasPtr(1)
 }
 
 func (s DaemonInterface_PushMessage) SetResourceUpdated(v DaemonInterface_ResourceUpdate) error {
-	s.Struct.SetUint16(0, 7)
-	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 7)
+	return capnp.Struct(s).SetPtr(1, capnp.Struct(v).ToPtr())
 }
 
 // NewResourceUpdated sets the resourceUpdated field to a newly
 // allocated DaemonInterface_ResourceUpdate struct, preferring placement in s's segment.
 func (s DaemonInterface_PushMessage) NewResourceUpdated() (DaemonInterface_ResourceUpdate, error) {
-	s.Struct.SetUint16(0, 7)
-	ss, err := NewDaemonInterface_ResourceUpdate(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 7)
+	ss, err := NewDaemonInterface_ResourceUpdate(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_ResourceUpdate{}, err
 	}
-	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(1, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // DaemonInterface_PushMessage_List is a list of DaemonInterface_PushMessage.
-type DaemonInterface_PushMessage_List struct{ capnp.List }
+type DaemonInterface_PushMessage_List = capnp.StructList[DaemonInterface_PushMessage]
 
 // NewDaemonInterface_PushMessage creates a new list of DaemonInterface_PushMessage.
 func NewDaemonInterface_PushMessage_List(s *capnp.Segment, sz int32) (DaemonInterface_PushMessage_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2}, sz)
-	return DaemonInterface_PushMessage_List{l}, err
-}
-
-func (s DaemonInterface_PushMessage_List) At(i int) DaemonInterface_PushMessage {
-	return DaemonInterface_PushMessage{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_PushMessage_List) Set(i int, v DaemonInterface_PushMessage) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_PushMessage_List) String() string {
-	str, _ := text.MarshalList(0x8ec8fa620071fa9f, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_PushMessage](l), err
 }
 
 // DaemonInterface_PushMessage_Future is a wrapper for a DaemonInterface_PushMessage promised by a client call.
@@ -10443,7 +11617,7 @@ type DaemonInterface_PushMessage_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_PushMessage_Future) Struct() (DaemonInterface_PushMessage, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_PushMessage{s}, err
+	return DaemonInterface_PushMessage(s), err
 }
 
 func (p DaemonInterface_PushMessage_Future) Header() PushMessageHeader_Future {
@@ -10482,7 +11656,7 @@ func (p DaemonInterface_PushMessage_Future) ResourceUpdated() DaemonInterface_Re
 	return DaemonInterface_ResourceUpdate_Future{Future: p.Future.Field(1, nil)}
 }
 
-type DaemonInterface_Message struct{ capnp.Struct }
+type DaemonInterface_Message capnp.Struct
 type DaemonInterface_Message_Which uint16
 
 const (
@@ -10507,111 +11681,121 @@ const DaemonInterface_Message_TypeID = 0xd78f8b719109324e
 
 func NewDaemonInterface_Message(s *capnp.Segment) (DaemonInterface_Message, error) {
 	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return DaemonInterface_Message{st}, err
+	return DaemonInterface_Message(st), err
 }
 
 func NewRootDaemonInterface_Message(s *capnp.Segment) (DaemonInterface_Message, error) {
 	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
-	return DaemonInterface_Message{st}, err
+	return DaemonInterface_Message(st), err
 }
 
 func ReadRootDaemonInterface_Message(msg *capnp.Message) (DaemonInterface_Message, error) {
 	root, err := msg.Root()
-	return DaemonInterface_Message{root.Struct()}, err
+	return DaemonInterface_Message(root.Struct()), err
 }
 
 func (s DaemonInterface_Message) String() string {
-	str, _ := text.Marshal(0xd78f8b719109324e, s.Struct)
+	str, _ := text.Marshal(0xd78f8b719109324e, capnp.Struct(s))
 	return str
 }
 
+func (s DaemonInterface_Message) EncodeAsPtr(seg *capnp.Segment) capnp.Ptr {
+	return capnp.Struct(s).EncodeAsPtr(seg)
+}
+
+func (DaemonInterface_Message) DecodeFromPtr(p capnp.Ptr) DaemonInterface_Message {
+	return DaemonInterface_Message(capnp.Struct{}.DecodeFromPtr(p))
+}
+
+func (s DaemonInterface_Message) ToPtr() capnp.Ptr {
+	return capnp.Struct(s).ToPtr()
+}
+
 func (s DaemonInterface_Message) Which() DaemonInterface_Message_Which {
-	return DaemonInterface_Message_Which(s.Struct.Uint16(0))
+	return DaemonInterface_Message_Which(capnp.Struct(s).Uint16(0))
+}
+func (s DaemonInterface_Message) IsValid() bool {
+	return capnp.Struct(s).IsValid()
+}
+
+func (s DaemonInterface_Message) Message() *capnp.Message {
+	return capnp.Struct(s).Message()
+}
+
+func (s DaemonInterface_Message) Segment() *capnp.Segment {
+	return capnp.Struct(s).Segment()
 }
 func (s DaemonInterface_Message) RpcResponse() (Libp2pHelperInterface_RpcResponse, error) {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		panic("Which() != rpcResponse")
 	}
-	p, err := s.Struct.Ptr(0)
-	return Libp2pHelperInterface_RpcResponse{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return Libp2pHelperInterface_RpcResponse(p.Struct()), err
 }
 
 func (s DaemonInterface_Message) HasRpcResponse() bool {
-	if s.Struct.Uint16(0) != 0 {
+	if capnp.Struct(s).Uint16(0) != 0 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_Message) SetRpcResponse(v Libp2pHelperInterface_RpcResponse) error {
-	s.Struct.SetUint16(0, 0)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 0)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewRpcResponse sets the rpcResponse field to a newly
 // allocated Libp2pHelperInterface_RpcResponse struct, preferring placement in s's segment.
 func (s DaemonInterface_Message) NewRpcResponse() (Libp2pHelperInterface_RpcResponse, error) {
-	s.Struct.SetUint16(0, 0)
-	ss, err := NewLibp2pHelperInterface_RpcResponse(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 0)
+	ss, err := NewLibp2pHelperInterface_RpcResponse(capnp.Struct(s).Segment())
 	if err != nil {
 		return Libp2pHelperInterface_RpcResponse{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 func (s DaemonInterface_Message) PushMessage() (DaemonInterface_PushMessage, error) {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		panic("Which() != pushMessage")
 	}
-	p, err := s.Struct.Ptr(0)
-	return DaemonInterface_PushMessage{Struct: p.Struct()}, err
+	p, err := capnp.Struct(s).Ptr(0)
+	return DaemonInterface_PushMessage(p.Struct()), err
 }
 
 func (s DaemonInterface_Message) HasPushMessage() bool {
-	if s.Struct.Uint16(0) != 1 {
+	if capnp.Struct(s).Uint16(0) != 1 {
 		return false
 	}
-	return s.Struct.HasPtr(0)
+	return capnp.Struct(s).HasPtr(0)
 }
 
 func (s DaemonInterface_Message) SetPushMessage(v DaemonInterface_PushMessage) error {
-	s.Struct.SetUint16(0, 1)
-	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+	capnp.Struct(s).SetUint16(0, 1)
+	return capnp.Struct(s).SetPtr(0, capnp.Struct(v).ToPtr())
 }
 
 // NewPushMessage sets the pushMessage field to a newly
 // allocated DaemonInterface_PushMessage struct, preferring placement in s's segment.
 func (s DaemonInterface_Message) NewPushMessage() (DaemonInterface_PushMessage, error) {
-	s.Struct.SetUint16(0, 1)
-	ss, err := NewDaemonInterface_PushMessage(s.Struct.Segment())
+	capnp.Struct(s).SetUint16(0, 1)
+	ss, err := NewDaemonInterface_PushMessage(capnp.Struct(s).Segment())
 	if err != nil {
 		return DaemonInterface_PushMessage{}, err
 	}
-	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	err = capnp.Struct(s).SetPtr(0, capnp.Struct(ss).ToPtr())
 	return ss, err
 }
 
 // DaemonInterface_Message_List is a list of DaemonInterface_Message.
-type DaemonInterface_Message_List struct{ capnp.List }
+type DaemonInterface_Message_List = capnp.StructList[DaemonInterface_Message]
 
 // NewDaemonInterface_Message creates a new list of DaemonInterface_Message.
 func NewDaemonInterface_Message_List(s *capnp.Segment, sz int32) (DaemonInterface_Message_List, error) {
 	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
-	return DaemonInterface_Message_List{l}, err
-}
-
-func (s DaemonInterface_Message_List) At(i int) DaemonInterface_Message {
-	return DaemonInterface_Message{s.List.Struct(i)}
-}
-
-func (s DaemonInterface_Message_List) Set(i int, v DaemonInterface_Message) error {
-	return s.List.SetStruct(i, v.Struct)
-}
-
-func (s DaemonInterface_Message_List) String() string {
-	str, _ := text.MarshalList(0xd78f8b719109324e, s.List)
-	return str
+	return capnp.StructList[DaemonInterface_Message](l), err
 }
 
 // DaemonInterface_Message_Future is a wrapper for a DaemonInterface_Message promised by a client call.
@@ -10619,7 +11803,7 @@ type DaemonInterface_Message_Future struct{ *capnp.Future }
 
 func (p DaemonInterface_Message_Future) Struct() (DaemonInterface_Message, error) {
 	s, err := p.Future.Struct()
-	return DaemonInterface_Message{s}, err
+	return DaemonInterface_Message(s), err
 }
 
 func (p DaemonInterface_Message_Future) RpcResponse() Libp2pHelperInterface_RpcResponse_Future {
@@ -10630,478 +11814,484 @@ func (p DaemonInterface_Message_Future) PushMessage() DaemonInterface_PushMessag
 	return DaemonInterface_PushMessage_Future{Future: p.Future.Field(0, nil)}
 }
 
-const schema_fb174cb3ecf64f4f = "x\xda\xc4|y|TU\x96\xff=\xef\xa5\xa8\x14[" +
-	"\xaa\xb8I06!@\xb3$@hH\xa4\xc5@(" +
-	"(` \xc8\x92J\xc14\xa2\xdd\xd3\x95\xaag(H" +
-	"\xaa*U\x15\x96\x8c6\xc2\x80\xdd\xd0b\x0b?\xd1\x86" +
-	"\x81\x19qD\x96\x16\x1bT\xda\x06\x97VZ~#\xfe" +
-	"\xa4\x11lDQ\xc6e\\\x11\x94 \xa0\xac\xef\xf79" +
-	"\xf7-\xf7V\xd5\xcb&\xfe~\xf3_\xf2\xce\xa9\xbb\x9c" +
-	"{\xee9\xdf\xb3\xbc7\xf4/\xd9c\xa4a\xb6_\xf7" +
-	"'\xc4\xf7\x12\xd8:\xa8_\xd7\xdf*\xdd\xfeb\xe5=" +
-	"\xc4\xe5\x06\xf5T\xde\xafkV\xd8\x17~Bl\x92\x9d" +
-	"\x90\xd2\"Z&\xd1\x0aj'\x84N\xa0\x0b\x08\xa8y" +
-	"\xbf\xba\xd5>\xdbYw\x0fq\x0d\x00u\xff]\xcb\x1e" +
-	"\xbf\xef\xde\xfd\xabI\x06\xf2\xee\xa6\xdb\x81\x1e\xa4\x03\x88" +
-	"\xac\x8e\xbc6gF\xf1\xfe\xc2%\xc4\xd5\x1b\xd4\x9d\xbe" +
-	"\x95\x9do\x19q\xdfvb\xeb\x80l\xfb\xe9R\xa0\xef" +
-	"\xe0\x90\xa5G\xe9\xcf\x80\x80\xfa\xf3\xf2=\xbf\xbc\xf9\xc9" +
-	"\xa9K\x89w\x00\x08\x83N\x90\xec\x12!\xa5\xc59\xeb" +
-	"\x81N\xc8\xc1%\x8c\xcd\xf9#\x01\xf5\xcf\xe7G_z" +
-	"\xef\xe2\xae\xa5)\x83\x03\x8e\xf8NN#\xd0\xd3\x8c\xf9" +
-	"\x8b\x1c7\x01u\xd2\xe3;b\x7f\\\xfd\xce\xbf\x10\xd7" +
-	"-\xa0\xde\x14\xbc\xe3\xdc\xe1g\xff\xf3\x82\xb6^Gn" +
-	"G\x89\x16\xe5\xda\x89\xac>\xf0\xf0\xed3F\xbe\xbb\xf7" +
-	"\xde\xe4]iC\xdar\x9f\x02\x9a\x9f\x8bC\xe6\xe5\xe2" +
-	"\x90_\x0d[~\xdf\x93\xd3n\xfb\xb5\x85\x08*r\xf7" +
-	"\x01\xf5\xe7\xa2\x08\xae\xfa\xef\xbe\xc1>\xf2S+\xae\xdb" +
-	"rW\x02\xadg\\\x0f_<\xd5\xf5\xa7\xdf\xbc\xb4\x82" +
-	"x]\x00\xea\xf4\xe9\x17N==\xa5\xfbe\xc6FC" +
-	"\xb9gi\x03\x9b\xb7\x9e\xcd[3\xbdlq\xf1\xc7o" +
-	"\xafH\x11\x93\xb6\xca\xd5\xb9k\x80nc\xdc\x9bs\xf1" +
-	"\xa0&\xbe\x15\x1c=%\xef\xe3\x15\xc4\xe5\x12\x06f\xa7" +
-	"Jm\xdd\x8fPWw\xfc\xabKw\xe4\xdd\xf5V\xef" +
-	"\xf2\x9e\xb9=~K\\7\x83Z\xfd\xe6\xb9~;\xe6" +
-	"\x9f\xfe7m\xad\x8b\xbaK\x12]\xdb\xddN\xe4o\xff" +
-	"\xfdR}\xf5\xa5W\xef\xf7\xf6\x06A\xec\x13${&" +
-	"!\xa5\xf5\xdd\xe7\x02]\x8eC\x96.\xe9\xae\xe2\xa1\xd6" +
-	".~s\xdc\xc1>KW\x13W\x09\xa8\xf0\xe5B\xe7" +
-	"\x96\xe7\x1b\xde\xd3\xb5j[\xdeq\xa0\xfb\xf3p\x01/" +
-	"\xe7\xe1\x02\xcc\xcd$-\x96-\xa0\xf7\x8deP:\xec" +
-	"\xc6o\x81\xc8jY\xf9\xc6\xbb\xcb>\x9b\xf2\xbfp\xcc" +
-	"k\x8f\xae}\xf5\xd8\x1b\x8b>`L\xae\x1e\xc7\x81\x16" +
-	"\xf7\xc0\xa3|\xfa\xe1\xde\x83\xdfX\xa0\xac%\xaeRP" +
-	"G\xfe\x15~wr\xcc?\\\xd6\x85\xe4@\xb6~=" +
-	"p\xde\xde=P\xa4\xe7:l\xbe}\xdd\xbf\x0e\x7f\x88" +
-	"x\x87\x83\xac\x96~z5\xef\xe1\xea\xf5\x0fi\x13O" +
-	"\xe8q\x16\xa8\x9f1\xff\xbc\x07\xea\x9dIN?Q\xc8" +
-	"\xdf\x0e4/\x1fOt\xd2\xf23o\xca\xab\xd6\xaf'" +
-	"\xae\x9f\x80z,\x7fe\xb7[\x9b\xc6\xee\xd5\xb8\\\xf9" +
-	"\xfb\x80\x16\xe5\xe3*\xb7\x9f\x1c\xf8\\\xc6\xb3\xa760" +
-	"\xae\x8c\xe9\xc1ko5\x1e\xfb\x83.\x1d[\xfe^\xa0" +
-	"\xf9\xf9L\xe1\xf2\x17\x10x\x7f\xc4\x8aA\xcf>\x1f\xda" +
-	"h\xa1\"\x0d\xf9G\xe8\x12\xc6yw>\xee\xc7<\xbb" +
-	"\xf4%n\xc4Qw\xb3%\x1ez\xf9\xd8\x82\xed_\x8e" +
-	"\x7f\xd4B5Jw\xe4w\x03\xfa\x02\x1br\x0fN\xae" +
-	"\x8e9P1\xf1G[\xbez4\xe5\xb61\xe6\xfc\x9e" +
-	"\xd5@\x87\xf5D\xe6\xe2\x9e\xc8\xbco\xd2\xe6N\x1b\xee" +
-	"]\xfa\x1f)#\xa3\xf0\xe9\xaa\x9e\x1f\xd1u\x8cwm" +
-	"O\\\xeb\x86\xd9\xd1\x9b\x8f\xad)|\x8c\xb8F\x08w" +
-	"J;\xa8\xfd=%\x89~\xc8\x98O0\xe6\xff86" +
-	"\xf9\xc8\x1dc\xbe~\x8c\x9dj\xe1\x7f\xee\xa1{b\xff" +
-	"\xb8]\x97}\xc1G@\xf3\x0bP\xaa\x13\xb7\x7f\xf6i" +
-	"\xff\xf2\x0e\x9b-nS\xe9\xc5\x9e\x12P[\x01\x0e\x09" +
-	"\x058\xe4\xe3\x9d\xbf[\xfd\xd4\xad\x8f>N\xbcn\x00" +
-	"\xb5\xa2\xf6\xf4\x8f3\x1ey\xf1\xaa\xbe\x80\xde\x05e\x12" +
-	"\x1d\xcb\xb8\xcb\x0bpg\xf7\xd9\xea\xcewZ\xb2l\x8b" +
-	"\xd5u\xdaXp\x92nc\xbc\x9b\x19\xef{\x1b\xce\x14" +
-	"=\xb4\xb2h\xab\x85\x14Jm\xbdn\x04\x9a\xd3\x0b\x99" +
-	"]\xbdp\x19=f\xed\x9eursh\x1bq\x0d\x03" +
-	"n4\xd8\x92\x87\xf7:\x02\xd4\xdb\x0bw\xb6q\xde\xed" +
-	"\xef\xd6\xdc\x99\xbb=\xd5D\x82=\x17M$2V\xf4" +
-	"bZ\xdb\xebX\x06\x11D\x94\xae\x08{\xfa\xad\x07z" +
-	"\xb8\x1f*B\x9f\xa5/\xec\x9br\xe2\x8e\xedV\x9b:" +
-	"\xd0\xef\x12=\xda\x0f\xff:\xdc\x0f7e\x1e}\xfa\x15" +
-	"\x1d\xd6\xbf#\xd0\xb1\xfd\xb7\x10\x99\xabr\xfa\xbc/\xf7" +
-	"o\x04z\xb4?\xce\xdb\xcf~\xcf\xdee\xdb.\xfc\xc1" +
-	"JM\x0e\xf6?I\xdf\xe9\x8f\x7f\x1d\xed\x8f\xf2\x996" +
-	"g\xe4\x88\xd7\x1f\xfe\xe7'S\xceT[\xe4\xc5\xfeG" +
-	"\xa8m\x00;\xd3\x01xE\xcbzzw|xa\xee" +
-	"\x1f\x99\x9a\xfcl\xeb\xaf\x06;w|\xf4\xba\xae\xff\x03" +
-	">\x02\xbag\x00\x0asA\xd0Yryn\xe5\xce\x14" +
-	"\x87\xc7\xceg\xed\x00\x8fDw\xb3!w\x0d\xc0\xf9\xd7" +
-	"\x1czA}v\xff\xfd;\x89\xcb%\xf1\xe9\x09\x94\x1e" +
-	"\x1d\xd0\x07\xe8'\x8c\xf3\xc3\x01\xd3\x09\xa8+o\xde0" +
-	"y\x7f\xe1\xae]\xcc\x8af\xdf~S\xd5RW|\x8f" +
-	">\xec\xf9\x01\x92D]\x85\xcc\xe4\x16\xe2\xb0g\xfev" +
-	"\xfc\xf0^\xf8\xcdS\x96\xc6\xbc\xb8\x10]\x1e\xe3\x1e[" +
-	"\x88\xc2\xbf\xb4=\x9a1\xedW\x87\x9eN[\xc4\xc6\xc2" +
-	"n@w0\xcem\x85\xb8\x08\xcf\xbf\x0f\x88\x8e\x1c\x9f" +
-	"\xf9\xa7d\xc3\xc2$\xf0B\xe1>\xa0G\x0bQ\x02\xfd" +
-	"\xdf\xffC\xdd\x9f.\xf5\xf93q\x8d\x04u\xdd\x83\xcf" +
-	"}\xf8\xeb\xf3\x8e\x03\xfa\xe4\xbb\x0ao\x94\xe8a6\xe4" +
-	"A\xb6Ts+\xe9g\xdaT\xb8\x17\xa8\xa3\x08\xcf\xd4" +
-	"4u\x16\xd6\xb1\xa8\x11h\x0e\xe3:\xbcn\xf6\x92\xf0" +
-	"\x88\x0f\xf7&\xbbcm\xe2.E\xdd$Z\\\x84\x13" +
-	"\x17\x15\xe1\xc4\x17\x9e,X\xd2\xd8\xe7\x8b\xbd\xc9nI" +
-	"c\xbe\xad\xe8\x12\xd0\x06\xc6\\\xcf\x987\xdc\x17\xf8}" +
-	"\xbf\xf7\xc2\xcf\xb1{\xf4\xf8\xbdJ\xe5\xd6\x8b\xf7\xff]" +
-	"\x9b\x7fm\xd1k@w\x15\xe1\xc67\xed\xecs\xe4\xd3" +
-	"\xdf]\xd5\xb8f\x1e\xba\xb9\xaa\xfb?uU\xf5!W" +
-	"!\xdb66\xe4f6\xe4s\xc3\x16\xe6\xfdd\xc8_" +
-	"\x9fO\xc7%\x19h\xa3\x8a\xd6\x03=Q\xc4PGQ" +
-	"\x01\xba\xbc\x8d\xd7.\xac\xac9\xf4\xca\x8bV\xc0\xe4\xea" +
-	"\xc0\xa5@]\x83\x98\x02\x0c\xc2\xc1\x1f\x18\xf3\x90\xfa\xc1" +
-	"+\x0f\xfd\xc5\xca\xf3\x0f\x1bt\x84\x963\xde[\x18o" +
-	"\xec/\xdd\x96\xbe\xbb\xe7\xe2\xcb\xc45\x04\xd4\x1f\xbd=" +
-	"i\xc5\xe0\xdd\xcb>7\x041h/\xd0z\xc6\\\xc7" +
-	"\x98O;\xee\xb8\xabKl\xd6>\xe2\xfd\x09\x08\x1eH" +
-	"\xe3\xde\x88\xdc\xbb\x19\xf7\xaeA\xa8Yo~2\xf3_" +
-	"\x9f\xfa\xe3\xa1}\xec.p#\xc8\xcc\xbbk\xb0G\xa2" +
-	"\xc3\x063\xf3>\x18\x99\x83}\xfe\xe1\xf2\x81\xb2\x93\xfb" +
-	"S6(\xb3\x91\x07/\x05\xba\x8b1\xef\x18\x8cw\xd1" +
-	"T\xabt\x85\x98Z|\x1ch\xa8\x98\x99\xa0\x0d\x83\x96" +
-	"\xffI\xc9:\x80b\x10T\xdb\xd6\x11\x07\xf2\x17\x9f\xa5" +
-	"u\xc5\xf8\x8bP\xf1\xb72\x01\xf5\xe9QE9\xcf\xf4" +
-	"y\xf2\xb5d\xbdec\x16\x95\xf4\x91hE\x09\x1er" +
-	"\xed\xee\xf7\x97\xfdU\xbd\xf8\x9a\x95y\xe9W\xb2\x8f\x16" +
-	"\x970\x1d+Ai\x99F\xc2\x02\xcc\x95\xac\x07\xea/" +
-	"\xc1U\xd6\xdf.\xcf8\xf4\xec\x8b\x07-\x0f\xa0\xe4)" +
-	"\xa0\xf5l\xc8:6d\xc5\xfa=\xbf\xc8\xff\xa2\xfeo" +
-	"\xc9v\x80\x0d\xb9\xaa\xe4\x12\xd0ml\x91\x1f\xa9?\xcf" +
-	"\xfb\xf1\x13\x9f\x1da\xeeo\xcb\xd3\x0f\xfc\xef\xb1\xef|" +
-	"vU\xe3Z^\"It\x13\xe3\xfa\xbc\xae*7o" +
-	"\xc5\xa97\xad\xb4\xe4\xee\x92#t\x05\x9bw9\x9b\xd7" +
-	"T\xfa\xf4\xadl.Y\x09\xf4\x05\xb6\x95i\x7fs\x0f" +
-	"\xed\xf3\xdb\xf8Q+\x00_\xf2\x1a\xd0\xc3\x1aW\x89c" +
-	"u\xfdo\x7fw\x8c\xa4\xa0=`\x90\xfc@\xc9d\xa0" +
-	"'\xd8\xd4\xef\x94\xa0b\x98\xf8.}\xd0\xf2\xd25@" +
-	"g\x96\xe2\xa0o\xef\xfei\xde\x81\x1e\xb1\x13\xe9N\x0c" +
-	"\x07\x9dZ\xda\x08\xd4_\xca\xf0V)\x0e\xba\xae\xd6\xb1" +
-	"\xef\x93\xe9[\xfe+\x19\xc9i\xbe\xa4\xf4#\xa0'J" +
-	"\xedD6`\xa0\x85\x9f\xc3\x89\x0f\xb3\x89?\x9dP\xbc" +
-	"{\xd0\x90^\x1f\xa6\xfa\x10&\xc6\x03\xa5g\xe9Q\x9c" +
-	"\xb6\xf4p)\xbb\xc6\xb3|7\xfeb\xfd\xf4k\x1fY" +
-	"\x9a\xe6a\xc3\xf7\x01\xad\x18\xce\x02\xa2\xe1\xb8\xca\x19\x0f" +
-	"\xbd\xf5\xf9\xbf\xd5\x8d\xf8\x98\xb8\x86C\x0a\x82\xdc5\xfc" +
-	"$\xd0\x83\xc3\xf1\x1c\xff{\xcd\x1f\x1e\xbd|i\xd2\xc7" +
-	"\xe9\xa6\x04\xfd\xf7\xb6\xe1k\x80\xbe<\x9c\x19\xe9\xe1Y" +
-	"6\"x\xa5\xf4}\xd5\x8d\xbc\x04t\xc5H\xdc\x97\xa9" +
-	"\x89\xe9\\KF\xc6\x80\xaee\\\xff\xe7\x8bM/m" +
-	"\x83\x7f\xfe\x92\xd9\\\xf3\xf8u\x9b7\xb2\xa3Dw\x8c" +
-	"d\xfec$*\xd1\xfd]~\x14\xbd\xe9-\xd7i\xab" +
-	"\xbbs`\xe4qz\x94\xf1\x1e\xd6x_{\xb6\x8bo" +
-	"\xd1\xa9\xd3)J\xa2{\xbc\x91K\x81:F\xb1pc" +
-	"\x14\x0aJ\xbe\xe7\xc8\xa1^\x87771A\x99a$" +
-	"[l\xfd\xa8\xb3@W\x8dBA\xed\xf6V\x97\xda~" +
-	"6\xffl2*d\\\xa1Q\x1d%\xba\x82q\xfdw" +
-	"Q\xde\xfb\xfd\xd6\xef=\x9b\x0c\x07\xb5\x89\x95Q\xc7\x81" +
-	".a\x13\xdf=\x0a\x97\xb9\xe8\xc3\xbc\x13\xffu[\xe6" +
-	"7\xc9\x08K3q\x9bF\xbd\x06\xf4\x05\xc6\xbc\x87\xad" +
-	"R\x19:\xeb\xc5\xc5{?\xf8&\x19Ah#\xe7\x95" +
-	"\x1f\x07:\xbc\x9cY\xe8r\x1c\xf9x\xfe\x93W~\xb1" +
-	"\xe6\x89\x0bb<\xa2\xb1\xce,?\x02\xb4\x9e\xb1\xd61" +
-	"V\xd3\xd7\xa5\x1f\xd5\xaar\xf4;\xe5\x03\x88|m\x8f" +
-	"}\xefg\xe3^\xbd\x90n\x126\x95w\x94\xe8\xcb\xe5" +
-	"\xb8\xf7\xad\xaec\xb3\xce5\xd4\x7fk\x15Xm\xc4i" +
-	"\xf7\xb0iw\x97\xe3v\xcck\x93>m\xce\xe8\xf5@" +
-	"\x8bG\xa3\x86d\xcf\xf6\xfdt\xd3\xeb3.'\xfbN" +
-	"m'\xfdF\x1f\x01:v4C\xc2\xa3\xd9\xa9\xf7z" +
-	"\xe4\xado?\xf1_N\xd1\x10\x99\xedu\xf4%\xba\x88" +
-	"\xf16\x8cF\x1f\xf0\xfak\xd7\xba\xdf\xbf\xbb\xf1\xb2\x95" +
-	"G\xccq\xaf\x01Z\xecf\xa6\xd8\x8d\x03\xf7\xfb\xfb\xbd" +
-	"?v\xdd\xf2\xe0e+=\xadpw\x93h\x881+" +
-	"\x8cy\xfc\xef\x06\xffh\xcb\xd0\xbeW\xac\xa0\xfer\xb7" +
-	"\x04t5c^\xc5\x98\x8b\x9e\xd82\xba\xd3\x94\x8bW" +
-	"\x92UO\x1by\x87\xfb$\xd0\x03\x8cy?c6\x9d" +
-	"`\xba\xc8>q_\x02\x0acPd\xe6\xf1\xa4s]" +
-	"t\xef\x03\xeab\\\xff\xd2#~\xa0\xec\xd2\xdckV" +
-	"\xfbw\x8c\xd9\x0b\xb4\xf7\x18\x9c8\x7f\x0cNl\xc2\x11" +
-	"\x0b#:f%\xd0\x99l\xc8A%\xb1G\x1e\xfb\xf3" +
-	"\xbbj2\x82\xd1\xdc\xea\x98#@Cc\xec\xe4'j" +
-	"m\xa8:Z\x12\xfd\xa7\x90=\x1a\x18\x12\xf0G\xc3\xd1" +
-	"\xb2)\xec\xc9$\xa56\xaa\xc4*\xc2\x09%v\xa7?" +
-	"\xa0\x0c\x99\xa1\xc4\x13\xe3\x95@$\xa8xB\x89\xf8\x02" +
-	"\x7f\xd4S\x1b\x09\xcc\x8b\x0f\xa9r+\xf5\x0dJ<Q" +
-	"\x09\xe0\xcd\x943\x08\xc9\x00B\\Ee\x84x\xfb\xca" +
-	"\xe0\x1d#\x81\x0b \x1b\xf0ay5!\xdeQ2x" +
-	"'I\xe0\xaef?\x87\xae\x04*e\x00'\x0f\x9b\x08" +
-	"\xe0C5\x16\x89$p\x0ab\x9fW\x11\x04'\x8f\x04" +
-	"\x08\x80\x93\x80\xb9n[+\xeb\xf6)\x89i\x91\xa0\xe2" +
-	"Kd\xf9\x13\x0dqo&\x88\x87\xec\xf0\x08\xc6\xc66" +
-	"yq\x95\xb6\x17\xb5J\x89G#\xe1\xb8B\x08\xb1\x98" +
-	"h\xbc_\xa9\x8b\x84\xf9\x14\x13#\xf1x(Z\xa5\x04" +
-	"\x94\xd0|%HP\x127\x98\x92X\x87\x92xP\x06" +
-	"\xef#\x82$6\xe2\xc3\xdf\xcb\xe0}L\x02\x97$e" +
-	"\x83D\x88k\xd3lB\xbc\x8f\xc8\xe0}B\x02\x97," +
-	"g\x83L\x88k[#!\xde\xad2x\x9f\x91\xc0\x95" +
-	"\x91\x91\x0d\x19\x84\xb8v\xcd%\xc4\xbbS\x06\xef\xf3\x12" +
-	"\xb8l\xb6l\xb0\x11\xe2\xda3\x90\x10\xef32x_" +
-	"\x92\xc0\x1dW\xc2A%\x06N\x1e\x14ibs\xc7\x15" +
-	"%<6\x01N#U\xa0KSY\x18\x0d\xc5\xfc\x89" +
-	"\x10\x91#\xe14b\xbc\xa1:\x1e\x88\x85\xa2\xc4\x9d\x08" +
-	"E\xc2\xec4\xccK\xa5\xb3\xcc\xf7\xd7\x86\x82\xf8\xfb," +
-	"\x9d\xc1LWi\x0cYA\x7f\xc2\x0f]\x88\x04]\xda" +
-	"qvU\xd1\x80v\x12r\\A\xa9v6\xa5:\x01" +
-	"\x058F\x06\xef\x14\x09\xf2AUu\xb9V\x94\x10\xe2" +
-	"\x1d/\x83\xb7R\x82|\xe9\x1a>F\xc9N\xf5\x10\xe2" +
-	"\x9d$\x83w\x86\x04\xee9\x8a_\x13\x8d\x99\xdc\xd0\x96" +
-	"X\xa0\xc4b\x91\x18t&\x12t&\xb08\xde\x10\x08" +
-	"(\xf188yD\x9d\xa2y\x19\xcd*D\xa5\xa2\xc4" +
-	"\xc6E\xc2\xee\xb0\x12H(A\\y\x86\xb9\xf2.\xb8" +
-	"\xf2L\x19\xbc\xd9\x12\xb8\xa3\x8a\x12c\xe22\x81h\xca" +
-	"\x1c\xad\xdd\xca\x89JbJ(\x9eP\xc2\xa1p\xcd\xd8" +
-	"`0\x16\x1f\xa2\xab0A5l\xb3\xa0\xc7+\xb5J" +
-	"B\xa9R\xe2\x05\x91\x86X@IYq\x1f}\xc5}" +
-	"%\xb0\x87\x82\xc2\x9d\x15\xefdWa\xd5\x1dZ\x99n" +
-	"l0\xe8K\xc4\x14\x7f\xdd$\x7f8X\xab\xc4\x08\xbb" +
-	"\x96<\xcd\xe3\xf0\x08\xde\xbd\xcd\xd7\xb2\x99\xfb\xaf)o" +
-	"\xb5B\xb4Y\xb8\x8fwx\x84\x94J+\xb3H\xe6," +
-	"\xff\xa8iz\x01\xbb\x09)\x82\xba\x91\x1f\xad\x1c\x0a\x82" +
-	"\x83H\xe0h\x87\xba\xebC\x87\"\x10N\xb1\xa6x\xdf" +
-	"\x0be\xf0\xde$\x81aB\x86\xa1\x1e\x0d\x96\xc1;B" +
-	"j\xfd\xfa\xb9cJ\xbc\xa16\x01Y<?@\x00\xb2" +
-	"\x84\xb5\xf1\x0d\xa2\x1aU\x84\xef\x84H3\x16}\xa8`" +
-	"\xc7\x8aK\xf4\x85\x8doA\x99\x0b\xfc\xa8\x98\\kL" +
-	"\xe0\x98\xa25\xf6\xd6-\xf9D\x7f\"\x14\xae\x19\x17\x09" +
-	"\xdf\x19\xaa\x19b\x9e\x93\xa8\xe9-\\\xca\x86\xf8\x9c\xa9" +
-	"J<+\xee\xafa\x0a\xde\xd7\xdc\xdai\xdc\xda\xe72" +
-	"x\xcf%\x19\x93\xa6\x18!\xde32x\xaf$\x19\x93" +
-	"\x8b+\x09\xf1^\x91\xc1\x97\x09\x12\xe4\xcbW\xf1\xb9\x8c" +
-	"\xd8\x15\x1a\x09\xf1e\x80\x0c>'R2\xae %\x03" +
-	"\xc3xF\xe9\x8c\x94\x1b\x90b\xbb\x8c\x14\x1b!4\x07" +
-	"f\x13\xe2\xcbFJ/\xa4t\xb8\x84\x94\x0e\xe8\xe8\xd9" +
-	"oz \xa5\x10)\xf6\x8bHaq)<E\x88\xaf" +
-	"\x10)7!%\xf3;\xa4d\"\xd4\x84\xa5\x84\xf8\x86" +
-	"\"e\x14\x88\x96\xceL3\xea\xd6%\xaa\xd9\xa70)" +
-	"`\x06\x0a\x9c\xbcR\"p\x8c\x0f\xc5\x03\x10\x09kF" +
-	"\x8c\x10pr\x90\xa6s\xd5\xe8\x8e\x8f\xb85\xd7\x07N" +
-	"^\xcf\xd1YB\xe1@\xa4.\x14\xae!n\xed\xc6\x83" +
-	"\x93\xe7\x06\x0c\xf7\xc2\x08S\"D\x8e'\xc0\xc9\xd3\xc8" +
-	"I\xe4q\x11\xe2\xae\x8b\xa2\x95B\x8bl\xa4O\x92X" +
-	"\xa6*\x10\xc7\xc3\xadR\x02\x05\xc6rLX\xa5s\xc6" +
-	"\x948\xb3p03\x1a\xf4\xe3\xb6P\x1f\x8d\xe0$\xc5" +
-	"\xf6\xb6f\xc5\xa6G\x95\xb0\xb6\xa9!I^J\xb83" +
-	"\x93\xf9\xbd5\xef\xcc\xb0\x81\xc2\xc5\xd5V^\x11$L" +
-	"\xbef\x0c\xaf;M<\x85t\x1fn.Pnn\x81" +
-	"nm\x85\xde\xbb@\xc4\x8aMUB\xd6\xbfi\xa9\x10" +
-	"\x136\x95\x09Q\xc7\xe95\x02dmZ)\xa4\xeb\xce" +
-	"{\x84\xccAS\x95P\xe6h\x8a\x09\xb9\xbf\xa6\xa5B" +
-	"r\xb7\xc9#\xd4\xb7NW\x09Y\x94\xd3\xd5B}\xec" +
-	"\xf4J!\x0b\xd4\xf4\xa8\x90&8?[\x08M\xceW" +
-	"\x0b\xf9\xea\xf3\xd5fH\x7f~\xb6Pn<\x1f\x13R" +
-	"\x17\xe7\xd7\x08\x11\xf2\xc5}\x02f\xbf\xba\x8f\xd7\xc9(" +
-	"\xc0l^\xda\xa3\x00\x8d<\xb6\xa7\x00+y\x12\x96\xda" +
-	"\xa0\x9a\xc7\xe8\xd4\x06\xb39>\xa06X\xcfK\x94\xd4" +
-	"\x01\xd5<1\xc8\xfe3\xd3\x1a\xd4\x01\x1eU3c\x0d" +
-	"1\x02\x8aj\xd86\xd0\x8d\x1bqkn]5\x1c<" +
-	"\x18\x1e\x1e\xe2\xaaG\xa9\x09\x85\xc7\x06\xe7\x83\x12K\x84" +
-	"\xe2x\xb9\xc8\xe2\xb1\xc1 \xa2\x0e\x15\x99\xf1\x0f\x82|" +
-	"\xfeppA(\x98 \x05s*\xc2wF\xd4\x89J" +
-	"X\x89\xf9\x13\x8a|\xab\xb2(\xea\x0f\xc5HeCu" +
-	"m(>\x87\x18>\x12\x14ufXC{\xc4\x1e\xaa" +
-	"VT\xc3Q\x83\xe9\xa9\x89Z\xa5\xd4E\xe6+\xbe\x04" +
-	"\x18\x0e\xdc^\xab\xc4T\xe32\x10\xd9_\xa7\x8e\xab\x8d" +
-	"\xc4\x15_\"F\xec\x8a\xbf\x0e\xfd\xa9\x920\xff\xf3)" +
-	"\xe1\xa0\xc9h\x80sR\x90@t\x8e\xbb\xc5\xc5O\x03" +
-	"\x86\xd8\xfd\x89\x06\x88\xabF\xe0\xd1!%\xf2 H\x98" +
-	"\x10N\x8bH\x88\xe1F\xe5HX5\x80\x0dqk\xf7" +
-	"^\x1d\x1fY\x10\xae\x8d\xf8\x83P\xa5[\x02Bp\x97" +
-	"\xec?bG\x0e\x06:\xeb\x1b\x144G\xaa\x81@!" +
-	"\x1cW|\x88\x08\xe5x\xdc|H\xec\xe1\xb8\xa2\xea~" +
-	"%N\xec\xfe\x1ae1\xfe\xe5\xafQ\xdalD\x0cq" +
-	"\xa4\x18\x916\xff\xde\x10\xb56@}\x83\"k\xa1\x98" +
-	"\x80J\xd0\x08u\x96\xc1{Ck\xf6\xa6\xcd\x93\x1a\x8a" +
-	"\xc5\xd4\x0a\xd7]\xc0\x1cq\x0aDo\xe4X\xdc4~" +
-	"S\x97\x12\xe2\x9d\"\x83w\x96\x10\xf8\xcc\xc4\x15\xce\x90" +
-	"\xc1\xfbK\x09\x1dF\xb4!\xe1\xf1\x87\x89[\x9b\x02:" +
-	"\x11\x09:\x11P#\x0d\x09F\x01}nbR\x02\xd1" +
-	"\x86\x99(t\xdc\x94\xf1\xac\xad\x98\xcb\xdcJ\x16\xee\x85" +
-	"!D\x9e\xa7sxx\xdd\xb75\x84\xd8\x06\xcc\x8b\xaa" +
-	"m\x8dZZ[\xa5~Q\x9b\x0b\xb6K\xac\xa0\xd9@" +
-	"\xee{\x0a\x12\x91h(`\x846\xd6\xb1\x18\x07\x803" +
-	"\xc3\xa1\x85\xd3\xfca\x0d\x00\x0az\xe4\xe1\xe8vq\xd8" +
-	"\x1f\x8e\xf8\x94\x00\xd8\x88\x04\xb6\xf6E\xe3\x1a\x86sk" +
-	"v\x8e\x09\x9cWo\x1c\x1e\xa1\xc3\xa0\x15\x81s\xefW" +
-	"\x15\x0d\xe8\xd7n\x12\"\x1e\x88\xb5\xc5\x0b\xa3v\x0e\x95" +
-	"\xc1;J\x025\x11\xaaS|J8\xc1nEj\xf0" +
-	"\x8bK\x08\x07\x14\xe2\x9e\xd6PW\xcd\xfc\xb1Y<n" +
-	"s@\xa8]\xd0)\xf6H\xda\xd1Y\xae\xad\xac\xad\x08" +
-	"\xc1\x1dS\xfc\xf1H\xd88Y\x8b\xc3\x9c\x81'?E" +
-	"\xb1\xcfWj\x9b\x89C\xfbJ\xe0f\xfaaBt\x1c" +
-	"\xad=\xc0<5\x9c3c\xd0\x16\x0cQ4\x16ID" +
-	"\x02\x91Z\xdcV\xea\xea[\xbbJ\x86C1\x8d\xa6=" +
-	"\x9cl4\xb9j\xf8\xf4\xd3\xd3\xce.uA%\\\xa3" +
-	"\x0b\xe2J}8\x92\x16\xb2\xb5%+f\xe1\x83\x9a\xbb" +
-	"\xa8\x03\xf9E5\xef\xe9\\~\xd8\xc97\xb3\xce\xbf\x90" +
-	"\x8dF\xb2|\xa1F%\xed\xaa\xf13f\\?\x0be" +
-	"%\xe6h\x11\xa90a\xb5\x95z\x95\x08\xeaU]\xeb" +
-	"\x9f\xa7\x94TO\"v\x7f|\x8e1u\x01K\xce\xa5" +
-	"\x99\x08.V\xc3\xe7\xe9WNVb-\x1cuK\xb7" +
-	"\xab\xcdn\xd2\x88\xe2\x0d\xfb\x09\xed\xf2\x92f\"I\xf7" +
-	"\xe2q\x88\xe3\x82g\xc9\x19\x9dU\x15WLo\x93\xaa" +
-	"\x08\xf1\xcd\x92d\xf0\x05%\x09\xba\xc05\x95I\x8b\xfa" +
-	"%\x0c\xaa~\x89\x84Z$HWU\xe6\xb5hH*" +
-	"#\xc4\x17DB\x14\x09\xf2\x15U\x0b\x04\xeb\xa45\x84" +
-	"\xf8\xa2H\xb8\x0b\x09\x19\x97U-\x0e\\$\xad$\xc4" +
-	"w\x17\x12~\x83\x04\xdb%U\x0b\x03\x97K\x1eB|" +
-	"\xf7 \xe1>$t\xb8\xa8jQ\xe0\x0a\xb6\xaa\xdf " +
-	"\xe1A$\xd8\xbfS\xb5 p5[\xd5\x03H\xd8\x80" +
-	"\x84\xccoU-\x06\\\xc7\x86z\x10\x09\x8f \xc1q" +
-	"A\xcd\x06\x07!t#\x1bj\x03\x12\xb6\"\xa1\xe3y" +
-	"5\x1b:\x12B7K\xd5\x84\xf8\x1eC\xc2N$t" +
-	":\xa7fC'B\xe8\x0e\xb6\xdc\x9dHx\x1e\x09\x9d" +
-	"\xbfQ\xb3\xa13!t\x8f\xf4(!\xbe\xe7\x91\xf0*" +
-	"\x12\xba\x9cU\xb3\xa1\x0b!t\xbf\x84\xe1\xec+Hx" +
-	"\x03\x09]\x9b\xd4l\xe8J\x08=\xc8\xe6x\x1d\x09o" +
-	"#!\xeb\x8c\x9a\x0dY\x84\xd0\xa3\x8c\xf0w$|\x80" +
-	"\x04\xe7\xd7j68\x09\xa1'\xd8P\xef!\xe1s$" +
-	"\xb8\xbeR\xb3\xc1E\x08\xfdD\x8a\x11\xe2\xfb\x18\x09g" +
-	"\x90\xd0\xed\xb4\x9a\x0d\xdd\x08\xa1\xa7\x99\xd8\xcf \xe1\x0a" +
-	"\x12\xe8)5\x1b(!\xf4\"\xfb\xc5wH\xc8\x90%" +
-	"\xe8\x92\xfd\xa5\x9a\x0d\xd9\x84P\x90\xf7a\xc4.c\xc4" +
-	"\x8e\x84\x9c\x93j6\xe4`\xc0\xce\x08N$\xf4\x90%" +
-	"P\x03\x1c\xa9\x83\x93\xe7\xd5M\x0f\x91\x82\xdd\xc1\xc9\xbd" +
-	"\x98n\xa7k\x19\x9a\x07'/\xd0\x1b!t:\xbe\x07" +
-	"'o~\xd0\xb9\xaa\xd3\x11?8\x8d\x1a\x90\xc6\xb3\xd8" +
-	"\xaf\x01\x0cp\xf2\xc62\xf3\x92\x991\x018y\x09\xc7" +
-	"\\\x81\x16\x15\x80\x11\x15\x80\x937\xa8\xe8cG5\xfc" +
-	"\x01N\xde5\x92\x9c\x1b\xae\xd6Dc\xe6\xd3tj\x83" +
-	"\x18M\x80\x93w\xdd\xe8t\x7fz|\x01N\x9e\xfb3" +
-	"\x83v\x8b\x88\x03\x9c\xbc\xc6\xaf\xf3E\x84\x18\x04\x9c\xbc" +
-	"\xafP'\x07\xc4\xa8\x04\x9c\xbcj\xccs\x03<N\x01" +
-	"'\xef$3\xcf\x99G.\xb8\x17\xa3\xc5\x90\xab\x81\x18" +
-	"\xcb\x80\x93\x97\x16\xf8Y\xa7F7\xe0\xe4\xc5,\xe3\xac" +
-	"\x93\xa36pr\x0c\xaas$\xf4\x88HJ\x8d|\xc0" +
-	"\xc9;\x96\x04^tPV\xbcfGG;K*\xa6" +
-	"\xff\x95\xfdu\x0c\xc0\xf1\"\xab\xc3#4\xe0\xb59\xa7" +
-	"\xaa\xf9\xf2\xa9n\xcd\xa3\xfc\xb09\x14K\xb0+7\x87" +
-	"\xd4p.\x10\x1b\x87+bBi\xb2b\xa5\xd0\xaf<" +
-	"\xb5Q\xe8r\x99\xda(\xb4?N\x9d-4\xf8Lm" +
-	"\x14j{S\x9f\xe2\xd9&\x97\xb7\xd1h\x94uy\xab" +
-	"y\x1f\x85\xcb\xebQ+\x93\x13t\xec\xff\x94t\x9c:" +
-	"1%\xf9\xa6V\xa4\xa4\xdaT\x9f\x90X\xd3\xff\xe1i" +
-	"4\xfdAZ\xd2L5\x03c\xb7\x96#k%\xc0\xcd" +
-	"h-tqk\xb6\x83)\x0aofux\x84\x06\xb4" +
-	"6+J\x95V\x14\xcc\x0a\xccK\xcb\xbdW\x0b\x88\xc3" +
-	"\x12\xd4X\x0c\x87b5S\xddB\xe4:\x9bG\xaef" +
-	"\xe0:\x90\x97\x90\\\x92\x9e\x0a\xf6\x96\xf1hV\x1f\xbe" +
-	"2B\xe4X\x02\xecD\x02;\x81\xac9\x91x\xc2\xc0" +
-	"\xb7\xadW{Z\x831Fr\xc6\xc4A\xa9\xc07\xf3" +
-	"\xfb\x16q\x85\xa0\xb49\xa1\x06\xd9\xef\x82\xe3\x89\xbd\xe5" +
-	"\x1be\xe8\x8f\xa6=3\xec\x8b\xa2Zb\x80I,\xbf" +
-	"\x04\xf7\xec\xca\xf1\x10\x02\x12\x8bA\x0a\xfc\xc1\xa0\x12\\" +
-	"\xac\xd9\xf8\xa0\xbb:\x16\x99\xa7\x84\xdbQ\xff\xd2\x9c\x97" +
-	"\xee\xbb\x9a\xdd\x88Xt\xd3k!N\xde\x9f\xd0N\xfb" +
-	"g\xe4\x8bbr \xd5X\xf5\xb1\x00\xf8B nO" +
-	"\xf8k\xa0\x03\x91\xa0C\xeb\x96\xc9\xac\x06\x85\xabp\xc1" +
-	"\x90\x10\xa4X\xa6I\xb1\xcc\x94\xa2\xdb\x1f\x08(\xd1\x84" +
-	";\xa6\xccU\x02\x09w\xa8&\x1c\x89\xb5=\x09e\xa6" +
-	"\x17\xacr\x13\xf6V\xbd\x81\xe6\x9d\xd3\x02\xc0\x963Q" +
-	"-\x05\x80\xb6\xb6\x9e\xba[;vf[x3\x9d\xc3" +
-	"#t\xd8\xb6b[Z3_c\xdd\x1a\xacbS\x98" +
-	"\x0d\x938\x05o\xdfoe\x8a\xefS\xc3\xe51Ns" +
-	"!\xbb\xae\xc5\xadV\xd5:\xb4\xb7\xaa&D\xae\xc2\xd4" +
-	"s\x85\xa3\xab\xd1\xf9I\x16\xfe\x02\x9c\xbck\xae\x9d\xf6" +
-	"\xccHV7S\xb5n5\xf7\xa9\xc3r%\xe9\xe7\xcd" +
-	"]{\x0d\xc4\x83\x937\x92\xb6\xf3\xda\x9bA\xaf\xaca" +
-	"\x94ls\x9e\xbbq\x9e\x852x\x97%\x15\x10\x97\xa0" +
-	"\x1f\xb9G\x06\xef}I\x05\xc4\x15hU\x7f#\x83\xf7" +
-	"A\xb1~\xe8Z\xddH\x88\xf7\x01\x19\xbc\x1b\xc4\xe2\xa1" +
-	"k\xddJB\xbc\x1bd\xf0nm\xa9\xa2g\x16\x80Y" +
-	"\xff\x06/lp\x9c\xcd3\xdc\xe0\xe4\xe5\x0c\x9d\x1eL" +
-	"I\x93\x83\x93WC\x0c\x96\xf4\xc498y\x95\xa4Y" +
-	"YZ\xa7\xc2\xc6E4\x14B\xae;W\xcd\xbd\xf9\xf8" +
-	"\x86\x18/\x9e\xb7\x92\xb7loi^\xbb\xa0C\xaa\x14" +
-	"w\xdcLu_\xe7\xc5\xb4\xb55al\x9dJ\xaaj" +
-	"\xa5%\xa0\xae\xa16\x11\xf2\x07\x83\x04b)\x8b\xc0x" +
-	"4\x14\xf7)J\x10\x80H\x00\xa4}\xf8\xc12\xdd%" +
-	"\xba\xdd\xff\xd9.\xb0T}3P\xb1\xa6w$\x05\xe9" +
-	"M\xb6\xaaQ$A=\xbdF\xe1E\xceJ\x19\xbcw" +
-	"|\xdf\xaa\xed\xf5e<S|\xac\xac{$\xfez\x86" +
-	"\xc3#\xf4\xbc\xb7\x19Pk\xd3\x8d+`\xb6\x11e3" +
-	"\xc9\x90\x0d\xfd\x02&\x13\xe2\xfb\x1cd\xf0\x9d\x03.\x1e" +
-	"\xda\xc4z\x16\xce\xe0\xf3+\xc0%D/B\x15!\xbe" +
-	"\xef\xf0y\x86\xc4;\xd8(H\x93\x09\xa9\x92d\xf0\xf5" +
-	"\x90$\x00\xad\x85\x8d\xe6\xb1\xc4\xcf\x0d\xf8\xb8/r\xdb" +
-	"2\xb4TXo\x96\xc5\xe9\x8b\xcf\x87\xe2\xf3\x0eN-" +
-	"\x13V\xcc\x12^\x83\xf1\xf9\x08|nwi\x89\xb0\xe1" +
-	"R\x09!\xbe\xa1\xf8|\x14>\xcf\xec\xa6\xe5\xc1n\x91" +
-	"\xe6\x12\xe2\x1b\x81\xcf\xc7\xe3s\x87MK\x83\x8de\xf3" +
-	"\x8e\xc1\xe7w\xe0\xf3\x8e\x1d\xb4,\x98\x90\xffK\xe0\xf3" +
-	"Nv-\x09V\xcf\xc61\x93y\xae\xce\xa0\xe5\xc0\x16" +
-	"I\x8d\x84\xf8\x16\xe2\xf3e\xf8\xbc\x8b\xa4\xa5\xc0\x96\xb0" +
-	"\xdc\xd82|\xfe\x00>\xefJ\xb5\x0c\xd8*\x96L3" +
-	"\x13v\xae,YK\x80\xadc\xe3\xfc\x1e\x9f?\x86\xcf" +
-	"\x9d\x99Z\xfek\x93\xb4\xde\xc8\xca\xbd\x84\xcf]\x0e-" +
-	"\xfd\xf5\x02[\xff\xf3F&M\x8d'\xfc\x09%\x18\x8a" +
-	"\x89Z\x15\x8d\x85\xe6#:\"\xb2\xb2\xc8\x04\x98a%" +
-	"\xb1 \x12\x9bWA (\xa8\x1fZ\xb5\xe9a\xfcq" +
-	"\xb3\xf6\xaaNI\xc4B\x81x%\xb1Gx`\xa3*" +
-	"\x0b\x13J,\xec\xaf\x85\xa9\xba\x9d\xb123jC8" +
-	"\xee\xbfS\x99\x16\x81\x19\xb1\x86x\xa2\"J\x0c\x8bS" +
-	"pgm$\xc2\xed\x0f^\x99\x09\x0b\x03sH\x96?" +
-	"\\\xa3\x98\x8f\x83\xa1\x98\x12HT*\xc4\xae\xb4\xd4@" +
-	"\x14W\x94\xa0\x91\xdfj\x96\xa9U\xd0R\xe7_\x88!" +
-	"7\xc6\xd3\x08\xba\xe3\x90I$\xc8\x14|+D\xc2\xde" +
-	"\x06\xa5A\xf1\xd9C\x8d\x8aI\xad\x0b\x85\xfd,\xef\x86" +
-	"\xeb\xc7\xd5\x13s\x93H\xb3\x1er^8\xb2 \\\x19" +
-	"\x0b\x01\x9eSEt\x9a\"'\xd2\xaa/\xac&3." +
-	"\x12&v\\\xaf\xb9/\xf3\xc5\xc9vvOY\xc3t" +
-	"\x8b\x182%<\x0e\x92\x96\x9b\xdc\xda\x8b\xdd\xcd\x18V" +
-	"\xaeV\x98\x09\xe3}\xf4\x0e\x8f\xf0Z\xdeu\xb6\xfd\x99" +
-	"\x0e\xbb\xc0\x0a\xcd\x8a\x85\x9f\x10\xf2[\xe8n[ms" +
-	"Z\x08\xca\xfdu\x9b\x0f\xc7\xe8\xe80\xd2\xbbb\x05\xad" +
-	"\xd9|Y\x05\xfc\xc0\xfd\x87&\x1c\xd7[%\xf9\x8br" +
-	"\x0e\x8f\xd0\xf9\x7f\x9d\x85p\xa3\xc7\xc3H\x82\x1a\xb3\xf1" +
-	"\x97O\x1c\x1e\xa1\xc3\xbf\xcd\xf1[\xaa\xe3\xd7\x13U\xc4" +
-	"\xc0$z\xa5'\xa9&f\x96y\\\xc3\xaa\x85zp" +
-	"Ll\xf0\x00'\xef\xe91\\\xb9\x98\x11\x03\xa7\x91\xc6" +
-	"kg<a\xf6\x8f\x81\x96E\xe5\xafk8<\xc2K" +
-	"\xf1\xd7\x19\xc0\xa6dUM)\xccn\x9b\x14\xf4F\x18" +
-	"p\xf2\xa6'k!\xf0V\xa7v\xde\x9f\xe4\x0e\x16\x0b" +
-	"\x83dkk\x0b\x8d.G\xfe\xae\x0d\x1a\x14\xf3C\x00" +
-	"m\xc6Dz8\xcc1\x91\x10\xe8!\xea\xbeK\x06\xef" +
-	"\xef\x05\xbc\xb86\xa6w\xf8\xef\x14\xf0\xe2\x0e\x94\xef\x13" +
-	"2x_\x15\x9a\xf9\xf7c\x88\xf7\x8a\x0c\xde\x0fL " +
-	"\xe4:\x81\xe1\xc9\xdb2x?\x96X\xee?\xac\x04\xd1" +
-	"O\xa6\xb9\x03\x8dT\xa9\x90\x024\xca\x82\xa3\x13\x93\x89" +
-	"\xcco\xa0\xabU\x82\x15D\x8e\xa6\xfb\x14\x8dVI\xdc" +
-	"J\xcb\xa3,\x0e\xc5#\xb5\xfe\x84\x92\x16!\xb4v\x9a" +
-	"F\x7f\x95\x19%\xb6!A\xd6\x877\x11\x8b\x09\xb2\x1f" +
-	"\xa6\xd7<\xb5W\xa9>+\xd58\xb7\xe9-\x04T\x1c" +
-	"-\x05w\x87\x89\x90\x1bX\x05\xd8\xc4\x86<\xf2\xa7\x8b" +
-	"\x18\x9a4\xd1!\x0f\xfe\xe9\x12\x86c\xcdR\xaf\xd0?" +
-	"\xbc\x82\x8df\"G\xa1\x7fx\x15\xc3\xc4&v\x14\xfa" +
-	"\x87\xd71Ti\x16u\x85\xfe\xe1\xcd\xac\x0e\xfc\x08R" +
-	"\x9e\x90\x92\xfa\x87\xb7\xb1\xb5mE\xca3RR\xff\xf0" +
-	".\xb66\xb3\xe0\x9b\xef\xf8\x16)\x0eV\xf1\xc5\xd1\x9e" +
-	"1\xd0h~\xc7\x0bH\xe9\xc8\xf0h\x95X\x0b\xce\xef" +
-	"t\x1e)\x9dX1\xb8Z,\x06\xe7w>\xa7\xea\xd8" +
-	"\xf9 [\xf5\x1bHy\x0f)]\xbeA\x0a\xa2\xe7w" +
-	"\x18z6\xab\xbe\xf9]\xcf\"\xa5++\xfb\xce\x16\xcb" +
-	"\xbe\xf9YMH\xc9bu_\x9c\xe7\x14R\xbeC\x8a" +
-	"\xf3\x0cR\x10C\x9fg\x94s\x92\x0cU\xb2\x04\xf9\xae" +
-	"\xaf\x91\x80 \xfa*\x1b\xec\x0a\xfe$\x13)\xdd\xbeB" +
-	"J7B\xa8M\x8e\x89%\xe1|z\x1a)\x94\xd5\x84" +
-	"\xd7\x885\xe1\xfc\xecSH\xc9\xc6P\x86\xfd\xe6\x06\xa4" +
-	"\xf4EJ\xce\x97H\xc9\xc1`\x86\xd5\x91\xfb\"e(" +
-	"RrO\"%\x17\xc3\x19F\x19\x8a\x94Qr\x0b/" +
-	"\xa5\xa4\x94\x9e\xcd\x97\xd2[(=\x9b\xddT\xa9\xa5g" +
-	"\xf3\xd5\xe4\x16K\xcf\xe6gpZ*=\xf3w\x92\xd3" +
-	"\x8a\xcff\x8e\xd4\xb2\xf8lB\x8a\x16\x8a\xcff\"7" +
-	"\xad\xf8l\x96\x8f,\x8b\xcf\xe6\x9b\x1d\xcd\x14\x9fM\xa0" +
-	"\xd9b\xf1\xd9|\x0b\xa5\x95\xe2\xb3\x19y[\x17\x9fM" +
-	"g\xdeL\xf1\xd9\xfc\xf8L3\xc5g\xb3\xa4j]|" +
-	"6}\\\xb3\xc5g\xf3%\xb7\x16\x8b\xcf&\xe8j\xb6" +
-	"\xf8lvC\xb6\xa1\xf8l~\x1f\xaa\x0d\xc5g\xf3\xa3" +
-	"*\xed\x84\x0bi%,\xb76&s\xfd\xfc\x03U\x0e" +
-	"\x8f\xf0\xf1\x8e\xeb\x84PS\x0a\xd8\x15b3\xf0\xf7\xfb" +
-	"\x1d\x1e\xe1k\x0b\xd7_\x02H\xc6\xc4\xcdf\xb4\x07r" +
-	"\x88o$\x9a\x9a\x0b\\8\xa2\xd1ct9\x98\xda\xa6" +
-	"\xd5(\xa4[cJ\x14\x950L\xdc\x09Vuj!" +
-	"\xb2K\x85\xda\xc9%?\xd2\x86\xa67\xc1\xe5g%\x16" +
-	"E\x15\xc8\xe2\x9fO\xd1\xdeL\xfaa\xbc\xbf\xf9\xf6\xa7" +
-	".T\xde\xa9|=\xdd\x8d\xc6\x01\xb7\xab\x05-\xa9i" +
-	"\xf1\xffS\xa3\xb6\xd86'\xe8Sk\xad\xc3\x8d<\x8f" +
-	"\x9c\xdc:\xdc\x96WA\xbf_1\xdbR \xa2z\xfe" +
-	"\x803'\xf5\xdcs`g\xf1\xc6c\xb6\x04\xf6\xba8" +
-	"+\x1a\x19\x1f@jwv \xa5\xb8\xa7G\xbb\xfck" +
-	"s\x0e\x8f\xf0\xad\x9b\xeb\xb4#\x16y\x84\xef\xa3\xabI" +
-	"o6q\x01Y\xdfi\xae6\xb3\x85NV\xdd6\xa5" +
-	"v:\x98Ip\xb9\xa2\xfd\xa9#3R4\xfa\x8e\xf8" +
-	"\x17\xdc\x1c\x1e\xe1# \xd7\x99\xa0\x10\xab\x92\xed\xaf\xc3" +
-	"\x8ai\xff\xae\x96\xd6X\x9b\xd5\xa8]7\xdfz\xc2\x0b" +
-	"\x12UV/M\x94\x09\x05\x09\xcb\x8c/\xc3M\x81[" +
-	"\x15\x02\xe6\xb3\xd6[Pl-\xbe\xd4<>\x14\x0f\xe8" +
-	"-H\xf0\xff\xfa\xbd\xe64\x87\xd8\xf2Y\x08\x9d\x1d\xcd" +
-	"\xf7T\xe8\xf60\xaa\x99\x10\xd2\xbe\xf4Y{}\x8d\x19" +
-	"i6\xb7\xdc\xb8\x86\xd5R\x97\xdb\xa1\xbdE8\x11\x01" +
-	"\x99\xb0\x0a\xaf\x04\xffd\xd3u^\x89T\xbb\xa2\xd90" +
-	"\xfea\"\x87\xc7\xfc \xc9\xf7\xfe\x8a\x82\xd1\x8f\xa6\xb7" +
-	"\xa3\xe9]m\xdf\xdb0\xdb\xda\xda<\xa0\x1bd\xfe\xbd" +
-	"/\x87G\xf8t\xc6u\x0aNlQ\xe0\xfa\xfb\x7f\x03" +
-	"\x00\x00\xff\xff\xa0\xd3\x17Z"
+const schema_fb174cb3ecf64f4f = "x\xda\xc4|k|TU\x96\xef^\xe7\xa4\xa8\x14\x10" +
+	"R\xc5\x0e\xc1\xd8\x84\x00\x8d\x90\xf0jH\x00!\x12*" +
+	")` H '\x05\xd3\x10\xb5\xa7+U\xc7P\x90" +
+	"TU\xea\xc1#\xa3\x8d0b7\xb4\xda\xca\xf8h\x18" +
+	"\x98\x11F\x04i\xb1A\xa5\x15Z\x1d\xa1\xe5\x8er\xb5" +
+	"i\xb1\x15\xb5e\x14\xdb'\x82\x02\x02\x1a \x9c\xfb[" +
+	"\xfb<\xf6\xa9\xaa\x93\x97x\xef\xfd\x96\x9c\xb5j?\xd6" +
+	"^{\xad\xffz\x9c3\xfa\xbb\x9c\xf2\x8c1Y\x1f\x0c" +
+	"!\x82\xf7e\xb0uS\xben\xbaQ\xb8\xe9\xc5\xea;" +
+	"\x88\xcb\x0d\xca\xc9\xbc_\xd6\xaf\xb1/\xfb\x84\xd8\x04;" +
+	"!%\xf3h\xa9@\x13\xd4N\x08m\xa2K\x09(y" +
+	"\xbf\xb8\xd1^\xebl\xbc\x83\xb8\x86\x82r\xf0\xb6;\x1f" +
+	"\xbb\xfb\xae\x83\xf7\x93\x0c\xe4=Nw\x00m\xa1C\x89" +
+	"\xa8\xdcpe\xe1\xdc\x91\x07\x0bW\x12\xd7@Pvy" +
+	"\xd7\xf6\x9c8\xe1\xee\x1d\xc4\xd6\x0d\xd9\xce\xd0U@m" +
+	"9\xf8'\xe4\xfc\x14\x08(\xb7\x94\xed\xfd\xf9\xf5OV" +
+	"\xad\"\xd2P0\x0d:M\xb0\x0b\x84\x94,\xe8\xb3\x01" +
+	"hS\x1f\\Bc\x9f\xdf\x13P\x9e;?\xf9\xe2\xfb" +
+	"-\xbbW\xa5\x0c\x0e8\xa2-\xb7\x19h^.2\xf7" +
+	"\xc9u\x13Pf<\xb63\xfa\xfb\xfb\xdf\xfd\x17\xe2\x9a" +
+	"\x08\xca\xd8\xc0\xcd\xe7\xdex\xf6\xbf/\xa8\xeb\x1d\x97\xdb" +
+	"]\xa0\xf3r\xedDT\xee{\xf8\xa6\xb97\xfcm\xdf" +
+	"]\xc9\xbbR\x87\x1c\x93\xfb\x14\xd0J6\xe446\xe4" +
+	"WcV\xdf\xfd\xe4\xec\x05\xbf\xb4\x10A\"\xf7\x00\xd0" +
+	"{rQ\x04\xad\xbe\xdb\xaf\xb1\xdf\xf0\xa9\x15\xd7\xea\xdc" +
+	"\xb5@71\xae\x87[N\xf6\x1a\xff\xcdKk\x88\xe4" +
+	"\x02P\xe6\xcc\xb9p\xf2\xe9Y}/16\xfa`\xee" +
+	"Y\xba\x99\xcd\xbb\x89\xcd[?\xa7t\xc5\xc8\x8f\xdfY" +
+	"\x93\"&u\x95/\xe4\xae\x03\xfa\x16\xe3~#\x17\x0f" +
+	"j\xfa\xdb\x81\xc9\xb3\xf2>^C\\.\xd3\xc0\xecT" +
+	"\xe9\x98\xbeGhY_\xfckb_\xe4\xdd\xfd\xf6\xc0" +
+	"\xb2\xfe\xb9\xfd~M\\\xd7\x83R\xf7\xe6\xb9\xebv." +
+	"9\xf5\xef\xeaZ\xb7\xf6\x15\x04\xba\xbf\xaf\x9d\x88\xdf\xfe" +
+	"\xc7\xc5\xa6\xba\x8b\xaf\xdc+\x0d\x04\x93\xd8\xa7\x09\xf6L" +
+	"BJ6\xf5]\x04t7\x0eY\xb2\xb3\xaf\x82\x87\xda" +
+	"\xb0\xe2\xcd)\xaf\x0fZu?q\x15\x83\x02_.s" +
+	"n{>\xf1\xbe\xa6Uo\xe5\xbd\x07\xf4L\x1e.\xe0" +
+	"T\x1e.\xc0\xd8L\xd2b\xd9\x02\xaa\xae-\x85\x92[" +
+	"\xae\xb5\x0bDTJ\xcb6\xdd^\xfa\xd9\xac\x7f\xc51" +
+	"\xafly\xf0\x95\xa3\x7fY\xfe\xa1\xca\xd4\xef=\xa0\xc1" +
+	"~x\x94O?<p\xc4_\x96\xca\x0f\x12W\x09(" +
+	"7\xfc\x09~s\xa2\xfc\x1f.iB\x9a\x86l\xbe~" +
+	"8\xef-\xfdP\xa4\xe7\xbam\xbdi\xfd\xbf\x8d{\x88" +
+	"H\xe3@TJ>m\xcd{\xb8n\xc3C\xea\xc4+" +
+	"\xfb\x9d\x05\xba\x891\xaf\xef\x87zg\x90\xd3O\xb4," +
+	"\x7f\x07\xd0y\xf9x\xa23V\x9f~S\xbcg\xc3\x06" +
+	"\xe2\xfa\x09(G\xf3\xd7\xf6\xbe\xf1L\xc5>m+\xf9" +
+	"\x07\x80\xca\xf9\xb8\xca\x1d'\x86\xfd1\xe3\xd9\x93\x1b\x19" +
+	"W\xc6\x9c\xc0\x95\xb7\x9b\x8f\xfeN\x93NE\xfe>\xa0" +
+	"\x0b\xf2q\xe2y\xf9K\x09|0a\xcd\xf0g\x9f\x0f" +
+	"n\xb2P\x91\xdd\xf9G\xe8\x0b\x8cso>\xee\xc78" +
+	"\xbb\xf4%\xbe\x8b\xa3\x9eaK<\xbc\xff\xe8\xd2\x1d_" +
+	"N\xddb\xa1\x1a%_\xe4\xf7\x06\xda\xc2\x86<\x8f\x93" +
+	"+\xe5\x9fg\xd9\xb3\xff\xf5\xd0\x16\xab\xab\xb1\xa0\xff\x0e" +
+	"\xa0M\xfd\xd9\xd5\xec\x8f\xf3\x97\xbfZ9\xfdG\xdb\xbe" +
+	"\xda\x92r5\xd9\xc8\xf7\xf4\xaf\x03\xba\x991o\xea\x8f" +
+	"#\x1f\x98\xb1\xb5\xc7\xc6\xbbV\xfdg\xca2pd\xda" +
+	"\xda\xff#\xea(\xc0\xbfl\x058\xf0\xc6\xda\xc8\xf5G" +
+	"\xd7\x15>J\\\x13L\x17P]\xc5\xb8\x02A\xa0\x12" +
+	"c\xaeb\xcc\xffyt\xe6\x91\x9b\xcb\xbf~\x94\xa9@" +
+	"\xe1\x7f\xef\xa5{\xa3\xff\xb8C\x95BS\xc1G@\xef" +
+	")\xc0#\x98\xbe\xe3\xb3O\x87\x94u\xdbjq\xf5J" +
+	"\x82\x05\x02\xd0\x04\x1b\xb2\x89\x0d\xf9X\xcf\xef\xee\x7f\xea" +
+	"\xc6-\x8f\x11\xc9\x0d\xa0T6\x9c\xfaq\xc6#/\xb6" +
+	"j\x0b\xb8\xbf\xa0T\xa0\xbb\x19\xf7\xce\x02\xdc\xd9\xdd\xb6" +
+	"\xc6\xf3=V\xde\xb9\xcd\xea\xeee\x0d8A\xf3\x060" +
+	"\x035\x00y\xdf\xdfx\xba\xe8\xa1\xb5E\xdb-\xa4P" +
+	"\x92\x18p-\xd0\xd5\x8cy\xe5\x00\\F\xbf\xf9{\xe6" +
+	"\x9f\xd8\x1a|\x9c\xb8\xc6\x00\xb70\xeaE\x1dp\x04\xe8" +
+	"\xfe\x01\xb8\xb3M\x8bo\xfa[\xfd\xad\xb9;R\xed)" +
+	"\xd8s\xf1\xaa\"\xe3^\x1c\xb4d\xcf\x80\xa3\x19\xc4$" +
+	"\xa2t\xad)\x1a\xb2\x01h\xc5\x10\xd4\x9aA\xab^8" +
+	"0\xeb\xd8\xcd;\xac65q\xc8E:m\x08\xfeU" +
+	"1\x047e\x1c}\xfa}\xde<\xa4;\xd0\xddC\xb6" +
+	"\x11\x91\xeb}\xfa\xbcc\x866\x03\x9d6\x14\xe7\xbd\xce" +
+	"~\xc7\xbe;\x1f\xbf\xf0;+5)\x1bz\x82V\x0e" +
+	"e\xa6y(\xcag\xf6\xc2\x1b&\xbc\xf6\xf0??\x99" +
+	"r\xa6\xea\"\x83C\x8f\xd0\x04cn\x1a\x8a\xf7\xb9\xb4" +
+	"\xbf\xb4\xf3\xf8\x85E\xbfgj\xf2\xd3\xed\xbf\x18\xe1\xdc" +
+	"\xf9\xd1k\xea\xf4Y\x85\x1f\x01-*Da.\x0d8" +
+	"\x8b/-\xaa\xde\x95\xe2\x1dUoS\xe8\x11\xe8u\x85" +
+	"8\xe4\xc0B\x9c\x7f\xdd\xe1\x17\x94g\x0f\xde\xbb\x8b\xb8" +
+	"\\\x02\x9f\x9e@\xc9\xb4\xc2A@\xe71N\xa9p\x0e" +
+	"\x01e\xed\xf5\x1bg\x1e,\xdc\xbd\x9b\x99\xdc\x9c\x9b\xc6" +
+	"\xd6\xacr\xc5\xf6j\xc3\xca\x85\x82@W2\xe6\xdb\xd9" +
+	"\xb0\xa7\xff\xfc\xde\x1b\xfb\xe0WOYZ\xfeM\x85\x1b" +
+	"\x80\xeea\xdc\xbb\x0bQ\xf8\x17wD2f\xff\xe2\xf0" +
+	"\xd3i\x8b\xc8*\xea\x0d4\xbf\x089\xf3\x8ap\x11\x9e" +
+	"\xff\x18\x1a\xb9aj\xe6\x1f\x92\xad\x10\x93\xc0\xc8\xa2\x03" +
+	"@\xa7\x15\xa1\x04\x86|\xf0\xbb\xc6?\\\x1c\xf4\x1cq" +
+	"\xdd\x00\xca\xfa\x07\xfex\xfc\x97\xe7\x1d\xafj\x93\x0f," +
+	"\xbaV\xa0\x15l\xc8\xb2\"\\\xaa\xb1\x95\xf43\xf5\x15" +
+	"\xed\x03\xba\xbc\x08\xcf\xd4\xb0\x8b\xe9\\ME\xcd@W" +
+	"3\xae7\xd6\xd7\xae\x0cM8\xbe/\xd9w\xab\x13\xdf" +
+	"^\xd4[\xa0\x9b\xd8\xc4\xeb\xd9\xc4\x17\x9e,X\xd9<" +
+	"\xe8\x8b}\xc9>Le~\xb5\xe8\"\xd0O\x18\xf3q" +
+	"\xc6\xbc\xf1n\xffo\xaf{?\xf4Gv\x8f\x1e\xbbK" +
+	"\xae\xde\xder\xef_\xd5\xf9m\xc3\x0e\x01\x1d8\x0c7" +
+	"\xbey\xd7\xa0#\x9f\xfe\xa6U\xe5\x9aw\xf8\xfa\x9a\xbe" +
+	"\xff\xd4K\xd1\x86l-:\x044o\x18\xbb\xc7\xc3p" +
+	"\xc8?\x8eY\x96\xf7\x93Q\x7fz>\x1d\xc4\xd8\xd0F" +
+	"\x0d\xdb\x00\xb4\x0a\xd9K*\x871\xd0\xb3\xe9\xca\x85\xb5" +
+	"\xf5\x87_~\xd1\x0a\xc5\xec\x1c\xbe\x0a\xe8\xfe\xe18\xf8" +
+	"\x0b\xc3q\xf0\xfb\xca\x1fR>|\xf9\xa1\xff\xb2\x82\x09" +
+	"\xc7\x87\x1f\xa1\xa7\x18\xef\x17\x8c7\xfa_\xbdW\xfdm" +
+	"o\xcb~\xe2\x1a\x05\xca\x8f\xde\x99\xb1f\xc4\x9e;?" +
+	"\xd7\x06v\x8c\xd8\x07t\xe0\x08d\xce\x1f\x81\xcc\xa7\x1c" +
+	"7\xdf\x96\x15\x9d\x7f\x80H?\x01\x93\xbbR\xb9\xab\x90" +
+	"[f\xdc\xbe\x11\xa8Yo~2\xef\xdf\x9e\xfa\xfd\xe1" +
+	"\x03\xec.p#\xc8\xcc\xfb\xfe\x11\x1e\x81\x1eg\xcc\xc7" +
+	"\x18s`\xd0?\\z\xb5\xf4\xc4\xc1\x94\x0d\x8al\xe4" +
+	"\x91\xab\x80\xfaF2G<\x12\xef\xa2\xa1V\xe9\x0a\xd1" +
+	":\xf2=\xa0y\xa3\x98\x09\xda8|\xf5\x1f\xe4\xecW" +
+	"Q\x0c\xa2\xe9zw\xc7\x81\\\xa3\xce\xd2\xfcQ\xf8\x8b" +
+	"\xbcQ\xdf\x8a\x04\x94\xa7'\x15\xf5yf\xd0\x93\x87\x92" +
+	"\xf5Vu\x86\xc5\x83\x04\xdaR\x8c\x87\xdc\xb0\xe7\x83;" +
+	"\xff\xa4\xb4\x1c\xb22/o\x15\x1f\xa0\xc7\x8a\xf1\xafw" +
+	"\x8bQZ\x86\x91H_eK\xf1\x06\xa0\xae\x12\\e" +
+	"\xd3M\xe2\xdc\xc3\xcf\xbe\xf8\xba\xe5\x01\x94<\x05t`" +
+	"\x09;\x80\x12\x1c\xb2r\xc3\xde\x9f\xe5\x7f\xd1\xf4\xe7d" +
+	";\xa0\x82\x8a\x92\x8b@\x17\x94\xe0\"?Rn\xc9\xfb" +
+	"\xf1\x13\x9f\x1da\xeeo\xdb\xd3\xf7\xfd\xaf\x8aw?k" +
+	"\xd5Pl\x09z?\xc6\xf5ycMn\xde\x9a\x93o" +
+	"Zi\xc9\xc8\x92#t\"\x9bw\x1c\x9b\xd7P\xfa\xf4" +
+	"\xad\xcc+Y\x0b\xb4\x91me\xf6\x9f\xdd\xa3\x07\xfd:" +
+	"\xf6\x96\x05\x97\\r\x08\xe8J\x95\xab\xd8q\x7f\xd3\xaf" +
+	"\x7fs\x94\xa4@C`\xf8}y\xc9L\xa0\xf7\xb0\xa9" +
+	"\xd7\x94\xa0b\x18`0}\xd0S%\xeb\x80\xda\xc6\xe2" +
+	"\xa0\xef\xec\x19\x9f\xf7j\xbf\xe8\xb1t'\x86\x83\xb6\x96" +
+	"4\x03u\x8de\x0eu,\x0e\xba\xbe\xc1q\xe0\x939" +
+	"\xdb\xfe'\x19\xf6\xa9\x16e,\xfa\xfc\xb1v\"\xea\x98" +
+	"1}\xe2\xe0\xd8u@W\xb2\x89?\x9d6r\xcf\xf0" +
+	"Q\x03\x8e\xa7\xfa\x10&\xc6\xe5c\xcf\xd2\xd5c\x19<" +
+	"\x1c[\x80\xd7x\xbe\xf7\xda\x9fm\x98s\xe5#K\xd3" +
+	"||\xdc\x01\xa0-\xe3\x18\x98\x1a\x87\xab\x9c\xfb\xd0\xdb" +
+	"\x9f\xff{\xe3\x84\x8f\x89k\x1c\xa4\xc0M\xdf\xf8\x13@" +
+	"o\x1f\x8f\xe7\xf8\xf7u\xbf\xdbr\xe9\xe2\x8c\x8f\xd3M" +
+	"\x09\xfa\xef\x05\xe3\xd7\x01m\x1a\x8f\xbfi\x1c\x9fm#" +
+	"&\xaf\x94\xbe\xaf\xfcI\x17\x81N\x9c\x84\xfb24\xd1" +
+	"\xc2\xdbN\x8a\x02\x9d\xc6\xb8\xfe\xf7\x17\x9b_z\x1c\xfe" +
+	"\xf9Kfs\x8d\xe3W\xb7S6\xa9\xbb@o\x99\x84" +
+	"\xdbY0\x09\x95\xe8\xde\xac\x1fE\xc6\xbe\xed:eu" +
+	"w\x96Oz\x8f\xaef\xbc+U\xdeC\xcffy\x97" +
+	"\x9f<\x95\xa2$\xea\xc8['\xad\x02\xba\x97q\xef\x99" +
+	"\x84\x82\x12\xef8rx\xc0\x1b[\xcf0A\x191'" +
+	"[\xec\xc0\xb2\xb3@\xcb\xcaPP{\xa4\xba\x12\xdbO" +
+	"\x97\x9cMF\x85\x8c+\xaf\xac\xbb@'2\xae\xbf\x17" +
+	"\xe5}p\xdd\x86}g\x93\xe1\xa0:q\x9f\xb2\xf7\x80" +
+	"\x8e)c7\xa4\x0c\x97\xb9\xfcx\xde\xb1\xffY\x90\xf9" +
+	"M2\xc2RM\x9cTv\x08h#c\x0e\x96\xe1*" +
+	"\xe5\xd1\xf3_\\\xb1\xef\xc3o\x92\x11\x84\xe6sp\xe4" +
+	"O\x18\xf3q6\xf2{\xf9O^\xfe\xd9\xba'.\x98" +
+	"\x83\x17\x0dFL>\x02t\xe0df\x14&#\xab\xe1" +
+	"\xeb,\"\x8d\xc9\x87\x80.\x98<\x94\x88W\xf6\xda\xf7" +
+	"}6\xe5\x95\x0b\xe9&A\x9a\xdc]\xa0M\x93q\xef" +
+	"\xdb]G\xe7\x9fK4}k\x15\x85U\xe1\xb4A6" +
+	"\xad<\x19\xb7c\\\x9b\xf4i\x0fN\xde\x00\xf4\x18N" +
+	"\xab\xe4\xd4z\xc7o~m\xee\xa5d\xdf\xa9\xee\xe4-" +
+	"\x1c\xf2\x0c\x1b\xf2\x14\xdb\xc9\xbd\x03\x1ey\xfb\xdbO|" +
+	"\x97R4Dd{u_\xa4En\xfc\xeb:7\xfa" +
+	"\x80\xd7\x0e]\xe9{\xef\x9e\xe6KV\x1e\xf1\xa0{\x1d" +
+	"\xd0c\x8c\xf9]7\x0e|\xdd_\xef\xfa\xb1k\xe2\x03" +
+	"\x97\xac\xf4\xb4\xc5\xdd[\xa0y\xe5\xcc7\x97#\xf3\xd4" +
+	"\xdf\x8c\xf8\xd1\xb6\xd1\x83/[A\xfdq\xe5\x02\xd0\x0a" +
+	"\xc6\\\xc6\x98\x8b\x9e\xd86\xb9\xc7\xac\x96\xcb\xc9\xaa\xa7" +
+	"\x8e|K\xf9\x09\xa0\xcb\x19s\x821\x1bN0]d" +
+	"\x0f\x96_\x04\xba\xbb\x1cEf\x1cO:\xd7\xe3\xe5\x07" +
+	"\x80\xeeg\\\xff\xd2/\xf6j\xe9\xc5EW\xac\xf6\xbf" +
+	"\xb7|\x1f\xd07\xd8\xc4\xaf\xb3\x89\x0d8baD\xcb" +
+	"\xd7\x02\xb5U\xe0\x90\xc3\x8b\xa3\x8f<\xfa\xdc\xdf\x94d" +
+	"\x04\xa3\xba\xd5\xf2#@\xf3*\xec\xe4'JC\xb0." +
+	"R\x1c\xf9\xa7\xa0=\xe2\x1f\xe5\xf7EB\x91\xd2Y\xec" +
+	"\xc9\x0c\xb9!\"G+Cq9z\xab\xcf/\x8f\x9a" +
+	"+\xc7\xe2Se\x7f8 {\x82\xf1\xd8R_\xc4\xd3" +
+	"\x10\xf6/\x8e\x8d\xaaq\xcbM\x099\x16\xaf\x06\x902" +
+	"\xc5\x0cB2\x80\x10WQ)!\xd2`\x11\xa4r\x01" +
+	"\\\x009\x80\x0f\xcb\xea\x08\x91&\x89 \xcd\x10\xc0]" +
+	"\xc7~\x0e\xbd\x08T\x8b\x00N\x1e6\x11\xc0\x87J4" +
+	"\x1c\x8e\xe3\x14\xc4\xbe\xb82\x00N\x1e\x09\x10\x00'\x01" +
+	"c\xdd\xb6\x0e\xd6\xed\x95\xe3\xb3\xc3\x01\xd9\x1b\xcf\xf6\xc5" +
+	"\x131)\x13\xcc\x87\xec\xf0\x98\x8c\x8dm\xe6\x8a\x1au" +
+	"/J\x8d\x1c\x8b\x84C1\x99\x10b1\xd1T\x9f\xdc" +
+	"\x18\x0e\xf1)\xa6\x87c\xb1`\xa4F\xf6\xcb\xc1%r" +
+	"\x80\xa0$\xae1$\xb1\x1e%\xf1\x80\x08\xd2#&I" +
+	"l\xc2\x87\xbf\x15AzT\x00\x97 \xe4\x80@\x88k" +
+	"s-!\xd2#\"HO\x08\xe0\x12\xc5\x1c\x10\x09q" +
+	"=\xdeL\x88\xb4]\x04\xe9\x19\x01\\\x19\x199\x90A" +
+	"\x88k\xf7\"B\xa4]\"H\xcf\x0b\xe0\xb2\xd9r\xc0" +
+	"F\x88k\xef0B\xa4gD\x90^\x12\xc0\x1d\x93C" +
+	"\x019\x0aN\x1e\x14\xa9bs\xc7d9T\x11\x07\xa7" +
+	"\x9eW\xd0\xa4)/\x8b\x04\xa3\xbex\x90\x88\xe1P\x1a" +
+	"1\x96\xa8\x8b\xf9\xa3\xc1\x08q\xc7\x83\xe1\x10;\x0d\xe3" +
+	"Ri,K|\x0d\xc1\x00\xfe>[c0r[*" +
+	"Cv\xc0\x17\xf7A\x16\x11 \xab\x0bgW\x13\xf1\xab" +
+	"'!\xc6d\x94jOC\xaa\xd3P\x80\xe5\"H\xb3" +
+	"\x04\xc8\x07E\xd1\xe4ZYL\x884U\x04\xa9Z\x80" +
+	"|\xe1\x0a>F\xc9Vy\x08\x91f\x88 \xcd\x15\xc0" +
+	"\xbdP\xf6\xa9\xa212!\xea\x12\x0b\xe4h4\x1c\x85" +
+	"\x9eD\x80\x9e\x04V\xc4\x12~\xbf\x1c\x8b\x81\x93G\xd4" +
+	")\x9a\x97\xd1\xa6BT\xcbrtJ8\xe4\x0e\xc9\xfe" +
+	"\xb8\x1c\xc0\x95g\x18+\xcf\xc2\x95g\x8a \xe5\x08\xe0" +
+	"\x8e\xc8r\x94\x89\xcb\x00\xa2)stt+\xa7\xcb\xf1" +
+	"Y\xc1X\\\x0e\x05C\xf5\x15\x81@46JSa" +
+	"\x82j\xd8iAO\x95\x1b\xe4\xb8\\#\xc7\x0a\xc2\x89" +
+	"\xa8_NY\xf1 m\xc5\x83\x05\xb0\x07\x03\xa6;k" +
+	"\xbe\x93\xbdL\xab\xee\xd6\xc1t\x15\x81\x807\x1e\x95}" +
+	"\x8d3|\xa1@\x83\x1c%\xecZ\xf24\x8f\xc3c\xf2" +
+	"\xee\x9d\xbe\x96m\xdc\x7fUy\xebd\xa2\xce\xc2}\xbc" +
+	"\xc3cJ\xa9t0\x8b`\xcc\xf2\x8f\xaa\xa6\x17\xb0\x9b" +
+	"\x90\"\xa8k\xf9\xd1\x8a\xc1\x008\x88\x00\x8e.\xa8\xbb" +
+	"6t0\x0c\xa1\x14k\x8a\xf7\xbdP\x04i\xac\x00\xba" +
+	"\x09\x19\x83z4B\x04i\x82\xd0\xf1\xf5sG\xe5X" +
+	"\xa2!\x0e\xd9<?@\x00\xb2Mk\xe3\x1bD5\xaa" +
+	"\x0c\xdd\x0a\xe16,\xfah\x93\x1d\x1bY\xac-lj" +
+	";\xca\\\xe0C\xc5\xe4Zc\x00\xc7\x14\xad\xb1wl" +
+	"\xc9\xa7\xfb\xe2\xc1P\xfd\x94p\xe8\xd6`\xfd(\xe3\x9c" +
+	"\xcc\x9a\xde\xce\xa5L\xc4\x16V\xc9\xb1\xec\x98\xaf\x9e)" +
+	"\xf8`ck\xa7pk\x9f\x8b \x9dK2&g\xa2" +
+	"\x84H\xa7E\x90.'\x19\x93\x96\xb5\x84H\x97E\xf0" +
+	"f\x82\x00\xf9b+>\x17\x09\xa16h&\xc4\x9b\x01" +
+	"\"x\x9dH\xc9\xb8\x8c\x94\x0c\x0cR\x18\xa5'R\xae" +
+	"A\x8a\xed\x12Rl\x88P\xa0\x96\x10o\x0eR\x06 " +
+	"\xa5\xdbE\xa4tC|\xc4~\xd3\x0f)\x85H\xb1\xb7" +
+	" \x85\xe1%x\x8a\x10o!R\xc6\"%\xf3;\xa4" +
+	"d\x12B\xc7\xc0*B\xbc\xa3\x912\x09\xcc\x96\xceH" +
+	"3j\xd6%\xa2\xda\xa7\x10)`\x06\x0a\x9c\xbc\xacb" +
+	"\xe2\x98\x1a\x8c\xf9!\x1cR\x8d\x18!\xe0\xe4 M\xe3" +
+	"\xaa\xd7\x1c\x1fq\xab\xae\x0f\x9c\xbc\xf8\xa3\xb1\x04C\xfe" +
+	"pc0TO\xdc\xea\x8d\x07'\xcf\x0d\xe8\xee\x85\x11" +
+	"f\x85\x89\x18\x8b\x83\x93\xa7\x91\x93\xc8S\xc2\xc4\xdd\x18" +
+	"A+\x85\x16YO\x9f$\xb1T\xc9\x10\xc3\xc3\xad\x91" +
+	"\xfd\x05\xfar\x0cX\xa5qF\xe5\x18\xb3p0/\x12" +
+	"\xf0\xe1\xb6P\x1f\xf5\xe0$\xc5\xf6vd\xc5\xe6D\xe4" +
+	"\x90\xba\xa9QI^\xcatgf\xf2{k\xdc\x991" +
+	"\xc3L\x17W]ye\x800\xf9\x1a1\xbc\xe64\xf1" +
+	"\x14\xd2}\xb8\xb1@\xb1\xad\x05\xba\xd5\x15Jw\x80\x19" +
+	"+\xb6\xd4\x98J\x04-\xabL1aK\xa9)\xea8" +
+	"\xbf\xce\x04Y[\xd6\x9a\xd2u\xad\x1eS\xe6\xa0\xa5\xc6" +
+	"T\x13i\x89\x9ar\x7f-\xabL\xc9\xdd\x16\x8f\xa9\x18" +
+	"v\xbe\xc6\x94E9_g*\xa6\x9d_k\xca\x02\xb5" +
+	"l1\xa5\x09ZkM\xa1Ik\x9d)_\xddZg" +
+	"\x84\xf4\xad\xb5\xa6\xdadk\xd4\x94\xbah]\xc7#d" +
+	"\x0ap\x80\x83vj\x83\x03\xbc\xacF\x1dP\xcb+\x81" +
+	"\xd4\x01\xcd\xbc\xf8A\x1d\x10\xe5\xb1>u\xc0Z\x9e\x94" +
+	"\xa5YP\xc7cv\x9a\x05\xb5\x1c/\xd0,\xd8\xc0\xeb" +
+	"\x9b\xd4\x05u<Q\xc8\xfe3\xd2\x1c\xd4\x05\x1eE5" +
+	"k\x89(\x01Y\xd1m\x1dh\xc6\x8e\xb8U7\xaf\xe8" +
+	"\x0e\x1ft\x8f\x0f1\xc5#\xd7\x07C\x15\x81% G" +
+	"\xe3\xc1\x18^6\xb2\xa2\"\x10@\x14\xa2 3\xfeA" +
+	"\x90\xcf\x17\x0a,\x0d\x06\xe2\xa4`ae\xe8\xd6\xb02" +
+	"]\x0e\xc9Q_\\\x16o\x94\x97G|\xc1(\xa9N" +
+	"\xd45\x04c\x0b\x89\xee3AV\xe6\x85T\xf4G\xec" +
+	"\xc1:Y\xd1\x1d7\x18\x9e\x9b(5rcx\x89\xec" +
+	"\x8d\x83\xee\xd0\xed\x0drT\xd1/\x07\x11}\x8d\xca\x94" +
+	"\x86pL\xf6\xc6\xa3\xc4.\xfb\x1a\xd1\xbf\xcaq\xe3?" +
+	"\xaf\x1c\x0a\x18\x8c:X'\x05qD\xeb\xb8[\\\xfc" +
+	"l`\x08\xde\x17O@L\xd1\x03\x91n)\x91\x08A" +
+	"\xc2\xb4PZ\x84Bt\xb7*\x86C\x8a\x0et\x88[" +
+	"\xb5\x03\xca\x0c\xd9\x17\x8d\xd7\xc9>R\xc0fR\xa6\x86" +
+	"\x97\x86\x1a\xc2\xbe\x00\xd4h\x96\x82\x10\xdc5\xfb\x8f\xd8" +
+	"\xf1\x17\x0c\x946%d4W\x8a\x8eP!\x14\x93\xbd" +
+	"\x88\x18\xc5X\xccxH\xec\xa1\x98\xach~'F\xec" +
+	"\xbezy\x05\xfe\xe5\xab\x97;mdt\xf1\xa4\x18\x99" +
+	"N\xff^\x17\xbd:@SB\x16\xd5P\xcd\x84Z\xd0" +
+	"H\xf5\x14A\xba\xa6#{\xd4\xe9IuEcj\x86" +
+	"\xeb.`\x8e:\x05\xc27s\xacn\x18\xc7\xaaU\x84" +
+	"H\xb3D\x90\xe6\x9b\x02\xa3y\xb8\xc2\xb9\"H?\x17" +
+	"\xd0\xa1D\x12q\x8f/D\xdc\xea\x14\xd0\x83\x08\xd0\x83" +
+	"\x80\x12N\xc4\x19\x05\xb4\xb9\x89A\xf1G\x12\xf3P\xe8" +
+	"\xb8)\xfdYg1\x99\xb1\x95l\xdc\x0bC\x90<\x8f" +
+	"\xe7\xf0\xf0\"rG\x08\xb2\x13\x98\x18\x15\xd0\x1a\xd5t" +
+	"\xb4J\xed\xe2\xb6\x15\x8c\x17[A\xb7a\xdc7\x15\xc4" +
+	"\xc3\x91\xa0_\x0f}\xacc5\x0e\x10\xe7\x85\x82\xcbf" +
+	"\xfbB*@4\xe9\x91\x87\xa3\xdf\x15!_(\xec\x95" +
+	"\xfd`#\x02\xd8\xba\x16\xad\xab\x18\xcf\xad\xda=&p" +
+	"^\xddqxL\xed\x0a\x1d\x08\x9c{\xc7\x9a\x88_\xbb" +
+	"v3\x10\x11A\xb43^\x1a\xb5s\xb4\x08\xd2$\x01" +
+	"\x94x\xb0Q\xf6\xca\xa18\xbb\x15\xa9\xc11.!\xe4" +
+	"\x97\x89{v\xa2\xb1\x8e\xf9k\xa3\xb8\xdc\xc5T\x85n" +
+	"\x8b\xe2\xd9\xa8\x09\xed\xc7\x16m\x87\x8cm#`\xd5\x0c" +
+	"\xcc\xb2\x87\xd3\x14\xc4R\x02\xa5\x9d\xc5)\xee\xa8\xec\x8b" +
+	"\x85C\xba\xfeX\xa8\xcc\\\xd4\xafY\xb2}\x89\xdc\xd0" +
+	"F4<X\x007\xd3B#P\xc0\xd1\xba\x12\x1e\xa4" +
+	"\x06\x95F$\xdc\x8e\xb9\x8bD\xc3\xf1\xb0?\xdc\x80\xdb" +
+	"J]}G\x17Vwc\x86i\xb6\x87\x92M3W" +
+	"@\xaf\xa6#\xaa\x86\xa4.\xa8\x98\x9flALn\x0a" +
+	"\x85\xd3\x02\xc7\xce\xe4\xe6,<_[\xe6`\x187\x07" +
+	"\x865X\xc4\x0f;\xf9\xfe7\xfa\x96\xb1\xd1H\xb67" +
+	"\xd8,\xa7]h~\xc6\x8c\xeb\xa7\xc1\xec\xf8B5." +
+	"6MXg\xa5^\xc5&\xf5\xaak\xf0-\x96\x8b\xeb" +
+	"f\x10\xbb/\xb6P\x9f\xba\x80\xa5\x08\xd3\x0c\x11\x17\xab" +
+	"\xeeY\xb5\x8b-\xa6\xdd\x19\xf3Q\xb7w\x87;\xed\x8c" +
+	"\xf5\\\x82n\xa5\xa1K\xbe\xd8HgiX!\x061" +
+	"\\\xf0|1\xa3\xa7\xa2\xe0\x8a\xe9\x02\xa1\x86\x10\xef|" +
+	"A\x04o@\x10 \x0b\xae(LZ\xd4'`h\xf7" +
+	"s$4 AhU\x98o\xa4A\xa1\x94\x10o\x00" +
+	"\x09\x11$\x88\x97\x155\x1cm\x14\xd6\x11\xe2\x8d \xe1" +
+	"6$d\\R\xd4ht\xb9\xb0\x96\x10\xefmH\xf8" +
+	"\x15\x12l\x17\x155\x18]-x\x08\xf1\xde\x81\x84\xbb" +
+	"\x91\xd0\xadEQc\xd15lU\xbfB\xc2\x03H\xb0" +
+	"\x7f\xa7\xa8\xa1\xe8\xfdlU\xf7!a#\x122\xbfU" +
+	"\xd4Ht=\x1b\xea\x01$<\x82\x04\xc7\x05%\x07\x1c" +
+	"\x84\xd0Ml\xa8\x8dH\xd8\x8e\x84\xee\xe7\x95\x1c\xe8N" +
+	"\x08\xdd*\xd4\x11\xe2}\x14\x09\xbb\x90\xd0\xe3\x9c\x92\x03" +
+	"=\x08\xa1;\xd9rw!\xe1y$\xf4\xfcF\xc9\x81" +
+	"\x9e\x84\xd0\xbd\xc2\x16B\xbc\xcf#\xe1\x15$d\x9dU" +
+	"r \x8b\x10zP\xc0\xa0\xfae$\xfc\x05\x09\xbd\xce" +
+	"(9\xd0\x8b\x10\xfa:\x9b\xe35$\xbc\x83\x84\xec\xd3" +
+	"J\x0ed\x13B\xdfb\x84\xbf\"\xe1C$8\xbfV" +
+	"r\xc0I\x08=\xc6\x86z\x1f\x09\x9f#\xc1\xf5\x95\x92" +
+	"\x03.B\xe8'B\x94\x10\xef\xc7H8\x8d\x84\xde\xa7" +
+	"\x94\x1c\xe8M\x08=\xc5\xc4~\x1a\x09\x97\x91@O*" +
+	"9@\x09\xa1-\xec\x17\xdf!!C\x14 +\xe7K" +
+	"%\x07r\x08\xa1 \x1e \xc4\x9b!\x8a\xe0u\"\xa1" +
+	"\xcf\x09%\x07\xfa\x10B\xb3\x18\xc1\x89\x84~\xa2\x00\x8a" +
+	"\x9f\xc7\x07\xe0\xe4\xd9}\xc3\x0f\xa5D\x0c\xe0\xe4\xbeR" +
+	"\xb3\xd3\x0d,\x86\x00'o\x13\xd0\x03\xf9\xf4\xa8\x02\x9c" +
+	"\xbc\x05C\xe3\xaaK\x8f3\xc0\xa9W\xa2T\x9e\x15>" +
+	"\x15\xc6\x80\x93\xf7\xc2\x19\x97\xcc\x88D\xc0\xc9\x0bI\xc6" +
+	"\x0a\xd4X\x04\xf4X\x04\x9c\xbcMF\x1b;\xa2\xa2\x1c" +
+	"p\xf2\xde\x95\xe4\x0cu\x9d*\x1a#\xab\xa7Q\x13\xe6" +
+	"\x18\x06\x9c\xbc\xf7G\xa3\xfb\xd2\xa3\x1ap\xf2\x0c\xa4\x91" +
+	":\xb0\x88s\xc0\xc9;\x0d4\xbe\xb0)\xf2A7\xad" +
+	"\xb7Bjd\xbf9\x16\x02'\xaf]\xf3\x0c\x05\x8f\x8e" +
+	"\xc0\xc9\xfb\xd9\x8cs\xe6\xf1\x12\xeeE\xef\x8a\xe4j`" +
+	"\x8e\xa0\xc0\xc9\x0b\x1c\xfc\xacSc*p\xf2\x92\x9a~" +
+	"\xd6\xc9\xb1\"89\xd2\xd58\xe2Z\x1c&\xa4\xc6[" +
+	"\xe0\xe4}S&^tPV\xbcF_I\x17\xd1\x92" +
+	"\xe1\x7fE_#\x83\x89\xbc\xd4\xeb\xf0\x98\xda\x00;\x9d" +
+	"\xd9U}y\x95[\xf5(?l&\xc7\x12R\x8bm" +
+	"!5\x9c\x0b\xcc\xbd\xce\x95QS\x81\xb4r\xad\xa9\xc5" +
+	"\xba\xaa\xd9\xd4kS\xd5lj\xc2\xac\xaa5\xb5\x19U" +
+	"5\x9b*\x8cUO\xf1\x9c\x97Kj\xd6{{]R" +
+	"\x1d\xef\xe6pI\x1e\xa5:9M\xc8\xfeOI\x0a*" +
+	"\xd3SR\x80JeJ\xc2O\xf1\x9a\xd2{\xda?<" +
+	"\x99\xa7=HK\xdd)F\xf8\xedV3u\x1d\x84\xd1" +
+	"\x19\x1d\x05Hn\xd5v0E\xe1\xfd\xb7\x0e\x8f\xa9\x0d" +
+	"\xae\xd3\x8aR\xa3\x96&\xb3\xfd\x8b\xd3*\x00u&\xc4" +
+	"a\x09j,\x86C\xb1\x1a\x09wS|\\\xcb\xe3c" +
+	"#<\x1e\xc6\x0bY.AKHK\xa5<f\xd6\x86" +
+	"\xaf\x0e\x131\x1a\x07;\x11\xc0N {a8\x16\xd7" +
+	"\xf1m\xc75\xa7\x8e`\x8c\x9e\x122pP*\xf0\xcd" +
+	"\xfc\xbe\xa5dS\xe8\xdb\x96P\x03\xecw\x81\xa9\xc4\xde" +
+	"\xfe\x8d\xd2\xf5G\xd5\x9e\xb9\xf6\xe5\x115\xfd\xc0$\x96" +
+	"_\x8c{v\xf5\xf1\x10\x02\x02\x8bA\x0a|\x81\x80\x1c" +
+	"X\xa1\xda\xf8\x80\xbb.\x1a^,\x87\xbaP\x85S\x9d" +
+	"\x97\xe6\xbb\xda\xdc\x88\xb9\xf4\xa7Ud\x9c\xbcK\xa2\x8b" +
+	"\xf6O\xcfJEE\x7f\xaa\xb1\x1ad\x01\xf0M\xe1\xbe" +
+	"=\xee\xab\x87nD\x80n\x1d[&\xa3&\x15\xaa\xc1" +
+	"\x05C\xdc$\xc5RU\x8a\xa5\x86\x14\xdd>\xbf_\x8e" +
+	"\xc4\xddQy\x91\xec\x8f\xbb\x83\xf5\xa1p\xb4\xf3\xa9." +
+	"#\x89a\x95\x01\xb1w\xe8\x0dT\xef\x9c\x16\x00\xb6\x9f" +
+	"\xefj/\x00\xb4u\xf6\xd4\xdd\xea\xb13\xdb\xc2[\xfa" +
+	"\x1c\x1eS\x9fo\x07\xb6\xa5#\xf3U\xe1Va\x15\x9b" +
+	"\xc2h\xdb\xc4)\xf8\x1b\x07\x1dL\xf1}*\xc9<\xc6" +
+	"i+d\xd7\xb4\xb8\xc3\xda^\xb7\xae\xd6\xf6L\x91\xab" +
+	"i\xeaE\xa6\xa3\xab\xd7\xf8I6\xfe\x02\x9c\xbcw\xaf" +
+	"\x8b\xf6LO\x91\xb7Q;\xef0\xc3\xaa\xc1r9\xe9" +
+	"\xe7m]{\x15\xc4\x83\x93\xb7\xb3v\xf1\xda\x1bA\xaf" +
+	"\xa8b\x14\xebN\x13S\x19s\x13\xfa\x91\x8d\"H\xdb" +
+	"\x93\xca\x98[\xd1\xaa>*\x82\xb4\xcb\\\xc5t\xedl" +
+	"&DzB\x04\xe99s\x09\xd3\xb5g-!\xd2s" +
+	"\"H/\x9b\xeb\x97\xae\xfdQB\xa4\x97D\x90^k" +
+	"\xaf\xdchT\xa7Ys\x09\xaf\xb9p\xf8\xcd\xd3\xeb\xe0" +
+	"\xe4\xb5\x15\x8d\x1eH\xc9\xd9\x83\x93\x17jt\x96\xf4\xac" +
+	"=8y\xc9F\xe3Z\x98\x9c\xeb\x07'/\xf1\xb4y" +
+	"\x08\xd69\xb4)a\x15\xbe\x90\xabN\xa5s\x1805" +
+	"\x11\xe5\xb5\xff\x0e\xd2\xaa]\xed,Po\xf6\xa8\x1a\xd9" +
+	"\x1d32\xf1Wy\xa3m\x9d\xcdg[\xe7\xa0j:" +
+	"\xe8hhL4\xc4\x83\xbe@\x80@4e\x11\x18\xc8" +
+	"\x06c^Y\x0e\x00\x10\x01\x80t\x0dxX\xe6\xc9\xcc" +
+	"\xfe\xfa\xffo\x13[\xaa\xbe\xe9pZ\xd5;\x92\x02\x11" +
+	"gZ\x95P\x920\xa2VB\x91\x90\xb3Z\x04\xe9\xe6" +
+	"\xef[t\xbe\xbaTi\x8as\x165W\xc6\xdf.q" +
+	"xL-\xfb\x9dF\xe2\xeatS\x0a\x98QE\xd9\xcc" +
+	"\xd0eC\xbf\x80\x99\x84x?\x07\x11\xbc\xe7\x80\x8b\x87" +
+	"\x9ea-\x17\xa7\xf1\xf9e\xe0\x12\xa2-PC\x88\xf7" +
+	";|\x9e!\xf0\x06<\x0a\xc2LBj\x04\x11\xbc\xfd" +
+	"\x04\x01@\xed\xc0\xa3y,ct\x0d>\x1e\x8c\xdc\xb6" +
+	"\x0c5\x876\x90\xa5\x7f\x06\xe3\xf3\xd1\xf8\xbc\x9bSM" +
+	"\xa1\x8dd\x99\xb2\x11\xf8|\x02>\xb7\xbb\xd4\x0c\xda8" +
+	"\xa1\x98\x10\xefh|>\x09\x9fg\xf6V\x13h\x13\x85" +
+	"E\x84x'\xe0\xf3\xa9\xf8\xdcaS\xf3g\x15l\xde" +
+	"r|~3>\xef\xdeMM\x9f\x99\x12\x87q|\xde" +
+	"\xc3\xaef\xcf\x9a\xd88F\x16\xd0\xd5\x13\xd4\xe4\xd9r" +
+	"\xa1\x99\x10\xef2|~'>\xcf\x12\xd4\xdc\xd9J\x96" +
+	"T\xbb\x13\x9f\xdf\x87\xcf{\x89j\xea\xec\x1e\xf6\xdc\xc8" +
+	"\xf4\xb9\xb23\xd4\xcc\xd9z6\xceo\xf1\xf9\xa3\xf8\xdc" +
+	"\x99\xa9&\xce6\x0b\x1b\xf4t\xdeK\xf8\xdc\xe5P\xf3" +
+	"f/\xb0\xf5?\xaf\xa7\xe0\x94X\xdc\x17\x97\x03\xc1\xa8" +
+	"Y\xab\"\xd1\xe0\x12\x84UD\x94\x97\x1b\xc84$\xc7" +
+	"\x97\x86\xa3\x8b+\x09\x04L\xea\x87VmN\x08\x7f\xdc" +
+	"\xa6\xbdj\x94\xe3\xd1\xa0?VM\xeca\x1e\x11)\xf2" +
+	"\xb2\xb8\x1c\x0d\xf9\x1a\xa0J\xb33VfFI\x84b" +
+	"\xbe[\xe5\xd9a\x98\x1bM\xc4\xe2\x95\x11\xa2[\x9c\x82" +
+	"[\x1b\xc2an\x7f\xf0\xcaL[\xe6_H\xb2}\xa1" +
+	"z\xd9x\x1c\x08Fe\x7f\xbcZ&v\xb9\xbd\xfe\xa7" +
+	"\x98,\x07\xf4\xc4X\x9bL\x1d\xa2\x9dF\xdf2\x8c\xd5" +
+	"1\x10G\xb4\x1e\x83L\"@\xa6\xc9\xfbB8$%" +
+	"\xe4\x84\xec\xb5\x07\x9be\x83\x8aK\xaf\x8e\x86\xe3 \xb3" +
+	"\x9f\xd5\xf8\xec\xe8\x83\xba\x13\x01\xba\xe3\xa0\xc1\x90\xf5\xa0" +
+	"\x8bC\xe1\xa5\xa1\xeah\x10\xf0\xa4*#\xb3e1\x9e" +
+	"V\xb8a\xe5\x9c)\xe1\x10\xb1\xe3\x8a\x8d\x9d\x19o~" +
+	"v\xb1\xfd\xcb\x1a\xe1[\x84\x9f)\x91u\x80\xb4_I" +
+	"\xeb*\xec7\xc2_\xb1NfF\x8c\xbf\x08\xe0\xf0\x98" +
+	"\xde+\xbc\xca\xbeE\xc3e\x17X\x01as\xcd(\x88" +
+	"\xfc\x16\xda\xdbY\xeb\x9c\x16\xbdr\x8f\xdd\xe9\xc3\xd1[" +
+	"P\xf4\xcc\xb0\xb9\xf8\xd6f\xaa\xad\x12~\xe0\x06J\x03" +
+	"\xc9k\xbd\x9e\xfcM?\x87\xc7\xf4\xea\xc2UV\xea\xf5" +
+	"\xa6\x14=\x7f\xaa\xcf\xc6\xdf\x9eqxL\xaf(t:" +
+	"\xf4Ku\xfdZ\x8e\x8b\xe8\xa8D+\x12%\x95\xd3\x8c" +
+	"\x0a\x91kL\x9d\xa9`\x1d5w\xa0\x80\x937!\xe9" +
+	"\xce\xdc\x9cL\x03\xa7\x9e\x01\xecb(b4\xc0\x81\x9a" +
+	"\x80\xe5\xef\x9b8<\xa6O\x00\\e\xec\x9b\x92\x905" +
+	"\xa4P\xdb9)h\x9d:\xe0\xe4]Z\xd6B\xe0\xbd" +
+	"Y]\xbc?\xc9-6\x16\x06\xc9\xd6\xd9\x1e\x1fM\x8e" +
+	"\xfce!4(\xc6g\x0f:\x8d\x8a\xb4H\x9a\xa3\xa2" +
+	"\x1c\xe3\x86\xdd\x8e\xb8\xfb6\x11\xa4\xdf\x9a\x10\xe3\x83Q" +
+	"-p\xdceB\x8c;k\xb5@\xf0\x15\xd3\xdb\x08\x07" +
+	"1:|Y\x04\xe9C\x03\x0a\xb9\x8ea\x80\xf2\x8e\x08" +
+	"\xd2\xc7\x02+\x1b\x84\xe4\x00z\xca4w\xa0\x92\xaae" +
+	"R\x80F\xd9\xe4\xea\xccyH\xe67\xd0\xd9\xca\x81J" +
+	"\"F\xd2}\x8aJ\xab&n\xb9\xfdQV\x04c\xe1" +
+	"\x06_\\N\x8b\x11::M\xbd\x01\xcc\x88$;\x91" +
+	"[\x1b\xc4\xbb\xa0\xcd\xb9\xb5\x1f\xa6Y>\xb5\x99\xaa)" +
+	";\xd58w\xea5\x0aT\x1c5{w\xb3\x81\x91\x13" +
+	"\xacxl\xa0C\x9e4\xa0\xcb\x19\x9e4\xf0!\xcf\x1b" +
+	"\xd0\x95\x0c\xc9\x1aUbS\x03\xf4\x1a6\x9a\x81\x1dM" +
+	"\x0d\xd0\xf70Tl\xa0GS\x03\xf4zV\xdd5\xea" +
+	"\xc1\xa6\x06\xe8\xad\xac\x84\xfc\x08R\x9e\x10\x92\x1a\xa0\x1f" +
+	"gk\xdb\x8e\x94g\x84\xa4\x06\xe8\xddlmF\xad8" +
+	"\xdf\xf1-R\x1c\xacX\x8c\xa3=\xa3\xe3\xd1\xfc\xee\x17" +
+	"\x90\xd2\x9d!\xd2\x1as\x199\xbf\xc7y\xa4\xf4`u" +
+	"\xe4:s\x1d9\xbf\xe79EC\xcf\xaf\xb3U\xff\x05" +
+	")\xef#%\xeb\x1b\xa4 ~~\x97\xe1d\xa3`\x9c" +
+	"\xdf\xeb,Rz\xb1\x8aq\xad\xb9b\x9c\x9f}\x06)" +
+	"\xd9\xacd\x8c\xf3\x9cD\xcawHq\x9eF\x0a\xa2\xe8" +
+	"\xf3\x8crN\x10\xa1F\x14 \xdf\xf55\x12\x10F\xb7" +
+	"\xb2\xc1.\xe3O2\x91\xd2\xfb+\xa4\xf4&\x84\xda\xc4" +
+	"\xa8\xb9\x9a\x9cOO!\x85\xb2r\xf2:s99?" +
+	"\xe7$Rr0\x98a\xbf\xb9\x06)\x83\x91\xd2\xe7K" +
+	"\xa4\xf4\xc1p\x86\x95\xa0\x07#e4RrO %" +
+	"\x17\x03\x1aF\x19\x8d\x94Ib;o\xd5\xa4T\xad\x8d" +
+	"\xb7\xea\xdb\xa9Z\x1b\xed^\xa9Uk\xe3\xdd\xeav\xab" +
+	"\xd6\xc6G\x7f\xda\xabZ\xf3\x97\xaa\xd3\xea\xd6Fz\xd5" +
+	"\xb2nm@\x8av\xea\xd6F\x0e8\xadnmT\x9e" +
+	",\xeb\xd6\xc6\xab)m\xd4\xad\x0d\xa0\xd9n\xdd\xdax" +
+	"\x8d\xa6\x83\xba\xb5\x11{[\xd7\xad\x0dg\xdeF\xdd\xda" +
+	"\xf8\xd4N\x1buk\xa3\x1ak]\xb76|\\\x9bu" +
+	"k\xe3-\xbdv\xeb\xd6\x06\xe8j\xb3nm\xb4kv" +
+	"\xa2nm|\x0d\xab\x13uk\xe3\xab0]\x84\x0bi" +
+	"\xd5/\xb7:&s\xfd\xfcs\\\x0e\x8f\xe9\xeb#W" +
+	"\x09\xa1f\x15\xb0+\xc4f\xe0\x1f(pxL\x9f\x8b" +
+	"\xb8\xfa\xeaA2&n3\x19>\x8cC|=\xd5\xd4" +
+	"V\xe0\xc2\x11\x8d\x16\xa5\x8b\x81\xd4\x0e\xaffS\xc25" +
+	"*GP\x09C\xc4\x1dg\x05\xabv\"\xbbT\xa8\x9d" +
+	"\\-$\x9d\xe8\x973\xb9\xfc\xec\xf8\xf2\x88\x0c\xd9\xfc" +
+	"\xfb/\xea\xabU?\x8c\xf77^_\xd5\x84\xca[\xa9" +
+	"\xaf\xa61R?\xe0.u\xaf%\xf5;\xfe?\xea$" +
+	"7w\xdc\x99\xf4\xa9\xa3\xde\xe6f\x9eIN\xeem\xee" +
+	"\xcc\xbb\xac\xdf\xaf\x0en)\x10\xb3z\xfe\x803'\xbd" +
+	"\x14\xc0\x81\x9d\xc5+\x9b9\x02\xd8\x1bc\xac\xde\xa4\x7f" +
+	"\xc1\xa9\xcb\xd9\x81\x94\xba\xa0\x16\xed\xf2o\xeb9<\xa6" +
+	"\x8f\xf5\\\xa5\x1d\xb1\xc8#|\x1f]Mz5\x8b\x0b" +
+	"\xc8\xfaNs\xb5\xa955\xc1j\xb6)\xb5I\xc2H" +
+	"\x83\x8b\x95]O\x1d\x19\x91\xa2\xde\xb2\xc4\xbfW\xe7\xf0" +
+	"\x98\xbebr\x95\x09\x0asA\xb3\xeb%\\s\xe2\xbf" +
+	"\x97\xa55Vg\xd5\xcb\xdemw\xad\xf0\x92D\x8d\xd5" +
+	"[\x1d\xa5\xa6\x92\x84e\xce\x97\xe1&\xff\x8d2\x01\xe3" +
+	"Y\xc7\xdd+\xb6v\xdf\xca\x9e\x1a\x8c\xf9\xb5\xee%\xf8" +
+	"\xbf\xfdbv\x9aCl\xff,LM!m\xb7ch" +
+	"\xf60\xa2\x9a\x10\xd2\xb5\xf4YW}\x8d\x11i\xb6\xb5" +
+	"\xdc\x98\x8a\xd5R\x97\xdb\xad\xabe83\x022`\x15" +
+	"^\x09\xfe\xcd\xa9\xab\xbc\x12\xa9vE\xb5a\xfc\xcbJ" +
+	"\x0e\x8f\xf1E\x95\xef\xfd\x19\x08\xbd\x95M\xebd\xd3\x1a" +
+	"\xe2\xbe\xb7a\xb6u\xb6\xef@3\xc8\xfc\x83e\x0e\x8f" +
+	"\xe9\xdb\x1fW)8sw\x03\xd7\xdf\xff\x13\x00\x00\xff" +
+	"\xff\xba\x04_r"
 
 func init() {
 	schemas.Register(schema_fb174cb3ecf64f4f,
@@ -11130,6 +12320,7 @@ func init() {
 		0x9d6900bcb72b8938,
 		0x9eed76ad25f4d362,
 		0xa244ebaa77d7c1cf,
+		0xa2ca930f070de840,
 		0xa2eea71b4749c940,
 		0xa382869c0ba548c2,
 		0xa42892d737705a9c,
