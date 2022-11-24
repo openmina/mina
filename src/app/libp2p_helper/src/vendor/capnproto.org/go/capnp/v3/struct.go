@@ -1,7 +1,12 @@
 package capnp
 
 // Struct is a pointer to a struct.
-type Struct struct {
+type Struct StructKind
+
+// The underlying type of Struct. We expose this so that
+// we can use ~StructKind as a constraint in generics to
+// capture any struct type.
+type StructKind = struct {
 	seg        *Segment
 	off        address
 	size       ObjectSize
@@ -12,12 +17,12 @@ type Struct struct {
 // NewStruct creates a new struct, preferring placement in s.
 func NewStruct(s *Segment, sz ObjectSize) (Struct, error) {
 	if !sz.isValid() {
-		return Struct{}, newError("new struct: invalid size")
+		return Struct{}, errorf("new struct: invalid size")
 	}
 	sz.DataSize = sz.DataSize.padToWord()
 	seg, addr, err := alloc(s, sz.totalSize())
 	if err != nil {
-		return Struct{}, annotate(err).errorf("new struct")
+		return Struct{}, annotatef(err, "new struct")
 	}
 	return Struct{
 		seg:        seg,
@@ -82,7 +87,7 @@ func (p Struct) Size() ObjectSize {
 // with future versions of the protocol.
 func (p Struct) CopyFrom(other Struct) error {
 	if err := copyStruct(p, other); err != nil {
-		return annotate(err).errorf("copy struct")
+		return annotatef(err, "copy struct")
 	}
 	return nil
 }
@@ -135,7 +140,7 @@ func (p Struct) SetNewText(i uint16, v string) error {
 	if err != nil {
 		return err
 	}
-	return p.SetPtr(i, t.List.ToPtr())
+	return p.SetPtr(i, t.ToPtr())
 }
 
 // SetTextFromBytes sets the i'th pointer to a newly allocated text or null if v is nil.
@@ -147,7 +152,7 @@ func (p Struct) SetTextFromBytes(i uint16, v []byte) error {
 	if err != nil {
 		return err
 	}
-	return p.SetPtr(i, t.List.ToPtr())
+	return p.SetPtr(i, t.ToPtr())
 }
 
 // SetData sets the i'th pointer to a newly allocated data or null if v is nil.
@@ -159,7 +164,7 @@ func (p Struct) SetData(i uint16, v []byte) error {
 	if err != nil {
 		return err
 	}
-	return p.SetPtr(i, d.List.ToPtr())
+	return p.SetPtr(i, d.ToPtr())
 }
 
 func (p Struct) pointerAddress(i uint16) address {
@@ -328,11 +333,11 @@ func copyStruct(dst, src Struct) error {
 		dstAddr, _ := dstPtrSect.element(int32(j), wordSize)
 		m, err := src.seg.readPtr(srcAddr, src.depthLimit)
 		if err != nil {
-			return annotate(err).errorf("copy struct pointer %d", j)
+			return annotatef(err, "copy struct pointer %d", j)
 		}
 		err = dst.seg.writePtr(dstAddr, m, true)
 		if err != nil {
-			return annotate(err).errorf("copy struct pointer %d", j)
+			return annotatef(err, "copy struct pointer %d", j)
 		}
 	}
 	for j := numSrcPtrs; j < numDstPtrs; j++ {
@@ -345,3 +350,13 @@ func copyStruct(dst, src Struct) error {
 
 	return nil
 }
+
+// s.EncodeAsPtr is equivalent to s.ToPtr(); for implementing TypeParam.
+// The segment argument is ignored.
+func (s Struct) EncodeAsPtr(*Segment) Ptr { return s.ToPtr() }
+
+// DecodeFromPtr(p) is equivalent to p.Struct() (the receiver is ignored).
+// for implementing TypeParam.
+func (Struct) DecodeFromPtr(p Ptr) Struct { return p.Struct() }
+
+var _ TypeParam[Struct] = Struct{}
