@@ -56,7 +56,7 @@ let push_metadata ~metadata trace =
   | Some ({ checkpoints = previous :: rest; _ } as trace) ->
       let previous =
         { previous with
-          metadata = String.concat ~sep:" " [ previous.metadata; metadata ]
+          metadata = String.concat ~sep:", " [ previous.metadata; metadata ]
         }
       in
       Some { trace with checkpoints = previous :: rest }

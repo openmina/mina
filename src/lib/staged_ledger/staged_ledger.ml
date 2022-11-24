@@ -756,6 +756,9 @@ module T = struct
             update_ledger_and_get_statements ~constraint_constants ledger
               working_stack transactions current_state_view state_and_body_hash
           in
+          Internal_tracing.Block_tracing.Processing.push_metadata
+            (Printf.sprintf "is_new_stack=%b, transactions_len=%d, data_len=%d"
+               is_new_stack (List.length transactions) (List.length data) ) ;
           ( is_new_stack
           , data
           , Pending_coinbase.Update.Action.Update_one
@@ -812,8 +815,14 @@ module T = struct
                 (Update_none, `Update_none)
           in
           Internal_tracing.Block_tracing.Processing.push_metadata
-            (Printf.sprintf "coinbase_in_first_partition=%b second_has_data=%b"
-               coinbase_in_first_partition second_has_data ) ;
+            (Printf.sprintf
+               "is_new_stack=false, coinbase_in_first_partition=%b, \
+                second_has_data=%b, txns_for_partition1_len=%d, \
+                txns_for_partition2_len=%d, data1_len=%d, data2_len=%d"
+               coinbase_in_first_partition second_has_data
+               (List.length txns_for_partition1)
+               (List.length txns_for_partition2)
+               (List.length data1) (List.length data2) ) ;
           (false, data1 @ data2, pending_coinbase_action, stack_update) )
     else
       Deferred.return
@@ -971,9 +980,7 @@ module T = struct
           Deferred.return (to_staged_ledger_or_error r) )
     in
     let%bind () = yield_result () in
-    checkpoint
-      ~metadata:(Printf.sprintf "is_new_stack=%b" is_new_stack)
-      `Update_pending_coinbase_collection ;
+    checkpoint `Update_pending_coinbase_collection ;
     let%bind updated_pending_coinbase_collection' =
       O1trace.thread "update_pending_coinbase_collection" (fun () ->
           update_pending_coinbase_collection
