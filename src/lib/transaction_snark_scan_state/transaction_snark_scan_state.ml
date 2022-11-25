@@ -820,8 +820,10 @@ let fill_work_and_enqueue_transactions t transactions work =
   in
   Internal_tracing.Block_tracing.Processing.push_metadata
     (Printf.sprintf
-       "scan_state_added_works=%d, merge_jobs_created=%d, emitted_proof=%b"
-       added_works merge_jobs_created (Option.is_some proof_opt) ) ;
+       "scan_state_added_works=%d, total_proofs=%d, merge_jobs_created=%d, \
+        emitted_proof=%b"
+       added_works (total_proofs work) merge_jobs_created
+       (Option.is_some proof_opt) ) ;
   let%map result_opt =
     Option.value_map ~default:(Ok None) proof_opt
       ~f:(fun ((proof, _), txns_with_witnesses) ->
