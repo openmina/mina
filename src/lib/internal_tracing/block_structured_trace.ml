@@ -53,10 +53,10 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Update_pending_coinbase_collection
       ; `Verify_scan_state_after_apply
       ; `Hash_new_staged_ledger
-      ; `Hash_scan_state
-      ; `Get_merkle_root
       ; `Make_staged_ledger_hash
       ]
+  | `Hash_new_staged_ledger ->
+      [ `Hash_scan_state; `Get_merkle_root ]
   | `Add_and_finalize ->
       [ `Add_breadcrumb_to_frontier; `Add_breadcrumb_to_frontier_done ]
   | `Add_breadcrumb_to_frontier ->
