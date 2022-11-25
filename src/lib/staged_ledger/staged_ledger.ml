@@ -426,6 +426,7 @@ module T = struct
       ; constraint_constants = _
       ; pending_coinbase_collection
       } : Staged_ledger_hash.t =
+    checkpoint `Hash_new_staged_ledger ;
     checkpoint `Hash_scan_state ;
     let scan_state_hash = Scan_state.hash scan_state in
     checkpoint `Get_merkle_root ;
@@ -1034,7 +1035,6 @@ module T = struct
       ; pending_coinbase_collection = updated_pending_coinbase_collection'
       }
     in
-    checkpoint `Hash_new_staged_ledger ;
     ( `Hash_after_applying (hash_with_checkpoint ~checkpoint new_staged_ledger)
     , `Ledger_proof res_opt
     , `Staged_ledger new_staged_ledger
