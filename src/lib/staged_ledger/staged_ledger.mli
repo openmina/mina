@@ -33,6 +33,8 @@ module Scan_state : sig
 
   val snark_job_list_json : t -> string
 
+  val snark_job_list_compact_yojson : t -> Yojson.Safe.t
+
   val staged_transactions : t -> Transaction.t With_status.t list
 
   val staged_transactions_with_protocol_states :
