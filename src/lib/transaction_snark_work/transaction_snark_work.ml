@@ -28,11 +28,43 @@ module Statement = struct
       type _unused = unit constraint t = Arg.Stable.V2.t
 
       include Hashable.Make_binable (Arg.Stable.V2)
+
+      module Partial_hash = struct
+        let hash_fold_t =
+          One_or_two.hash_fold_t
+            Transaction_snark.Statement.Stable.Latest.Partial_view.hash_fold_t
+
+        let hash t = Hash.get_hash_value (hash_fold_t (Hash.create ()) t)
+
+        let compare =
+          One_or_two.compare
+            Transaction_snark.Statement.Stable.Latest.Partial_view.compare
+
+        include Hashable.Make_binable (struct
+          (* Alias because deriving doesn't support `norec` *)
+          type outer_t = t [@@deriving sexp, bin_io_unversioned]
+
+          type t = outer_t [@@deriving sexp, bin_io_unversioned]
+
+          let hash_fold_t = hash_fold_t
+
+          let hash = hash
+
+          let compare = compare
+        end)
+
+        module Table = struct
+          let __versioned__ = () (* Workaround for ppx_versioned *)
+
+          include Table
+        end
+      end
     end
   end]
 
   type t = Stable.Latest.t [@@deriving sexp, hash, compare, yojson, equal]
 
+  module Partial_hash = Stable.Latest.Partial_hash
   include Hashable.Make (Stable.Latest)
 
   let gen = One_or_two.gen Transaction_snark.Statement.gen

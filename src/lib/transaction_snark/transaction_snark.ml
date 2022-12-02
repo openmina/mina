@@ -247,6 +247,17 @@ module Make_str (A : Wire_types.Concrete) = struct
         [@@deriving compare, equal, hash, sexp, yojson]
 
         let to_latest = Fn.id
+
+        module Partial_view = struct
+          let hash_fold_t state t =
+            Frozen_ledger_hash.Stable.V1.hash_fold_t state t.target.ledger
+
+          let hash t =
+            let target_ledger_hash = t.target.ledger in
+            Frozen_ledger_hash.Stable.V1.hash target_ledger_hash
+
+          let compare = compare
+        end
       end
     end]
 

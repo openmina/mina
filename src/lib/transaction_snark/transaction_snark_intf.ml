@@ -147,6 +147,14 @@ module type Full = sig
           , Local_state.Stable.V1.t )
           Poly.Stable.V2.t
         [@@deriving compare, equal, hash, sexp, yojson]
+
+        module Partial_view : sig
+          val hash_fold_t : Hash.state -> t -> Hash.state
+
+          val hash : t -> int
+
+          val compare : t -> t -> int
+        end
       end
     end]
 

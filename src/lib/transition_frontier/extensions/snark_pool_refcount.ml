@@ -5,12 +5,12 @@ module Work = Transaction_snark_work.Statement
 module T = struct
   type view =
     { removed : int
-    ; refcount_table : int Work.Table.t
+    ; refcount_table : int Work.Partial_hash.Table.t
           (** Tracks the number of blocks that have each work statement in
               their scan state.
               Work is included iff it is a member of some block scan state.
           *)
-    ; best_tip_table : Work.Hash_set.t
+    ; best_tip_table : Work.Partial_hash.Hash_set.t
           (** The set of all snark work statements present in the scan state
               for the last 10 blocks in the best chain.
           *)
@@ -18,12 +18,12 @@ module T = struct
   [@@deriving sexp]
 
   type t =
-    { refcount_table : int Work.Table.t
+    { refcount_table : int Work.Partial_hash.Table.t
           (** Tracks the number of blocks that have each work statement in
               their scan state.
               Work is included iff it is a member of some block scan state.
           *)
-    ; best_tip_table : Work.Hash_set.t
+    ; best_tip_table : Work.Partial_hash.Hash_set.t
           (** The set of all snark work statements present in the scan state
               for the last 10 blocks in the best chain.
           *)
@@ -36,7 +36,7 @@ module T = struct
   let add_to_table ~get_work ~get_statement table t : bool =
     let res = ref false in
     List.iter (get_work t) ~f:(fun work ->
-        Work.Table.update table (get_statement work) ~f:(function
+        Work.Partial_hash.Table.update table (get_statement work) ~f:(function
           | Some count ->
               count + 1
           | None ->
@@ -49,7 +49,7 @@ module T = struct
   let remove_from_table ~get_work ~get_statement table t : bool =
     let res = ref false in
     List.iter (get_work t) ~f:(fun work ->
-        Work.Table.change table (get_statement work) ~f:(function
+        Work.Partial_hash.Table.change table (get_statement work) ~f:(function
           | Some 1 ->
               res := true ;
               None
@@ -67,8 +67,8 @@ module T = struct
 
   let create ~logger:_ frontier =
     let t =
-      { refcount_table = Work.Table.create ()
-      ; best_tip_table = Work.Hash_set.create ()
+      { refcount_table = Work.Partial_hash.Table.create ()
+      ; best_tip_table = Work.Partial_hash.Hash_set.create ()
       }
     in
     let () =

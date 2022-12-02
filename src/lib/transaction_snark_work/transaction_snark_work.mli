@@ -6,6 +6,8 @@ module Statement : sig
   type t = Transaction_snark.Statement.t One_or_two.t
   [@@deriving compare, sexp, yojson, equal]
 
+  module Partial_hash : Hashable.S with type t := t
+
   include Hashable.S with type t := t
 
   module Stable : sig
@@ -13,6 +15,16 @@ module Statement : sig
       type t [@@deriving bin_io, compare, sexp, version, yojson, equal]
 
       include Hashable.S_binable with type t := t
+
+      module Partial_hash : sig
+        include Hashable.S_binable with type t := t
+
+        module Table : sig
+          val __versioned__ : unit
+
+          include module type of Table
+        end
+      end
     end
   end
   with type V2.t = t

@@ -2,7 +2,7 @@ open Core_kernel
 open Async
 open Pipe_lib
 open Network_peer
-module Statement_table = Transaction_snark_work.Statement.Table
+module Statement_table = Transaction_snark_work.Statement.Partial_hash.Table
 
 module Snark_tables = struct
   module Serializable = struct
@@ -14,7 +14,7 @@ module Snark_tables = struct
             Priced_proof.Stable.V1.t
           * [ `Rebroadcastable of Core.Time.Stable.With_utc_sexp.V2.t
             | `Not_rebroadcastable ] )
-          Transaction_snark_work.Statement.Stable.V2.Table.t
+          Transaction_snark_work.Statement.Stable.V2.Partial_hash.Table.t
         [@@deriving sexp]
 
         let to_latest = Fn.id
@@ -23,12 +23,10 @@ module Snark_tables = struct
   end
 
   type t =
-    { all :
-        Ledger_proof.t One_or_two.t Priced_proof.t
-        Transaction_snark_work.Statement.Table.t
+    { all : Ledger_proof.t One_or_two.t Priced_proof.t Statement_table.t
     ; rebroadcastable :
         (Ledger_proof.t One_or_two.t Priced_proof.t * Core.Time.t)
-        Transaction_snark_work.Statement.Table.t
+        Statement_table.t
     }
   [@@deriving sexp]
 
