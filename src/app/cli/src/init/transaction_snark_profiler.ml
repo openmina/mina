@@ -179,20 +179,29 @@ let pending_coinbase_stack_target (t : Transaction.t) stack =
   in
   target
 
-let format_time_span ts =
-  sprintf !"Total time was: %{Time.Span.to_string_hum}" ts
+let format_time_span tag ts =
+  sprintf !"Total time for %s was: %{Time.Span.to_string_hum}" tag ts
 
 (* This gives the "wall-clock time" to snarkify the given list of transactions, assuming
    unbounded parallelism. *)
-let profile_user_command (module T : Transaction_snark.S) sparse_ledger0
-    (transitions : Transaction.Valid.t list) _ : string Async.Deferred.t =
+let profile_user_command ~verifier (module T : Transaction_snark.S)
+    sparse_ledger0 (transitions : Transaction.Valid.t list) _ :
+    string Async.Deferred.t =
   let constraint_constants = Genesis_constants.Constraint_constants.compiled in
   let txn_state_view = Lazy.force curr_state_view in
+  let sok_message =
+    Sok_message.create ~fee:Currency.Fee.zero
+      ~prover:Public_key.(compress (of_private_key_exn (Private_key.create ())))
+  in
+  let sok_digest = Sok_message.digest sok_message in
   let open Async.Deferred.Let_syntax in
+  let base_snark_times = ref [] in
+  let transaction_times = ref [] in
   let%bind (base_proof_time, _, _), base_proofs_rev =
     Async.Deferred.List.fold transitions
       ~init:((Time.Span.zero, sparse_ledger0, Pending_coinbase.Stack.empty), [])
-      ~f:(fun ((max_span, sparse_ledger, coinbase_stack_source), proofs) t ->
+      ~f:(fun ((acc_span, sparse_ledger, coinbase_stack_source), proofs) t ->
+        let tm0 = Core.Unix.gettimeofday () in
         let sparse_ledger', _applied =
           Sparse_ledger.apply_transaction ~constraint_constants ~txn_state_view
             sparse_ledger (Transaction.forget t)
@@ -202,11 +211,14 @@ let profile_user_command (module T : Transaction_snark.S) sparse_ledger0
           pending_coinbase_stack_target (Transaction.forget t)
             coinbase_stack_source
         in
+        let tm1 = Core.Unix.gettimeofday () in
+        let span = Time.Span.of_sec (tm1 -. tm0) in
+        transaction_times := span :: !transaction_times ;
         let tm0 = Core.Unix.gettimeofday () in
         let%map proof =
           T.of_non_zkapp_command_transaction
             ~statement:
-              { sok_digest = Sok_message.Digest.default
+              { sok_digest
               ; source =
                   { ledger = Sparse_ledger.merkle_root sparse_ledger
                   ; pending_coinbase_stack = coinbase_stack_source
@@ -235,9 +247,18 @@ let profile_user_command (module T : Transaction_snark.S) sparse_ledger0
         in
         let tm1 = Core.Unix.gettimeofday () in
         let span = Time.Span.of_sec (tm1 -. tm0) in
-        ( (Time.Span.max span max_span, sparse_ledger', coinbase_stack_target)
+        base_snark_times := span :: !base_snark_times ;
+        ( (Time.Span.( + ) span acc_span, sparse_ledger', coinbase_stack_target)
         , proof :: proofs ) )
   in
+  let snark_of_proof proof =
+    let statement = Transaction_snark.statement proof in
+    let sok_digest = Transaction_snark.sok_digest proof in
+    let proof = Transaction_snark.proof proof in
+    (Ledger_proof.create ~statement ~sok_digest ~proof, sok_message)
+  in
+  let merge_snarks = ref [] in
+  let merge_snark_times = ref [] in
   let rec merge_all serial_time proofs =
     match proofs with
     | [ _ ] ->
@@ -245,12 +266,10 @@ let profile_user_command (module T : Transaction_snark.S) sparse_ledger0
     | _ ->
         let%bind layer_time, new_proofs_rev =
           Async.Deferred.List.fold (pair_up proofs) ~init:(Time.Span.zero, [])
-            ~f:(fun (max_time, proofs) (x, y) ->
+            ~f:(fun (acc_time, proofs) (x, y) ->
               let tm0 = Core.Unix.gettimeofday () in
               let%map proof =
-                match%map
-                  T.merge ~sok_digest:Sok_message.Digest.default x y
-                with
+                match%map T.merge ~sok_digest x y with
                 | Ok proof ->
                     proof
                 | Error _ ->
@@ -258,14 +277,101 @@ let profile_user_command (module T : Transaction_snark.S) sparse_ledger0
               in
               let tm1 = Core.Unix.gettimeofday () in
               let pair_time = Time.Span.of_sec (tm1 -. tm0) in
-              (Time.Span.max max_time pair_time, proof :: proofs) )
+              merge_snarks := snark_of_proof proof :: !merge_snarks ;
+              merge_snark_times := pair_time :: !merge_snark_times ;
+              (Time.Span.( + ) acc_time pair_time, proof :: proofs) )
         in
         merge_all
           (Time.Span.( + ) serial_time layer_time)
           (List.rev new_proofs_rev)
   in
-  let%map total_time = merge_all base_proof_time (List.rev base_proofs_rev) in
-  format_time_span total_time
+  let%bind total_time = merge_all base_proof_time (List.rev base_proofs_rev) in
+  let base_snarks = List.rev_map base_proofs_rev ~f:snark_of_proof in
+  let tm0 = Core.Unix.gettimeofday () in
+  let%bind result = Verifier.verify_transaction_snarks verifier base_snarks in
+  let tm1 = Core.Unix.gettimeofday () in
+  let base_verify_time = Time.Span.of_sec (tm1 -. tm0) in
+  match result with
+  | Error _ ->
+      return "base SNARK verify errored"
+  | Ok false ->
+      return "base SNARK verify failed"
+  | Ok true -> (
+      let tm0 = Core.Unix.gettimeofday () in
+      let%map result =
+        Verifier.verify_transaction_snarks verifier (List.rev !merge_snarks)
+      in
+      let tm1 = Core.Unix.gettimeofday () in
+      let merge_verify_time = Time.Span.of_sec (tm1 -. tm0) in
+      match result with
+      | Error _ ->
+          "merge SNARK verify errored"
+      | Ok false ->
+          "merge SNARK verify failed"
+      | Ok true ->
+          let transaction_max =
+            List.fold ~f:Time.Span.max ~init:Time.Span.zero !transaction_times
+          in
+          let transaction_min =
+            List.fold ~f:Time.Span.min ~init:Time.Span.day !transaction_times
+          in
+          let transaction_total =
+            List.fold ~f:Time.Span.( + ) ~init:Time.Span.zero !transaction_times
+          in
+          let transaction_mean =
+            Time.Span.( / ) transaction_total
+              (List.length !transaction_times |> Float.of_int)
+          in
+          let base_snark_max =
+            List.fold ~f:Time.Span.max ~init:Time.Span.zero !base_snark_times
+          in
+          let base_snark_min =
+            List.fold ~f:Time.Span.min ~init:Time.Span.day !base_snark_times
+          in
+          let base_snark_total =
+            List.fold ~f:Time.Span.( + ) ~init:Time.Span.zero !base_snark_times
+          in
+          let base_snark_mean =
+            Time.Span.( / ) base_snark_total
+              (List.length !base_snark_times |> Float.of_int)
+          in
+          let merge_snark_max =
+            List.fold ~f:Time.Span.max ~init:Time.Span.zero !merge_snark_times
+          in
+          let merge_snark_min =
+            List.fold ~f:Time.Span.min ~init:Time.Span.day !merge_snark_times
+          in
+          let merge_snark_total =
+            List.fold ~f:Time.Span.( + ) ~init:Time.Span.zero !merge_snark_times
+          in
+          let merge_snark_mean =
+            Time.Span.( / ) merge_snark_total
+              (List.length !merge_snark_times |> Float.of_int)
+          in
+          sprintf
+            !"Transactions time (%d transactions)\n\
+             \       total: %{Time.Span.to_string_hum}\n\
+             \       mean: %{Time.Span.to_string_hum}\n\
+             \       min: %{Time.Span.to_string_hum}\n\
+             \       max: %{Time.Span.to_string_hum}\n\
+              Total SNARKs production time: %{Time.Span.to_string_hum} \n\
+             \   Base SNARKs production time total: %{Time.Span.to_string_hum}\n\
+             \       mean: %{Time.Span.to_string_hum}\n\
+             \       min: %{Time.Span.to_string_hum}\n\
+             \       max: %{Time.Span.to_string_hum} \n\
+             \   Merge SNARKs production time total: %{Time.Span.to_string_hum}\n\
+             \       mean: %{Time.Span.to_string_hum}\n\
+             \       min: %{Time.Span.to_string_hum}\n\
+             \       max: %{Time.Span.to_string_hum} \n\
+             \   Base SNARKs verified: %d in %{Time.Span.to_string_hum}\n\
+             \   Merge SNARKs verified: %d in %{Time.Span.to_string_hum}"
+            (List.length !transaction_times)
+            transaction_total transaction_mean transaction_min transaction_max
+            total_time base_snark_total base_snark_mean base_snark_min
+            base_snark_max merge_snark_total merge_snark_mean merge_snark_min
+            merge_snark_max (List.length base_snarks) base_verify_time
+            (List.length !merge_snarks)
+            merge_verify_time )
 
 let profile_zkapps ~verifier ledger zkapp_commands =
   let open Async.Deferred.Let_syntax in
@@ -308,10 +414,10 @@ let profile_zkapps ~verifier ledger zkapp_commands =
   in
   let tm1 = Core.Unix.gettimeofday () in
   let total_time = Time.Span.of_sec (tm1 -. tm0) in
-  format_time_span total_time
+  format_time_span "zkapp snarks" total_time
 
-let check_base_snarks sparse_ledger0 (transitions : Transaction.Valid.t list)
-    preeval =
+let check_base_snarks ~verifier:_ sparse_ledger0
+    (transitions : Transaction.Valid.t list) preeval =
   let constraint_constants = Genesis_constants.Constraint_constants.compiled in
   ignore
     ( let sok_message =
@@ -356,7 +462,7 @@ let check_base_snarks sparse_ledger0 (transitions : Transaction.Valid.t list)
       : Sparse_ledger.t ) ;
   Async.Deferred.return "Base constraint system satisfied"
 
-let generate_base_snarks_witness sparse_ledger0
+let generate_base_snarks_witness ~verifier:_ sparse_ledger0
     (transitions : Transaction.Valid.t list) preeval =
   let constraint_constants = Genesis_constants.Constraint_constants.compiled in
   ignore
@@ -413,7 +519,8 @@ let run ~user_command_profiler ~zkapp_profiler num_transactions repeats preeval
       Async.Thread_safe.block_on_async_exn (fun () ->
           Verifier.create ~logger ~proof_level ~constraint_constants
             ~conf_dir:None
-            ~pids:(Child_processes.Termination.create_pid_table ()) )
+            ~pids:(Child_processes.Termination.create_pid_table ())
+            () )
     in
     let rec go n =
       if n <= 0 then ()
@@ -437,12 +544,20 @@ let run ~user_command_profiler ~zkapp_profiler num_transactions repeats preeval
                (Transaction.accounts_referenced (Transaction.forget t))
                participants ) )
     in
+    Parallel.init_master () ;
+    let verifier =
+      Async.Thread_safe.block_on_async_exn (fun () ->
+          Verifier.create ~logger ~proof_level ~constraint_constants
+            ~conf_dir:None
+            ~pids:(Child_processes.Termination.create_pid_table ())
+            ~workers_count:4 () )
+    in
     let rec go n =
       if n <= 0 then ()
       else
         let message =
           Async.Thread_safe.block_on_async_exn (fun () ->
-              user_command_profiler sparse_ledger transactions preeval )
+              user_command_profiler ~verifier sparse_ledger transactions preeval )
         in
         print n message ;
         go (n - 1)
