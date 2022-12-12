@@ -111,6 +111,7 @@
    pickles.backend
    snark_params
    zkapp_command_builder
+   ledger_proof
  )
  (instrumentation (backend bisect_ppx))
  (preprocessor_deps ../../../../config.mlh
