@@ -25,6 +25,15 @@ module type Inputs_intf = sig
   module Base : sig
     type t
 
+    (* module Account_id : Intf.Account_id *)
+
+    (* module Path : Merkle_path.S *)
+    module Path : Merkle_path.S with type hash := Hash.t
+
+    val location_of_account : t -> Account_id.t -> Location.t option
+
+    val merkle_path : t -> Location.t -> Path.t
+
     val get : t -> Location.t -> Account.t option
 
     val last_filled : t -> Location.t option
@@ -50,6 +59,11 @@ module type Inputs_intf = sig
 end
 
 module Make (Inputs : Inputs_intf) : sig
+  val get_account_with_path :
+       Inputs.Base.t
+    -> Inputs.Account_id.t
+    -> (Inputs.Account.t * Inputs.Base.Path.t) option
+
   val get_all_accounts_rooted_at_exn :
        Inputs.Base.t
     -> Inputs.Location.Addr.t
@@ -67,6 +81,18 @@ module Make (Inputs : Inputs_intf) : sig
   val set_all_accounts_rooted_at_exn :
     Inputs.Base.t -> Inputs.Location.Addr.t -> Inputs.Account.t list -> unit
 end = struct
+  let get_account_with_path t account_id =
+    match Inputs.Base.location_of_account t account_id with
+    | None ->
+        None
+    | Some loc -> (
+        match Inputs.Base.get t loc with
+        | None ->
+            None
+        | Some account ->
+            let merkle_path = Inputs.Base.merkle_path t loc in
+            Some (account, merkle_path) )
+
   let get_all_accounts_rooted_at_exn t address =
     let open Inputs in
     let result =

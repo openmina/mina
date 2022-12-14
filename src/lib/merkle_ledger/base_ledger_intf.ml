@@ -38,6 +38,7 @@ module type S = sig
     Syncable_intf.S
       with type root_hash := root_hash
        and type hash := hash
+       and type account_id := account_id
        and type account := account
        and type addr := Addr.t
        and type path = Path.t

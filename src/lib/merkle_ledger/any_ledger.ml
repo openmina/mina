@@ -179,6 +179,9 @@ module Make_base (Inputs : Inputs_intf) :
 
     let make_space_for (T ((module Base), t)) = Base.make_space_for t
 
+    let get_account_with_path (T ((module Base), t)) =
+      Base.get_account_with_path t
+
     let get_all_accounts_rooted_at_exn (T ((module Base), t)) =
       Base.get_all_accounts_rooted_at_exn t
 
