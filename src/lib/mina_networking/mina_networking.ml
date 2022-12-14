@@ -1208,7 +1208,8 @@ let create (config : Config.t) ~sinks
                       , [ ("hash", Ledger_hash.to_yojson hash)
                         ; ( "query"
                           , Syncable_ledger.Query.to_yojson
-                              Mina_ledger.Ledger.Addr.to_yojson query )
+                              Mina_ledger.Ledger.Addr.to_yojson
+                              Account_id.to_yojson query )
                         ; ("error", Error_json.error_to_yojson err)
                         ] ) ))
           else return ()
