@@ -445,6 +445,19 @@ module Make (Inputs : Inputs_intf.S) = struct
       module Base = struct
         type nonrec t = t
 
+        module Path = Path
+
+        let location_of_account t account_id =
+          assert_is_attached t ;
+          let mask_result = self_find_location t account_id in
+          match mask_result with
+          | Some _ ->
+              mask_result
+          | None ->
+              Base.location_of_account (get_parent t) account_id
+
+        let merkle_path = merkle_path
+
         let get = get
 
         let last_filled = last_filled

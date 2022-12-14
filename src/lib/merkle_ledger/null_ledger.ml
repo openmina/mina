@@ -125,6 +125,8 @@ end = struct
 
   let make_space_for _t _tot = ()
 
+  let get_account_with_path _t _account_id = None
+
   let get_all_accounts_rooted_at_exn t addr =
     let first_node, last_node =
       Addr.Range.subtree_range ~ledger_depth:t.depth addr

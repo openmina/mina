@@ -487,7 +487,31 @@ module Make (Inputs : Inputs_intf) :
     module Hash = Hash
 
     module Base = struct
+      module Path = Path
+
       type nonrec t = t
+
+      let location_of_account = location_of_account
+
+      let merkle_path mdb location =
+        let location =
+          if Location.is_account location then
+            Location.Hash (Location.to_path_exn location)
+          else location
+        in
+        assert (Location.is_hash location) ;
+        let rec loop k =
+          if Location.height ~ledger_depth:mdb.depth k >= mdb.depth then []
+          else
+            let sibling = Location.sibling k in
+            let sibling_dir =
+              Location.last_direction (Location.to_path_exn k)
+            in
+            let hash = get_hash mdb sibling in
+            Direction.map sibling_dir ~left:(`Left hash) ~right:(`Right hash)
+            :: loop (Location.parent k)
+        in
+        loop location
 
       let get = get
 
