@@ -108,8 +108,8 @@ module Make (Inputs : Inputs_intf) :
       -> Account_id.t Envelope.Incoming.t
       -> logger:Logger.t
       -> trust_system:Trust_system.t
-      -> (Account.t * Path.t) Option.t Deferred.t =
-   fun ~frontier hash query ->
+      -> (Account.t * Sync_ledger.Path.t) Option.t Deferred.t =
+   fun ~frontier hash query ~logger ~trust_system ->
     match get_ledger_by_hash ~frontier hash with
     | None ->
         return None
