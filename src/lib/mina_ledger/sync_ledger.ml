@@ -33,6 +33,7 @@ module Mask = Syncable_ledger.Make (struct
   module Addr = Ledger.Location.Addr
   module MT = Ledger
   module Account = Account.Stable.Latest
+  module Account_id = Account_id.Stable.Latest
   module Hash = Hash
   module Root_hash = Root_hash
 
@@ -43,6 +44,7 @@ module Any_ledger = Syncable_ledger.Make (struct
   module Addr = Ledger.Location.Addr
   module MT = Ledger.Any_ledger.M
   module Account = Account.Stable.Latest
+  module Account_id = Account_id.Stable.Latest
   module Hash = Hash
   module Root_hash = Root_hash
 
@@ -53,6 +55,7 @@ module Db = Syncable_ledger.Make (struct
   module Addr = Ledger.Db.Addr
   module MT = Ledger.Db
   module Account = Account.Stable.Latest
+  module Account_id = Account_id.Stable.Latest
   module Hash = Hash
   module Root_hash = Root_hash
 
@@ -65,7 +68,8 @@ module Answer = struct
     module V2 = struct
       type t =
         ( Ledger_hash.Stable.V1.t
-        , Account.Stable.V2.t )
+        , Account.Stable.V2.t
+        , Ledger.Path.t )
         Syncable_ledger.Answer.Stable.V1.t
       [@@deriving sexp, to_yojson]
 
@@ -79,7 +83,7 @@ module Query = struct
   module Stable = struct
     module V1 = struct
       type t =
-        Ledger.Location.Addr.Stable.V1.t Account_id.t
+        Ledger.Location.Addr.Stable.V1.t Account_id.Stable.V2.t
         Syncable_ledger.Query.Stable.V1.t
       [@@deriving sexp, to_yojson, hash, compare]
 
