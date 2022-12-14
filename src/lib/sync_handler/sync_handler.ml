@@ -102,6 +102,24 @@ module Make (Inputs : Inputs_intf) :
         in
         Sync_ledger.Any_ledger.Responder.answer_query responder query
 
+  let get_ledger_account_by_address :
+         frontier:Inputs.Transition_frontier.t
+      -> Ledger_hash.t
+      -> Account_id.t Envelope.Incoming.t
+      -> logger:Logger.t
+      -> trust_system:Trust_system.t
+      -> (Account.t * Path.t) Option.t Deferred.t =
+   fun ~frontier hash query ->
+    match get_ledger_by_hash ~frontier hash with
+    | None ->
+        return None
+    | Some ledger ->
+        let responder =
+          Sync_ledger.Any_ledger.Responder.create ledger ignore ~logger
+            ~trust_system
+        in
+        Sync_ledger.Any_ledger.Responder.get_account_with_path responder query
+
   let get_staged_ledger_aux_and_pending_coinbases_at_hash ~frontier state_hash =
     let open Option.Let_syntax in
     let protocol_states scan_state =
