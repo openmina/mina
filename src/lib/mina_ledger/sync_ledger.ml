@@ -62,6 +62,18 @@ module Db = Syncable_ledger.Make (struct
   let account_subtree_height = 3
 end)
 
+module Path = struct
+  [%%versioned
+  module Stable = struct
+    module V1 = struct
+      type t = [ `Left of Hash.t | `Right of Hash.t ] list
+      [@@deriving sexp, to_yojson, equal]
+
+      let to_latest = Fn.id
+    end
+  end]
+end
+
 module Answer = struct
   [%%versioned
   module Stable = struct
@@ -69,7 +81,7 @@ module Answer = struct
       type t =
         ( Ledger_hash.Stable.V1.t
         , Account.Stable.V2.t
-        , Ledger.Path.t )
+        , Path.Stable.V1.t )
         Syncable_ledger.Answer.Stable.V1.t
       [@@deriving sexp, to_yojson]
 
@@ -83,7 +95,8 @@ module Query = struct
   module Stable = struct
     module V1 = struct
       type t =
-        Ledger.Location.Addr.Stable.V1.t Account_id.Stable.V2.t
+        ( Ledger.Location.Addr.Stable.V1.t
+        , Account_id.Stable.V2.t )
         Syncable_ledger.Query.Stable.V1.t
       [@@deriving sexp, to_yojson, hash, compare]
 
