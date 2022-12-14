@@ -79,7 +79,8 @@ module Query = struct
   module Stable = struct
     module V1 = struct
       type t =
-        Ledger.Location.Addr.Stable.V1.t Syncable_ledger.Query.Stable.V1.t
+        Ledger.Location.Addr.Stable.V1.t Account_id.t
+        Syncable_ledger.Query.Stable.V1.t
       [@@deriving sexp, to_yojson, hash, compare]
 
       let to_latest = Fn.id

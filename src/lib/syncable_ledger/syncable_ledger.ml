@@ -14,7 +14,7 @@ module Query = struct
   [%%versioned
   module Stable = struct
     module V1 = struct
-      type 'addr t =
+      type ('addr, 'account_id) t =
         | What_child_hashes of 'addr
             (** What are the hashes of the children of this address? *)
         | What_contents of 'addr
@@ -23,6 +23,8 @@ module Query = struct
         | Num_accounts
             (** How many accounts are there? Used to size data structure and
             figure out what part of the tree is filled in. *)
+        | What_account_with_path of 'account_id
+            (** What account has `account_id`? Get Path as well. *)
       [@@deriving sexp, yojson, hash, compare]
     end
   end]
@@ -32,7 +34,7 @@ module Answer = struct
   [%%versioned
   module Stable = struct
     module V1 = struct
-      type ('hash, 'account) t =
+      type ('hash, 'account, 'path) t =
         | Child_hashes_are of 'hash * 'hash
             (** The requested address's children have these hashes **)
         | Contents_are of 'account list
@@ -40,6 +42,7 @@ module Answer = struct
         | Num_accounts of int * 'hash
             (** There are this many accounts and the smallest subtree that
                 contains all non-empty nodes has this hash. *)
+        | Account_with_path of 'account * 'path
       [@@deriving sexp, yojson]
 
       let to_latest acct_to_latest = function
@@ -49,12 +52,18 @@ module Answer = struct
             Contents_are (List.map ~f:acct_to_latest accts)
         | Num_accounts (i, h) ->
             Num_accounts (i, h)
+        | Account_with_path (acc, path) ->
+            Account_with_path (acct_to_latest acc, path)
     end
   end]
 end
 
 module type Inputs_intf = sig
   module Addr : module type of Merkle_address
+
+  module Account_id : sig
+    type t [@@deriving bin_io, sexp, yojson]
+  end
 
   module Account : sig
     type t [@@deriving bin_io, sexp, yojson]
@@ -73,7 +82,9 @@ module type Inputs_intf = sig
       with type hash := Hash.t
        and type root_hash := Root_hash.t
        and type addr := Addr.t
+       and type account_id := Account_id.t
        and type account := Account.t
+  (* and type path := Merkle_ledger.Merkle_path.Make(Hash).t *)
 
   val account_subtree_height : int
 end
@@ -208,8 +219,8 @@ module Make (Inputs : Inputs_intf) : sig
        and type addr := Addr.t
        and type merkle_path := MT.path
        and type account := Account.t
-       and type query := Addr.t Query.t
-       and type answer := (Hash.t, Account.t) Answer.t
+       and type query := (Addr.t, Account_id.t) Query.t
+       and type answer := (Hash.t, Account.t, MT.path) Answer.t
 end = struct
   open Inputs
 
@@ -217,9 +228,9 @@ end = struct
 
   type index = int
 
-  type answer = (Hash.t, Account.t) Answer.t
+  type answer = (Hash.t, Account.t, MT.path) Answer.t
 
-  type query = Addr.t Query.t
+  type query = (Addr.t, Account_id.t) Query.t
 
   module Responder = struct
     type t =
@@ -340,6 +351,17 @@ end = struct
             Either.First
               (Num_accounts
                  (len, MT.get_inner_hash_at_addr_exn mt content_root_addr) )
+        | What_account_with_path account_id -> (
+            match MT.get_account_with_path mt account_id with
+            | Some (acc, path) ->
+                Either.First (Answer.Account_with_path (acc, path))
+            | None ->
+                Either.Second
+                  ( Actions.Violated_protocol
+                  , Some
+                      ( "Requested empty subtree: $addr"
+                      , [ ("account_id", Account_id.to_yojson account_id) ] ) )
+            )
       in
       match response_or_punish with
       | Either.First answer ->
@@ -349,6 +371,16 @@ end = struct
             record_envelope_sender trust_system logger sender action
           in
           None
+
+    (* let get_account_with_path :
+             t
+          -> Account_id.t Envelope.Incoming.t
+          -> (Account.t * MT.path) option Deferred.t =
+       fun { mt; f = _; logger = _; trust_system = _ } query_envelope ->
+        let query = Envelope.Incoming.data query_envelope in
+        (* f query ; *)
+        let answer = MT.get_account_with_path mt query in
+        Deferred.return @@ answer *)
   end
 
   type 'a t =
@@ -532,8 +564,8 @@ end = struct
   let main_loop t =
     let handle_answer :
            Root_hash.t
-           * Addr.t Query.t
-           * (Hash.t, Account.t) Answer.t Envelope.Incoming.t
+           * (Addr.t, Account_id.t) Query.t
+           * (Hash.t, Account.t, MT.path) Answer.t Envelope.Incoming.t
         -> unit Deferred.t =
      fun (root_hash, query, env) ->
       (* NOTE: think about synchronization here. This is deferred now, so
@@ -547,7 +579,7 @@ end = struct
       [%log' trace t.logger]
         ~metadata:
           [ ("root_hash", Root_hash.to_yojson root_hash)
-          ; ("query", Query.to_yojson Addr.to_yojson query)
+          ; ("query", Query.to_yojson Addr.to_yojson Account_id.to_yojson query)
           ]
         "Handle answer for $root_hash" ;
       if not (Root_hash.equal root_hash (desired_root_exn t)) then (
@@ -576,7 +608,10 @@ end = struct
             ( Actions.Fulfilled_request
             , Some
                 ( "sync ledger query $query"
-                , [ ("query", Query.to_yojson Addr.to_yojson query) ] ) )
+                , [ ( "query"
+                    , Query.to_yojson Addr.to_yojson Account_id.to_yojson query
+                    )
+                  ] ) )
         in
         let%bind _ =
           match (query, answer) with
@@ -640,17 +675,20 @@ end = struct
                             ] ) )
                   in
                   requeue_query () )
-          | query, answer ->
+          | Query.What_account_with_path _, Answer.Account_with_path _ ->
+              credit_fulfilled_request ()
+          | query, _answer ->
               let%map () =
                 record_envelope_sender t.trust_system t.logger sender
                   ( Actions.Violated_protocol
                   , Some
                       ( "Answered question we didn't ask! Query was $query \
-                         answer was $answer"
-                      , [ ("query", Query.to_yojson Addr.to_yojson query)
-                        ; ( "answer"
-                          , Answer.to_yojson Hash.to_yojson Account.to_yojson
-                              answer )
+                         answer was ..."
+                        (* $answer *)
+                      , [ ( "query"
+                          , Query.to_yojson Addr.to_yojson Account_id.to_yojson
+                              query )
+                          (* TODO(binier) *)
                         ] ) )
               in
               requeue_query ()

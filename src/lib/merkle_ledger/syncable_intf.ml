@@ -3,6 +3,8 @@ module type S = sig
 
   type hash
 
+  type account_id
+
   type account
 
   type addr
@@ -24,6 +26,8 @@ module type S = sig
   val set_all_accounts_rooted_at_exn : t -> addr -> account list -> unit
 
   val set_batch_accounts : t -> (addr * account) list -> unit
+
+  val get_account_with_path : t -> account_id -> (account * path) option
 
   (** Get all of the accounts that are in a subtree of the underlying Merkle
     tree rooted at `address`. The accounts are ordered by their addresses. *)
