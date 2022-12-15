@@ -6,6 +6,7 @@
  (modes native)
  (libraries
    ;;opam libraries
+   hex
    stdio
    async_kernel
    async_unix
