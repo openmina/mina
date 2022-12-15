@@ -1484,6 +1484,32 @@ let dump_type_shapes =
              Core_kernel.printf "%s, %s, %s, %s\n" path digest shape_summary
                ty_decl ) ) )
 
+let decode_sync_ledger_query =
+  Command.basic ~summary:"Decode sync ledger query binprot"
+    ( Command.Param.return
+    @@ fun () ->
+    Core_kernel.printf "Input:\n%!" ;
+    try
+      let input = In_channel.input_all In_channel.stdin in
+      let input =
+        Option.value ~default:input (String.chop_suffix ~suffix:"\n" input)
+      in
+      Core_kernel.printf "Decoding: '%s'\n%!" input ;
+      let input =
+        match Hex.Safe.of_hex input with
+        | Some s ->
+            s
+        | None ->
+            failwith "Failed to decode hex"
+      in
+      let result =
+        Bin_prot.Reader.of_string
+          Mina_ledger.Sync_ledger.Query.Stable.Latest.bin_reader_t input
+      in
+      let sexp = Mina_ledger.Sync_ledger.Query.Stable.Latest.sexp_of_t result in
+      Core_kernel.printf "Result:\n%s\n%!" (Sexp.to_string_hum sexp)
+    with exn -> Core_kernel.printf "ERROR: %s\n%!" (Exn.to_string exn) )
+
 [%%if force_updates]
 
 let rec ensure_testnet_id_still_good logger =
@@ -1754,6 +1780,7 @@ let internal_commands logger =
           Deferred.return ()) )
   ; ("dump-type-shapes", dump_type_shapes)
   ; ("replay-blocks", replay_blocks logger)
+  ; ("decode-sync-ledger-query", decode_sync_ledger_query)
   ]
 
 let mina_commands logger =
