@@ -56,6 +56,9 @@ module Make (Inputs : Inputs_intf) :
       Transition_frontier.consensus_local_state frontier
       |> Consensus.Data.Local_state.next_epoch_ledger
     in
+    let root_hash = Ledger.Any_ledger.M.merkle_root root_ledger in
+    Core_kernel.printf "++ Root ledger hash: %s\n%!"
+      (Ledger_hash.to_base58_check root_hash) ;
     if
       Ledger_hash.equal ledger_hash
         (Ledger.Any_ledger.M.merkle_root root_ledger)
