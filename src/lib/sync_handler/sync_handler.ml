@@ -94,8 +94,12 @@ module Make (Inputs : Inputs_intf) :
    fun ~frontier hash query ~logger ~trust_system ->
     match get_ledger_by_hash ~frontier hash with
     | None ->
+        [%log warn] "answer_query: Ledger with hash not found"
+          ~metadata:[ ("hash", `String (Ledger_hash.to_base58_check hash)) ] ;
         return None
     | Some ledger ->
+        [%log info] "answer_query: Ledger with hash found"
+          ~metadata:[ ("hash", `String (Ledger_hash.to_base58_check hash)) ] ;
         let responder =
           Sync_ledger.Any_ledger.Responder.create ledger ignore ~logger
             ~trust_system
