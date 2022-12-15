@@ -1771,6 +1771,9 @@ let create ?wallets (config : Config.t) =
                     O1trace.thread "handle_request_answer_sync_ledger_query"
                       (fun () ->
                         let ledger_hash, _ = Envelope.Incoming.data query_env in
+                        let ledger_hash_base58 =
+                          Ledger_hash.to_base58_check ledger_hash
+                        in
                         let%bind frontier =
                           Deferred.return
                           @@ peek_frontier frontier_broadcast_pipe_r
@@ -1786,10 +1789,10 @@ let create ?wallets (config : Config.t) =
                                   ~error:
                                     (Error.createf
                                        !"%s for ledger_hash: \
-                                         %{sexp:Ledger_hash.t}"
+                                         %{sexp:Ledger_hash.t} %s"
                                        Mina_networking
-                                       .refused_answer_query_string ledger_hash ) ) )
-                    )
+                                       .refused_answer_query_string ledger_hash
+                                       ledger_hash_base58 ) ) ) )
                   ~get_ancestry:
                     (handle_request "get_ancestry" ~f:(fun ~frontier s ->
                          s
