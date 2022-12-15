@@ -85,7 +85,12 @@ module Make (Inputs : Inputs_intf) :
           None
       | Ledger_db ledger ->
           Some (Ledger.Any_ledger.cast (module Ledger.Db) ledger)
-    else None
+    else
+      Option.map (Transition_frontier.find frontier ledger_hash) ~f:(fun bc ->
+          let staged_ledger = Breadcrumb.staged_ledger bc in
+          Ledger.Any_ledger.cast
+            (module Ledger)
+            (Staged_ledger.ledger staged_ledger) )
 
   let answer_query :
          frontier:Inputs.Transition_frontier.t
