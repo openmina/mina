@@ -1183,6 +1183,7 @@ let create (config : Config.t) ~sinks
   in
   let answer_sync_ledger_query_rpc conn ~version:_ ((hash, query) as sync_query)
       =
+    Core_kernel.printf "++ begin answer_sync_ledger_query_rpc @ %s\n%!" __LOC__ ;
     let%bind result, sender =
       run_for_rpc_result conn sync_query ~f:answer_sync_ledger_query
         "Answer_sync_ledger_query: $query"
