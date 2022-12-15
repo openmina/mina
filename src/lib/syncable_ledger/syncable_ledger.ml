@@ -352,6 +352,9 @@ end = struct
               (Num_accounts
                  (len, MT.get_inner_hash_at_addr_exn mt content_root_addr) )
         | What_account_with_path account_id -> (
+            Core_kernel.printf "++ Handling What_account_with_path @ %s: %s\n%!"
+              __LOC__
+              (Sexp.to_string_hum (Account_id.sexp_of_t account_id)) ;
             match MT.get_account_with_path mt account_id with
             | Some (acc, path) ->
                 Either.First (Answer.Account_with_path (acc, path))
