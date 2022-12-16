@@ -89,8 +89,10 @@ module Make (Inputs : Inputs_intf) :
       let breadcrumbs = Transition_frontier.best_tip_path frontier in
       List.find breadcrumbs ~f:(fun bc ->
           let staged_ledger = Breadcrumb.staged_ledger bc in
-          let staged_ledger_hash = Staged_ledger.hash staged_ledger in
-          Staged_ledger_hash.equal staged_ledger_hash (Obj.magic ledger_hash) )
+          let staged_ledger_ledger_hash =
+            Ledger.merkle_root (Staged_ledger.ledger staged_ledger)
+          in
+          Ledger_hash.equal staged_ledger_ledger_hash ledger_hash )
       |> Option.map ~f:(fun bc ->
              let staged_ledger = Breadcrumb.staged_ledger bc in
              Ledger.Any_ledger.cast
