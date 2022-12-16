@@ -113,7 +113,7 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 		return "", err
 	}
 
-	log.Warn("##webrtc::listen>>", " offer: ", offer)
+	log.Info("##webrtc::listen>>", " offer: ", offer)
 
 	api := l.config.transport.api
 	pc, err := api.NewPeerConnection(l.config.transport.webrtcOptions)
@@ -125,7 +125,7 @@ func (l *Listener) handleSignal(offerStr string) (string, error) {
 		dc.OnOpen(func() {
 			// TODO(zura): do we need the detach?
 			detachedDc, err := dc.Detach()
-			log.Warn("##webrtc::listen>>", " datachannel")
+			log.Info("##webrtc::listen>>", " datachannel")
 			if err != nil {
 				log.Warn("##webrtc::listen>>", " datachannel detach error: ", err)
 				return
