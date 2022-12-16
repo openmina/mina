@@ -86,11 +86,16 @@ module Make (Inputs : Inputs_intf) :
       | Ledger_db ledger ->
           Some (Ledger.Any_ledger.cast (module Ledger.Db) ledger)
     else
-      Option.map (Transition_frontier.find frontier ledger_hash) ~f:(fun bc ->
+      let breadcrumbs = Transition_frontier.best_tip_path frontier in
+      List.find breadcrumbs ~f:(fun bc ->
           let staged_ledger = Breadcrumb.staged_ledger bc in
-          Ledger.Any_ledger.cast
-            (module Ledger)
-            (Staged_ledger.ledger staged_ledger) )
+          let staged_ledger_hash = Staged_ledger.hash staged_ledger in
+          Staged_ledger_hash.equal staged_ledger_hash (Obj.magic ledger_hash) )
+      |> Option.map ~f:(fun bc ->
+             let staged_ledger = Breadcrumb.staged_ledger bc in
+             Ledger.Any_ledger.cast
+               (module Ledger)
+               (Staged_ledger.ledger staged_ledger) )
 
   let answer_query :
          frontier:Inputs.Transition_frontier.t
