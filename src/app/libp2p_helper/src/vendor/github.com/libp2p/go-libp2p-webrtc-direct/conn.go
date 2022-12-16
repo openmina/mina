@@ -100,7 +100,7 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Warn("##webrtc::dial>>", " offer: ", offer)
+	log.Info("##webrtc::dial>>", " offer: ", offer)
 
 	// Complete ICE Gathering for single-shot signaling.
 	gatherComplete := webrtc.GatheringCompletePromise(pc)
@@ -163,7 +163,7 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Warn("##webrtc::dial>>", " answer: ", answer)
+	log.Info("##webrtc::dial>>", " answer: ", answer)
 
 	if err := pc.SetRemoteDescription(answer); err != nil {
 		return nil, err
@@ -174,7 +174,7 @@ func dial(ctx context.Context, config *connConfig) (*Conn, error) {
 	defer close(connected)
 	dc.OnOpen(func() {
 		detachedDc, err := dc.Detach()
-		log.Warn("##webrtc::listen>>", " datachannel")
+		log.Debug("##webrtc::listen>>", " datachannel")
 		if err != nil {
 			log.Warn("##webrtc::listen>>", " datachannel detach error: ", err)
 			connectErr = err
@@ -320,7 +320,7 @@ func (w *Conn) Read(p []byte) (int, error) {
 		}
 	}
 
-	log.Warn("DC.Read: ", p[:n], " str: ", string(p[:n]))
+	// log.Debug("DC.Read: ", p[:n], " str: ", string(p[:n]))
 
 	return n, err
 }
@@ -332,7 +332,7 @@ func (w *Conn) write(p []byte) (n int, err error) {
 		return 0, errors.New("connection is closed")
 	}
 	if len(p) > dcBufSize {
-		log.Warn("DC.Write: ", p[:dcBufSize], " str: ", string(p[:dcBufSize]))
+		// log.Debug("DC.Write: ", p[:dcBufSize], " str: ", string(p[:dcBufSize]))
 
 		n, err := w.initChannel.Write(p[:dcBufSize])
 		if err != nil {
@@ -344,12 +344,12 @@ func (w *Conn) write(p []byte) (n int, err error) {
 		}
 		return n, nil
 	}
-	log.Warn("DC.Write: ", p, " str: ", string(p))
+	// log.Debug("DC.Write: ", p, " str: ", string(p))
 	return w.initChannel.Write(p)
 }
 
 func (w *Conn) Write(p []byte) (n int, err error) {
-	log.Warn("DC.WriteFULLMESSAGE: ", p, " str: ", string(p))
+	// log.Debug("DC.WriteFULLMESSAGE: ", p, " str: ", string(p))
 	return w.write(p)
 }
 
