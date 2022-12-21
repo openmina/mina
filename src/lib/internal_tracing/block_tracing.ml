@@ -67,6 +67,16 @@ module Registry = struct
     }
   [@@deriving to_yojson]
 
+  let trace_info_to_yojson t =
+    let blockchain_length_int =
+      Mina_numbers.Length.to_int t.blockchain_length
+    in
+    match trace_info_to_yojson t with
+    | `Assoc fields ->
+        `Assoc (("blockchain_length_int", `Int blockchain_length_int) :: fields)
+    | other ->
+        other
+
   type traces = { traces : trace_info list; produced_traces : trace_info list }
   [@@deriving to_yojson]
 

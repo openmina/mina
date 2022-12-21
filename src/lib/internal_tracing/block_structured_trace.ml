@@ -22,12 +22,20 @@ type section = { title : string; checkpoints : Entry.t list }
 
 type t =
   { source : Trace.block_source
-  ; blockchain_length : Mina_numbers.Length.t [@key "global_slot"]
+  ; blockchain_length : Mina_numbers.Length.t
   ; sections : section list
   ; status : Trace.status
   ; total_time : float
   }
 [@@deriving to_yojson]
+
+let to_yojson t =
+  let blockchain_length_int = Mina_numbers.Length.to_int t.blockchain_length in
+  match to_yojson t with
+  | `Assoc fields ->
+      `Assoc (("blockchain_length_int", `Int blockchain_length_int) :: fields)
+  | other ->
+      other
 
 let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
   match c with
