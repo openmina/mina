@@ -150,7 +150,7 @@ module Registry = struct
         with _ -> None )
 
   (* TODO: cleanup this and find a better way *)
-  let all_traces () =
+  let all_traces ?max_length () =
     let catchup_traces =
       Hashtbl.to_alist catchup_registry
       |> List.map ~f:(fun (key, item) ->
@@ -187,7 +187,17 @@ module Registry = struct
       |> List.sort ~compare:(fun a b ->
              Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
     in
-    { traces; produced_traces }
+    match max_length with
+    | None ->
+        { traces; produced_traces }
+    | Some max_length ->
+        let traces_count = List.length traces in
+        let produced_traces_count = List.length produced_traces in
+        let traces = List.drop traces (traces_count - max_length) in
+        let produced_traces =
+          List.drop produced_traces (produced_traces_count - max_length)
+        in
+        { traces; produced_traces }
 
   let push_entry ~status ~source ?blockchain_length block_id entry =
     Hashtbl.update registry block_id

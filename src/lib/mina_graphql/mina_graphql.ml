@@ -4806,9 +4806,13 @@ module Queries = struct
 
   let list_block_traces =
     field "blockTraces" ~doc:"Block with traces" ~typ:(non_null Types.json)
-      ~args:Arg.[]
-      ~resolve:(fun { ctx = _mina; _ } () ->
-        let traces = Block_tracing.Registry.all_traces () in
+      ~args:
+        Arg.
+          [ arg "maxLength" ~doc:"The maximum number of block traces to return."
+              ~typ:int
+          ]
+      ~resolve:(fun { ctx = _mina; _ } () max_length ->
+        let traces = Block_tracing.Registry.all_traces ?max_length () in
         Block_tracing.Registry.traces_to_yojson traces |> Yojson.Safe.to_basic
         )
 

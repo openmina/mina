@@ -14076,7 +14076,15 @@
             {
               "name": "blockTraces",
               "description": "Block with traces",
-              "args": [],
+              "args": [
+                {
+                  "name": "maxLength",
+                  "description":
+                    "The maximum number of block traces to return.",
+                  "type": { "kind": "SCALAR", "name": "Int", "ofType": null },
+                  "defaultValue": null
+                }
+              ],
               "type": {
                 "kind": "NON_NULL",
                 "name": null,
