@@ -1440,7 +1440,8 @@ let create ?wallets (config : Config.t) =
                       ~proof_level:config.precomputed_values.proof_level
                       ~constraint_constants:
                         config.precomputed_values.constraint_constants
-                      ~pids:config.pids ~conf_dir:(Some config.conf_dir) ) )
+                      ~pids:config.pids ~conf_dir:(Some config.conf_dir)
+                      ?workers_count:config.verifier_parallelism () ) )
             >>| Result.ok_exn
           in
           let%bind vrf_evaluator =
