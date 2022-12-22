@@ -54,5 +54,7 @@ module type S = sig
     -> constraint_constants:Genesis_constants.Constraint_constants.t
     -> pids:Child_processes.Termination.t
     -> conf_dir:string option
+    -> ?workers_count:int
+    -> unit
     -> t Deferred.t
 end

@@ -141,6 +141,12 @@ let setup_daemon logger =
         "seq|rand Choose work sequentially (seq) or randomly (rand) (default: \
          rand)"
       (optional work_selection_method)
+  and verifier_parallelism_flag =
+    flag "--verifier-parallelism" ~aliases:[ "verifier-parallelism" ]
+      ~doc:
+        "NUM Set the amount of verifier processes to run. Proof batches will \
+         be split among NUM verifiers."
+      (optional int)
   and libp2p_port = Flag.Port.Daemon.external_
   and client_port = Flag.Port.Daemon.client
   and rest_server_port = Flag.Port.Daemon.rest_server
@@ -864,6 +870,10 @@ let setup_daemon logger =
             maybe_from_config YJ.Util.to_int_option "snark-worker-parallelism"
               snark_worker_parallelism_flag
           in
+          let verifier_parallelism_flag =
+            maybe_from_config YJ.Util.to_int_option "verifier-parallelism"
+              verifier_parallelism_flag
+          in
           let coinbase_receiver_flag =
             maybe_from_config
               (json_to_publickey_compressed_option "coinbase receiver")
@@ -1284,6 +1294,7 @@ Pass one of -peer, -peer-list-file, -seed, -peer-list-url.|} ;
                    ; shutdown_on_disconnect = true
                    ; num_threads = snark_worker_parallelism_flag
                    }
+                 ?verifier_parallelism:verifier_parallelism_flag
                  ~snark_coordinator_key:run_snark_coordinator_flag
                  ~snark_pool_disk_location:(conf_dir ^/ "snark_pool")
                  ~wallets_disk_location:(conf_dir ^/ "wallets")
@@ -1666,7 +1677,7 @@ let internal_commands logger =
               ~proof_level:Genesis_constants.Proof_level.compiled
               ~constraint_constants:
                 Genesis_constants.Constraint_constants.compiled
-              ~pids:(Pid.Table.create ()) ~conf_dir:(Some conf_dir)
+              ~pids:(Pid.Table.create ()) ~conf_dir:(Some conf_dir) ()
           in
           let%bind result =
             match input with
