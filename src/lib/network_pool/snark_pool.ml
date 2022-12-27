@@ -301,23 +301,27 @@ struct
                  let yield = Staged.unstage (Scheduler.yield_every ~n:50) in
                  let%map () =
                    let open Deferred.Let_syntax in
-                   Statement_table.fold ~init:Deferred.unit t.snark_tables.all
-                     ~f:(fun ~key ~data:{ fee = { fee; prover }; _ } acc ->
-                       let%bind () = acc in
-                       let%map () = yield () in
-                       let prover_account_exists =
-                         prover
-                         |> Map.find_exn prover_account_ids
-                         |> Map.find_exn prover_account_locations
-                         |> Option.is_some
-                       in
-                       let keep =
-                         fee_is_sufficient t ~fee
-                           ~account_exists:prover_account_exists
-                       in
-                       if not keep then (
-                         Hashtbl.remove t.snark_tables.all key ;
-                         Hashtbl.remove t.snark_tables.rebroadcastable key ) )
+                   let%map to_remove =
+                     Statement_table.fold ~init:(Deferred.return [])
+                       t.snark_tables.all
+                       ~f:(fun ~key ~data:{ fee = { fee; prover }; _ } acc ->
+                         let%bind acc = acc in
+                         let%map () = yield () in
+                         let prover_account_exists =
+                           prover
+                           |> Map.find_exn prover_account_ids
+                           |> Map.find_exn prover_account_locations
+                           |> Option.is_some
+                         in
+                         let keep =
+                           fee_is_sufficient t ~fee
+                             ~account_exists:prover_account_exists
+                         in
+                         if keep then acc else key :: acc )
+                   in
+                   List.iter to_remove ~f:(fun key ->
+                       Hashtbl.remove t.snark_tables.all key ;
+                       Hashtbl.remove t.snark_tables.rebroadcastable key )
                  in
                  () )
             in
