@@ -36,11 +36,9 @@ module T = struct
       (but not if the same elements exist with a different reference count) *)
   let add_to_table ~get_work ~get_statement table t : bool =
     let res = ref false in
-    Block_tracing.Processing.checkpoint_current `SPRC_get_work ;
     let work = get_work t in
-    Block_tracing.Processing.checkpoint_current `SPRC_get_statements ;
     let statements = List.map ~f:get_statement work in
-    Block_tracing.Processing.checkpoint_current `SPRC_update_work_table ;
+    Block_tracing.Processing.checkpoint_current `SPRC_add_to_work_table ;
     List.iter statements ~f:(fun statement ->
         Work.Table.update table statement ~f:(function
           | Some count ->
@@ -50,23 +48,33 @@ module T = struct
               1 ) ) ;
     let metadata = Printf.sprintf "work_count=%d" (List.length work) in
     Block_tracing.Processing.checkpoint_current ~metadata
-      `SPRC_update_work_table_done ;
+      `SPRC_add_to_work_table_done ;
     !res
 
   (** Returns true if this update changed which elements are in the table
       (but not if the same elements exist with a different reference count) *)
   let remove_from_table ~get_work ~get_statement table t : bool =
     let res = ref false in
-    (* TODOX trace this *)
-    List.iter (get_work t) ~f:(fun work ->
-        Work.Table.change table (get_statement work) ~f:(function
+    let removed_count = ref 0 in
+    let work = get_work t in
+    let statements = List.map ~f:get_statement work in
+    Block_tracing.Processing.checkpoint_current `SPRC_remove_from_work_table ;
+    List.iter statements ~f:(fun statement ->
+        Work.Table.change table statement ~f:(function
           | Some 1 ->
               res := true ;
+              incr removed_count ;
               None
           | Some count ->
               Some (count - 1)
           | None ->
               failwith "Removed a breadcrumb we didn't know about" ) ) ;
+    let metadata =
+      Printf.sprintf "work_count=%d, removed=%d" (List.length work)
+        !removed_count
+    in
+    Block_tracing.Processing.checkpoint_current ~metadata
+      `SPRC_remove_from_work_table_done ;
     !res
 
   let add_scan_state_to_ref_table table scan_state : bool =

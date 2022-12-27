@@ -85,10 +85,10 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
   | `Notify_SPRC_handle_diffs ->
       [ `SPRC_add_scan_state_to_ref_table
       ; `SPRC_add_scan_state_to_ref_table_done
-      ; `SPRC_get_work
-      ; `SPRC_get_statements
-      ; `SPRC_update_work_table
-      ; `SPRC_update_work_table_done
+      ; `SPRC_add_to_work_table
+      ; `SPRC_add_to_work_table_done
+      ; `SPRC_remove_from_work_table
+      ; `SPRC_remove_from_work_table_done
       ; `SPRC_update_best_tip_table
       ; `SPRC_update_best_tip_table_done
       ]
