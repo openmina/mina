@@ -11,7 +11,7 @@ struct
     | [] ->
         None
     | expensive_work ->
-        let i = Random.int (List.length expensive_work) in
+        let i = Random.int (Int.min 20 (List.length expensive_work)) in
         let x = List.nth_exn expensive_work i in
         Lib.State.set state x ; Some x
 
