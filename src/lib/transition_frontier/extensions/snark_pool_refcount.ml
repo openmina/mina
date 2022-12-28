@@ -36,6 +36,7 @@ module T = struct
       (but not if the same elements exist with a different reference count) *)
   let add_to_table ~get_work ~get_statement table t : bool =
     let res = ref false in
+    let added_count = ref 0 in
     let work = get_work t in
     let statements = List.map ~f:get_statement work in
     Block_tracing.Processing.checkpoint_current `SPRC_add_to_work_table ;
@@ -45,8 +46,11 @@ module T = struct
               count + 1
           | None ->
               res := true ;
+              incr added_count ;
               1 ) ) ;
-    let metadata = Printf.sprintf "work_count=%d" (List.length work) in
+    let metadata =
+      Printf.sprintf "work_count=%d, added=%d" (List.length work) !added_count
+    in
     Block_tracing.Processing.checkpoint_current ~metadata
       `SPRC_add_to_work_table_done ;
     !res
