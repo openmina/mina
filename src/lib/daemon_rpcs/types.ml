@@ -193,6 +193,9 @@ module Status = struct
       ; snark_pool_diff_broadcasted : int
       ; pending_snark_work : int
       ; snark_pool_size : int
+      ; snark_work_garbage_collected : int
+      ; local_capacity_exceeded : int
+      ; remote_capacity_exceeded : int
       }
     [@@deriving to_yojson, bin_io_unversioned, fields]
   end
@@ -431,11 +434,21 @@ module Status = struct
         in
         let pending_snark_work = fmt_field "pending_snark_work" string_of_int in
         let snark_pool_size = fmt_field "snark_pool_size" string_of_int in
+        let snark_work_garbage_collected =
+          fmt_field "snark_work_garbage_collected" string_of_int
+        in
+        let local_capacity_exceeded =
+          fmt_field "local_capacity_exceeded" string_of_int
+        in
+        let remote_capacity_exceeded =
+          fmt_field "remote_capacity_exceeded" string_of_int
+        in
         Metrics.Fields.to_list ~block_production_delay
           ~transaction_pool_diff_received ~transaction_pool_diff_broadcasted
           ~transactions_added_to_pool ~transaction_pool_size
           ~snark_pool_diff_received ~snark_pool_diff_broadcasted
-          ~pending_snark_work ~snark_pool_size
+          ~pending_snark_work ~snark_pool_size ~snark_work_garbage_collected
+          ~local_capacity_exceeded ~remote_capacity_exceeded
         |> List.concat
         |> List.map ~f:(fun (s, v) -> ("\t" ^ s, v))
         |> digest_entries ~title:""

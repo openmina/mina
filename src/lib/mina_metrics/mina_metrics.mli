@@ -97,6 +97,10 @@ module Transaction_pool : sig
   val zkapp_updates : Counter.t
 
   val zkapp_proof_updates : Counter.t
+
+  val remote_capacity_exceeded : Counter.t
+
+  val local_capacity_exceeded : Counter.t
 end
 
 module Network : sig
@@ -351,6 +355,8 @@ module Snark_work : sig
   module Snark_fee_histogram : Histogram
 
   val snark_fee : Snark_fee_histogram.t
+
+  val snark_work_garbage_collected : Counter.t
 end
 
 module Scan_state_metrics : sig

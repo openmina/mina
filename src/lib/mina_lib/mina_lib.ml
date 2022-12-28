@@ -1380,6 +1380,8 @@ let send_resource_pool_diff_or_wait ~rl ~diff_score ~max_per_15_seconds diff =
     | `Within_capacity ->
         Deferred.return ()
     | `Capacity_exceeded ->
+        Mina_metrics.Counter.inc_one
+          Mina_metrics.Transaction_pool.local_capacity_exceeded ;
         if score > max_per_15_seconds then (
           (* This will never pass the rate limiting; pass it on
                              to progress in the queue. *)
