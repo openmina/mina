@@ -73,6 +73,9 @@ module T = struct
       Printf.sprintf "work_count=%d, removed=%d" (List.length work)
         !removed_count
     in
+    Mina_metrics.Counter.inc
+      Mina_metrics.Snark_work.snark_work_garbage_collected
+      (Float.of_int !removed_count) ;
     Block_tracing.Processing.checkpoint_current ~metadata
       `SPRC_remove_from_work_table_done ;
     !res

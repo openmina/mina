@@ -455,6 +455,13 @@ let get_status ~flag t =
       ; snark_pool_size = Float.to_int @@ Gauge.value Snark_work.snark_pool_size
       ; pending_snark_work =
           Float.to_int @@ Gauge.value Snark_work.pending_snark_work
+      ; snark_work_garbage_collected =
+          Float.to_int @@ Counter.value Snark_work.snark_work_garbage_collected
+      ; local_capacity_exceeded =
+          Float.to_int @@ Counter.value Transaction_pool.local_capacity_exceeded
+      ; remote_capacity_exceeded =
+          Float.to_int
+          @@ Counter.value Transaction_pool.remote_capacity_exceeded
       }
   in
   { Daemon_rpcs.Types.Status.num_accounts

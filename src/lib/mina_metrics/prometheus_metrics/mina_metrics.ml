@@ -380,6 +380,20 @@ module Transaction_pool = struct
        transaction"
     in
     Counter.v "zkapp_proof_updates" ~help ~namespace ~subsystem
+
+  let remote_capacity_exceeded : Counter.t =
+    let help =
+      "Number of times a peer has exceeded the rate limiter capacity when \
+       sending diffs"
+    in
+    Counter.v "remote_capacity_exceeded" ~help ~namespace ~subsystem
+
+  let local_capacity_exceeded : Counter.t =
+    let help =
+      "Number of times the local rate limiter capacity was exceeded when \
+       sending diffs"
+    in
+    Counter.v "local_capacity_exceeded" ~help ~namespace ~subsystem
 end
 
 module Metric_map (Metric : sig
@@ -1097,6 +1111,12 @@ module Snark_work = struct
   let snark_fee =
     let help = "A histogram for snark fees" in
     Snark_fee_histogram.v "snark_fee" ~help ~namespace ~subsystem
+
+  let snark_work_garbage_collected : Counter.t =
+    let help =
+      "Number of unreferenced snark works that were removed from the pool"
+    in
+    Counter.v "snark_work_garbage_collected" ~help ~namespace ~subsystem
 end
 
 module Scan_state_metrics = struct

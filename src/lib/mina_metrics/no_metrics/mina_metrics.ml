@@ -107,6 +107,10 @@ module Transaction_pool = struct
   let zkapp_updates : Counter.t = ()
 
   let zkapp_proof_updates : Counter.t = ()
+
+  let remote_capacity_exceeded : Counter.t = ()
+
+  let local_capacity_exceeded : Counter.t = ()
 end
 
 module Network = struct
@@ -363,6 +367,8 @@ module Snark_work = struct
   module Snark_fee_histogram = Histogram
 
   let snark_fee : Snark_fee_histogram.t = ()
+
+  let snark_work_garbage_collected : Counter.t = ()
 end
 
 module Scan_state_metrics = struct

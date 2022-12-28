@@ -104,6 +104,8 @@ module Base
               ~score:(Diff.score env.data)
           with
           | `Capacity_exceeded ->
+              Mina_metrics.Counter.inc_one
+                Mina_metrics.Transaction_pool.remote_capacity_exceeded ;
               [%log' debug logger]
                 ~metadata:
                   [ ("sender", Envelope.Sender.to_yojson env.sender)
