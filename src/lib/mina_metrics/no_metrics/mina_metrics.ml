@@ -369,6 +369,8 @@ module Snark_work = struct
   let snark_fee : Snark_fee_histogram.t = ()
 
   let snark_work_garbage_collected : Counter.t = ()
+
+  let snark_work_reference_added : Counter.t = ()
 end
 
 module Scan_state_metrics = struct

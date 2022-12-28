@@ -194,6 +194,7 @@ module Status = struct
       ; pending_snark_work : int
       ; snark_pool_size : int
       ; snark_work_garbage_collected : int
+      ; snark_work_reference_added : int
       ; local_capacity_exceeded : int
       ; remote_capacity_exceeded : int
       }
@@ -437,6 +438,9 @@ module Status = struct
         let snark_work_garbage_collected =
           fmt_field "snark_work_garbage_collected" string_of_int
         in
+        let snark_work_reference_added =
+          fmt_field "snark_work_reference_added" string_of_int
+        in
         let local_capacity_exceeded =
           fmt_field "local_capacity_exceeded" string_of_int
         in
@@ -448,7 +452,8 @@ module Status = struct
           ~transactions_added_to_pool ~transaction_pool_size
           ~snark_pool_diff_received ~snark_pool_diff_broadcasted
           ~pending_snark_work ~snark_pool_size ~snark_work_garbage_collected
-          ~local_capacity_exceeded ~remote_capacity_exceeded
+          ~snark_work_reference_added ~local_capacity_exceeded
+          ~remote_capacity_exceeded
         |> List.concat
         |> List.map ~f:(fun (s, v) -> ("\t" ^ s, v))
         |> digest_entries ~title:""
