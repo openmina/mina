@@ -357,6 +357,8 @@ module Snark_work : sig
   val snark_fee : Snark_fee_histogram.t
 
   val snark_work_garbage_collected : Counter.t
+
+  val snark_work_reference_added : Counter.t
 end
 
 module Scan_state_metrics : sig

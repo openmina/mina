@@ -457,6 +457,8 @@ let get_status ~flag t =
           Float.to_int @@ Gauge.value Snark_work.pending_snark_work
       ; snark_work_garbage_collected =
           Float.to_int @@ Counter.value Snark_work.snark_work_garbage_collected
+      ; snark_work_reference_added =
+          Float.to_int @@ Counter.value Snark_work.snark_work_reference_added
       ; local_capacity_exceeded =
           Float.to_int @@ Counter.value Transaction_pool.local_capacity_exceeded
       ; remote_capacity_exceeded =

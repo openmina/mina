@@ -1117,6 +1117,12 @@ module Snark_work = struct
       "Number of unreferenced snark works that were removed from the pool"
     in
     Counter.v "snark_work_garbage_collected" ~help ~namespace ~subsystem
+
+  let snark_work_reference_added : Counter.t =
+    let help =
+      "Number of snark work references that were created in the pool"
+    in
+    Counter.v "snark_work_reference_added" ~help ~namespace ~subsystem
 end
 
 module Scan_state_metrics = struct

@@ -51,6 +51,8 @@ module T = struct
     let metadata =
       Printf.sprintf "work_count=%d, added=%d" (List.length work) !added_count
     in
+    Mina_metrics.Counter.inc Mina_metrics.Snark_work.snark_work_reference_added
+      (Float.of_int !added_count) ;
     Block_tracing.Processing.checkpoint_current ~metadata
       `SPRC_add_to_work_table_done ;
     !res
