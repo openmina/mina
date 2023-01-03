@@ -572,7 +572,6 @@ let calculate_diffs ({ context = (module Context); _ } as t) breadcrumb =
 (* TODO: refactor metrics tracking outside of apply_diff (could maybe even be an extension?) *)
 let apply_diff (type mutant) t (diff : (Diff.full, mutant) Diff.t)
     ~enable_epoch_ledger_sync : mutant * State_hash.t option =
-  (* TODOX: trace this *)
   match diff with
   | New_node (Full breadcrumb) ->
       let breadcrumb_hash = Breadcrumb.state_hash breadcrumb in
@@ -609,8 +608,12 @@ let apply_diff (type mutant) t (diff : (Diff.full, mutant) Diff.t)
       let new_root_protocol_states =
         Root_data.Limited.protocol_states new_root
       in
+      Internal_tracing.Block_tracing.Processing.checkpoint_current
+        `Move_frontier_root ;
       move_root t ~new_root_hash ~new_root_protocol_states ~garbage
         ~enable_epoch_ledger_sync ;
+      Internal_tracing.Block_tracing.Processing.checkpoint_current
+        `Move_frontier_root_done ;
       (old_root_hash, Some new_root_hash)
 
 module Metrics = struct

@@ -57,6 +57,9 @@ type block_processing_checkpoint =
   | `Prediff
   | `Apply_diff
   | `Update_coinbase_stack
+  | `Update_ledger_and_get_statements
+  | `Update_ledger_and_get_statements_done
+  | `Update_coinbase_stack_done
   | `Check_for_sufficient_snark_work
   | `Check_zero_fee_excess
   | `Fill_work_and_enqueue_transactions
@@ -75,6 +78,8 @@ type block_processing_checkpoint =
   | `Calculate_diffs
   | `Apply_catchup_tree_diffs
   | `Apply_full_frontier_diffs
+  | `Move_frontier_root
+  | `Move_frontier_root_done
   | `Full_frontier_diffs_applied
   | `Synchronize_persistent_frontier
   | `Persistent_frontier_synchronized

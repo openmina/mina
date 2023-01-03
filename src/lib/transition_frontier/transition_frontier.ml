@@ -406,7 +406,8 @@ let add_breadcrumb_exn t breadcrumb =
     (Applying_diffs { diffs = List.map ~f:Diff.Full.E.to_yojson diffs }) ;
   Block_tracing.Processing.checkpoint state_hash `Apply_catchup_tree_diffs ;
   Catchup_tree.apply_diffs t.catchup_tree diffs ;
-  Block_tracing.Processing.checkpoint state_hash `Apply_full_frontier_diffs ;
+  Block_tracing.Processing.checkpoint state_hash `Apply_full_frontier_diffs
+    ~metadata:(sprintf "count=%d" (List.length diffs)) ;
   let (`New_root_and_diffs_with_mutants
         (new_root_identifier, diffs_with_mutants) ) =
     (* Root DB moves here *)

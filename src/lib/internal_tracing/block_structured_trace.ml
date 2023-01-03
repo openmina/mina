@@ -55,6 +55,7 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       []
   | `Apply_diff ->
       [ `Update_coinbase_stack
+      ; `Update_coinbase_stack_done
       ; `Check_for_sufficient_snark_work
       ; `Check_zero_fee_excess
       ; `Fill_work_and_enqueue_transactions
@@ -62,6 +63,10 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Verify_scan_state_after_apply
       ; `Hash_new_staged_ledger
       ; `Make_staged_ledger_hash
+      ]
+  | `Update_coinbase_stack ->
+      [ `Update_ledger_and_get_statements
+      ; `Update_ledger_and_get_statements_done
       ]
   | `Hash_new_staged_ledger ->
       [ `Hash_scan_state; `Get_merkle_root ]
@@ -77,6 +82,8 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Notify_frontier_extensions
       ; `Notify_frontier_extensions_done
       ]
+  | `Apply_full_frontier_diffs ->
+      [ `Move_frontier_root; `Move_frontier_root_done ]
   | `Notify_frontier_extensions ->
       [ `Notify_SPRC_handle_diffs
       ; `Notify_SPRC_write_view

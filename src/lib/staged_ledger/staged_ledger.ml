@@ -630,6 +630,7 @@ module T = struct
     let current_stack_with_state =
       push_state current_stack (snd state_and_body_hash)
     in
+    let call_times = ref [] in
     let%map res_rev, pending_coinbase_stack_state =
       let pending_coinbase_stack_state : Stack_state_with_init_stack.t =
         { pc = { source = current_stack; target = current_stack_with_state }
@@ -650,12 +651,16 @@ module T = struct
                   ()
               | Some pk ->
                   raise (Exit (Invalid_public_key pk)) ) ;
+              let tm0 = Unix.gettimeofday () in
               match%map
                 apply_transaction_and_get_witness ~constraint_constants ledger
                   pending_coinbase_stack_state t.With_status.data
                   (Some t.status) current_state_view state_and_body_hash
               with
               | Ok (res, updated_pending_coinbase_stack_state) ->
+                  let tm1 = Unix.gettimeofday () in
+                  let time = Time.Span.of_sec (tm1 -. tm0) in
+                  call_times := time :: !call_times ;
                   (res :: acc, updated_pending_coinbase_stack_state)
               | Error err ->
                   raise (Exit err) ) )
@@ -665,6 +670,28 @@ module T = struct
            | exn ->
                raise exn )
     in
+    let count = List.length !call_times in
+    let total = List.sum (module Time.Span) ~f:Fn.id !call_times in
+    let mean = Time.Span.(total / Float.of_int count) in
+    let min =
+      Option.value ~default:Time.Span.zero
+      @@ List.min_elt ~compare:Time.Span.compare !call_times
+    in
+    let max =
+      Option.value ~default:Time.Span.zero
+      @@ List.max_elt ~compare:Time.Span.compare !call_times
+    in
+    let metadata =
+      sprintf
+        "apply_transaction_and_get_witness[count=%d, total=%s, mean=%s, \
+         min=%s, max=%s]"
+        count
+        (Time.Span.to_string_hum total)
+        (Time.Span.to_string_hum mean)
+        (Time.Span.to_string_hum min)
+        (Time.Span.to_string_hum max)
+    in
+    Block_tracing.Processing.push_metadata metadata ;
     (List.rev res_rev, pending_coinbase_stack_state.pc.target)
 
   let check_completed_works ~logger ~verifier scan_state
@@ -753,13 +780,20 @@ module T = struct
             working_stack pending_coinbase_collection ~is_new_stack
             |> Deferred.return
           in
+          Block_tracing.Processing.checkpoint_current
+            ~metadata:"single-partition" `Update_ledger_and_get_statements ;
           let%map data, updated_stack =
             update_ledger_and_get_statements ~constraint_constants ledger
               working_stack transactions current_state_view state_and_body_hash
           in
-          Internal_tracing.Block_tracing.Processing.push_metadata
-            (Printf.sprintf "is_new_stack=%b, transactions_len=%d, data_len=%d"
-               is_new_stack (List.length transactions) (List.length data) ) ;
+          Block_tracing.Processing.checkpoint_current
+            `Update_ledger_and_get_statements_done ;
+          let metadata =
+            sprintf "is_new_stack=%b, transactions_len=%d, data_len=%d"
+              is_new_stack (List.length transactions) (List.length data)
+          in
+          Block_tracing.Processing.checkpoint_current ~metadata
+            `Update_coinbase_stack_done ;
           ( is_new_stack
           , data
           , Pending_coinbase.Update.Action.Update_one
@@ -780,21 +814,29 @@ module T = struct
             working_stack pending_coinbase_collection ~is_new_stack:false
             |> Deferred.return
           in
+          Block_tracing.Processing.checkpoint_current ~metadata:"left-partition"
+            `Update_ledger_and_get_statements ;
           let%bind data1, updated_stack1 =
             update_ledger_and_get_statements ~constraint_constants ledger
               working_stack1 txns_for_partition1 current_state_view
               state_and_body_hash
           in
+          Block_tracing.Processing.checkpoint_current
+            `Update_ledger_and_get_statements_done ;
           let txns_for_partition2 = List.drop transactions slots in
           (*Push the new state to the state_stack from the previous block even in the second stack*)
           let working_stack2 =
             Pending_coinbase.Stack.create_with working_stack1
           in
+          Block_tracing.Processing.checkpoint_current
+            ~metadata:"right-partition" `Update_ledger_and_get_statements ;
           let%map data2, updated_stack2 =
             update_ledger_and_get_statements ~constraint_constants ledger
               working_stack2 txns_for_partition2 current_state_view
               state_and_body_hash
           in
+          Block_tracing.Processing.checkpoint_current
+            `Update_ledger_and_get_statements_done ;
           let second_has_data = List.length txns_for_partition2 > 0 in
           let pending_coinbase_action, stack_update =
             match (coinbase_in_first_partition, second_has_data) with
@@ -815,20 +857,24 @@ module T = struct
                 (* a diff consists of only non-coinbase transactions. This is currently not possible because a diff will have a coinbase at the very least, so don't update anything?*)
                 (Update_none, `Update_none)
           in
-          Internal_tracing.Block_tracing.Processing.push_metadata
-            (Printf.sprintf
-               "is_new_stack=false, coinbase_in_first_partition=%b, \
-                second_has_data=%b, txns_for_partition1_len=%d, \
-                txns_for_partition2_len=%d, data1_len=%d, data2_len=%d"
-               coinbase_in_first_partition second_has_data
-               (List.length txns_for_partition1)
-               (List.length txns_for_partition2)
-               (List.length data1) (List.length data2) ) ;
+          let metadata =
+            sprintf
+              "is_new_stack=false, coinbase_in_first_partition=%b, \
+               second_has_data=%b, txns_for_partition1_len=%d, \
+               txns_for_partition2_len=%d, data1_len=%d, data2_len=%d"
+              coinbase_in_first_partition second_has_data
+              (List.length txns_for_partition1)
+              (List.length txns_for_partition2)
+              (List.length data1) (List.length data2)
+          in
+          Block_tracing.Processing.checkpoint_current ~metadata
+            `Update_coinbase_stack_done ;
           (false, data1 @ data2, pending_coinbase_action, stack_update) )
-    else
+    else (
+      Block_tracing.Processing.checkpoint_current `Update_coinbase_stack_done ;
       Deferred.return
         (Ok (false, [], Pending_coinbase.Update.Action.Update_none, `Update_none)
-        )
+        ) )
 
   (*update the pending_coinbase tree with the updated/new stack and delete the oldest stack if a proof was emitted*)
   let update_pending_coinbase_collection ~depth pending_coinbase_collection
