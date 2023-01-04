@@ -1123,6 +1123,11 @@ module Snark_work = struct
       "Number of snark work references that were created in the pool"
     in
     Counter.v "snark_work_reference_added" ~help ~namespace ~subsystem
+
+  let snark_worker_fee_insufficient_for_account : Counter.t =
+    let help = "Snark worker fee insufficient to create account" in
+    Counter.v "snark_worker_fee_insufficient_for_account" ~help ~namespace
+      ~subsystem
 end
 
 module Scan_state_metrics = struct

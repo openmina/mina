@@ -319,6 +319,10 @@ struct
                          in
                          if keep then acc else key :: acc )
                    in
+                   Mina_metrics.Counter.inc
+                     Mina_metrics.Snark_work
+                     .snark_worker_fee_insufficient_for_account
+                     (Float.of_int (List.length to_remove)) ;
                    List.iter to_remove ~f:(fun key ->
                        Hashtbl.remove t.snark_tables.all key ;
                        Hashtbl.remove t.snark_tables.rebroadcastable key )

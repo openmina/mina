@@ -462,6 +462,7 @@ module Types = struct
                ~snark_pool_diff_broadcasted:nn_int ~pending_snark_work:nn_int
                ~snark_pool_size:nn_int ~snark_work_garbage_collected:nn_int
                ~snark_work_reference_added:nn_int
+               ~snark_worker_fee_insufficient_for_account:nn_int
                ~local_capacity_exceeded:nn_int ~remote_capacity_exceeded:nn_int )
 
     let t : (_, Daemon_rpcs.Types.Status.t option) typ =
