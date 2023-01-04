@@ -264,6 +264,8 @@ struct
         Currency.Fee.(fee >= t.account_creation_fee) || account_exists
 
       let handle_new_best_tip_ledger t ledger =
+        ignore t ; ignore ledger ; Deferred.unit
+      (*
         let open Mina_base in
         let open Signature_lib in
         Throttle.enqueue t.snark_table_lock (fun () ->
@@ -329,7 +331,7 @@ struct
                  in
                  () )
             in
-            () )
+            () ) *)
 
       let handle_new_refcount_table t
           ({ removed; refcount_table; best_tip_table } :
