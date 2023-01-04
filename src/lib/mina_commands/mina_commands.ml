@@ -459,6 +459,9 @@ let get_status ~flag t =
           Float.to_int @@ Counter.value Snark_work.snark_work_garbage_collected
       ; snark_work_reference_added =
           Float.to_int @@ Counter.value Snark_work.snark_work_reference_added
+      ; snark_worker_fee_insufficient_for_account =
+          Float.to_int
+          @@ Counter.value Snark_work.snark_worker_fee_insufficient_for_account
       ; local_capacity_exceeded =
           Float.to_int @@ Counter.value Transaction_pool.local_capacity_exceeded
       ; remote_capacity_exceeded =
