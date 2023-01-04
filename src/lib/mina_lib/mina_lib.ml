@@ -1987,14 +1987,15 @@ let create ?wallets (config : Config.t) =
                               [ ( "external_transition"
                                 , Mina_block.Validated.to_yojson transition )
                               ]
-                            (Rebroadcast_transition { state_hash = hash }) ;
-                          (*send callback to libp2p to forward the gossiped transition*)
-                          Option.iter
-                            ~f:
-                              (Fn.flip
-                                 Mina_net2.Validation_callback
-                                 .fire_if_not_already_fired `Accept )
-                            valid_cb
+                            (Rebroadcast_transition { state_hash = hash })
+                      (*send callback to libp2p to forward the gossiped transition*)
+                      (* NOTE: should be a nooop, we already broadcasted it earlier *)
+                      (*Option.iter
+                        ~f:
+                          (Fn.flip
+                             Mina_net2.Validation_callback
+                             .fire_if_not_already_fired `Accept )
+                        valid_cb*)
                       | `Internal ->
                           (*Send callback to publish the new block. Don't log rebroadcast message if it is internally generated; There is a broadcast log*)
                           don't_wait_for

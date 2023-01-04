@@ -402,6 +402,12 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                       Transition_frontier_controller.transitions_being_processed)
               | `Partially_valid_transition
                   (`Block transition, `Valid_cb valid_cb) ->
+                  Option.iter
+                    ~f:
+                      (Fn.flip
+                         Mina_net2.Validation_callback.fire_if_not_already_fired
+                         `Accept )
+                    valid_cb ;
                   process_transition ~transition ~valid_cb ) ) )
 
 let%test_module "Transition_handler.Processor tests" =
