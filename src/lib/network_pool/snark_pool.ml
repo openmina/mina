@@ -340,11 +340,15 @@ struct
         t.best_tip_table <- Some best_tip_table ;
         t.removed_counter <- t.removed_counter + removed ;
         if t.removed_counter >= removed_breadcrumb_wait then (
+          let start_time = Time.now () in
           t.removed_counter <- 0 ;
           Statement_table.filter_keys_inplace t.snark_tables.all ~f:(fun k ->
               let keep = work_is_referenced t k in
               if not keep then Hashtbl.remove t.snark_tables.rebroadcastable k ;
               keep ) ;
+          Mina_metrics.(
+            Gauge.set Snark_work.handle_new_refcount_table_time
+              Time.(Span.to_sec @@ diff (now ()) start_time)) ;
           Mina_metrics.(
             Gauge.set Snark_work.snark_pool_size
               (Float.of_int @@ Hashtbl.length t.snark_tables.all)) )

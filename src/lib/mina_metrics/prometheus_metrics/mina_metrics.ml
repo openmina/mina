@@ -1128,6 +1128,14 @@ module Snark_work = struct
     let help = "Snark worker fee insufficient to create account" in
     Counter.v "snark_worker_fee_insufficient_for_account" ~help ~namespace
       ~subsystem
+
+  let handle_new_best_tip_ledger_time : Gauge.t =
+    let help = "Snark worker fee insufficient to create account" in
+    Gauge.v "handle_new_best_tip_ledger_time" ~help ~namespace ~subsystem
+
+  let handle_new_refcount_table_time : Gauge.t =
+    let help = "Snark worker fee insufficient to create account" in
+    Gauge.v "handle_new_refcount_table_time" ~help ~namespace ~subsystem
 end
 
 module Scan_state_metrics = struct

@@ -104,6 +104,8 @@ module Reflection = struct
 
     let id ~typ a x = reflect Fn.id ~typ a x
 
+    let nn_float a x = id ~typ:(non_null float) a x
+
     let nn_int a x = id ~typ:(non_null int) a x
 
     let nn_int_list a x = id ~typ:(non_null (list (non_null int))) a x
@@ -463,6 +465,8 @@ module Types = struct
                ~snark_pool_size:nn_int ~snark_work_garbage_collected:nn_int
                ~snark_work_reference_added:nn_int
                ~snark_worker_fee_insufficient_for_account:nn_int
+               ~handle_new_refcount_table_time:nn_float
+               ~handle_new_best_tip_ledger_time:nn_float
                ~local_capacity_exceeded:nn_int ~remote_capacity_exceeded:nn_int )
 
     let t : (_, Daemon_rpcs.Types.Status.t option) typ =
