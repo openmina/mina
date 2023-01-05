@@ -11971,7 +11971,7 @@
               "deprecationReason": null
             },
             {
-              "name": "handleNewBestTipLedgerTime",
+              "name": "snarkPoolPipeExtensionProcessingTimeMax",
               "description": null,
               "args": [],
               "type": {
@@ -11987,7 +11987,7 @@
               "deprecationReason": null
             },
             {
-              "name": "snarkPoolBatchVerifyTimeMax",
+              "name": "snarkPoolPipeDiffProcessingTimeMax",
               "description": null,
               "args": [],
               "type": {

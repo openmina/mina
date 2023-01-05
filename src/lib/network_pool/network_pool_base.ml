@@ -194,16 +194,39 @@ end)
              ; local_r
              ]
              ~f:(fun diff_source ->
-               match diff_source with
-               | Diff ((verified_diff, cb) : Remote_sink.unwrapped_t) ->
-                   O1trace.thread processing_diffs_thread_label (fun () ->
-                       apply_and_broadcast network_pool verified_diff cb )
-               | Transition_frontier_extension diff ->
-                   O1trace.thread
-                     processing_transition_frontier_diffs_thread_label
-                     (fun () ->
-                       Resource_pool.handle_transition_frontier_diff diff
-                         resource_pool ) ) ) ) ;
+               let start_time = Time.now () in
+               let gauge =
+                 ref
+                   Mina_metrics.Snark_work
+                   .snark_pool_pipe_diff_processing_time_max
+               in
+               let%map result =
+                 match diff_source with
+                 | Diff ((verified_diff, cb) : Remote_sink.unwrapped_t) ->
+                     gauge :=
+                       Mina_metrics.Snark_work
+                       .snark_pool_pipe_diff_processing_time_max ;
+                     O1trace.thread processing_diffs_thread_label (fun () ->
+                         apply_and_broadcast network_pool verified_diff cb )
+                 | Transition_frontier_extension diff ->
+                     gauge :=
+                       Mina_metrics.Snark_work
+                       .snark_pool_pipe_extension_processing_time_max ;
+                     O1trace.thread
+                       processing_transition_frontier_diffs_thread_label
+                       (fun () ->
+                         Resource_pool.handle_transition_frontier_diff diff
+                           resource_pool )
+               in
+               let total_time =
+                 Time.(Span.to_sec @@ diff (now ()) start_time)
+               in
+               let prev = Mina_metrics.(Gauge.value !gauge) in
+               ( if
+                 String.equal "snark_pool" Resource_pool.label
+                 && Float.(total_time > prev)
+               then Mina_metrics.(Gauge.set !gauge total_time) ) ;
+               result ) ) ) ;
     (network_pool, remote_w, local_w)
 
   (* Rebroadcast locally generated pool items every 10 minutes. Do so for 50

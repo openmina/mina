@@ -599,11 +599,13 @@ struct
                     in
                     let prev =
                       Mina_metrics.(
-                        Gauge.value Snark_work.snark_pool_batch_verify_time_max)
+                        Gauge.value
+                          Snark_work.snark_pool_pipe_diff_processing_time_max)
                     in
                     ( if Float.(total_time > prev) then
                       Mina_metrics.(
-                        Gauge.set Snark_work.snark_pool_batch_verify_time_max
+                        Gauge.set
+                          Snark_work.snark_pool_pipe_diff_processing_time_max
                           total_time) ) ;
                     match result with
                     | Ok true ->
