@@ -592,23 +592,9 @@ struct
                         ] ;
                     Deferred.return false
                 | Some _ -> (
-                    let start_time = Time.now () in
                     let%bind result =
                       Batcher.Snark_pool.verify t.batcher proof_env
                     in
-                    let total_time =
-                      Time.(Span.to_sec @@ diff (now ()) start_time)
-                    in
-                    let prev =
-                      Mina_metrics.(
-                        Gauge.value
-                          Snark_work.snark_pool_pipe_diff_processing_time_max)
-                    in
-                    ( if Float.(total_time > prev) then
-                      Mina_metrics.(
-                        Gauge.set
-                          Snark_work.snark_pool_pipe_diff_processing_time_max
-                          total_time) ) ;
                     match result with
                     | Ok true ->
                         return true
