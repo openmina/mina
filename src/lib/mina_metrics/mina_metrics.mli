@@ -362,9 +362,9 @@ module Snark_work : sig
 
   val snark_worker_fee_insufficient_for_account : Counter.t
 
-  val handle_new_best_tip_ledger_time : Gauge.t
+  val snark_pool_pipe_extension_processing_time_max : Gauge.t
 
-  val snark_pool_batch_verify_time_max : Gauge.t
+  val snark_pool_pipe_diff_processing_time_max : Gauge.t
 end
 
 module Scan_state_metrics : sig

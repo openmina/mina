@@ -1129,13 +1129,20 @@ module Snark_work = struct
     Counter.v "snark_worker_fee_insufficient_for_account" ~help ~namespace
       ~subsystem
 
-  let handle_new_best_tip_ledger_time : Gauge.t =
-    let help = "Snark worker fee insufficient to create account" in
-    Gauge.v "handle_new_best_tip_ledger_time" ~help ~namespace ~subsystem
+  let snark_pool_pipe_extension_processing_time_max : Gauge.t =
+    let help =
+      "Max time spent processing a transition frontier extension message in \
+       the snark pool pipe"
+    in
+    Gauge.v "snark_pool_pipe_extension_processing_time_max" ~help ~namespace
+      ~subsystem
 
-  let snark_pool_batch_verify_time_max : Gauge.t =
-    let help = "Max time spent in the snark pool batch verifier call" in
-    Gauge.v "snark_pool_batch_verify_time_max" ~help ~namespace ~subsystem
+  let snark_pool_pipe_diff_processing_time_max : Gauge.t =
+    let help =
+      "Max time spent processing a gossip diff message in the snark pool pipe"
+    in
+    Gauge.v "snark_pool_pipe_diff_processing_time_max" ~help ~namespace
+      ~subsystem
 end
 
 module Scan_state_metrics = struct
