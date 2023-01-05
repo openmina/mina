@@ -196,6 +196,8 @@ module Status = struct
       ; snark_work_garbage_collected : int
       ; snark_work_reference_added : int
       ; snark_worker_fee_insufficient_for_account : int
+      ; handle_new_best_tip_ledger_time : float
+      ; handle_new_refcount_table_time : float
       ; local_capacity_exceeded : int
       ; remote_capacity_exceeded : int
       }
@@ -445,6 +447,12 @@ module Status = struct
         let snark_worker_fee_insufficient_for_account =
           fmt_field "snark_worker_fee_insufficient_for_account" string_of_int
         in
+        let handle_new_best_tip_ledger_time =
+          fmt_field "handle_new_best_tip_ledger_time" string_of_float
+        in
+        let handle_new_refcount_table_time =
+          fmt_field "handle_new_refcount_table_time" string_of_float
+        in
         let local_capacity_exceeded =
           fmt_field "local_capacity_exceeded" string_of_int
         in
@@ -457,6 +465,7 @@ module Status = struct
           ~snark_pool_diff_received ~snark_pool_diff_broadcasted
           ~pending_snark_work ~snark_pool_size ~snark_work_garbage_collected
           ~snark_work_reference_added ~snark_worker_fee_insufficient_for_account
+          ~handle_new_best_tip_ledger_time ~handle_new_refcount_table_time
           ~local_capacity_exceeded ~remote_capacity_exceeded
         |> List.concat
         |> List.map ~f:(fun (s, v) -> ("\t" ^ s, v))

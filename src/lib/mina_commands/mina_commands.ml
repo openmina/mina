@@ -462,6 +462,10 @@ let get_status ~flag t =
       ; snark_worker_fee_insufficient_for_account =
           Float.to_int
           @@ Counter.value Snark_work.snark_worker_fee_insufficient_for_account
+      ; handle_new_best_tip_ledger_time =
+          Gauge.value Snark_work.handle_new_best_tip_ledger_time
+      ; handle_new_refcount_table_time =
+          Gauge.value Snark_work.handle_new_refcount_table_time
       ; local_capacity_exceeded =
           Float.to_int @@ Counter.value Transaction_pool.local_capacity_exceeded
       ; remote_capacity_exceeded =

@@ -361,6 +361,10 @@ module Snark_work : sig
   val snark_work_reference_added : Counter.t
 
   val snark_worker_fee_insufficient_for_account : Counter.t
+
+  val handle_new_best_tip_ledger_time : Gauge.t
+
+  val handle_new_refcount_table_time : Gauge.t
 end
 
 module Scan_state_metrics : sig
