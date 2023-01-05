@@ -1133,9 +1133,9 @@ module Snark_work = struct
     let help = "Snark worker fee insufficient to create account" in
     Gauge.v "handle_new_best_tip_ledger_time" ~help ~namespace ~subsystem
 
-  let handle_new_refcount_table_time : Gauge.t =
-    let help = "Snark worker fee insufficient to create account" in
-    Gauge.v "handle_new_refcount_table_time" ~help ~namespace ~subsystem
+  let snark_pool_batch_verify_time_max : Gauge.t =
+    let help = "Max time spent in the snark pool batch verifier call" in
+    Gauge.v "snark_pool_batch_verify_time_max" ~help ~namespace ~subsystem
 end
 
 module Scan_state_metrics = struct

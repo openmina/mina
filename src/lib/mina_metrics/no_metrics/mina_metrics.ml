@@ -376,7 +376,7 @@ module Snark_work = struct
 
   let handle_new_best_tip_ledger_time : Gauge.t = ()
 
-  let handle_new_refcount_table_time : Gauge.t = ()
+  let snark_pool_batch_verify_time_max : Gauge.t = ()
 end
 
 module Scan_state_metrics = struct

@@ -465,7 +465,7 @@ module Types = struct
                ~snark_pool_size:nn_int ~snark_work_garbage_collected:nn_int
                ~snark_work_reference_added:nn_int
                ~snark_worker_fee_insufficient_for_account:nn_int
-               ~handle_new_refcount_table_time:nn_float
+               ~snark_pool_batch_verify_time_max:nn_float
                ~handle_new_best_tip_ledger_time:nn_float
                ~local_capacity_exceeded:nn_int ~remote_capacity_exceeded:nn_int )
 

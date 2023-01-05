@@ -338,15 +338,11 @@ struct
         t.best_tip_table <- Some best_tip_table ;
         t.removed_counter <- t.removed_counter + removed ;
         if t.removed_counter >= removed_breadcrumb_wait then (
-          let start_time = Time.now () in
           t.removed_counter <- 0 ;
           Statement_table.filter_keys_inplace t.snark_tables.all ~f:(fun k ->
               let keep = work_is_referenced t k in
               if not keep then Hashtbl.remove t.snark_tables.rebroadcastable k ;
               keep ) ;
-          Mina_metrics.(
-            Gauge.set Snark_work.handle_new_refcount_table_time
-              Time.(Span.to_sec @@ diff (now ()) start_time)) ;
           Mina_metrics.(
             Gauge.set Snark_work.snark_pool_size
               (Float.of_int @@ Hashtbl.length t.snark_tables.all)) )
@@ -594,9 +590,22 @@ struct
                         ] ;
                     Deferred.return false
                 | Some _ -> (
-                    match%bind
+                    let start_time = Time.now () in
+                    let%bind result =
                       Batcher.Snark_pool.verify t.batcher proof_env
-                    with
+                    in
+                    let total_time =
+                      Time.(Span.to_sec @@ diff (now ()) start_time)
+                    in
+                    let prev =
+                      Mina_metrics.(
+                        Gauge.value Snark_work.snark_pool_batch_verify_time_max)
+                    in
+                    ( if Float.(total_time > prev) then
+                      Mina_metrics.(
+                        Gauge.set Snark_work.snark_pool_batch_verify_time_max
+                          total_time) ) ;
+                    match result with
                     | Ok true ->
                         return true
                     | Ok false ->
