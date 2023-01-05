@@ -187,6 +187,8 @@ end)
     (*priority: Transition frontier diffs > local diffs > incoming diffs*)
     Deferred.don't_wait_for
       (O1trace.thread Resource_pool.label (fun () ->
+           let is_snark_pool = String.equal "snark_pool" Resource_pool.label in
+           let previous_source = ref `None in
            Strict_pipe.Reader.Merge.iter
              [ Strict_pipe.Reader.map tf_diffs ~f:(fun diff ->
                    Transition_frontier_extension diff )
@@ -200,32 +202,42 @@ end)
                    Mina_metrics.Snark_work
                    .snark_pool_pipe_diff_processing_time_max
                in
+               let current_source = ref `None in
                let%map result =
                  match diff_source with
                  | Diff ((verified_diff, cb) : Remote_sink.unwrapped_t) ->
-                     gauge :=
-                       Mina_metrics.Snark_work
-                       .snark_pool_pipe_diff_processing_time_max ;
+                     if is_snark_pool then (
+                       gauge :=
+                         Mina_metrics.Snark_work
+                         .snark_pool_pipe_diff_processing_time_max ;
+                       current_source := `Diff ) ;
                      O1trace.thread processing_diffs_thread_label (fun () ->
                          apply_and_broadcast network_pool verified_diff cb )
                  | Transition_frontier_extension diff ->
-                     gauge :=
-                       Mina_metrics.Snark_work
-                       .snark_pool_pipe_extension_processing_time_max ;
+                     if is_snark_pool then (
+                       gauge :=
+                         Mina_metrics.Snark_work
+                         .snark_pool_pipe_extension_processing_time_max ;
+                       current_source := `Extension ) ;
                      O1trace.thread
                        processing_transition_frontier_diffs_thread_label
                        (fun () ->
                          Resource_pool.handle_transition_frontier_diff diff
                            resource_pool )
                in
-               let total_time =
-                 Time.(Span.to_sec @@ diff (now ()) start_time)
-               in
-               let prev = Mina_metrics.(Gauge.value !gauge) in
-               ( if
-                 String.equal "snark_pool" Resource_pool.label
-                 && Float.(total_time > prev)
-               then Mina_metrics.(Gauge.set !gauge total_time) ) ;
+               if is_snark_pool then (
+                 let total_time =
+                   Time.(Span.to_sec @@ diff (now ()) start_time)
+                 in
+                 let prev = Mina_metrics.(Gauge.value !gauge) in
+                 let total_time =
+                   if phys_equal !previous_source !current_source then
+                     total_time +. prev
+                   else total_time
+                 in
+                 ( if Float.(total_time > prev) then
+                   Mina_metrics.(Gauge.set !gauge total_time) ) ;
+                 previous_source := !current_source ) ;
                result ) ) ) ;
     (network_pool, remote_w, local_w)
 
