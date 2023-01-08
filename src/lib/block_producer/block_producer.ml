@@ -233,7 +233,7 @@ let generate_next_state ~constraint_constants ~previous_protocol_state
             | _ ->
                 diff_result )
       in
-      Block_tracing.Production.checkpoint `Generate_staged_ledger_diff ;
+      Block_tracing.Production.checkpoint `Apply_staged_ledger_diff ;
       match%map
         let%bind.Deferred.Result diff = return diff in
         Staged_ledger.apply_diff_unchecked staged_ledger ~constraint_constants

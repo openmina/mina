@@ -11,6 +11,7 @@ type block_production_checkpoint =
   | `Validate_and_apply_transactions
   | `Filter_successful_transactions
   | `Generate_staged_ledger_diff
+  | `Apply_staged_ledger_diff
   | (* Build breadcrumb *)
     `Produce_state_transition_proof
   | `Produce_chain_transition_proof

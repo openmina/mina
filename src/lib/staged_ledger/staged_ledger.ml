@@ -752,10 +752,14 @@ module T = struct
       ~f:(fun _ -> check (List.drop data (fst partitions.first)) partitions)
       partitions.second
 
-  let update_coinbase_stack_and_get_data ~constraint_constants scan_state ledger
-      pending_coinbase_collection transactions current_state_view
-      state_and_body_hash =
+  let update_coinbase_stack_and_get_data ?state_hash ~constraint_constants
+      scan_state ledger pending_coinbase_collection transactions
+      current_state_view state_and_body_hash =
     let open Deferred.Result.Let_syntax in
+    let checkpoint ?metadata cp =
+      Option.iter state_hash ~f:(fun state_hash ->
+          Block_tracing.Processing.checkpoint ?metadata state_hash cp )
+    in
     let coinbase_exists txns =
       List.fold_until ~init:false txns
         ~f:(fun acc t ->
@@ -780,20 +784,18 @@ module T = struct
             working_stack pending_coinbase_collection ~is_new_stack
             |> Deferred.return
           in
-          Block_tracing.Processing.checkpoint_current
-            ~metadata:"single-partition" `Update_ledger_and_get_statements ;
+          checkpoint ~metadata:"single-partition"
+            `Update_ledger_and_get_statements ;
           let%map data, updated_stack =
             update_ledger_and_get_statements ~constraint_constants ledger
               working_stack transactions current_state_view state_and_body_hash
           in
-          Block_tracing.Processing.checkpoint_current
-            `Update_ledger_and_get_statements_done ;
+          checkpoint `Update_ledger_and_get_statements_done ;
           let metadata =
             sprintf "is_new_stack=%b, transactions_len=%d, data_len=%d"
               is_new_stack (List.length transactions) (List.length data)
           in
-          Block_tracing.Processing.checkpoint_current ~metadata
-            `Update_coinbase_stack_done ;
+          checkpoint ~metadata `Update_coinbase_stack_done ;
           ( is_new_stack
           , data
           , Pending_coinbase.Update.Action.Update_one
@@ -814,29 +816,27 @@ module T = struct
             working_stack pending_coinbase_collection ~is_new_stack:false
             |> Deferred.return
           in
-          Block_tracing.Processing.checkpoint_current ~metadata:"left-partition"
+          checkpoint ~metadata:"left-partition"
             `Update_ledger_and_get_statements ;
           let%bind data1, updated_stack1 =
             update_ledger_and_get_statements ~constraint_constants ledger
               working_stack1 txns_for_partition1 current_state_view
               state_and_body_hash
           in
-          Block_tracing.Processing.checkpoint_current
-            `Update_ledger_and_get_statements_done ;
+          checkpoint `Update_ledger_and_get_statements_done ;
           let txns_for_partition2 = List.drop transactions slots in
           (*Push the new state to the state_stack from the previous block even in the second stack*)
           let working_stack2 =
             Pending_coinbase.Stack.create_with working_stack1
           in
-          Block_tracing.Processing.checkpoint_current
-            ~metadata:"right-partition" `Update_ledger_and_get_statements ;
+          checkpoint ~metadata:"right-partition"
+            `Update_ledger_and_get_statements ;
           let%map data2, updated_stack2 =
             update_ledger_and_get_statements ~constraint_constants ledger
               working_stack2 txns_for_partition2 current_state_view
               state_and_body_hash
           in
-          Block_tracing.Processing.checkpoint_current
-            `Update_ledger_and_get_statements_done ;
+          checkpoint `Update_ledger_and_get_statements_done ;
           let second_has_data = List.length txns_for_partition2 > 0 in
           let pending_coinbase_action, stack_update =
             match (coinbase_in_first_partition, second_has_data) with
@@ -867,11 +867,10 @@ module T = struct
               (List.length txns_for_partition2)
               (List.length data1) (List.length data2)
           in
-          Block_tracing.Processing.checkpoint_current ~metadata
-            `Update_coinbase_stack_done ;
+          checkpoint ~metadata `Update_coinbase_stack_done ;
           (false, data1 @ data2, pending_coinbase_action, stack_update) )
     else (
-      Block_tracing.Processing.checkpoint_current `Update_coinbase_stack_done ;
+      checkpoint `Update_coinbase_stack_done ;
       Deferred.return
         (Ok (false, [], Pending_coinbase.Update.Action.Update_none, `Update_none)
         ) )
@@ -945,7 +944,7 @@ module T = struct
     let open Deferred.Result.Let_syntax in
     let checkpoint ?metadata cp =
       Option.iter state_hash ~f:(fun state_hash ->
-          Block_tracing.External.checkpoint ?metadata state_hash cp )
+          Block_tracing.Processing.checkpoint ?metadata state_hash cp )
     in
     let max_throughput =
       Int.pow 2 t.constraint_constants.transaction_capacity_log_2
@@ -968,8 +967,8 @@ module T = struct
     checkpoint ~metadata `Update_coinbase_stack ;
     let%bind is_new_stack, data, stack_update_in_snark, stack_update =
       O1trace.thread "update_coinbase_stack_start_time" (fun () ->
-          update_coinbase_stack_and_get_data ~constraint_constants t.scan_state
-            new_ledger t.pending_coinbase_collection transactions
+          update_coinbase_stack_and_get_data ?state_hash ~constraint_constants
+            t.scan_state new_ledger t.pending_coinbase_collection transactions
             current_state_view state_and_body_hash )
     in
     let slots = List.length data in
