@@ -457,8 +457,8 @@ let reset_frontier_dependencies_validation (transition_with_hash, validation) =
       failwith "why can't this be refuted?"
 
 let validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
-    ~precomputed_values ~verifier ~parent_staged_ledger ~parent_protocol_state
-    (t, validation) =
+    ~get_completed_work ~precomputed_values ~verifier ~parent_staged_ledger
+    ~parent_protocol_state (t, validation) =
   let target_hash_of_ledger_proof =
     Fn.compose Registers.ledger
     @@ Fn.compose Ledger_proof.statement_target Ledger_proof.statement
@@ -482,6 +482,7 @@ let validate_staged_ledger_diff ?skip_staged_ledger_verification ~logger
                            , `Staged_ledger transitioned_staged_ledger
                            , `Pending_coinbase_update _ ) =
     Staged_ledger.apply ?skip_verification:skip_staged_ledger_verification
+      ~get_completed_work
       ~constraint_constants:
         precomputed_values.Precomputed_values.constraint_constants ~logger
       ~verifier parent_staged_ledger

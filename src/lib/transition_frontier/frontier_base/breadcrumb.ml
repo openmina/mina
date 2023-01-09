@@ -68,12 +68,12 @@ include Allocation_functor.Make.Sexp (T)
 let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
     ~trust_system ~parent
     ~transition:(transition_with_validation : Mina_block.almost_valid_block)
-    ~sender ~transition_receipt_time () =
+    ~get_completed_work ~sender ~transition_receipt_time () =
   O1trace.thread "build_breadcrumb" (fun () ->
       let open Deferred.Let_syntax in
       match%bind
         Validation.validate_staged_ledger_diff ?skip_staged_ledger_verification
-          ~logger ~precomputed_values ~verifier
+          ~get_completed_work ~logger ~precomputed_values ~verifier
           ~parent_staged_ledger:(staged_ledger parent)
           ~parent_protocol_state:
             ( parent.validated_transition |> Mina_block.Validated.header
@@ -443,7 +443,7 @@ module For_tests = struct
       let transition_receipt_time = Some (Time.now ()) in
       match%map
         build ~logger ~precomputed_values ~trust_system ~verifier
-          ~parent:parent_breadcrumb
+          ~get_completed_work:(Fn.const None) ~parent:parent_breadcrumb
           ~transition:
             ( next_block |> Mina_block.Validated.remember
             |> Validation.reset_staged_ledger_diff_validation )
