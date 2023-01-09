@@ -694,6 +694,30 @@ module T = struct
     Block_tracing.Processing.push_metadata metadata ;
     (List.rev res_rev, pending_coinbase_stack_state.pc.target)
 
+  (** Checks if the work has already been verified before by the snark pool logic *)
+  let is_work_already_verified ~get_completed_work jobs work =
+    let exception Statement_of_job_failure in
+    let statement_of_job_exn job =
+      Option.value_exn ~error:(Error.of_exn Statement_of_job_failure)
+      @@ Scan_state.statement_of_job job
+    in
+    try
+      let job_statements = One_or_two.map ~f:statement_of_job_exn jobs in
+      let work_statement = Transaction_snark_work.statement work in
+      let statements_match =
+        Transaction_snark_work.Statement.equal job_statements work_statement
+      in
+      let matching_completed_work_in_pool = get_completed_work work_statement in
+      match (statements_match, matching_completed_work_in_pool) with
+      | true, Some (completed_work : Transaction_snark_work.Checked.t) ->
+          (* Work for this statement may exist but fee and prover may be different,
+             makes sure it all matches *)
+          Fee.equal completed_work.fee work.fee
+          && Account.Key.equal completed_work.prover work.prover
+      | _ ->
+          false
+    with Statement_of_job_failure -> false
+
   let check_completed_works ~logger ~verifier ~get_completed_work scan_state
       (completed_works : Transaction_snark_work.t list) =
     let work_count = List.length completed_works in
@@ -704,19 +728,17 @@ module T = struct
     let jmps =
       List.concat_map (List.zip_exn job_pairs completed_works)
         ~f:(fun (jobs, work) ->
-          match get_completed_work (Transaction_snark_work.statement work) with
-          | Some _ ->
-              (* Work exists in the snark pool, this means that we have verified it before, skip it now *)
-              incr found_in_snarkpool_count ;
-              []
-          | None ->
-              let message =
-                Sok_message.create ~fee:work.fee ~prover:work.prover
-              in
-              One_or_two.(
-                to_list
-                  (map (zip_exn jobs work.proofs) ~f:(fun (job, proof) ->
-                       (job, message, proof) ) )) )
+          if is_work_already_verified ~get_completed_work jobs work then (
+            incr found_in_snarkpool_count ;
+            [] )
+          else
+            let message =
+              Sok_message.create ~fee:work.fee ~prover:work.prover
+            in
+            One_or_two.(
+              to_list
+                (map (zip_exn jobs work.proofs) ~f:(fun (job, proof) ->
+                     (job, message, proof) ) )) )
     in
     Block_tracing.Processing.push_metadata
       (sprintf "completed_work_found_in_pool=%d" !found_in_snarkpool_count) ;
