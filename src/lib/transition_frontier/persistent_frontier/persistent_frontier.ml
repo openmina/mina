@@ -319,7 +319,8 @@ module Instance = struct
                  ~logger:t.factory.logger ~precomputed_values
                  ~verifier:t.factory.verifier
                  ~trust_system:(Trust_system.null ()) ~parent ~transition
-                 ~senders:[] ~transition_receipt_time:None ()
+                 ~get_completed_work:(Fn.const None) ~senders:[]
+                 ~transition_receipt_time:None ()
              in
              let%map () = apply_diff Diff.(E (New_node (Full breadcrumb))) in
              Block_tracing.Reconstruct.complete state_hash ;

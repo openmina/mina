@@ -99,8 +99,9 @@ let is_transition_for_bootstrap ~context:(module Context : CONTEXT) frontier
 
 let start_transition_frontier_controller ~context:(module Context : CONTEXT)
     ~on_bitswap_update_ref ~trust_system ~verifier ~network ~time_controller
-    ~producer_transition_writer_ref ~verified_transition_writer ~clear_reader
-    ~collected_transitions ?transition_writer_ref ~frontier_w frontier =
+    ~get_completed_work ~producer_transition_writer_ref
+    ~verified_transition_writer ~clear_reader ~collected_transitions
+    ?transition_writer_ref ~frontier_w frontier =
   let open Context in
   [%str_log info] Starting_transition_frontier_controller ;
   Storage_tracing.Distributions.bootstrap_complete () ;
@@ -132,17 +133,17 @@ let start_transition_frontier_controller ~context:(module Context : CONTEXT)
   Transition_frontier_controller.run
     ~context:(module Context)
     ~on_bitswap_update_ref ~trust_system ~verifier ~network ~time_controller
-    ~collected_transitions ~frontier
+    ~collected_transitions ~frontier ~get_completed_work
     ~network_transition_reader:transition_frontier_controller_reader
     ~producer_transition_reader ~clear_reader ~verified_transition_writer ;
   transition_writer_ref
 
 let start_bootstrap_controller ~context:(module Context : CONTEXT)
     ~on_bitswap_update_ref ~trust_system ~verifier ~network ~time_controller
-    ~producer_transition_writer_ref ~verified_transition_writer ~clear_reader
-    ?transition_writer_ref ~consensus_local_state ~frontier_w
-    ~initial_root_transition ~persistent_root ~persistent_frontier
-    ~best_seen_transition ~catchup_mode =
+    ~get_completed_work ~producer_transition_writer_ref
+    ~verified_transition_writer ~clear_reader ?transition_writer_ref
+    ~consensus_local_state ~frontier_w ~initial_root_transition ~persistent_root
+    ~persistent_frontier ~best_seen_transition ~catchup_mode =
   let open Context in
   [%str_log info] Starting_bootstrap_controller ;
   [%log info] "Starting Bootstrap Controller phase" ;
@@ -195,9 +196,9 @@ let start_bootstrap_controller ~context:(module Context : CONTEXT)
       start_transition_frontier_controller
         ~context:(module Context)
         ~on_bitswap_update_ref ~trust_system ~verifier ~network ~time_controller
-        ~producer_transition_writer_ref ~verified_transition_writer
-        ~clear_reader ~collected_transitions ~transition_writer_ref ~frontier_w
-        new_frontier
+        ~get_completed_work ~producer_transition_writer_ref
+        ~verified_transition_writer ~clear_reader ~collected_transitions
+        ~transition_writer_ref ~frontier_w new_frontier
       |> Fn.const () ) ;
   transition_writer_ref
 
@@ -369,9 +370,10 @@ let wait_for_high_connectivity ~logger ~network ~is_seed =
 
 let initialize ~context:(module Context : CONTEXT) ~on_bitswap_update_ref
     ~network ~is_seed ~is_demo_mode ~verifier ~trust_system ~time_controller
-    ~frontier_w ~producer_transition_writer_ref ~clear_reader
-    ~verified_transition_writer ~most_recent_valid_block_writer ~persistent_root
-    ~persistent_frontier ~consensus_local_state ~catchup_mode ~notify_online =
+    ~get_completed_work ~frontier_w ~producer_transition_writer_ref
+    ~clear_reader ~verified_transition_writer ~most_recent_valid_block_writer
+    ~persistent_root ~persistent_frontier ~consensus_local_state ~catchup_mode
+    ~notify_online =
   let open Context in
   let%bind () =
     if is_demo_mode then return ()
@@ -400,7 +402,7 @@ let initialize ~context:(module Context : CONTEXT) ~on_bitswap_update_ref
       in
       start_bootstrap_controller ~on_bitswap_update_ref
         ~context:(module Context)
-        ~trust_system ~verifier ~network ~time_controller
+        ~trust_system ~verifier ~network ~time_controller ~get_completed_work
         ~producer_transition_writer_ref ~verified_transition_writer
         ~clear_reader ?transition_writer_ref:None ~consensus_local_state
         ~frontier_w ~persistent_root ~persistent_frontier
@@ -428,9 +430,9 @@ let initialize ~context:(module Context : CONTEXT) ~on_bitswap_update_ref
       start_bootstrap_controller
         ~context:(module Context)
         ~on_bitswap_update_ref ~trust_system ~verifier ~network ~time_controller
-        ~producer_transition_writer_ref ~verified_transition_writer
-        ~clear_reader ?transition_writer_ref:None ~consensus_local_state
-        ~frontier_w ~persistent_root ~persistent_frontier
+        ~get_completed_work ~producer_transition_writer_ref
+        ~verified_transition_writer ~clear_reader ?transition_writer_ref:None
+        ~consensus_local_state ~frontier_w ~persistent_root ~persistent_frontier
         ~initial_root_transition ~catchup_mode
         ~best_seen_transition:(Some best_tip)
   | best_tip_opt, Some frontier ->
@@ -497,9 +499,9 @@ let initialize ~context:(module Context : CONTEXT) ~on_bitswap_update_ref
       start_transition_frontier_controller
         ~context:(module Context)
         ~on_bitswap_update_ref ~trust_system ~verifier ~network ~time_controller
-        ~producer_transition_writer_ref ~verified_transition_writer
-        ~clear_reader ~collected_transitions ?transition_writer_ref:None
-        ~frontier_w frontier
+        ~get_completed_work ~producer_transition_writer_ref
+        ~verified_transition_writer ~clear_reader ~collected_transitions
+        ?transition_writer_ref:None ~frontier_w frontier
 
 let wait_till_genesis ~logger ~time_controller
     ~(precomputed_values : Precomputed_values.t) =
@@ -547,7 +549,7 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~verifier ~network
     ~producer_transition_reader
     ~most_recent_valid_block:
       (most_recent_valid_block_reader, most_recent_valid_block_writer)
-    ~catchup_mode ~notify_online ~on_bitswap_update_ref =
+    ~get_completed_work ~catchup_mode ~notify_online ~on_bitswap_update_ref =
   let open Context in
   let initialization_finish_signal = Ivar.create () in
   let clear_reader, clear_writer =
@@ -614,9 +616,10 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~verifier ~network
           ~context:(module Context)
           ~on_bitswap_update_ref ~network ~is_seed ~is_demo_mode ~verifier
           ~trust_system ~persistent_frontier ~persistent_root ~time_controller
-          ~frontier_w ~catchup_mode ~producer_transition_writer_ref
-          ~clear_reader ~verified_transition_writer
-          ~most_recent_valid_block_writer ~consensus_local_state ~notify_online
+          ~get_completed_work ~frontier_w ~catchup_mode
+          ~producer_transition_writer_ref ~clear_reader
+          ~verified_transition_writer ~most_recent_valid_block_writer
+          ~consensus_local_state ~notify_online
       in
       Ivar.fill_if_empty initialization_finish_signal () ;
       let valid_transition_reader1, valid_transition_reader2 =
@@ -678,7 +681,7 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~verifier ~network
                         @@ start_bootstrap_controller
                              ~context:(module Context)
                              ~trust_system ~verifier ~network ~time_controller
-                             ~producer_transition_writer_ref
+                             ~get_completed_work ~producer_transition_writer_ref
                              ~verified_transition_writer ~clear_reader
                              ~transition_writer_ref ~consensus_local_state
                              ~frontier_w ~persistent_root ~persistent_frontier

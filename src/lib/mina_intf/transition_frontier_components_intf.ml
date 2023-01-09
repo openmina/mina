@@ -373,6 +373,9 @@ module type Transition_router_intf = sig
     -> most_recent_valid_block:
          Mina_block.initial_valid_header Broadcast_pipe.Reader.t
          * Mina_block.initial_valid_header Broadcast_pipe.Writer.t
+    -> get_completed_work:
+         (   Transaction_snark_work.Statement.t
+          -> Transaction_snark_work.Checked.t option )
     -> catchup_mode:
          [ `Bit of Bit_catchup_state.Transition_states.t | `Normal | `Super ]
     -> notify_online:(unit -> unit Deferred.t)

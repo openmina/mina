@@ -86,7 +86,7 @@ let compute_block_trace_metadata transition_with_validation =
 let build_no_reporting ?skip_staged_ledger_verification ~logger
     ~precomputed_values ~verifier ~parent
     ~transition:(transition_with_validation : Mina_block.almost_valid_block)
-    ~transition_receipt_time () =
+    ~transition_receipt_time ~get_completed_work () =
   let create_do
       ( `Just_emitted_a_proof just_emitted_a_proof
       , `Block_with_validation fully_valid_block
@@ -99,7 +99,7 @@ let build_no_reporting ?skip_staged_ledger_verification ~logger
   in
   let build_do () =
     Validation.validate_staged_ledger_diff ?skip_staged_ledger_verification
-      ~logger ~precomputed_values ~verifier
+      ~get_completed_work ~logger ~precomputed_values ~verifier
       ~parent_staged_ledger:(staged_ledger parent)
       ~parent_protocol_state:
         ( parent.validated_transition |> Mina_block.Validated.header
@@ -110,7 +110,8 @@ let build_no_reporting ?skip_staged_ledger_verification ~logger
   O1trace.thread "build_breadcrumb" build_do
 
 let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
-    ~trust_system ~parent ~transition ~senders ~transition_receipt_time () =
+    ~trust_system ~parent ~transition ~get_completed_work ~senders
+    ~transition_receipt_time () =
   let state_hash =
     (With_hash.hash @@ Mina_block.Validation.block_with_hash transition)
       .state_hash
@@ -124,7 +125,7 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
   match%bind
     build_no_reporting ?skip_staged_ledger_verification ~logger
       ~precomputed_values ~verifier ~parent ~transition ~transition_receipt_time
-      ()
+      ~get_completed_work ()
   with
   | Ok b ->
       Deferred.Result.return b
@@ -480,7 +481,7 @@ module For_tests = struct
       let transition_receipt_time = Some (Time.now ()) in
       match%map
         build ~logger ~precomputed_values ~trust_system ~verifier
-          ~parent:parent_breadcrumb
+          ~get_completed_work:(Fn.const None) ~parent:parent_breadcrumb
           ~transition:
             ( next_block |> Mina_block.Validated.remember
             |> Validation.reset_staged_ledger_diff_validation )

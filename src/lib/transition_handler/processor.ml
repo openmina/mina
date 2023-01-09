@@ -207,7 +207,7 @@ let handle_frontier_validation_error ~trust_system ~logger ~senders ~state_hash
          is already in the transition frontier"
 
 let process_transition ~context:(module Context : CONTEXT) ~broadcast_actions
-    ~trust_system ~verifier ~frontier ~catchup_scheduler
+    ~trust_system ~verifier ~get_completed_work ~frontier ~catchup_scheduler
     ~processed_transition_writer ~time_controller ~gd_map block_or_header =
   let valid_cbs = Transition_frontier.Gossip.valid_cbs gd_map in
   let open Context in
@@ -327,8 +327,9 @@ let process_transition ~context:(module Context : CONTEXT) ~broadcast_actions
         cached_transform_deferred_result cached_initially_validated_transition
           ~transform_cached:(fun _ ->
             Transition_frontier.Breadcrumb.build ~logger ~precomputed_values
-              ~verifier ~trust_system ~transition_receipt_time ~senders
-              ~parent:parent_breadcrumb ~transition:mostly_validated_transition
+              ~verifier ~get_completed_work ~trust_system
+              ~transition_receipt_time ~senders ~parent:parent_breadcrumb
+              ~transition:mostly_validated_transition
               (* TODO: Can we skip here? *) () )
           ~transform_result:(function
             | Error (`Invalid_staged_ledger_hash error)
@@ -369,7 +370,7 @@ let process_transition ~context:(module Context : CONTEXT) ~broadcast_actions
       Result.return result
 
 let run_impl ~broadcast_actions ~context:(module Context : CONTEXT) ~verifier
-    ~trust_system ~time_controller ~frontier
+    ~trust_system ~time_controller ~frontier ~get_completed_work
     ~(primary_transition_reader :
        ( [ `Block of (Mina_block.initial_valid_block, State_hash.t) Cached.t
          | `Header of Mina_block.initial_valid_header ]
@@ -406,8 +407,8 @@ let run_impl ~broadcast_actions ~context:(module Context : CONTEXT) ~verifier
   let process_transition =
     process_transition
       ~context:(module Context)
-      ~broadcast_actions ~trust_system ~verifier ~frontier ~catchup_scheduler
-      ~processed_transition_writer ~time_controller
+      ~broadcast_actions ~get_completed_work ~trust_system ~verifier ~frontier
+      ~catchup_scheduler ~processed_transition_writer ~time_controller
   in
   O1trace.background_thread "process_blocks" (fun () ->
       Reader.Merge.iter
@@ -636,8 +637,8 @@ let%test_module "Transition_handler.Processor tests" =
                     ; rebroadcast = (fun ~origin_topics:_ _ -> ())
                     }
                   ~context:(module Context)
-                  ~time_controller ~verifier ~trust_system
-                  ~clean_up_catchup_scheduler ~frontier
+                  ~time_controller ~verifier ~get_completed_work:(Fn.const None)
+                  ~trust_system ~clean_up_catchup_scheduler ~frontier
                   ~primary_transition_reader:valid_transition_reader
                   ~producer_transition_reader ~catchup_job_writer
                   ~catchup_breadcrumbs_reader ~catchup_breadcrumbs_writer

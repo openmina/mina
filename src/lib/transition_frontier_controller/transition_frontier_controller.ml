@@ -10,8 +10,8 @@ module type CONTEXT = Context.MINI_CONTEXT
 let run_with_normal_or_super_catchup ~context:(module Context : CONTEXT)
     ~trust_system ~verifier ~network ~time_controller
     ~(collected_transitions : Transition_frontier.Gossip.element list) ~frontier
-    ~network_transition_reader ~producer_transition_reader ~clear_reader
-    ~verified_transition_writer =
+    ~get_completed_work ~network_transition_reader ~producer_transition_reader
+    ~clear_reader ~verified_transition_writer =
   let open Context in
   let valid_transition_pipe_capacity = 50 in
   let start_time = Time.now () in
@@ -132,7 +132,7 @@ let run_with_normal_or_super_catchup ~context:(module Context : CONTEXT)
   Transition_handler.Processor.run
     ~context:(module Context)
     ~network ~time_controller ~trust_system ~verifier ~frontier
-    ~primary_transition_reader ~producer_transition_reader
+    ~get_completed_work ~primary_transition_reader ~producer_transition_reader
     ~clean_up_catchup_scheduler ~catchup_job_writer ~catchup_breadcrumbs_reader
     ~catchup_breadcrumbs_writer ~processed_transition_writer ;
   Ledger_catchup.run
@@ -155,9 +155,9 @@ let run_with_normal_or_super_catchup ~context:(module Context : CONTEXT)
     ~f:(Strict_pipe.Writer.write verified_transition_writer)
   |> don't_wait_for
 
-let run ~on_bitswap_update_ref ~frontier =
+let run ~on_bitswap_update_ref ~frontier ~get_completed_work =
   match Transition_frontier.catchup_state frontier with
   | Full _ | Hash _ ->
-      run_with_normal_or_super_catchup ~frontier
+      run_with_normal_or_super_catchup ~frontier ~get_completed_work
   | Bit _ ->
       Bit_catchup.run ~on_bitswap_update_ref ~frontier

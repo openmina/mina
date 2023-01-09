@@ -35,6 +35,9 @@ val build :
   -> trust_system:Trust_system.t
   -> parent:t
   -> transition:Mina_block.almost_valid_block
+  -> get_completed_work:
+       (   Transaction_snark_work.Statement.t
+        -> Transaction_snark_work.Checked.t option )
   -> senders:Envelope.Sender.t list
   -> transition_receipt_time:Time.t option
   -> unit
@@ -52,6 +55,9 @@ val build_no_reporting :
   -> parent:t
   -> transition:Mina_block.almost_valid_block
   -> transition_receipt_time:Time.t option
+  -> get_completed_work:
+       (   Transaction_snark_work.Statement.t
+        -> Transaction_snark_work.Checked.t option )
   -> unit
   -> ( t
      , [> `Invalid_body_reference

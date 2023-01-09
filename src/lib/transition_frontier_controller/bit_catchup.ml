@@ -62,7 +62,7 @@ let hash_chain_to_metas ~target_length ~target_hash ancestors =
 
 (** Tries to find an ancestor of target hash for which
     [lookup_transition] doesn't return [`Not_present].
-    
+
     Returned non-empty list is in parent-first and contains no target hash. *)
 let try_to_connect_hash_chain ~lookup_transition ~target_length ~root_length =
   let open Mina_numbers.Length in
@@ -285,7 +285,7 @@ let download_ancestors ~config ~preferred_peers ~lookup_transition ~network
 (** [compute_next_state] takes state with [Processed] status and
     returns the next state with [Processing] status or [None] if the transition
     exits the catchup state.
-    
+
     If needed, this function launches deferred action related to the new state.
 
     Note that some other states may be restarted (transitioned from [Failed] to [In_progress])
@@ -383,7 +383,7 @@ let mark_invalid ~state ?reason ~error state_hash =
 
 (** [promote_to_next_state] takes [old_state] of a transition with [Processed] status
     and updates it to [next_state_opt].
-    
+
     Some other states may also be promoted if promotion of the transition
     triggers they are successors of the transition and are in [Processed] status.
 *)
@@ -513,7 +513,7 @@ let report_time_used_for type_ span =
   in
   Mina_metrics.Gauge.set gauge (Time.Span.to_ms span)
 
-(** 
+(**
 Returns [Misc.actions] object with [mark_invalid] and [mark_processed_and_promote] fields.
 
 [mark_processed_and_promote] takes a list of state hashes and marks corresponding
@@ -524,7 +524,7 @@ as the result of [mark_processed].
    1. Order of [state_hashes] respects parent-child relationship and parent always comes first
    2. Respective substates for states from [processed] are in [Processing (Done _)] status
 
-  Post-condition: list returned respects parent-child relationship and parent always comes first 
+  Post-condition: list returned respects parent-child relationship and parent always comes first
 
 This is a recursive function that is called recursively when a transition
 is promoted multiple times or upon completion of deferred action.
@@ -646,7 +646,8 @@ let make_context ~frontier ~time_controller ~verifier ~trust_system ~network
           ( Frontier_base.Breadcrumb.build_no_reporting
               ~skip_staged_ledger_verification:`Proofs ~logger
               ~precomputed_values ~verifier ~parent ~transition
-              ~transition_receipt_time:(Some received_at) ()
+              ~transition_receipt_time:(Some received_at)
+              ~get_completed_work:(Fn.const None) ()
           |> Deferred.Result.map_error ~f:convert_breadcrumb_error )
       in
       report_time_used_for `Breadcrumb_build Time.(diff (now ()) start_time) ;

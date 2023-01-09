@@ -99,7 +99,8 @@ let build_subtrees_of_breadcrumbs ~logger ~precomputed_values ~verifier
                   Deferred.Or_error.try_with ~here:[%here] (fun () ->
                       Transition_frontier.Breadcrumb.build ~logger
                         ~precomputed_values ~verifier ~trust_system ~parent
-                        ~transition:mostly_validated_transition ~senders
+                        ~transition:mostly_validated_transition
+                        ~get_completed_work:(Fn.const None) ~senders
                         ~transition_receipt_time () )
                 with
                 | Error _ ->
