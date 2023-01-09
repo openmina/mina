@@ -700,12 +700,14 @@ module T = struct
     let job_pairs =
       Scan_state.k_work_pairs_for_new_diff scan_state ~k:work_count
     in
+    let found_in_snarkpool_count = ref 0 in
     let jmps =
       List.concat_map (List.zip_exn job_pairs completed_works)
         ~f:(fun (jobs, work) ->
           match get_completed_work (Transaction_snark_work.statement work) with
           | Some _ ->
               (* Work exists in the snark pool, this means that we have verified it before, skip it now *)
+              incr found_in_snarkpool_count ;
               []
           | None ->
               let message =
@@ -716,6 +718,8 @@ module T = struct
                   (map (zip_exn jobs work.proofs) ~f:(fun (job, proof) ->
                        (job, message, proof) ) )) )
     in
+    Block_tracing.Processing.push_metadata
+      (sprintf "completed_work_found_in_pool=%d" !found_in_snarkpool_count) ;
     if List.is_empty jmps then Deferred.return (Ok ())
     else verify jmps ~logger ~verifier
 
