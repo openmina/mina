@@ -125,6 +125,9 @@ val apply :
   -> constraint_constants:Genesis_constants.Constraint_constants.t
   -> t
   -> ?state_hash:Frozen_ledger_hash.t
+  -> get_completed_work:
+       (   Transaction_snark_work.Statement.t
+        -> Transaction_snark_work.Checked.t option )
   -> Staged_ledger_diff.t
   -> logger:Logger.t
   -> verifier:Verifier.t

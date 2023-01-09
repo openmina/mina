@@ -694,7 +694,7 @@ module T = struct
     Block_tracing.Processing.push_metadata metadata ;
     (List.rev res_rev, pending_coinbase_stack_state.pc.target)
 
-  let check_completed_works ~logger ~verifier scan_state
+  let check_completed_works ~logger ~verifier ~get_completed_work scan_state
       (completed_works : Transaction_snark_work.t list) =
     let work_count = List.length completed_works in
     let job_pairs =
@@ -703,13 +703,21 @@ module T = struct
     let jmps =
       List.concat_map (List.zip_exn job_pairs completed_works)
         ~f:(fun (jobs, work) ->
-          let message = Sok_message.create ~fee:work.fee ~prover:work.prover in
-          One_or_two.(
-            to_list
-              (map (zip_exn jobs work.proofs) ~f:(fun (job, proof) ->
-                   (job, message, proof) ) )) )
+          match get_completed_work (Transaction_snark_work.statement work) with
+          | Some _ ->
+              (* Work exists in the snark pool, this means that we have verified it before, skip it now *)
+              []
+          | None ->
+              let message =
+                Sok_message.create ~fee:work.fee ~prover:work.prover
+              in
+              One_or_two.(
+                to_list
+                  (map (zip_exn jobs work.proofs) ~f:(fun (job, proof) ->
+                       (job, message, proof) ) )) )
     in
-    verify jmps ~logger ~verifier
+    if List.is_empty jmps then Deferred.return (Ok ())
+    else verify jmps ~logger ~verifier
 
   (**The total fee excess caused by any diff should be zero. In the case where
      the slots are split into two partitions, total fee excess of the transactions
@@ -1142,8 +1150,9 @@ module T = struct
                  (Error.of_string "batch verification failed") ) ) )
 
   let apply ?skip_verification ~constraint_constants t ?state_hash
-      (witness : Staged_ledger_diff.t) ~logger ~verifier ~current_state_view
-      ~state_and_body_hash ~coinbase_receiver ~supercharge_coinbase =
+      ~get_completed_work (witness : Staged_ledger_diff.t) ~logger ~verifier
+      ~current_state_view ~state_and_body_hash ~coinbase_receiver
+      ~supercharge_coinbase =
     let open Deferred.Result.Let_syntax in
     let work = Staged_ledger_diff.completed_works witness in
     let%bind () =
@@ -1158,7 +1167,8 @@ module T = struct
                   in
                   Block_tracing.Processing.checkpoint ~metadata state_hash
                     `Check_completed_works ) ;
-              check_completed_works ~logger ~verifier t.scan_state work )
+              check_completed_works ~get_completed_work ~logger ~verifier
+                t.scan_state work )
     in
     Option.iter state_hash ~f:(fun state_hash ->
         Block_tracing.Processing.checkpoint state_hash `Prediff ) ;
@@ -2269,8 +2279,8 @@ let%test_module "staged ledger tests" =
               , `Pending_coinbase_update (is_new_stack, pc_update) ) =
         match%map
           Sl.apply ~constraint_constants !sl diff' ~logger ~verifier
-            ~current_state_view ~state_and_body_hash ~coinbase_receiver
-            ~supercharge_coinbase
+            ~get_completed_work:(Fn.const None) ~current_state_view
+            ~state_and_body_hash ~coinbase_receiver ~supercharge_coinbase
         with
         | Ok x ->
             x
@@ -2977,6 +2987,7 @@ let%test_module "staged ledger tests" =
                     in
                     let%bind apply_res =
                       Sl.apply ~constraint_constants !sl diff ~logger ~verifier
+                        ~get_completed_work:(Fn.const None)
                         ~current_state_view:(dummy_state_view ())
                         ~state_and_body_hash:
                           (State_hash.dummy, State_body_hash.dummy)
@@ -3899,7 +3910,7 @@ let%test_module "staged ledger tests" =
                   let%map res =
                     Sl.apply ~constraint_constants !sl
                       (Staged_ledger_diff.forget diff)
-                      ~logger ~verifier
+                      ~logger ~verifier ~get_completed_work:(Fn.const None)
                       ~current_state_view:(dummy_state_view ())
                       ~state_and_body_hash:
                         (State_hash.dummy, State_body_hash.dummy)
