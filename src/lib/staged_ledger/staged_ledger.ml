@@ -722,8 +722,10 @@ module T = struct
                  block_work_proofs
           then Second "proof_not_equal"
           else First ()
-      | _ ->
+      | _, None ->
           Second "not_found_in_pool"
+      | false, _ ->
+          Second "job_and_work_statement_do_not_match"
     with Statement_of_job_failure -> Second "statement_of_job_failure"
 
   let check_completed_works ~logger ~verifier ~get_completed_work scan_state
