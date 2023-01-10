@@ -695,7 +695,7 @@ module T = struct
     (List.rev res_rev, pending_coinbase_stack_state.pc.target)
 
   (** Checks if the work has already been verified before by the snark pool logic *)
-  let is_work_already_verified ~get_completed_work jobs work =
+  let work_already_verified_check ~get_completed_work jobs work =
     let exception Statement_of_job_failure in
     let statement_of_job_exn job =
       Option.value_exn ~error:(Error.of_exn Statement_of_job_failure)
@@ -710,13 +710,21 @@ module T = struct
       let matching_completed_work_in_pool = get_completed_work work_statement in
       match (statements_match, matching_completed_work_in_pool) with
       | true, Some (completed_work : Transaction_snark_work.Checked.t) ->
-          (* Work for this statement may exist but fee and prover may be different,
-             makes sure it all matches *)
-          Fee.equal completed_work.fee work.fee
-          && Account.Key.equal completed_work.prover work.prover
+          let verified_proofs = completed_work.proofs in
+          let block_work_proofs = work.proofs in
+          if not @@ Fee.equal completed_work.fee work.fee then
+            Second "fee_not_equal"
+          else if not @@ Account.Key.equal completed_work.prover work.prover
+          then Second "prover_account_not_equal"
+          else if
+            not
+            @@ One_or_two.equal Ledger_proof.equal verified_proofs
+                 block_work_proofs
+          then Second "proof_not_equal"
+          else First ()
       | _ ->
-          false
-    with Statement_of_job_failure -> false
+          Second "not_found_in_pool"
+    with Statement_of_job_failure -> Second "statement_of_job_failure"
 
   let check_completed_works ~logger ~verifier ~get_completed_work scan_state
       (completed_works : Transaction_snark_work.t list) =
@@ -725,23 +733,29 @@ module T = struct
       Scan_state.k_work_pairs_for_new_diff scan_state ~k:work_count
     in
     let found_in_snarkpool_count = ref 0 in
+    let mismatch_reasons = String.Table.create ~size:10 () in
     let jmps =
       List.concat_map (List.zip_exn job_pairs completed_works)
         ~f:(fun (jobs, work) ->
-          if is_work_already_verified ~get_completed_work jobs work then (
-            incr found_in_snarkpool_count ;
-            [] )
-          else
-            let message =
-              Sok_message.create ~fee:work.fee ~prover:work.prover
-            in
-            One_or_two.(
-              to_list
-                (map (zip_exn jobs work.proofs) ~f:(fun (job, proof) ->
-                     (job, message, proof) ) )) )
+          match work_already_verified_check ~get_completed_work jobs work with
+          | First () ->
+              incr found_in_snarkpool_count ;
+              []
+          | Second reason ->
+              String.Table.incr mismatch_reasons reason ;
+              let message =
+                Sok_message.create ~fee:work.fee ~prover:work.prover
+              in
+              One_or_two.(
+                to_list
+                  (map (zip_exn jobs work.proofs) ~f:(fun (job, proof) ->
+                       (job, message, proof) ) )) )
     in
     Block_tracing.Processing.push_metadata
       (sprintf "completed_work_found_in_pool=%d" !found_in_snarkpool_count) ;
+    List.iter (String.Table.to_alist mismatch_reasons)
+      ~f:(fun (reason, count) ->
+        Block_tracing.Processing.push_metadata (sprintf "%s=%d" reason count) ) ;
     if List.is_empty jmps then Deferred.return (Ok ())
     else verify jmps ~logger ~verifier
 
