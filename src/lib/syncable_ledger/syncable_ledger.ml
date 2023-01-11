@@ -42,7 +42,7 @@ module Answer = struct
         | Num_accounts of int * 'hash
             (** There are this many accounts and the smallest subtree that
                 contains all non-empty nodes has this hash. *)
-        | Account_with_path of 'account * 'path
+        | Account_with_path of ('account * 'path) option
       [@@deriving sexp, yojson]
 
       let to_latest acct_to_latest = function
@@ -52,8 +52,9 @@ module Answer = struct
             Contents_are (List.map ~f:acct_to_latest accts)
         | Num_accounts (i, h) ->
             Num_accounts (i, h)
-        | Account_with_path (acc, path) ->
-            Account_with_path (acct_to_latest acc, path)
+        | Account_with_path opt ->
+            let some_to_latest (acc, path) = (acct_to_latest acc, path) in
+            Account_with_path (Option.map ~f:some_to_latest opt)
     end
   end]
 end
@@ -351,20 +352,12 @@ end = struct
             Either.First
               (Num_accounts
                  (len, MT.get_inner_hash_at_addr_exn mt content_root_addr) )
-        | What_account_with_path account_id -> (
+        | What_account_with_path account_id ->
             Core_kernel.printf "++ Handling What_account_with_path @ %s: %s\n%!"
               __LOC__
               (Sexp.to_string_hum (Account_id.sexp_of_t account_id)) ;
-            match MT.get_account_with_path mt account_id with
-            | Some (acc, path) ->
-                Either.First (Answer.Account_with_path (acc, path))
-            | None ->
-                Either.Second
-                  ( Actions.Violated_protocol
-                  , Some
-                      ( "Requested empty subtree: $addr"
-                      , [ ("account_id", Account_id.to_yojson account_id) ] ) )
-            )
+            let result = MT.get_account_with_path mt account_id in
+            Either.First (Answer.Account_with_path result)
       in
       match response_or_punish with
       | Either.First answer ->
