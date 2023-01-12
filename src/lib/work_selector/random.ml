@@ -11,7 +11,13 @@ struct
     | [] ->
         None
     | expensive_work ->
-        let i = Random.int (Int.min 20 (List.length expensive_work)) in
+        let random_window =
+          Option.value_map ~default:Int.max_value ~f:Int.of_string
+            (Sys.getenv_opt "MINA_RANDOM_WORK_SELECTION_WINDOW")
+        in
+        let i =
+          Random.int (Int.min random_window (List.length expensive_work))
+        in
         let x = List.nth_exn expensive_work i in
         Lib.State.set state x ; Some x
 
