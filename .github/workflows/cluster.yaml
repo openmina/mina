@@ -7,4 +7,5 @@ on:
 jobs:
   test-workflow:
     runs-on: ubuntu-latest
-    steps: echo "It (generaly) works!!!"
+    steps:
+      - run: echo "It (generaly) works!!!"
