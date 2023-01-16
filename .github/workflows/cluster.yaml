@@ -1,0 +1,10 @@
+name: K8s Cluster Workflow
+run-name: Runs some tests in a k8s cluster
+on:
+  push:
+    branches:
+      gha-cluster
+jobs:
+  test-workflow:
+    runs-on: ubuntu-latest
+    steps: echo "It (generaly) works!!!"
