@@ -1345,7 +1345,7 @@ let create (config : Config.t) ~sinks
     ; Rpc_handler
         { rpc = Get_best_tip
         ; f = get_best_tip_rpc
-        ; budget = (3, `Per minute)
+        ; budget = (Int.pow 2 17, `Per minute)
         ; cost = unit
         }
     ; Rpc_handler
