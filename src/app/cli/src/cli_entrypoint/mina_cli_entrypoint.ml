@@ -1160,6 +1160,14 @@ Pass one of -peer, -peer-list-file, -seed, -peer-list-url.|} ;
                 (Lazy.force precomputed_values.constraint_system_digests)
               ~protocol_major_version
           in
+          [%log info] "Chain-ID: %s" chain_id ;
+          let%bind () =
+            match Sys.getenv "PRINT_CHAIN_ID_AND_EXIT" with
+            | Some _ ->
+                exit 0
+            | None ->
+                return ()
+          in
           let gossip_net_params =
             Gossip_net.Libp2p.Config.
               { timeout = Time.Span.of_sec 3.
