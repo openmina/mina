@@ -195,6 +195,7 @@ let generate_next_state ~constraint_constants ~previous_protocol_state
       let diff =
         O1trace.sync_thread "create_staged_ledger_diff" (fun () ->
             (* TODO: handle transaction inclusion failures here *)
+            Block_tracing.Production.checkpoint `Create_staged_ledger_diff ;
             let diff_result =
               Staged_ledger.create_diff ~constraint_constants staged_ledger
                 ~coinbase_receiver ~logger
@@ -210,6 +211,7 @@ let generate_next_state ~constraint_constants ~previous_protocol_state
               |> Result.map_error ~f:(fun err ->
                      Staged_ledger.Staged_ledger_error.Pre_diff err )
             in
+            Block_tracing.Production.checkpoint `Create_staged_ledger_diff_done ;
             match (diff_result, block_reward_threshold) with
             | Ok diff, Some threshold ->
                 let net_return =
@@ -282,6 +284,7 @@ let generate_next_state ~constraint_constants ~previous_protocol_state
                   ] ) ;
           None)
   in
+  Block_tracing.Production.checkpoint `Apply_staged_ledger_diff_done ;
   match res with
   | None ->
       Interruptible.return None
@@ -660,7 +663,6 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                 (Transition_frontier.extensions frontier)
                 Transition_registry
             in
-            Block_tracing.Production.checkpoint `Find_best_tip ;
             let crumb = Transition_frontier.best_tip frontier in
             let crumb =
               let crumb_global_slot_since_genesis =
@@ -727,6 +729,7 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
             let%bind () =
               Interruptible.lift (Deferred.return ()) (Ivar.read ivar)
             in
+            Block_tracing.Production.checkpoint `Generate_next_state ;
             let%bind next_state_opt =
               generate_next_state ~constraint_constants ~scheduled_time
                 ~block_data ~previous_protocol_state ~time_controller
@@ -734,6 +737,7 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                 ~transactions ~get_completed_work ~logger ~log_block_creation
                 ~winner_pk:winner_pubkey ~block_reward_threshold
             in
+            Block_tracing.Production.checkpoint `Generate_next_state_done ;
             match next_state_opt with
             | None ->
                 Interruptible.return ()
@@ -748,6 +752,7 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                 let protocol_state_hashes =
                   Protocol_state.hashes protocol_state
                 in
+                (* TODOZ: state hash is known here, move trace? *)
                 let consensus_state_with_hashes =
                   { With_hash.hash = protocol_state_hashes
                   ; data = Protocol_state.consensus_state protocol_state
@@ -857,6 +862,7 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                       |> Deferred.return
                     in
                     let transition_receipt_time = Some (Time.now ()) in
+                    Block_tracing.Production.checkpoint `Build_new_breadcrumb ;
                     let%bind breadcrumb =
                       time ~logger ~time_controller
                         "Build breadcrumb on produced block" (fun () ->
@@ -878,6 +884,8 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                              | `Prover_error _ ) as err ->
                                err )
                     in
+                    Block_tracing.Production.checkpoint
+                      `Build_new_breadcrumb_done ;
                     [%str_log info]
                       ~metadata:
                         [ ("breadcrumb", Breadcrumb.to_yojson breadcrumb) ]

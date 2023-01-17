@@ -1801,6 +1801,7 @@ module T = struct
         in
         check_constraints_and_update ~constraint_constants init_resources log )
 
+  (* TODOZ: trace internals here *)
   let generate ~constraint_constants logger cw_seq ts_seq ~receiver
       ~is_coinbase_receiver_new ~supercharge_coinbase
       (partitions : Scan_state.Space_partition.t) =
@@ -1862,6 +1863,7 @@ module T = struct
       has_no_commands res && Resources.coinbase_added res = 0
     in
     (*Partitioning explained in PR #687 *)
+    (* TODOZ: trace one_prediff and second_pre_diff calls *)
     match partitions.second with
     | None ->
         let res, log =
@@ -2086,6 +2088,13 @@ module T = struct
                         ]
                       !"Staged_ledger_diff creation: Snark fee $snark_fee \
                         insufficient to create the snark worker account" ;
+                    Block_tracing.Production.push_global_metadata
+                      [ ("interrupt_get_completed_work_at", `Int count)
+                      ; ( "interrupt_get_completed_work_reason"
+                        , `String
+                            "Snark fee insufficient to create snark worket \
+                             account" )
+                      ] ;
                     Stop (seq, count) )
               | None ->
                   [%log debug]
@@ -2097,9 +2106,17 @@ module T = struct
                       ]
                     !"Staged_ledger_diff creation: No snark work found for \
                       $statement" ;
+                  Block_tracing.Production.push_global_metadata
+                    [ ("interrupt_get_completed_work_at", `Int count)
+                    ; ( "interrupt_get_completed_work_reason"
+                      , `String "Snark work for statement not found" )
+                    ] ;
                   Stop (seq, count) )
             ~finish:Fn.id
         in
+        Block_tracing.Production.push_metadata
+          (sprintf "work_to_do_count=%d, proof_count=%d"
+             (List.length work_to_do) proof_count ) ;
         Block_tracing.Production.checkpoint `Validate_and_apply_transactions ;
         (*Transactions in reverse order for faster removal if there is no space when creating the diff*)
         let valid_on_this_ledger, invalid_on_this_ledger =
@@ -2150,6 +2167,16 @@ module T = struct
                 valid_on_this_ledger ~receiver:coinbase_receiver
                 ~is_coinbase_receiver_new ~supercharge_coinbase partitions )
         in
+        let summaries, detailed = List.unzip log in
+        Block_tracing.Production.push_global_metadata
+          [ ("proof_count", `Int proof_count)
+          ; ("txn_count", `Int (Sequence.length valid_on_this_ledger))
+          ; ("diff_log", Diff_creation_log.summary_list_to_yojson summaries)
+          ; ( "diff_log_detailed"
+            , Diff_creation_log.detail_list_to_yojson
+                (List.map ~f:List.rev detailed) )
+          ] ;
+        Block_tracing.Production.checkpoint `Generate_staged_ledger_diff_done ;
         let%map diff =
           (* Fill in the statuses for commands. *)
           let generate_status =
@@ -2159,6 +2186,7 @@ module T = struct
                   Transaction_validator.apply_transaction ~constraint_constants
                     status_ledger ~txn_state_view:current_state_view txn )
           in
+          (* TODOZ: the generate_status above applies transactions, measure it *)
           Pre_diff_info.compute_statuses ~constraint_constants ~diff
             ~coinbase_amount:
               (Option.value_exn

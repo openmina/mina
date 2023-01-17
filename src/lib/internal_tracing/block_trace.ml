@@ -27,7 +27,6 @@ let block_source_to_yojson = Util.flatten_yojson_variant block_source_to_yojson
 
 let status_to_yojson = Util.flatten_yojson_variant status_to_yojson
 
-(* TODOX: add general metadata *)
 type t =
   { source : block_source
   ; blockchain_length : Mina_numbers.Length.t
@@ -35,6 +34,7 @@ type t =
   ; other_checkpoints : Entry.t list
   ; status : status
   ; total_time : float
+  ; metadata : Yojson.Safe.t
   }
 [@@deriving to_yojson]
 
@@ -45,6 +45,7 @@ let empty ?(blockchain_length = Mina_numbers.Length.zero) source =
   ; other_checkpoints = []
   ; status = `Pending
   ; total_time = 0.0
+  ; metadata = `Null
   }
 
 let to_yojson t = to_yojson { t with checkpoints = List.rev t.checkpoints }
@@ -60,6 +61,18 @@ let push_metadata ~metadata trace =
         }
       in
       Some { trace with checkpoints = previous :: rest }
+
+let push_global_metadata ~metadata trace =
+  match trace with
+  | None ->
+      trace (* do nothing *)
+  | Some ({ metadata = `Null; _ } as trace) ->
+      Some { trace with metadata = `Assoc metadata }
+  | Some trace ->
+      Some
+        { trace with
+          metadata = Yojson.Safe.Util.combine trace.metadata (`Assoc metadata)
+        }
 
 let push ~status ~source ?blockchain_length entry trace =
   match trace with
