@@ -6,17 +6,21 @@ type block_production_checkpoint =
   [ `Begin_block_production
   | `Find_best_tip
   | `Get_transactions_from_pool
-  | (* Create staged ledger diff *)
-    `Get_snark_work_for_pending_transactions
+  | `Generate_next_state
+  | `Create_staged_ledger_diff
+  | `Get_snark_work_for_pending_transactions
   | `Validate_and_apply_transactions
-  | `Filter_successful_transactions
   | `Generate_staged_ledger_diff
+  | `Generate_staged_ledger_diff_done
+  | `Create_staged_ledger_diff_done
+  | `Generate_next_state_done
   | `Apply_staged_ledger_diff
-  | (* Build breadcrumb *)
-    `Produce_state_transition_proof
+  | `Apply_staged_ledger_diff_done
+  | `Produce_state_transition_proof
+  | `Build_new_breadcrumb
+  | `Build_new_breadcrumb_done
   | `Produce_chain_transition_proof
   | `Produce_validated_transition
-  | `Build_breadcrumb
   | `Send_breadcrumb_to_transition_frontier
   | `Wait_for_confirmation
   | `Transition_accepted

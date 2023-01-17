@@ -122,6 +122,7 @@ module Registry = struct
         regular.other_checkpoints (* Catchup will not happen more than once *)
     ; status = catchup.status
     ; total_time = regular.total_time
+    ; metadata = regular.metadata (* TODO: igoring catchup metadata *)
     }
 
   let find_trace state_hash =
@@ -262,6 +263,14 @@ module Production = struct
         Hashtbl.remove Registry.produced_registry id ;
         let trace = { trace with blockchain_length; status = `Success } in
         Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace)
+
+  let push_metadata metadata =
+    Hashtbl.change Registry.produced_registry !current_producer_block_id
+      ~f:(Trace.push_metadata ~metadata)
+
+  let push_global_metadata metadata =
+    Hashtbl.change Registry.produced_registry !current_producer_block_id
+      ~f:(Trace.push_global_metadata ~metadata)
 end
 
 module External = struct

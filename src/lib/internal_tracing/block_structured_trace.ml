@@ -26,6 +26,7 @@ type t =
   ; sections : section list
   ; status : Trace.status
   ; total_time : float
+  ; metadata : Yojson.Safe.t
   }
 [@@deriving to_yojson]
 
@@ -98,6 +99,18 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `SPRC_remove_from_work_table_done
       ; `SPRC_update_best_tip_table
       ; `SPRC_update_best_tip_table_done
+      ]
+  | `Generate_next_state ->
+      [ `Create_staged_ledger_diff
+      ; `Create_staged_ledger_diff_done
+      ; `Apply_staged_ledger_diff
+      ; `Apply_staged_ledger_diff_done
+      ]
+  | `Create_staged_ledger_diff ->
+      [ `Get_snark_work_for_pending_transactions
+      ; `Validate_and_apply_transactions
+      ; `Generate_staged_ledger_diff
+      ; `Generate_staged_ledger_diff_done
       ]
   | _ ->
       []
@@ -174,6 +187,7 @@ let of_flat_trace trace =
       ; checkpoints
       ; other_checkpoints = _
       ; total_time
+      ; metadata
       } =
     trace
   in
@@ -181,4 +195,4 @@ let of_flat_trace trace =
   (* TODOX: complete sections *)
   let section = { title = "All"; checkpoints } in
   let sections = [ section ] in
-  { source; blockchain_length; sections; status; total_time }
+  { source; blockchain_length; sections; status; total_time; metadata }
