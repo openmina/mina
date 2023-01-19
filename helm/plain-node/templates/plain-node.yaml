@@ -25,6 +25,7 @@ spec:
         prometheus.io/port: {{ $.Values.mina.ports.metrics | quote }}
         prometheus.io/path: '/metrics'
     spec:
+      shareProcessNamespace: true
       initContainers:
       - name: libp2p-perms
         image: {{ $.Values.mina.image | quote }}
@@ -39,6 +40,7 @@ spec:
           - name: MINA_LIBP2P_PASS
             value: {{ $.Values.mina.privkeyPass | quote }}
       containers:
+      - {{ include "sideCar.resources.containerSpec" (dict "resources" $.Values.resources) | nindent 8 }}
       - name: mina
         resources:
           limits:
@@ -167,5 +169,8 @@ spec:
     port: 80
     targetPort: {{ $.Values.mina.ports.graphql }}
 {{- end }}
+
+{{ include "sideCar.resources.service" (dict "name" $name "resources" $.Values.resources) }}
+
 ---
 {{ end }}

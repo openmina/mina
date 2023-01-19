@@ -32,3 +32,6 @@ healthcheck:
 
 nodeSelector:
   preemptible: false
+
+resources:
+  enable: false

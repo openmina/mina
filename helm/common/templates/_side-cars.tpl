@@ -51,3 +51,45 @@ Side-Car - Watchman: container definition
 {{- include "sideCar.watchman.volumeMount" . | indent 2 }}
 {{- end }}
 {{- end }}
+
+
+{{/*
+Side-Car - Resources: container definition
+*/}}
+{{- define "sideCar.resources.containerSpec" }}
+{{- if .resources.enable }}
+name: resources
+image: {{ .resources.image }}
+args: {{ .resources.args }}
+imagePullPolicy: Always
+securityContext:
+  privileged: true
+ports:
+  - name: http-resources
+    containerPort: 4000
+    protocol: TCP
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - Resources: service definition
+*/}}
+{{- define "sideCar.resources.service" }}
+{{- if .resources.enable }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}-resources
+spec:
+  type: ClusterIP
+  publishNotReadyAddresses: true
+  selector:
+    app: {{ .name }}
+  ports:
+  - name: http-resources
+    protocol: TCP
+    port: 80
+    targetPort: 4000
+{{- end }}
+{{- end }}
