@@ -60,9 +60,6 @@ type segment struct {
 type segments [256]*segment
 
 func (ss *segments) get(p peer.ID) *segment {
-	log.Warn(">>", " len(p): ", len(p))
-	log.Warn(">>", " byte(p[len(p)-1]): ", byte(p[len(p)-1]))
-	log.Warn(">>", " ss[byte(p[len(p)-1])]: ", ss[byte(p[len(p)-1])])
 	return ss[byte(p[len(p)-1])]
 }
 
