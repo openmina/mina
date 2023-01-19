@@ -270,6 +270,10 @@ spec:
         - name: MINA_PARTIAL_STATEMENT_HASH
           value: "1"
         {{ end -}}
+        {{ if eq "prod1" $config.name -}}
+        - name: MINA_SKIP_SIGCHECK
+          value: "y"
+        {{- end }}
         {{ include "sideCar.bpfDebugger.envVar" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 8 }}
         ports:
         - name: client-port
