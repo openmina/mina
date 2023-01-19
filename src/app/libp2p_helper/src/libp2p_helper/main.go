@@ -145,7 +145,7 @@ func main() {
 	go func() {
 		for {
 			msg := <-app.OutChan
-			helperLog.Warn("##main::main>>", " msg: ", msg)
+			// helperLog.Warn("##main::main>>", " msg: ", msg)
 			bytes, err := msg.Marshal()
 			if err != nil {
 				panic(err)
