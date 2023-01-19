@@ -1589,8 +1589,14 @@ let create ?wallets (config : Config.t) =
                   Deferred.unit
               | Some frontier ->
                   Transition_frontier.close ~loc:__LOC__ frontier ) ;
+          let counter = ref 0 in
           let handle_request name ~f query_env =
             O1trace.thread ("handle_request_" ^ name) (fun () ->
+                let id = !counter in
+                if String.equal name "get_best_tip" then (
+                  incr counter ;
+                  Stdlib.Printf.printf "+++ Serving get_best_tip %d\n%!" id ) ;
+                let tm0 = Time.now () in
                 let input = Envelope.Incoming.data query_env in
                 Deferred.return
                 @@
@@ -1598,7 +1604,14 @@ let create ?wallets (config : Config.t) =
                 let%bind frontier =
                   Broadcast_pipe.Reader.peek frontier_broadcast_pipe_r
                 in
-                f ~frontier input )
+                let result = f ~frontier input in
+                let tm1 = Time.now () in
+                let tm_diff = Time.diff tm1 tm0 in
+                if String.equal name "get_best_tip" then
+                  Stdlib.Printf.printf
+                    "+++ Done serving get_best_tip %d after %s\n%!" id
+                    (Time.Span.to_string_hum tm_diff) ;
+                result )
           in
           (* knot-tying hacks so we can pass a get_node_status function before net, Mina_lib.t created *)
           let net_ref = ref None in
