@@ -54,6 +54,9 @@ spec:
           "-config-directory", "/root/.mina-config",
           "-client-port", "$(DAEMON_CLIENT_PORT)",
           "-rest-port", "$(DAEMON_REST_PORT)",
+          {{- if $.Values.mina.exposeGraphql }}
+          "-insecure-rest-server",
+          {{- end -}}
           "-external-port", "$(DAEMON_EXTERNAL_PORT)",
           "-metrics-port", "$(DAEMON_METRICS_PORT)",
           "-enable-peer-exchange", "true",
@@ -150,12 +153,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $.Values.name  }}-graphql
+  name: {{ $.Values.name }}-graphql
 spec:
   type: ClusterIP
   publishNotReadyAddresses: true
   selector:
-    app: {{ $.Values.name  }}
+    app: {{ $.Values.name }}
   ports:
   - name: http-graphql
     protocol: TCP
@@ -163,4 +166,3 @@ spec:
     targetPort: {{ $.Values.mina.ports.graphql }}
 {{- end }}
 ---
-
