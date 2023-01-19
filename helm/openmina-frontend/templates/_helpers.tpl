@@ -59,6 +59,7 @@ http {
         }
         location /{{ $node }}/resources {
            set $upstream {{ $node }}-resources.{{ $namespace }}.svc.cluster.local;
+           rewrite ^/{{ $node }}/resources(.*) /$1 break;
            proxy_pass http://$upstream/resources;
         }
         location /{{ $node }}/bpf-debugger {

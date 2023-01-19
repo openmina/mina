@@ -1,0 +1,179 @@
+kind: pipeline
+name: build-image
+type: docker
+clone:
+  disable: true
+trigger:
+  event:
+  - cron
+  cron:
+  - hourly
+environment:
+  MINA_BRANCH: release/2.0.0
+steps:
+- name: clone
+  image: alpine/git
+  commands:
+  - '[[ ! -n "${MINA_IMAGE}" ]] && echo "Continue" || exit 78'
+  - git clone https://github.com/MinaProtocol/mina.git .
+  - git checkout $${MINA_BRANCH}
+  - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder > ./dockerfiles/stages/merged
+  - echo "WORKDIR /root/" >> ./dockerfiles/stages/merged
+  - echo "USER 0" >> ./dockerfiles/stages/merged
+  - echo "ENV PATH="$PATH:/home/opam/app"" >> ./dockerfiles/stages/merged
+  - echo "ENV MINA_LIBP2P_HELPER_PATH=/home/opam/app/libp2p_helper" >> ./dockerfiles/stages/merged
+  - echo "RUN mkdir -p /root/.mina-config" >> ./dockerfiles/stages/merged
+- name: publish-image
+  image: plugins/docker
+  settings:
+    build_args_from_env:
+    - MINA_BRANCH
+    dockerfile: ./dockerfiles/stages/merged
+    password:
+      from_secret: docker_hub_password
+    repo: adrnagy/mina
+    tags:
+    - ${DRONE_COMMIT_SHA:0:8}
+    username:
+      from_secret: docker_hub_username
+---
+kind: pipeline
+name: build-image-custom
+type: docker
+clone:
+  disable: true
+trigger:
+  event:
+  - custom
+steps:
+- name: prepare-dockerfiles
+  image: alpine/git
+  commands:
+  - '[[ ! -n "${MINA_IMAGE}" ]] && echo "Continue" || exit 78'
+  - git clone $${MINA_REPO:-https://github.com/MinaProtocol/mina} .
+  - git checkout $${MINA_BRANCH}
+  - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder > ./dockerfiles/stages/merged
+  - echo "WORKDIR /root/" >> ./dockerfiles/stages/merged
+  - echo "USER 0" >> ./dockerfiles/stages/merged
+  - echo "ENV PATH="$PATH:/home/opam/app"" >> ./dockerfiles/stages/merged
+  - echo "ENV MINA_LIBP2P_HELPER_PATH=/home/opam/app/libp2p_helper" >> ./dockerfiles/stages/merged
+  - echo "RUN mkdir -p /root/.mina-config" >> ./dockerfiles/stages/merged
+- name: publish-image
+  image: plugins/docker
+  settings:
+    build_args_from_env:
+    - MINA_BRANCH
+    - MINA_REPO
+    dockerfile: ./dockerfiles/stages/merged
+    password:
+      from_secret: docker_hub_password
+    repo: adrnagy/mina
+    tags:
+    - ${DRONE_COMMIT_SHA:0:8}
+    username:
+      from_secret: docker_hub_username
+---
+kind: pipeline
+name: deploy-to-cluster
+type: docker
+trigger:
+  event:
+  - cron
+  cron:
+  - hourly
+depends_on:
+- build-image
+environment:
+  MINA_BRANCH: release/2.0.0
+volumes:
+- name: step-cache
+  temp: {}
+steps:
+- name: prepare-deamon-json
+  image: apteno/alpine-jq
+  commands:
+  - export CURRENT_TIMESTAMP=$(date -u -Iseconds)
+  - echo $CURRENT_TIMESTAMP
+  - tmpfile=$(mktemp);
+  - cp helm/openmina-config/resources/daemon.json "$tmpfile"
+  - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
+- name: prepare-chain-id
+  image: ${MINA_IMAGE:-adrnagy/mina:${DRONE_COMMIT_SHA:0:8}}
+  environment:
+    MINA_LIBP2P_PASS: yoo
+  volumes:
+  - name: step-cache
+    path: /step-cache
+  commands:
+  - mkdir -p /root/libp2p-keys/
+  - mina libp2p generate-keypair --privkey-path /root/libp2p-keys/key && /bin/chmod -R 0700 /root/libp2p-keys/
+  - mina daemon --config-file ./helm/openmina-config/resources/daemon.json --libp2p-keypair /root/libp2p-keys/key --seed &
+  - ./scripts/drone-get-chain-id.sh /step-cache/chain_id
+- name: deploy-to-cluster
+  image: alpine/helm:3.8.1
+  environment:
+    DRONE_KUBECONFIG:
+      from_secret: k8s_config
+  volumes:
+  - name: step-cache
+    path: /step-cache
+  commands:
+  - '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=adrnagy/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
+  - umask 0077
+  - mkdir -p $HOME/.kube
+  - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
+  - helm upgrade seeds ./helm/seed-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+---
+kind: pipeline
+name: deploy-to-cluster-custom
+type: docker
+trigger:
+  event:
+  - custom
+depends_on:
+- build-image-custom
+volumes:
+- name: step-cache
+  temp: {}
+steps:
+- name: prepare-deamon-json
+  image: apteno/alpine-jq
+  commands:
+  - export CURRENT_TIMESTAMP=$(date -u -Iseconds)
+  - echo $CURRENT_TIMESTAMP
+  - tmpfile=$(mktemp);
+  - cp helm/openmina-config/resources/daemon.json "$tmpfile"
+  - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
+- name: prepare-chain-id
+  image: ${MINA_IMAGE:-adrnagy/mina:${DRONE_COMMIT_SHA:0:8}}
+  environment:
+    MINA_LIBP2P_PASS: yoo
+  volumes:
+  - name: step-cache
+    path: /step-cache
+  commands:
+  - mkdir -p /root/libp2p-keys/
+  - mina libp2p generate-keypair --privkey-path /root/libp2p-keys/key && /bin/chmod -R 0700 /root/libp2p-keys/
+  - mina daemon --config-file ./helm/openmina-config/resources/daemon.json --libp2p-keypair /root/libp2p-keys/key --seed &
+  - ./scripts/drone-get-chain-id.sh /step-cache/chain_id
+- name: deploy-to-cluster
+  image: alpine/helm:3.8.1
+  environment:
+    DRONE_KUBECONFIG:
+      from_secret: k8s_config
+  volumes:
+  - name: step-cache
+    path: /step-cache
+  commands:
+  - '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=adrnagy/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
+  - umask 0077
+  - mkdir -p $HOME/.kube
+  - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
+  - helm upgrade seeds ./helm/seed-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+
