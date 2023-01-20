@@ -516,13 +516,11 @@ func (nn *cmNotifee) Connected(n network.Network, c network.Conn) {
 	cm := nn.cm()
 
 	p := c.RemotePeer()
-	log.Warn("//////////////////////////////////////////", p, cm, cm.segments)
 	s := cm.segments.get(p)
 	s.Lock()
 	defer s.Unlock()
 
 	id := c.RemotePeer()
-	log.Warn(s, s.peers, id)
 	pinfo, ok := s.peers[id]
 	if !ok {
 		pinfo = &peerInfo{
