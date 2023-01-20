@@ -41,7 +41,6 @@ func newConnConfig(transport *Transport, maAddr ma.Multiaddr, isServer bool) (*c
 
 	tcpMa := httpMa.Decapsulate(httpma)
 	addr, err := manet.ToNetAddr(tcpMa)
-	log.Warn("##webrtc::conn::newConnConfig>>", " maAddr: ", maAddr, " addr: ", addr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get net addr: %v", err)
 	}
