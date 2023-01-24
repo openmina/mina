@@ -200,23 +200,18 @@ module Broadcasted = struct
   open Async_kernel
   include Functor.Make_broadcasted (T)
 
-  let update t ?state_hash frontier diffs =
+  let update t frontier diffs =
+    let open Deferred.Let_syntax in
     let extension = extension t in
     let writer = writer t in
-    Option.iter state_hash ~f:(fun state_hash ->
-        let metadata = Printf.sprintf "diffs_count=%d" (List.length diffs) in
-        Block_tracing.Processing.checkpoint state_hash ~metadata
-          `Notify_SPRC_handle_diffs ) ;
-    Block_tracing.Processing.set_current_state_hash state_hash ;
+    Block_tracing.Processing.checkpoint_current
+      ~metadata:(sprintf "diffs_count=%d" (List.length diffs))
+      `Notify_SPRC_handle_diffs ;
     match T.handle_diffs extension frontier diffs with
     | Some view ->
-        Option.iter state_hash ~f:(fun state_hash ->
-            Block_tracing.Processing.checkpoint state_hash
-              `Notify_SPRC_write_view ) ;
-        Deferred.map (Broadcast_pipe.Writer.write writer view) ~f:(fun () ->
-            Option.iter state_hash ~f:(fun state_hash ->
-                Block_tracing.Processing.checkpoint state_hash
-                  `Notify_SPRC_write_view_done ) )
+        Block_tracing.Processing.checkpoint_current `Notify_SPRC_write_view ;
+        let%map () = Broadcast_pipe.Writer.write writer view in
+        Block_tracing.Processing.checkpoint_current `Notify_SPRC_write_view_done
     | None ->
         Deferred.unit
 end

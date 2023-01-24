@@ -33,13 +33,13 @@ let validate_transition ~context:(module Context : CONTEXT) ~frontier
     |> Mina_block.Validation.block_with_hash
   in
   let transition_hash = State_hash.With_state_hashes.state_hash transition in
-  Block_tracing.External.checkpoint transition_hash `Validate_transition ;
+  Block_tracing.External.checkpoint_current `Validate_transition ;
   let root_breadcrumb = Transition_frontier.root frontier in
   let blockchain_length =
     Envelope.Incoming.data enveloped_transition
     |> Mina_block.Validation.block |> Mina_block.blockchain_length
   in
-  Block_tracing.External.checkpoint ~blockchain_length transition_hash
+  Block_tracing.External.checkpoint_current ~blockchain_length
     `Check_transition_not_in_frontier ;
   let%bind () =
     Option.fold
@@ -47,8 +47,7 @@ let validate_transition ~context:(module Context : CONTEXT) ~frontier
       ~init:Result.(Ok ())
       ~f:(fun _ _ -> Result.Error (`In_frontier transition_hash))
   in
-  Block_tracing.External.checkpoint transition_hash
-    `Check_transition_not_in_process ;
+  Block_tracing.External.checkpoint_current `Check_transition_not_in_process ;
   let%bind () =
     Option.fold
       (Unprocessed_transition_cache.final_state unprocessed_transition_cache
@@ -56,8 +55,7 @@ let validate_transition ~context:(module Context : CONTEXT) ~frontier
       ~init:Result.(Ok ())
       ~f:(fun _ final_state -> Result.Error (`In_process final_state))
   in
-  Block_tracing.External.checkpoint transition_hash
-    `Check_transition_can_be_connected ;
+  Block_tracing.External.checkpoint_current `Check_transition_can_be_connected ;
   let%map () =
     Result.ok_if_true
       (Consensus.Hooks.equal_select_status `Take
@@ -69,8 +67,7 @@ let validate_transition ~context:(module Context : CONTEXT) ~frontier
             ~candidate:(With_hash.map ~f:Mina_block.consensus_state transition) ) )
       ~error:`Disconnected
   in
-  Block_tracing.External.checkpoint transition_hash
-    `Register_transition_for_processing ;
+  Block_tracing.External.checkpoint_current `Register_transition_for_processing ;
   (* we expect this to be Ok since we just checked the cache *)
   Unprocessed_transition_cache.register_exn unprocessed_transition_cache
     enveloped_transition
@@ -95,6 +92,8 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
           let transition_hash =
             State_hash.With_state_hashes.state_hash transition_with_hash
           in
+          Block_tracing.External.with_state_hash (Some transition_hash)
+          @@ fun () ->
           let transition = With_hash.data transition_with_hash in
           let sender = Envelope.Incoming.sender transition_env in
           match

@@ -62,7 +62,9 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       ]
     (Option.value_map valid_cb ~default:"without" ~f:(const "with")) ;
   let state_hash = Transition_frontier.Breadcrumb.state_hash breadcrumb in
-  Block_tracing.Processing.checkpoint state_hash `Add_and_finalize ;
+  Block_tracing.Processing.with_state_hash (Some state_hash)
+  @@ fun () ->
+  Block_tracing.Processing.checkpoint_current `Add_and_finalize ;
   let%map () =
     if only_if_present then (
       let parent_hash = Transition_frontier.Breadcrumb.parent_hash breadcrumb in
@@ -70,7 +72,7 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       | Some _ ->
           Transition_frontier.add_breadcrumb_exn frontier breadcrumb
       | None ->
-          Block_tracing.Processing.checkpoint state_hash
+          Block_tracing.Processing.checkpoint_current
             `Parent_breadcrumb_not_found ;
           [%log warn]
             !"When trying to add breadcrumb, its parent had been removed from \
@@ -96,7 +98,7 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
       in
       Mina_metrics.Block_latency.Inclusion_time.update
         (Block_time.Span.to_time_span time_elapsed) ) ;
-  Block_tracing.Processing.checkpoint state_hash `Add_and_finalize_done ;
+  Block_tracing.Processing.checkpoint_current `Add_and_finalize_done ;
   Writer.write processed_transition_writer
     (`Transition transition, `Source source, `Valid_cb valid_cb) ;
   Catchup_scheduler.notify catchup_scheduler
@@ -127,12 +129,13 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
   let metadata = [ ("state_hash", State_hash.to_yojson transition_hash) ] in
   let state_hash = transition_hash in
   let blockchain_length = Mina_block.blockchain_length transition in
-  Block_tracing.Processing.checkpoint ~source:`External ~blockchain_length
-    state_hash `Begin_external_block_processing ;
+  Block_tracing.Processing.with_state_hash (Some state_hash)
+  @@ fun () ->
+  Block_tracing.Processing.checkpoint_current ~source:`External
+    ~blockchain_length `Begin_external_block_processing ;
   Deferred.map ~f:(Fn.const ())
     (let open Deferred.Result.Let_syntax in
-    Block_tracing.Processing.checkpoint state_hash
-      `Validate_frontier_dependencies ;
+    Block_tracing.Processing.checkpoint_current `Validate_frontier_dependencies ;
     let%bind mostly_validated_transition =
       let open Deferred.Let_syntax in
       match
@@ -174,7 +177,7 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
           in
           return (Error ())
       | Error `Parent_missing_from_frontier -> (
-          Block_tracing.Processing.checkpoint state_hash `Schedule_catchup ;
+          Block_tracing.Processing.checkpoint_current `Schedule_catchup ;
           let _, validation =
             Cached.peek cached_initially_validated_transition
             |> Envelope.Incoming.data
@@ -204,7 +207,7 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
       Protocol_state.previous_state_hash
         (Header.protocol_state @@ Mina_block.header transition)
     in
-    Block_tracing.Processing.checkpoint state_hash `Find_parent_breadcrumb ;
+    Block_tracing.Processing.checkpoint_current `Find_parent_breadcrumb ;
     let parent_breadcrumb = Transition_frontier.find_exn frontier parent_hash in
     let%bind breadcrumb =
       cached_transform_deferred_result cached_initially_validated_transition
@@ -361,7 +364,9 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                       (Cached.peek breadcrumb)
                     |> Mina_block.Validated.state_hash
                   in
-                  Block_tracing.Processing.checkpoint state_hash
+                  Block_tracing.Processing.with_state_hash (Some state_hash)
+                  @@ fun () ->
+                  Block_tracing.Processing.checkpoint_current
                     `Begin_local_block_processing ;
                   let transition_time =
                     Transition_frontier.Breadcrumb.validated_transition

@@ -390,8 +390,10 @@ let root_snarked_ledger { persistent_root_instance; _ } =
 let add_breadcrumb_exn t breadcrumb =
   let open Deferred.Let_syntax in
   let state_hash = Breadcrumb.state_hash breadcrumb in
-  Block_tracing.Processing.checkpoint state_hash `Add_breadcrumb_to_frontier ;
-  Block_tracing.Processing.checkpoint state_hash `Calculate_diffs ;
+  Block_tracing.Processing.with_state_hash (Some state_hash)
+  @@ fun () ->
+  Block_tracing.Processing.checkpoint_current `Add_breadcrumb_to_frontier ;
+  Block_tracing.Processing.checkpoint_current `Calculate_diffs ;
   let diffs = Full_frontier.calculate_diffs t.full_frontier breadcrumb in
   [%log' trace t.logger]
     ~metadata:
@@ -404,9 +406,9 @@ let add_breadcrumb_exn t breadcrumb =
     "PRE: ($state_hash, $n)" ;
   [%str_log' trace t.logger]
     (Applying_diffs { diffs = List.map ~f:Diff.Full.E.to_yojson diffs }) ;
-  Block_tracing.Processing.checkpoint state_hash `Apply_catchup_tree_diffs ;
+  Block_tracing.Processing.checkpoint_current `Apply_catchup_tree_diffs ;
   Catchup_tree.apply_diffs t.catchup_tree diffs ;
-  Block_tracing.Processing.checkpoint state_hash `Apply_full_frontier_diffs
+  Block_tracing.Processing.checkpoint_current `Apply_full_frontier_diffs
     ~metadata:(sprintf "count=%d" (List.length diffs)) ;
   let (`New_root_and_diffs_with_mutants
         (new_root_identifier, diffs_with_mutants) ) =
@@ -416,7 +418,7 @@ let add_breadcrumb_exn t breadcrumb =
         (Catchup_tree.max_catchup_chain_length t.catchup_tree > 5)
       ~enable_epoch_ledger_sync:(`Enabled (root_snarked_ledger t))
   in
-  Block_tracing.Processing.checkpoint state_hash `Full_frontier_diffs_applied ;
+  Block_tracing.Processing.checkpoint_current `Full_frontier_diffs_applied ;
   Option.iter new_root_identifier
     ~f:(Persistent_root.Instance.set_root_identifier t.persistent_root_instance) ;
   [%log' trace t.logger]
@@ -443,8 +445,7 @@ let add_breadcrumb_exn t breadcrumb =
   let lite_diffs =
     List.map diffs ~f:Diff.(fun (Full.E.E diff) -> Lite.E.E (to_lite diff))
   in
-  Block_tracing.Processing.checkpoint state_hash
-    `Synchronize_persistent_frontier ;
+  Block_tracing.Processing.checkpoint_current `Synchronize_persistent_frontier ;
   let%bind sync_result =
     (* Diffs get put into a buffer here. They're processed asynchronously, except for root transitions *)
     Persistent_frontier.Instance.notify_sync t.persistent_frontier_instance
@@ -457,17 +458,13 @@ let add_breadcrumb_exn t breadcrumb =
             running, which indicates that transition frontier initialization \
             has not been performed correctly" )
   |> Result.ok_exn ;
-  Block_tracing.Processing.checkpoint state_hash
-    `Persistent_frontier_synchronized ;
-  Block_tracing.Processing.checkpoint state_hash `Notify_frontier_extensions ;
+  Block_tracing.Processing.checkpoint_current `Persistent_frontier_synchronized ;
+  Block_tracing.Processing.checkpoint_current `Notify_frontier_extensions ;
   let%map () =
     Extensions.notify t.extensions ~frontier:t.full_frontier ~diffs_with_mutants
-      ~state_hash
   in
-  Block_tracing.Processing.checkpoint state_hash
-    `Notify_frontier_extensions_done ;
-  Block_tracing.Processing.checkpoint state_hash
-    `Add_breadcrumb_to_frontier_done
+  Block_tracing.Processing.checkpoint_current `Notify_frontier_extensions_done ;
+  Block_tracing.Processing.checkpoint_current `Add_breadcrumb_to_frontier_done
 
 (* proxy full frontier functions *)
 include struct
