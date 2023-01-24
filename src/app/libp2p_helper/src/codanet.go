@@ -818,28 +818,34 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 	transport := direct.NewTransport(
 		webrtc.Configuration{
 			Certificates: []webrtc.Certificate{*cert},
-			// Certificates: []webrtc.Certificate{*cert},
+			ICEServers: []webrtc.ICEServer{
+				{
+					URLs:           []string{"stun:65.109.110.75:3478"},
+					Username:       "openmina",
+					Credential:     "webrtc",
+					CredentialType: 0,
+				},
+				{
+					URLs:           []string{"stun:138.201.74.177:3478"},
+					Username:       "openmina",
+					Credential:     "webrtc",
+					CredentialType: 0,
+				},
+				{
+					URLs: []string{
+						"stun:stun.l.google.com:19302",
+						"stun:stun1.l.google.com:19302",
+						"stun:stun2.l.google.com:19302",
+						"stun:stun3.l.google.com:19302",
+						"stun:stun4.l.google.com:19302",
+					},
+				},
+			},
 		},
 		muxer,
 		pk,
 		pk.GetPublic(),
 	)
-	// WithSignalConfiguration(star.SignalConfiguration{
-	// 	URLPath: "/socket.io/?EIO=3&transport=websocket",
-	// }).
-	// WithWebRTCConfiguration(webrtc.Configuration{
-	// 	ICEServers: []webrtc.ICEServer{
-	// 		{
-	// 			URLs: []string{
-	// 				"stun:stun.l.google.com:19302",
-	// 				"stun:stun1.l.google.com:19302",
-	// 				"stun:stun2.l.google.com:19302",
-	// 				"stun:stun3.l.google.com:19302",
-	// 				"stun:stun4.l.google.com:19302",
-	// 			},
-	// 		},
-	// 	},
-	// })
 
 	gs := NewCodaGatingState(gatingConfig, knownPrivateAddrFilters)
 	host, err := p2p.New(ctx,
