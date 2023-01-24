@@ -34,11 +34,7 @@ module type Broadcasted_extension_intf = sig
   val writer : t -> view Broadcast_pipe.Writer.t
 
   val update :
-       t
-    -> ?state_hash:Mina_base.State_hash.t
-    -> Full_frontier.t
-    -> Diff.Full.With_mutant.t list
-    -> unit Deferred.t
+    t -> Full_frontier.t -> Diff.Full.With_mutant.t list -> unit Deferred.t
 end
 
 module type Extension_intf = sig

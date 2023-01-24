@@ -122,7 +122,6 @@ val apply :
      ?skip_verification:[ `Proofs | `All ]
   -> constraint_constants:Genesis_constants.Constraint_constants.t
   -> t
-  -> ?state_hash:Frozen_ledger_hash.t
   -> Staged_ledger_diff.t
   -> logger:Logger.t
   -> verifier:Verifier.t

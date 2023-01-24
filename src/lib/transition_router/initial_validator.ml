@@ -258,7 +258,9 @@ let run ~logger ~trust_system ~verifier ~transition_reader
             |> Protocol_state.hashes )
               .state_hash
           in
-          Block_tracing.External.checkpoint state_hash `Initial_validation ;
+          Block_tracing.External.with_state_hash (Some state_hash)
+          @@ fun () ->
+          Block_tracing.External.checkpoint_current `Initial_validation ;
           if Ivar.is_full initialization_finish_signal then (
             let blockchain_length =
               Envelope.Incoming.data transition_env
@@ -298,20 +300,20 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                     >>= defer
                           (validate_genesis_protocol_state ~genesis_state_hash)
                     >>= (fun proof ->
-                          Block_tracing.External.checkpoint ~metadata:"count=1"
-                            state_hash `Validate_proofs ;
+                          Block_tracing.External.checkpoint_current
+                            ~metadata:"count=1" `Validate_proofs ;
                           Interruptible.uninterruptible
                             (validate_single_proof ~verifier ~genesis_state_hash
                                proof )
                           >>| fun result ->
-                          Block_tracing.External.checkpoint state_hash
+                          Block_tracing.External.checkpoint_current
                             `Done_validating_proofs ;
                           result )
                     >>= defer validate_delta_block_chain
                     >>= defer validate_protocol_versions)
                 with
                 | Ok verified_transition ->
-                    Block_tracing.External.checkpoint state_hash
+                    Block_tracing.External.checkpoint_current
                       `Initial_validation_complete ;
                     Writer.write valid_transition_writer
                       ( `Block

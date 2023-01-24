@@ -752,13 +752,12 @@ module T = struct
       ~f:(fun _ -> check (List.drop data (fst partitions.first)) partitions)
       partitions.second
 
-  let update_coinbase_stack_and_get_data ?state_hash ~constraint_constants
-      scan_state ledger pending_coinbase_collection transactions
-      current_state_view state_and_body_hash =
+  let update_coinbase_stack_and_get_data ~constraint_constants scan_state ledger
+      pending_coinbase_collection transactions current_state_view
+      state_and_body_hash =
     let open Deferred.Result.Let_syntax in
     let checkpoint ?metadata cp =
-      Option.iter state_hash ~f:(fun state_hash ->
-          Block_tracing.Processing.checkpoint ?metadata state_hash cp )
+      Block_tracing.Processing.checkpoint_current ?metadata cp
     in
     let coinbase_exists txns =
       List.fold_until ~init:false txns
@@ -939,12 +938,10 @@ module T = struct
           )
 
   let apply_diff ?(skip_verification = false) ~logger ~constraint_constants t
-      pre_diff_info ?state_hash ~current_state_view ~state_and_body_hash
-      ~log_prefix =
+      pre_diff_info ~current_state_view ~state_and_body_hash ~log_prefix =
     let open Deferred.Result.Let_syntax in
     let checkpoint ?metadata cp =
-      Option.iter state_hash ~f:(fun state_hash ->
-          Block_tracing.Processing.checkpoint ?metadata state_hash cp )
+      Block_tracing.Processing.checkpoint_current ?metadata cp
     in
     let max_throughput =
       Int.pow 2 t.constraint_constants.transaction_capacity_log_2
@@ -967,8 +964,8 @@ module T = struct
     checkpoint ~metadata `Update_coinbase_stack ;
     let%bind is_new_stack, data, stack_update_in_snark, stack_update =
       O1trace.thread "update_coinbase_stack_start_time" (fun () ->
-          update_coinbase_stack_and_get_data ?state_hash ~constraint_constants
-            t.scan_state new_ledger t.pending_coinbase_collection transactions
+          update_coinbase_stack_and_get_data ~constraint_constants t.scan_state
+            new_ledger t.pending_coinbase_collection transactions
             current_state_view state_and_body_hash )
     in
     let slots = List.length data in
@@ -1141,7 +1138,7 @@ module T = struct
               (Verifier.Failure.Verification_failed
                  (Error.of_string "batch verification failed") ) ) )
 
-  let apply ?skip_verification ~constraint_constants t ?state_hash
+  let apply ?skip_verification ~constraint_constants t
       (witness : Staged_ledger_diff.t) ~logger ~verifier ~current_state_view
       ~state_and_body_hash ~coinbase_receiver ~supercharge_coinbase =
     let open Deferred.Result.Let_syntax in
@@ -1152,16 +1149,12 @@ module T = struct
           | Some `All | Some `Proofs ->
               return ()
           | None ->
-              Option.iter state_hash ~f:(fun state_hash ->
-                  let metadata =
-                    "work_count=" ^ Int.to_string (List.length work)
-                  in
-                  Block_tracing.Processing.checkpoint ~metadata state_hash
-                    `Check_completed_works ) ;
+              let metadata = "work_count=" ^ Int.to_string (List.length work) in
+              Block_tracing.Processing.checkpoint_current ~metadata
+                `Check_completed_works ;
               check_completed_works ~logger ~verifier t.scan_state work )
     in
-    Option.iter state_hash ~f:(fun state_hash ->
-        Block_tracing.Processing.checkpoint state_hash `Prediff ) ;
+    Block_tracing.Processing.checkpoint_current `Prediff ;
     let%bind prediff =
       Pre_diff_info.get witness ~constraint_constants ~coinbase_receiver
         ~supercharge_coinbase
@@ -1172,19 +1165,17 @@ module T = struct
                   Staged_ledger_error.Pre_diff error ) )
     in
     let apply_diff_start_time = Core.Time.now () in
-    Option.iter state_hash ~f:(fun state_hash ->
-        Block_tracing.Processing.checkpoint state_hash `Apply_diff ) ;
+    Block_tracing.Processing.checkpoint_current `Apply_diff ;
     let%map ((_, _, `Staged_ledger new_staged_ledger, _) as res) =
       apply_diff
         ~skip_verification:
           ([%equal: [ `All | `Proofs ] option] skip_verification (Some `All))
         ~constraint_constants t
         (forget_prediff_info prediff)
-        ?state_hash ~logger ~current_state_view ~state_and_body_hash
+        ~logger ~current_state_view ~state_and_body_hash
         ~log_prefix:"apply_diff"
     in
-    Option.iter state_hash ~f:(fun state_hash ->
-        Block_tracing.Processing.checkpoint state_hash `Diff_applied ) ;
+    Block_tracing.Processing.checkpoint_current `Diff_applied ;
     [%log debug]
       ~metadata:
         [ ( "time_elapsed"
@@ -1214,8 +1205,8 @@ module T = struct
     in
     apply_diff t
       (forget_prediff_info prediff)
-      ?state_hash:None ~constraint_constants ~logger ~current_state_view
-      ~state_and_body_hash ~log_prefix:"apply_diff_unchecked"
+      ~constraint_constants ~logger ~current_state_view ~state_and_body_hash
+      ~log_prefix:"apply_diff_unchecked"
 
   module Resources = struct
     module Discarded = struct

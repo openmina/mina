@@ -7,13 +7,13 @@
   ;; opam libraries
   base.base_internalhash_types
   core
+  core_kernel
   sexplib0
   yojson
+  async_kernel
   ;; local libraries
   mina_base
-  mina_numbers
-  ;; opam libraries
-  core_kernel)
+  mina_numbers)
  (preprocess
   (pps ppx_jane ppx_deriving_yojson))
  (instrumentation

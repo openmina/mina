@@ -31,7 +31,7 @@ module Make_broadcasted (Extension : Intf.Extension_base_intf) :
 
   let writer { writer; _ } = writer
 
-  let update { extension; writer; _ } ?state_hash frontier diffs =
+  let update { extension; writer; _ } frontier diffs =
     match Extension.handle_diffs extension frontier diffs with
     | Some view ->
         Broadcast_pipe.Writer.write writer view

@@ -274,7 +274,26 @@ module Production = struct
 end
 
 module External = struct
+  let current_state_hash_key =
+    Univ_map.Key.create ~name:"current_state_hash"
+      Mina_base.State_hash.sexp_of_t
+
+  let with_state_hash state_hash f =
+    Async_kernel.Async_kernel_scheduler.with_local current_state_hash_key
+      state_hash ~f
+
+  let get_current_state_hash () =
+    Async_kernel.Async_kernel_scheduler.find_local current_state_hash_key
+
   let checkpoint = Registry.checkpoint ~source:`External
+
+  let checkpoint_current ?status ?metadata ?blockchain_length checkpoint_name =
+    match get_current_state_hash () with
+    | None ->
+        ()
+    | Some state_hash ->
+        checkpoint ?status ?metadata ?blockchain_length state_hash
+          checkpoint_name
 
   let failure ~reason state_hash =
     checkpoint ~metadata:reason ~status:`Failure state_hash `Failure
@@ -283,12 +302,18 @@ module External = struct
     checkpoint ~status:`Success state_hash `Validate_transition_complete
 end
 
+(* TODO: some processing can happen during block production, account for that *)
 module Processing = struct
-  let current_state_hash : Mina_base.State_hash.t option ref = ref None
+  let current_state_hash_key =
+    Univ_map.Key.create ~name:"current_state_hash"
+      Mina_base.State_hash.sexp_of_t
 
-  let set_current_state_hash state_hash = current_state_hash := state_hash
+  let with_state_hash state_hash f =
+    Async_kernel.Async_kernel_scheduler.with_local current_state_hash_key
+      state_hash ~f
 
-  let get_current_state_hash () = !current_state_hash
+  let get_current_state_hash () =
+    Async_kernel.Async_kernel_scheduler.find_local current_state_hash_key
 
   let parent_registry = Hashtbl.create (module Mina_base.State_hash)
 
@@ -303,7 +328,7 @@ module Processing = struct
 
   let checkpoint_current ?status ?metadata ?source ?blockchain_length
       checkpoint_name =
-    match !current_state_hash with
+    match get_current_state_hash () with
     | None ->
         ()
     | Some block_id ->
@@ -311,7 +336,7 @@ module Processing = struct
           checkpoint_name
 
   let push_metadata metadata =
-    match !current_state_hash with
+    match get_current_state_hash () with
     | None ->
         ()
     | Some block_id ->
@@ -341,7 +366,16 @@ module Catchup = struct
 end
 
 module Reconstruct = struct
+  let with_state_hash = Processing.with_state_hash
+
   let checkpoint = Registry.checkpoint ~source:`Reconstruct
+
+  let checkpoint_current ?status ?metadata ?blockchain_length checkpoint_name =
+    match Processing.get_current_state_hash () with
+    | None ->
+        ()
+    | Some block_id ->
+        checkpoint ?status ?metadata ?blockchain_length block_id checkpoint_name
 
   let failure = Processing.failure
 
