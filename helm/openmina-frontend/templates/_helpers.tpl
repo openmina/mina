@@ -3,7 +3,7 @@
         {
           "backend": "/{{ .name }}",
           {{ if .debugger }}
-          "debugger": "{{ .debugger }}",
+          "debugger": "/{{ .name }}/{{ .debugger }}",
           {{ end }}
           "features": [
             "dashboard",
@@ -43,22 +43,23 @@ http {
            index index.html index.htm;
            error_page 404 /usr/share/nginx/html/index.html;
         }
-        {{ $release := "mina-testnet" }}
-        {{ range $node := . }}
+        {{ $namespace := .namespace }}
+        {{ range $node := .nodes }}
         location /{{ $node }}/graphql {
-           set $upstream {{ $node }}-graphql.{{ $release }}.svc.cluster.local;
+           set $upstream {{ $node }}-graphql.{{ $namespace }}.svc.cluster.local;
            proxy_pass http://$upstream/graphql;
         }
         location /{{ $node }}/resources {
-           set $upstream {{ $node }}-resources.{{ $release }}.svc.cluster.local;
+           set $upstream {{ $node }}-resources.{{ $namespace }}.svc.cluster.local;
            proxy_pass http://$upstream/resources;
         }
-        location /{{ $node }}/bpf-debugger {
-           set $upstream {{ $node }}-bpf-debugger.{{ $release }}.svc.cluster.local;
+        location /{{ $node }}/bpf-debugger/ {
+           set $upstream {{ $node }}-bpf-debugger.{{ $namespace }}.svc.cluster.local;
+           rewrite ^/{{ $node }}/bpf-debugger/(.*) /$1 break;
            proxy_pass http://$upstream;
         }
         location /{{ $node }}/ptrace-debugger {
-           set $upstream {{ $node }}-ptrace-debugger.{{ $release }}.svc.cluster.local;
+           set $upstream {{ $node }}-ptrace-debugger.{{ $namespace }}.svc.cluster.local;
            proxy_pass http://$upstream;
         }
         {{ end }}
