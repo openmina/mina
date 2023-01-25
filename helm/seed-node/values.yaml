@@ -45,3 +45,9 @@ healthcheck:
 
 nodeSelector:
   preemptible: false
+
+resources:
+  enable: false
+
+bpfDebugger:
+  enable: false

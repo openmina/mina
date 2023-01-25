@@ -89,5 +89,11 @@ healthcheck:
   periodSeconds: 5
   initialDelaySeconds: 30
 
+resources:
+  enable: false
+
+bpfDebugger:
+  enable: false
+
 nodeSelector:
   preemptible: true

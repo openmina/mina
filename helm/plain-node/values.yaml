@@ -35,3 +35,6 @@ nodeSelector:
 
 resources:
   enable: false
+
+bpfDebugger:
+  enable: false

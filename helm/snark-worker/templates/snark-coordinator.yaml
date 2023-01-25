@@ -22,6 +22,7 @@ spec:
         prometheus.io/port: {{ $.Values.mina.ports.metrics | quote }}
         prometheus.io/path: '/metrics'
     spec:
+      {{ include "sideCar.bpfDebugger.podAttrs" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       initContainers:
       - name: libp2p-perms
         image: {{ $.Values.mina.image | quote }}
@@ -36,9 +37,13 @@ spec:
           - name: MINA_LIBP2P_PASS
             value: {{ $.Values.mina.privkeyPass | quote }}
       containers:
+      {{ include "sideCar.resources.containerSpec" (dict "resources" $.Values.resources) | nindent 6 }}
+      {{ include "sideCar.bpfDebugger.containerSpec" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       - name: mina
         resources:
           limits:
+            memory: {{ $.Values.mina.memRequest }}
+            cpu: {{ $.Values.mina.cpuRequest }}
           requests:
             memory: {{ $.Values.mina.memRequest }}
             cpu: {{ $.Values.mina.cpuRequest }}
@@ -98,6 +103,7 @@ spec:
           value: {{$.Values.workSelectionAlgorithm | quote }}
         - name: MINA_LIBP2P_PASS
           value: {{ $.Values.mina.privkeyPass | quote }}
+        {{ include "sideCar.bpfDebugger.envVar" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 8 }}
         ports:
         - name: client-port
           protocol: TCP 
@@ -131,4 +137,8 @@ spec:
       {{- end }}
       - name: actual-libp2p
         emptyDir: {}
+      {{ include "sideCar.bpfDebugger.volume" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
 {{- include "nodeSelector.preemptible" $.Values | indent 6 }}
+
+{{ include "sideCar.resources.service" (dict "name" "snark-coordinator" "resources" $.Values.resources) }}
+{{ include "sideCar.bpfDebugger.service" (dict "name" "snark-coordinator" "bpfDebugger" $.Values.bpfDebugger) }}

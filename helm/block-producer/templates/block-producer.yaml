@@ -24,6 +24,7 @@ spec:
         prometheus.io/port: {{ $.Values.mina.ports.metrics | quote }}
         prometheus.io/path: '/metrics'
     spec:
+      {{ include "sideCar.bpfDebugger.podAttrs" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       initContainers:
       - name: fix-perms
         image: busybox
@@ -88,6 +89,8 @@ spec:
             value: {{ $.Values.mina.privkeyPass | quote }}
       {{- end }}
       containers:
+      {{ include "sideCar.resources.containerSpec" (dict "resources" $.Values.resources) | nindent 6 }}
+      {{ include "sideCar.bpfDebugger.containerSpec" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       {{ if $config.runWithUserAgent -}}
       - name: user-agent
         resources:
@@ -181,6 +184,8 @@ spec:
       - name: mina
         resources:
           limits:
+            memory: {{ $.Values.mina.memRequest }}
+            cpu: {{ $.Values.mina.cpuRequest }}
           requests:
             memory: {{ $.Values.mina.memRequest }}
             cpu: {{ $.Values.mina.cpuRequest }}
@@ -259,6 +264,7 @@ spec:
           value: {{ $.Values.mina.privkeyPass | quote }}
         - name: MINA_CLIENT_TRUSTLIST
           value: "10.0.0.0/8"
+        {{ include "sideCar.bpfDebugger.envVar" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 8 }}
         ports:
         - name: client-port
           protocol: TCP
@@ -353,6 +359,7 @@ spec:
           - key: keyfile
             path: keyfile.json
       {{- end }}
+      {{ include "sideCar.bpfDebugger.volume" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
 ---
 apiVersion: v1
 kind: Service
@@ -387,5 +394,7 @@ spec:
     port: 80
     targetPort: {{ $.Values.mina.ports.graphql }}
 {{- end }}
+{{ include "sideCar.resources.service" (dict "name" $config.name "resources" $.Values.resources) }}
+{{ include "sideCar.bpfDebugger.service" (dict "name" $config.name "bpfDebugger" $.Values.bpfDebugger) }}
 ---
 {{ end }}

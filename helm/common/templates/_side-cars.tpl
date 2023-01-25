@@ -58,16 +58,23 @@ Side-Car - Resources: container definition
 */}}
 {{- define "sideCar.resources.containerSpec" }}
 {{- if .resources.enable }}
-name: resources
-image: {{ .resources.image }}
-args: {{ .resources.args }}
-imagePullPolicy: Always
-securityContext:
-  privileged: true
-ports:
-  - name: http-resources
-    containerPort: 4000
-    protocol: TCP
+- name: resources
+  image: {{ .resources.image }}
+  args: {{ .resources.args }}
+  imagePullPolicy: Always
+  securityContext:
+    privileged: true
+  ports:
+    - name: http-resources
+      containerPort: 4000
+      protocol: TCP
+  resources:
+    requests:
+      memory: {{ .resources.memory | default "0.1G" }}
+      cpu: {{ .resources.cpu | default "0.1" }}
+    limits:
+      memory: {{ .resources.memory | default "0.1G" }}
+      cpu: {{ .resources.cpu | default "0.1" }}
 {{- end }}
 {{- end }}
 
@@ -91,5 +98,95 @@ spec:
     protocol: TCP
     port: 80
     targetPort: 4000
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - BpfDebugger: pod attributes
+*/}}
+{{- define "sideCar.bpfDebugger.podAttrs" }}
+{{- if .bpfDebugger.enable }}
+runtimeClassName: {{ .bpfDebugger.runtime | default "kata-qemu" }}
+shareProcessNamespace: true
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - BpfDebugger: container definition
+*/}}
+{{- define "sideCar.bpfDebugger.containerSpec" }}
+{{- if .bpfDebugger.enable }}
+- name: bpf-debugger
+  image: {{ .bpfDebugger.image }}
+  {{ if .bpfDebugger.args }}
+  args: {{ .bpfDebugger.args }}
+  {{ end }}
+  imagePullPolicy: Always
+  securityContext:
+    privileged: true
+  env:
+    - name: RUST_LOG
+      value: info
+    - name: SERVER_PORT
+      value: "80"
+    - name: DEBUGGER_NAME
+      value: "debugger"
+  ports:
+    - name: http-bpf-dbg
+      containerPort: 80
+      protocol: TCP
+  resources:
+    requests:
+      memory: {{ .bpfDebugger.memory | default "4G" }}
+      cpu: {{ .bpfDebugger.cpu | default "2" }}
+    limits:
+      memory: {{ .bpfDebugger.memory | default "4G" }}
+      cpu: {{ .bpfDebugger.cpu | default "2" }}
+  volumeMounts:
+    - mountPath: /sys/kernel/debug
+      name: sys-kernel-debug
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - BpfDebugger: volume definition
+*/}}
+{{- define "sideCar.bpfDebugger.volume" }}
+{{- if .bpfDebugger.enable }}
+- name: sys-kernel-debug
+  hostPath:
+    path: /sys/kernel/debug
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - BpfDebugger: BPF_ALIAS variable
+*/}}
+{{- define "sideCar.bpfDebugger.envVar" }}
+{{- if .bpfDebugger.enable }}
+- name: BPF_ALIAS
+  value: /coda/0.0.1/{{ .bpfDebugger.chainId }}-0.0.0.0
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - BpfDebugger: service definition
+*/}}
+{{- define "sideCar.bpfDebugger.service" }}
+{{- if .bpfDebugger.enable }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}-bpf-debugger
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .name }}
+  ports:
+  - name: http-bpf-debugger
+    protocol: TCP
+    port: 80
+    targetPort: "http-bpf-dbg"
 {{- end }}
 {{- end }}
