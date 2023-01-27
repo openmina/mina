@@ -38,8 +38,7 @@ func (m AddStreamHandlerReq) handle(app *app, seqno uint64) *capnp.Message {
 		streamIdx := app.NextId()
 		app.StreamsMutex.Lock()
 		defer app.StreamsMutex.Unlock()
-		app.Streams[streamIdx] = stream
-		app.P2p.Logger.Info("AddStreamHandlerReq.handle: setting up stream %d", streamIdx)
+		app.P2p.Logger.Warnf("AddStreamHandlerReq.handle: setting up stream %d for peer", streamIdx)
 		app.writeMsg(mkIncomingStreamUpcall(peerinfo, streamIdx, protocolId))
 		handleStreamReads(app, stream, streamIdx, "peer")
 	})
@@ -141,6 +140,7 @@ func (m OpenStreamReq) handle(app *app, seqno uint64) *capnp.Message {
 		// FIXME HACK: allow time for the openStreamResult to get printed before we start inserting stream events
 		time.Sleep(250 * time.Millisecond)
 		// Note: It is _very_ important that we call handleStreamReads here -- this is how the "caller" side of the stream starts listening to the responses from the RPCs. Do not remove.
+		app.P2p.Logger.Warnf("OpenStreamReq.handle: setting up stream %d for daemon", streamIdx)
 		handleStreamReads(app, stream, streamIdx, "daemon")
 	}()
 	return mkRpcRespSuccess(seqno, func(m *ipc.Libp2pHelperInterface_RpcResponseSuccess) {

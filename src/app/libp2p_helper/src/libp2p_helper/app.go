@@ -332,16 +332,16 @@ func handleStreamReads(app *app, stream net.Stream, idx uint64, source string) {
 		buf := make([]byte, 4096)
 		tot := uint64(0)
 		for {
-			app.P2p.Logger.Info("handleStreamReads: reading from stream %d (%s)", idx, source)
+			app.P2p.Logger.Warnf("handleStreamReads: reading from stream %d (%s)", idx, source)
 			n, err := stream.Read(buf)
 
 			if n != 0 {
-				app.P2p.Logger.Info("handleStreamReads: writing message for stream %d (%s)", idx, source)
+				app.P2p.Logger.Warnf("handleStreamReads: writing message for stream %d (%s)", idx, source)
 				app.writeMsg(mkStreamMessageReceivedUpcall(idx, buf[:n]))
 			}
 
 			if err != nil && err != io.EOF {
-				app.P2p.Logger.Warn("handleStreamReads: read failure for stream %d (%s)", idx, source)
+				app.P2p.Logger.Warnf("handleStreamReads: read failure for stream %d (%s)", idx, source)
 				app.writeMsg(mkStreamLostUpcall(idx, fmt.Sprintf("read failure: %s", err.Error())))
 				return
 			}
@@ -349,16 +349,16 @@ func handleStreamReads(app *app, stream net.Stream, idx uint64, source string) {
 			tot += uint64(n)
 
 			if err == io.EOF {
-				app.P2p.Logger.Info("handleStreamReads: EOF for stream %d (%s)", idx, source)
+				app.P2p.Logger.Warnf("handleStreamReads: EOF for stream %d (%s)", idx, source)
 				app.P2p.MsgStats.UpdateMetrics(tot)
 				break
 			}
 		}
-		app.P2p.Logger.Info("handleStreamReads: completed stream %d (%s)", idx, source)
+		app.P2p.Logger.Warnf("handleStreamReads: completed stream %d (%s)", idx, source)
 		app.writeMsg(mkStreamCompleteUpcall(idx))
 		err := stream.Close()
 		if err != nil {
-			app.P2p.Logger.Warn("Error while closing the stream: ", err.Error())
+			app.P2p.Logger.Warnf("Error while closing the stream: ", err.Error())
 		}
 	}()
 }
