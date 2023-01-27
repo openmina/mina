@@ -94,11 +94,11 @@ module Base
         if BC.is_expired cb then Deferred.return None
         else
           let summary = `String (Diff.summary @@ Envelope.Incoming.data env) in
-          [%log' debug logger] "Verifying $diff from $sender"
+          (*[%log' debug logger] "Verifying $diff from $sender"
             ~metadata:
               [ ("diff", summary)
               ; ("sender", Envelope.Sender.to_yojson env.sender)
-              ] ;
+              ] ;*)
           match
             Rate_limiter.add rl env.sender ~now:(Time.now ())
               ~score:(Diff.score env.data)
@@ -126,7 +126,7 @@ module Base
                       (*reject incoming messages*)
                       BC.error err cb >>| fun _ -> None
                   | Ok verified_diff ->
-                      [%log' debug logger] "Verified diff: $verified_diff"
+                      (*[%log' debug logger] "Verified diff: $verified_diff"
                         ~metadata:
                           [ ( "verified_diff"
                             , Diff.verified_to_yojson
@@ -134,7 +134,7 @@ module Base
                           ; ( "sender"
                             , Envelope.Sender.to_yojson
                               @@ Envelope.Incoming.sender verified_diff )
-                          ] ;
+                          ] ;*)
                       Deferred.return (Some verified_diff) ) )
 
   let push t (msg, cb) =

@@ -1496,7 +1496,7 @@ let create ?wallets (config : Config.t) =
           log_snark_coordinator_warning config snark_worker ;
           Protocol_version.set_current config.initial_protocol_version ;
           Protocol_version.set_proposed_opt config.proposed_protocol_version_opt ;
-          let log_rate_limiter_occasionally rl ~label =
+          let _log_rate_limiter_occasionally rl ~label =
             let t = Time.Span.of_min 1. in
             every t (fun () ->
                 [%log' debug config.logger]
@@ -1951,7 +1951,7 @@ let create ?wallets (config : Config.t) =
           O1trace.background_thread "broadcast_transaction_pool_diffs"
             (fun () ->
               let rl = Network_pool.Transaction_pool.create_rate_limiter () in
-              log_rate_limiter_occasionally rl ~label:"broadcast_transactions" ;
+              (*log_rate_limiter_occasionally rl ~label:"broadcast_transactions" ;*)
               Linear_pipe.iter
                 (Network_pool.Transaction_pool.broadcasts transaction_pool)
                 ~f:(fun cmds ->
@@ -2091,7 +2091,7 @@ let create ?wallets (config : Config.t) =
           in
           O1trace.background_thread "broadcast_snark_pool_diffs" (fun () ->
               let rl = Network_pool.Snark_pool.create_rate_limiter () in
-              log_rate_limiter_occasionally rl ~label:"broadcast_snark_work" ;
+              (*log_rate_limiter_occasionally rl ~label:"broadcast_snark_work" ;*)
               Linear_pipe.iter (Network_pool.Snark_pool.broadcasts snark_pool)
                 ~f:(fun x ->
                   let%bind () =

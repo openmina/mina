@@ -48,7 +48,7 @@ module Make (Inputs : Inputs_intf) :
   end)
 
   let prove ~context:(module Context : CONTEXT) frontier =
-    let open Context in
+    (*let open Context in*)
     let open Option.Let_syntax in
     let genesis_constants = Transition_frontier.genesis_constants frontier in
     let root = Transition_frontier.root frontier in
@@ -76,12 +76,12 @@ module Make (Inputs : Inputs_intf) :
     let _, merkle_list =
       Merkle_list_prover.prove ~context:frontier best_verified_tip
     in
-    [%log debug]
+    (*[%log debug]
       ~metadata:
         [ ( "merkle_list"
           , `List (List.map ~f:State_body_hash.to_yojson merkle_list) )
         ]
-      "Best tip prover produced a merkle list of $merkle_list" ;
+      "Best tip prover produced a merkle list of $merkle_list" ;*)
     Proof_carrying_data.
       { data = best_tip
       ; proof = (merkle_list, With_hash.data @@ Mina_block.Validated.forget root)

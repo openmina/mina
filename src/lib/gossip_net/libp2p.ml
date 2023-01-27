@@ -140,7 +140,7 @@ module Make (Rpc_intf : Network_peer.Rpc_intf.Rpc_interface_intf) :
         (Rpc_handler { rpc; f = handler; cost; budget }) =
       let (module Impl) = implementation_of_rpc rpc in
       let logger = Logger.create () in
-      let log_rate_limiter_occasionally rl =
+      let _log_rate_limiter_occasionally rl =
         let t = Time.Span.of_min 1. in
         every t (fun () ->
             [%log' debug logger]
@@ -149,7 +149,7 @@ module Make (Rpc_intf : Network_peer.Rpc_intf.Rpc_interface_intf) :
               !"%s $rate_limiter" Impl.name )
       in
       let rl = Network_pool.Rate_limiter.create ~capacity:budget in
-      log_rate_limiter_occasionally rl ;
+      (*log_rate_limiter_occasionally rl ;*)
       let handler (peer : Network_peer.Peer.t) ~version q =
         Mina_metrics.(Counter.inc_one Network.rpc_requests_received) ;
         Mina_metrics.(Counter.inc_one @@ fst Impl.received_counter) ;

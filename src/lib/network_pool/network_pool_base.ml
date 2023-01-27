@@ -146,7 +146,7 @@ end)
               ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
             Broadcast_callback.error e cb )
 
-  let log_rate_limiter_occasionally t rl =
+  let _log_rate_limiter_occasionally t rl =
     let time = Time_ns.Span.of_min 1. in
     every time (fun () ->
         [%log' debug t.logger]
@@ -169,7 +169,7 @@ end)
       ; constraint_constants
       }
     in
-    let remote_r, remote_w, remote_rl =
+    let remote_r, remote_w, _remote_rl =
       Remote_sink.create ~log_gossip_heard ~on_push:on_remote_push
         ~wrap:(fun m -> Diff m)
         ~unwrap:(function
@@ -183,7 +183,7 @@ end)
           | Diff m -> m | _ -> failwith "unexpected message type" )
         ~trace_label:Resource_pool.label ~logger resource_pool
     in
-    log_rate_limiter_occasionally network_pool remote_rl ;
+    (*log_rate_limiter_occasionally network_pool remote_rl ;*)
     (*priority: Transition frontier diffs > local diffs > incoming diffs*)
     Deferred.don't_wait_for
       (O1trace.thread Resource_pool.label (fun () ->

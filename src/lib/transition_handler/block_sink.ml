@@ -167,7 +167,7 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
         Block_time.(Span.to_time_span @@ diff tm tn_production_time) ;
       Deferred.unit
 
-let log_rate_limiter_occasionally rl ~logger ~label =
+let _log_rate_limiter_occasionally rl ~logger ~label =
   let t = Time.Span.of_min 1. in
   every t (fun () ->
       [%log debug]
@@ -190,7 +190,7 @@ let create
           20
         , `Per (Block_time.Span.to_time_span slot_duration_ms) )
   in
-  log_rate_limiter_occasionally rate_limiter ~logger ~label:"new_block" ;
+  (*log_rate_limiter_occasionally rate_limiter ~logger ~label:"new_block" ;*)
   let reader, writer = create Synchronous in
   ( reader
   , Sink
