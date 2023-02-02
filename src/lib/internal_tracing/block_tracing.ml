@@ -64,6 +64,7 @@ module Registry = struct
     ; state_hash : string
     ; status : Trace.status
     ; total_time : float
+    ; metadata : Yojson.Safe.t
     }
   [@@deriving to_yojson]
 
@@ -156,10 +157,23 @@ module Registry = struct
       Hashtbl.to_alist catchup_registry
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
-             let Trace.{ blockchain_length; source; status; total_time; _ } =
+             let Trace.
+                   { blockchain_length
+                   ; source
+                   ; status
+                   ; total_time
+                   ; metadata
+                   ; _
+                   } =
                item
              in
-             { state_hash; blockchain_length; source; status; total_time } )
+             { state_hash
+             ; blockchain_length
+             ; source
+             ; status
+             ; total_time
+             ; metadata
+             } )
     in
     let traces =
       Hashtbl.to_alist registry
@@ -167,10 +181,23 @@ module Registry = struct
              Option.is_none (Hashtbl.find catchup_registry s) )
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
-             let Trace.{ blockchain_length; source; status; total_time; _ } =
+             let Trace.
+                   { blockchain_length
+                   ; source
+                   ; status
+                   ; total_time
+                   ; metadata
+                   ; _
+                   } =
                item
              in
-             { state_hash; blockchain_length; source; status; total_time } )
+             { state_hash
+             ; blockchain_length
+             ; source
+             ; status
+             ; total_time
+             ; metadata
+             } )
     in
     let traces =
       traces @ catchup_traces
@@ -181,10 +208,23 @@ module Registry = struct
       Hashtbl.to_alist produced_registry
       |> List.map ~f:(fun (_, item) ->
              let state_hash = "<unknown>" in
-             let Trace.{ blockchain_length; source; status; total_time; _ } =
+             let Trace.
+                   { blockchain_length
+                   ; source
+                   ; status
+                   ; total_time
+                   ; metadata
+                   ; _
+                   } =
                item
              in
-             { state_hash; blockchain_length; source; status; total_time } )
+             { state_hash
+             ; blockchain_length
+             ; source
+             ; status
+             ; total_time
+             ; metadata
+             } )
       |> List.sort ~compare:(fun a b ->
              Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
     in
@@ -206,6 +246,9 @@ module Registry = struct
 
   let push_metadata ~metadata (block_id : Mina_base.State_hash.t) =
     Hashtbl.change registry block_id ~f:(Trace.push_metadata ~metadata)
+
+  let push_global_metadata ~metadata (block_id : Mina_base.State_hash.t) =
+    Hashtbl.change registry block_id ~f:(Trace.push_global_metadata ~metadata)
 
   let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
       (block_id : Mina_base.State_hash.t) checkpoint =
@@ -341,6 +384,13 @@ module Processing = struct
         ()
     | Some block_id ->
         Registry.push_metadata ~metadata block_id
+
+  let push_global_metadata metadata =
+    match get_current_state_hash () with
+    | None ->
+        ()
+    | Some block_id ->
+        Registry.push_global_metadata ~metadata block_id
 
   let failure ~reason state_hash =
     (* TODOX: compute structured version and save it *)
