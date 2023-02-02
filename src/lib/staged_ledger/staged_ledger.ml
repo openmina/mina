@@ -2106,14 +2106,11 @@ module T = struct
                 valid_on_this_ledger ~receiver:coinbase_receiver
                 ~is_coinbase_receiver_new ~supercharge_coinbase partitions )
         in
-        let summaries, detailed = List.unzip log in
+        let summaries = List.map ~f:fst log in
         Block_tracing.Production.push_global_metadata
           [ ("proof_count", `Int proof_count)
           ; ("txn_count", `Int (Sequence.length valid_on_this_ledger))
           ; ("diff_log", Diff_creation_log.summary_list_to_yojson summaries)
-          ; ( "diff_log_detailed"
-            , Diff_creation_log.detail_list_to_yojson
-                (List.map ~f:List.rev detailed) )
           ] ;
         Block_tracing.Production.checkpoint `Generate_staged_ledger_diff_done ;
         let%map diff =

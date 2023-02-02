@@ -64,6 +64,7 @@ module Registry = struct
     ; state_hash : string
     ; status : Trace.status
     ; total_time : float
+    ; metadata : Yojson.Safe.t
     }
   [@@deriving to_yojson]
 
@@ -156,10 +157,23 @@ module Registry = struct
       Hashtbl.to_alist catchup_registry
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
-             let Trace.{ blockchain_length; source; status; total_time; _ } =
+             let Trace.
+                   { blockchain_length
+                   ; source
+                   ; status
+                   ; total_time
+                   ; metadata
+                   ; _
+                   } =
                item
              in
-             { state_hash; blockchain_length; source; status; total_time } )
+             { state_hash
+             ; blockchain_length
+             ; source
+             ; status
+             ; total_time
+             ; metadata
+             } )
     in
     let traces =
       Hashtbl.to_alist registry
@@ -167,10 +181,23 @@ module Registry = struct
              Option.is_none (Hashtbl.find catchup_registry s) )
       |> List.map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
-             let Trace.{ blockchain_length; source; status; total_time; _ } =
+             let Trace.
+                   { blockchain_length
+                   ; source
+                   ; status
+                   ; total_time
+                   ; metadata
+                   ; _
+                   } =
                item
              in
-             { state_hash; blockchain_length; source; status; total_time } )
+             { state_hash
+             ; blockchain_length
+             ; source
+             ; status
+             ; total_time
+             ; metadata
+             } )
     in
     let traces =
       traces @ catchup_traces
@@ -181,10 +208,23 @@ module Registry = struct
       Hashtbl.to_alist produced_registry
       |> List.map ~f:(fun (_, item) ->
              let state_hash = "<unknown>" in
-             let Trace.{ blockchain_length; source; status; total_time; _ } =
+             let Trace.
+                   { blockchain_length
+                   ; source
+                   ; status
+                   ; total_time
+                   ; metadata
+                   ; _
+                   } =
                item
              in
-             { state_hash; blockchain_length; source; status; total_time } )
+             { state_hash
+             ; blockchain_length
+             ; source
+             ; status
+             ; total_time
+             ; metadata
+             } )
       |> List.sort ~compare:(fun a b ->
              Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
     in
@@ -206,6 +246,9 @@ module Registry = struct
 
   let push_metadata ~metadata (block_id : Mina_base.State_hash.t) =
     Hashtbl.change registry block_id ~f:(Trace.push_metadata ~metadata)
+
+  let push_global_metadata ~metadata (block_id : Mina_base.State_hash.t) =
+    Hashtbl.change registry block_id ~f:(Trace.push_global_metadata ~metadata)
 
   let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
       (block_id : Mina_base.State_hash.t) checkpoint =
@@ -234,43 +277,52 @@ module Registry = struct
 end
 
 module Production = struct
-  let current_producer_block_id = ref Mina_numbers.Global_slot.zero
+  let current_slot_key =
+    Univ_map.Key.create ~name:"current_slot" Mina_numbers.Global_slot.sexp_of_t
 
-  let checkpoint ?metadata (checkpoint : Checkpoint.block_production_checkpoint)
-      =
-    Registry.produced_checkpoint ?metadata !current_producer_block_id
-      (checkpoint :> Checkpoint.t)
+  let with_slot slot f =
+    Async_kernel.Async_kernel_scheduler.with_local current_slot_key slot ~f
 
-  let begin_block_production slot =
-    current_producer_block_id := slot ;
-    checkpoint `Begin_block_production
+  let get_current_slot () =
+    Async_kernel.Async_kernel_scheduler.find_local current_slot_key
+
+  (* FIXME: only production and processing checkpoints should be allowed *)
+  let checkpoint ?metadata (checkpoint : Checkpoint.t) =
+    Option.iter (get_current_slot ()) ~f:(fun slot ->
+        Registry.produced_checkpoint ?metadata slot (checkpoint :> Checkpoint.t) )
+
+  let begin_block_production () = checkpoint `Begin_block_production
 
   let end_block_production ?state_hash ~blockchain_length at_checkpoint =
     checkpoint at_checkpoint ;
-    let id = !current_producer_block_id in
-    let trace =
-      Option.value ~default:(Trace.empty `Internal)
-      @@ Registry.find_produced_trace id
-    in
-    (* At this point we may know the hash of the produced block, so we get rid of the
-       produced trace and register a trace for the state hash so that the next
-       pipeline can continue it *)
-    match state_hash with
-    | None ->
-        Hashtbl.set Registry.produced_registry ~key:id
-          ~data:{ trace with blockchain_length; status = `Success }
-    | Some state_hash ->
-        Hashtbl.remove Registry.produced_registry id ;
-        let trace = { trace with blockchain_length; status = `Success } in
-        Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace)
+    Option.iter (get_current_slot ()) ~f:(fun slot ->
+        let trace =
+          Option.value ~default:(Trace.empty `Internal)
+          @@ Registry.find_produced_trace slot
+        in
+        (* At this point we may know the hash of the produced block, so we get rid of the
+           produced trace and register a trace for the state hash so that the next
+           pipeline can continue it *)
+        match state_hash with
+        | None ->
+            Hashtbl.set Registry.produced_registry ~key:slot
+              ~data:{ trace with blockchain_length; status = `Success }
+        | Some state_hash ->
+            Hashtbl.remove Registry.produced_registry slot ;
+            let trace = { trace with blockchain_length; status = `Success } in
+            Hashtbl.update Registry.registry state_hash ~f:(fun _ -> trace) )
 
   let push_metadata metadata =
-    Hashtbl.change Registry.produced_registry !current_producer_block_id
-      ~f:(Trace.push_metadata ~metadata)
+    Option.iter (get_current_slot ())
+      ~f:
+        (Hashtbl.change Registry.produced_registry
+           ~f:(Trace.push_metadata ~metadata) )
 
   let push_global_metadata metadata =
-    Hashtbl.change Registry.produced_registry !current_producer_block_id
-      ~f:(Trace.push_global_metadata ~metadata)
+    Option.iter (get_current_slot ())
+      ~f:
+        (Hashtbl.change Registry.produced_registry
+           ~f:(Trace.push_global_metadata ~metadata) )
 end
 
 module External = struct
@@ -326,21 +378,38 @@ module Processing = struct
 
   let checkpoint ?(source = `Unknown) = Registry.checkpoint ~source
 
+  (* FIXME: should only allow processing checkpoints *)
   let checkpoint_current ?status ?metadata ?source ?blockchain_length
       checkpoint_name =
-    match get_current_state_hash () with
-    | None ->
+    match (Production.get_current_slot (), get_current_state_hash ()) with
+    | Some _, _ ->
+        (* TODO: verify that this is safe to do, also find a better alternative *)
+        Production.checkpoint ?metadata checkpoint_name
+    | None, None ->
         ()
-    | Some block_id ->
+    | None, Some block_id ->
         checkpoint ?status ?metadata ?source ?blockchain_length block_id
           checkpoint_name
 
   let push_metadata metadata =
-    match get_current_state_hash () with
-    | None ->
+    match (Production.get_current_slot (), get_current_state_hash ()) with
+    | Some _, _ ->
+        (* TODO: verify that this is safe to do, also find a better alternative *)
+        Production.push_metadata metadata
+    | None, None ->
         ()
-    | Some block_id ->
+    | None, Some block_id ->
         Registry.push_metadata ~metadata block_id
+
+  let push_global_metadata metadata =
+    match (Production.get_current_slot (), get_current_state_hash ()) with
+    | Some _, _ ->
+        (* TODO: verify that this is safe to do, also find a better alternative *)
+        Production.push_global_metadata metadata
+    | None, None ->
+        ()
+    | None, Some block_id ->
+        Registry.push_global_metadata ~metadata block_id
 
   let failure ~reason state_hash =
     (* TODOX: compute structured version and save it *)

@@ -655,8 +655,10 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
         | None ->
             log_bootstrap_mode () ; Interruptible.return ()
         | Some frontier -> (
-            Block_tracing.Production.begin_block_production
-              (Consensus.Data.Block_data.global_slot block_data) ;
+            Block_tracing.Production.with_slot
+              (Some (Consensus.Data.Block_data.global_slot block_data))
+            @@ fun () ->
+            Block_tracing.Production.begin_block_production () ;
             let open Transition_frontier.Extensions in
             let transition_registry =
               get_extension
@@ -862,7 +864,6 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                       |> Deferred.return
                     in
                     let transition_receipt_time = Some (Time.now ()) in
-                    Block_tracing.Production.checkpoint `Build_new_breadcrumb ;
                     let%bind breadcrumb =
                       time ~logger ~time_controller
                         "Build breadcrumb on produced block" (fun () ->
@@ -883,8 +884,6 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                              | `Prover_error _ ) as err ->
                                err )
                     in
-                    Block_tracing.Production.checkpoint
-                      `Build_new_breadcrumb_done ;
                     [%str_log info]
                       ~metadata:
                         [ ("breadcrumb", Breadcrumb.to_yojson breadcrumb) ]

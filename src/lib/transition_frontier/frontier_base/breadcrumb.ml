@@ -66,6 +66,23 @@ T.
 
 include Allocation_functor.Make.Sexp (T)
 
+let compute_block_trace_metadata transition_with_validation =
+  let header =
+    Mina_block.header @@ Mina_block.Validation.block transition_with_validation
+  in
+  let cs =
+    header |> Mina_block.Header.protocol_state
+    |> Mina_state.Protocol_state.consensus_state
+  in
+  let open Consensus.Data.Consensus_state in
+  [ ( "global_slot"
+    , Mina_numbers.Global_slot.to_yojson @@ global_slot_since_genesis cs )
+  ; ("slot", Unsigned_extended.UInt32.to_yojson @@ curr_slot cs)
+  ; ("creator", Account.key_to_yojson @@ block_creator cs)
+  ; ("winner", Account.key_to_yojson @@ block_stake_winner cs)
+  ; ("coinbase_receiver", Account.key_to_yojson @@ coinbase_receiver cs)
+  ]
+
 let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
     ~trust_system ~parent
     ~transition:(transition_with_validation : Mina_block.almost_valid_block)
@@ -78,6 +95,9 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
   Block_tracing.Processing.with_state_hash (Some state_hash)
   @@ fun () ->
   Block_tracing.Processing.checkpoint_current `Build_breadcrumb ;
+  let metadata = compute_block_trace_metadata transition_with_validation in
+  Block_tracing.Processing.push_global_metadata metadata ;
+  Block_tracing.Production.push_global_metadata metadata ;
   O1trace.thread "build_breadcrumb" (fun () ->
       let open Deferred.Let_syntax in
       match%bind

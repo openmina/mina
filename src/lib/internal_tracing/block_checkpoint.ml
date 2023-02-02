@@ -17,8 +17,6 @@ type block_production_checkpoint =
   | `Apply_staged_ledger_diff
   | `Apply_staged_ledger_diff_done
   | `Produce_state_transition_proof
-  | `Build_new_breadcrumb
-  | `Build_new_breadcrumb_done
   | `Produce_chain_transition_proof
   | `Produce_validated_transition
   | `Send_breadcrumb_to_transition_frontier
