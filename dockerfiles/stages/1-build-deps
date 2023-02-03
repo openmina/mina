@@ -66,6 +66,7 @@ RUN apt-get update --quiet \
   sudo \
   unzip \
   zlib1g-dev \
+  libcurl4-gnutls-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # Symlink image-specific lld version to a single lld executable
