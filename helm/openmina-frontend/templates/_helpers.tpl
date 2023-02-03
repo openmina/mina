@@ -11,7 +11,8 @@
             "network",
             {{ end }}
             "benchmarks",
-            "explorer"
+            "explorer",
+            "resources"
           ],
           "name": "{{.name}}"
         }
