@@ -11,7 +11,9 @@ struct
     | [] ->
         None
     | expensive_work ->
-        let i = Random.int (List.length expensive_work) in
+        let rand = Random.float 1. in
+        let max_i = (List.length expensive_work) - 1 in
+        let i = rand *. rand *. (float max_i) |> round |> int_of_float in
         let x = List.nth_exn expensive_work i in
         Lib.State.set state x ; Some x
 
