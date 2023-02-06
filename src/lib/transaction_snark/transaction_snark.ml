@@ -248,19 +248,29 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         let to_latest = Fn.id
 
+        let optimized =
+          match Sys.getenv "MINA_PARTIAL_STATEMENT_HASH" with
+          | Some _ ->
+              true
+          | None ->
+              false
+
         (* Override hash functions with faster partial versions.
          * The assumption here is that the target ledger hash by itself
          * is unique enough to differentiate between statements, so
          * there will be no clashes.
          *)
 
-        let hash_fold_t state t =
-          let state' =
-            Frozen_ledger_hash.Stable.V1.hash_fold_t state t.source.ledger
-          in
-          Frozen_ledger_hash.Stable.V1.hash_fold_t state' t.target.ledger
+        let hash_fold_t =
+          if optimized then fun state t ->
+            let state' =
+              Frozen_ledger_hash.Stable.V1.hash_fold_t state t.source.ledger
+            in
+            Frozen_ledger_hash.Stable.V1.hash_fold_t state' t.target.ledger
+          else hash_fold_t
 
-        let hash = Ppx_hash_lib.Std.Hash.of_fold hash_fold_t
+        let hash =
+          if optimized then Ppx_hash_lib.Std.Hash.of_fold hash_fold_t else hash
       end
     end]
 
