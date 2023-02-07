@@ -102,12 +102,14 @@ spec:
 {{- end }}
 
 {{/*
-Side-Car - BpfDebugger: pod attributes
+Side-Car - common pod attributes
 */}}
-{{- define "sideCar.bpfDebugger.podAttrs" }}
-{{- if .bpfDebugger.enable }}
-runtimeClassName: {{ .bpfDebugger.runtime | default "kata-qemu" }}
+{{- define "sideCar.podAttrs" }}
+{{- if or .bpfDebugger.enable .resources.enable }}
 shareProcessNamespace: true
+{{- end }}
+{{- if .bpfDebugger.enable }}
+runtimeClassName: {{ .bpfDebugger.runtime | default "kata-clh" }}
 {{- end }}
 {{- end }}
 

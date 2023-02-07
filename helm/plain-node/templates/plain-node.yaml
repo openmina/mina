@@ -25,7 +25,7 @@ spec:
         prometheus.io/port: {{ $.Values.mina.ports.metrics | quote }}
         prometheus.io/path: '/metrics'
     spec:
-      {{ include "sideCar.bpfDebugger.podAttrs" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
+      {{ include "sideCar.podAttrs" (dict "resources" $.Values.resources "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       initContainers:
       - name: libp2p-perms
         image: {{ $.Values.mina.image | quote }}
