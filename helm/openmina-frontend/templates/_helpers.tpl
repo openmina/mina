@@ -12,6 +12,7 @@
             {{ end }}
             "benchmarks",
             "explorer",
+            "tracing",
             "resources"
           ],
           "name": "{{.name}}"
