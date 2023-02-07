@@ -10,6 +10,8 @@ module Global_slot = Mina_numbers.Global_slot
 
 (* let constraint_constants = Genesis_constants.Constraint_constants.compiled *)
 
+let proof_level = Genesis_constants.Proof_level.Full
+
 let constraint_constants: Genesis_constants.Constraint_constants.t = {
   sub_windows_per_window = 11
   ; ledger_depth = 35
@@ -75,18 +77,25 @@ let set_initial_accounts accounts_bytes =
     Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
 
 let apply_tx user_command_bytes =
-  let command = Bin_prot.Reader.of_bytes [%bin_reader: User_command.Stable.Latest.t] user_command_bytes in
-  let tx = Transaction.Command command in
-  let ledger = match !ledger with
-    | Some(ledger) -> ledger
-    | None -> failwith "ledger not initialized"
-  in
-  let applied = Ledger.apply_transaction ~constraint_constants ~txn_state_view ledger tx in
-  Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t Or_error.t}\n%!" applied ;
-  let ledger_hash = Ledger.merkle_root ledger in
-  Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
+  try
+    let command = Bin_prot.Reader.of_bytes [%bin_reader: User_command.Stable.Latest.t] user_command_bytes in
+    let tx = Transaction.Command command in
+    let ledger = match !ledger with
+      | Some(ledger) -> ledger
+      | None -> failwith "ledger not initialized"
+    in
+    let applied = Ledger.apply_transaction ~constraint_constants ~txn_state_view ledger tx in
+      Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t Or_error.t}\n%!" applied;
+    let ledger_hash = Ledger.merkle_root ledger in
+    Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
+  with
+    e -> let msg = Exn.to_string e in
+    let bt = Printexc.get_backtrace () in
+    Core_kernel.printf !"except: %s\n%s\n%!" msg bt;
+    raise e
 
 let () =
+Printexc.record_backtrace true;
 Core_kernel.printf !"starting...\n%!";
 Rust.transaction_fuzzer set_initial_accounts apply_tx
 
