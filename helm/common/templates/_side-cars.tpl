@@ -107,8 +107,6 @@ Side-Car - common pod attributes
 {{- define "sideCar.podAttrs" }}
 {{- if or .bpfDebugger.enable .resources.enable }}
 shareProcessNamespace: true
-{{- end }}
-{{- if .bpfDebugger.enable }}
 runtimeClassName: {{ .bpfDebugger.runtime | default "kata-clh" }}
 {{- end }}
 {{- end }}
