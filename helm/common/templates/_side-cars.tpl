@@ -138,10 +138,10 @@ Side-Car - BpfDebugger: container definition
   resources:
     requests:
       memory: {{ .bpfDebugger.memory | default "4G" }}
-      cpu: {{ .bpfDebugger.cpu | default "2" }}
+      cpu: {{ .bpfDebugger.cpu | default "1" }}
     limits:
       memory: {{ .bpfDebugger.memory | default "4G" }}
-      cpu: {{ .bpfDebugger.cpu | default "2" }}
+      cpu: {{ .bpfDebugger.cpu | default "1" }}
   volumeMounts:
     - mountPath: /sys/kernel/debug
       name: sys-kernel-debug
