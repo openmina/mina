@@ -116,7 +116,7 @@ spec:
         {{ end -}}
         {{ include "sideCar.bpfDebugger.envVar" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 8 }}
         - name: MINA_SNARK_COORDINATOR_URL
-          value: http://snarker-http-coordinator/lock-job
+          value: http://snarker-http-coordinator
         ports:
         - name: client-port
           protocol: TCP
