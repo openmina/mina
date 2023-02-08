@@ -153,6 +153,29 @@ exec-daemon() {
     $@
 }
 
+exec-daemon-nosigcheck() {
+  BASE_PORT=${1}
+  shift
+  CLIENT_PORT=${BASE_PORT}
+  REST_PORT=$((${BASE_PORT} + 1))
+  EXTERNAL_PORT=$((${BASE_PORT} + 2))
+  DAEMON_METRICS_PORT=$((${BASE_PORT} + 3))
+  LIBP2P_METRICS_PORT=$((${BASE_PORT} + 4))
+
+  exec env MINA_SKIP_SIGCHECK=y ${MINA_EXE} daemon \
+    -client-port ${CLIENT_PORT} \
+    -rest-port ${REST_PORT} \
+    -insecure-rest-server \
+    -external-port ${EXTERNAL_PORT} \
+    -metrics-port ${DAEMON_METRICS_PORT} \
+    -libp2p-metrics-port ${LIBP2P_METRICS_PORT} \
+    -config-file ${CONFIG} \
+    -log-json \
+    -log-level ${LOG_LEVEL} \
+    -file-log-level ${FILE_LOG_LEVEL} \
+    $@
+}
+
 # Executes the Archive node
 exec-archive-node() {
   exec ${ARCHIVE_EXE} run \
@@ -169,6 +192,13 @@ spawn-node() {
   shift
   exec-daemon $@ -config-directory ${FOLDER} &>${FOLDER}/log.txt &
 }
+
+spawn-node-nosigcheck() {
+  FOLDER=${1}
+  shift
+  exec-daemon-nosigcheck $@ -config-directory ${FOLDER} &>${FOLDER}/log.txt &
+}
+
 
 # Spawns the Archive Node in background
 spawn-archive-node() {
@@ -465,7 +495,15 @@ done
 
 SNARK_WORKER_FLAGS="-snark-worker-fee ${SNARK_WORKER_FEE} -run-snark-worker ${SNARK_WORKER_PUBKEY} -work-selection seq"
 
-for ((i = 0; i < ${WHALES}; i++)); do
+# first node is nosigcheck
+FOLDER=${NODES_FOLDER}/whale_0
+KEY_FILE=${LEDGER_FOLDER}/online_whale_keys/online_whale_account_0
+mkdir -p ${FOLDER}
+spawn-node-nosigcheck ${FOLDER} $((${WHALE_START_PORT} + (0 * 5))) -peer ${SEED_PEER_ID} -block-producer-key ${KEY_FILE} \
+  -libp2p-keypair ${LEDGER_FOLDER}/libp2p_keys/whale_0 ${SNARK_WORKER_FLAGS} ${ARCHIVE_ADDRESS_CLI_ARG}
+WHALE_PIDS[0]=$!
+
+for ((i = 1; i < ${WHALES}; i++)); do
   FOLDER=${NODES_FOLDER}/whale_${i}
   KEY_FILE=${LEDGER_FOLDER}/online_whale_keys/online_whale_account_${i}
   mkdir -p ${FOLDER}
