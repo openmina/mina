@@ -134,6 +134,20 @@ module Make (Inputs : Intf.Inputs_intf) :
                 Cryptography.snark_work_base_time_sec (Time.Span.to_sec time)) ;
             [%str_log info] (Base_snark_generated { time }) )
 
+  let coordinator_url =
+    Core_kernel.Sys.getenv_opt "MINA_SNARK_COORDINATOR_URL"
+    |> Option.value ~default:"http://localhost:8080"
+
+  let coordinator_stats_put id content =
+    let url = String.concat ~sep:"/" [ coordinator_url; "worker-stats"; id ] in
+    match Ezcurl.put ~url ~content:(`String content) () with
+    | Ok response ->
+        Some response.Ezcurl.body
+    | Error (_curl_code, msg) ->
+        Stdlib.Printf.printf
+          "+++ coordinator stats put: %s %s -> failed: %s \n%!" url content msg ;
+        None
+
   let main
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~logger
@@ -142,6 +156,8 @@ module Make (Inputs : Intf.Inputs_intf) :
       (* TODO: Make this configurable. *)
       Genesis_constants.Constraint_constants.compiled
     in
+    let now () = Unix.time () |> round |> int_of_float in
+    let register_t = now () in
     let%bind state =
       Worker_state.create ~constraint_constants ~proof_level ()
     in
@@ -164,6 +180,75 @@ module Make (Inputs : Intf.Inputs_intf) :
       (* FIXME: Use a backoff algo here *)
       k ()
     in
+    let id_opt : string option ref = ref None in
+    let notify_job_get_init t =
+      Option.map !id_opt ~f:(fun id ->
+          coordinator_stats_put id
+            (Yojson.Safe.to_string
+               (`Assoc [ ("kind", `String "JobGetInit"); ("time", `Int t) ]) ) )
+    in
+    let notify_job_get_error t error =
+      Option.map !id_opt ~f:(fun id ->
+          coordinator_stats_put id
+            (Yojson.Safe.to_string
+               (`Assoc
+                 [ ("kind", `String "JobGetError")
+                 ; ("time", `Int t)
+                 ; ("error", `String error)
+                 ] ) ) )
+    in
+    let notify_job_get_success t job_ids =
+      Option.map !id_opt ~f:(fun id ->
+          coordinator_stats_put id
+            (Yojson.Safe.to_string
+               (`Assoc
+                 [ ("kind", `String "JobGetSuccess")
+                 ; ("time", `Int t)
+                 ; ("ids", `String job_ids)
+                 ] ) ) )
+    in
+    let notify_work_create_error t job_ids error =
+      Option.map !id_opt ~f:(fun id ->
+          coordinator_stats_put id
+            (Yojson.Safe.to_string
+               (`Assoc
+                 [ ("kind", `String "WorkCreateError")
+                 ; ("time", `Int t)
+                 ; ("ids", `String job_ids)
+                 ; ("error", `String error)
+                 ] ) ) )
+    in
+    let notify_work_create_success t job_ids =
+      Option.map !id_opt ~f:(fun id ->
+          coordinator_stats_put id
+            (Yojson.Safe.to_string
+               (`Assoc
+                 [ ("kind", `String "WorkCreateSuccess")
+                 ; ("time", `Int t)
+                 ; ("ids", `String job_ids)
+                 ] ) ) )
+    in
+    (* let notify_work_submit_error t job_ids error =
+         Option.map !id_opt ~f:(fun id ->
+             coordinator_stats_put id
+               (Yojson.Safe.to_string
+                  (`Assoc
+                    [ ("kind", `String "WorkSubmitError")
+                    ; ("time", `Int t)
+                    ; ("ids", `String job_ids)
+                    ; ("error", `String error)
+                    ] ) ) )
+       in *)
+    let notify_work_submit_success t job_ids =
+      Option.map !id_opt ~f:(fun id ->
+          coordinator_stats_put id
+            (Yojson.Safe.to_string
+               (`Assoc
+                 [ ("kind", `String "WorkSubmitSuccess")
+                 ; ("time", `Int t)
+                 ; ("ids", `String job_ids)
+                 ] ) ) )
+    in
     let rec go () =
       let%bind daemon_address =
         let%bind cwd = Sys.getcwd () in
@@ -182,13 +267,17 @@ module Make (Inputs : Intf.Inputs_intf) :
       [%log debug]
         !"Snark worker using daemon $addr"
         ~metadata:[ ("addr", `String (Host_and_port.to_string daemon_address)) ] ;
+      let job_get_init_t = now () in
+      let _ = notify_job_get_init job_get_init_t in
       match%bind
         dispatch Rpcs_versioned.Get_work.Latest.rpc shutdown_on_disconnect ()
           daemon_address
       with
       | Error e ->
+          let _ = notify_job_get_error (now ()) (Error.to_string_hum e) in
           log_and_retry "getting work" e (retry_pause 10.) go
       | Ok None ->
+          let _ = notify_job_get_error (now ()) "No Available Job" in
           let random_delay =
             Worker_state.worker_wait_time
             +. (0.5 *. Random.float Worker_state.worker_wait_time)
@@ -209,13 +298,60 @@ module Make (Inputs : Intf.Inputs_intf) :
                     (One_or_two.map (Work.Spec.instances work)
                        ~f:Work.Single.Spec.statement ) )
               ] ;
+
+          ( match !id_opt with
+          | Some _ ->
+              ()
+          | None ->
+              let pub_key = Public_key.Compressed.to_base58_check public_key in
+              let content =
+                Yojson.Safe.to_string
+                  (`Assoc
+                    [ ("kind", `String "Register"); ("time", `Int register_t) ]
+                    )
+              in
+              id_opt := coordinator_stats_put pub_key content ;
+              let _ = notify_job_get_init job_get_init_t in
+              () ) ;
+          let hash_single_work_spec s =
+            Work.Single.Spec.statement s
+            |> Transaction_snark.Statement.hash |> string_of_int
+          in
+          let job_ids =
+            match One_or_two.to_list (Work.Spec.instances work) with
+            | [ single ] ->
+                hash_single_work_spec single
+            | [ first; second ] ->
+                hash_single_work_spec first ^ "," ^ hash_single_work_spec second
+            | _ ->
+                assert false
+          in
+          let _ = notify_job_get_success (now ()) job_ids in
+
           let%bind () = wait () in
           (* Pause to wait for stdout to flush *)
           match%bind perform state public_key work with
           | Error e ->
+              let _ =
+                notify_work_create_error (now ()) job_ids
+                  (Error.to_string_hum e)
+              in
+              let%bind () =
+                match%map
+                  dispatch Rpcs_versioned.Failed_to_generate_snark.Latest.rpc
+                    shutdown_on_disconnect (e, work, public_key) daemon_address
+                with
+                | Error e ->
+                    [%log error]
+                      "Couldn't inform the daemon about the snark work failure"
+                      ~metadata:[ ("error", Error_json.error_to_yojson e) ]
+                | Ok () ->
+                    ()
+              in
               log_and_retry "performing work" e (retry_pause 10.) go
           | Ok result ->
               emit_proof_metrics result.metrics logger ;
+              let _ = notify_work_create_success (now ()) job_ids in
               [%log info] "Submitted completed SNARK work $work_ids to $address"
                 ~metadata:
                   [ ("address", `String (Host_and_port.to_string daemon_address))
@@ -233,6 +369,7 @@ module Make (Inputs : Intf.Inputs_intf) :
                     log_and_retry "submitting work" e (retry_pause 10.)
                       submit_work
                 | Ok () ->
+                    let _ = notify_work_submit_success (now ()) job_ids in
                     go ()
               in
               submit_work () )
