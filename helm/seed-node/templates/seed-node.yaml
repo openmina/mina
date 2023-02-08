@@ -165,6 +165,8 @@ spec:
         - name: daemon-config
           mountPath: "/config/"
         {{- end }}
+        - name: scripts
+          mountPath: "/scripts"
       volumes:
       {{- if $.Values.mina.runtimeConfig }}
       - name: daemon-config
@@ -205,6 +207,13 @@ spec:
       - name: actual-libp2p
         emptyDir: {}
       {{ include "sideCar.bpfDebugger.volume" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
+      - name: scripts
+        configMap:
+          defaultMode: 0755
+          name: scripts
+          items:
+          - key: "unset-k8s-env.sh"
+            path: "unset-k8s-env.sh"
 {{- include "nodeSelector.preemptible" $.Values | indent 6 }}
 ---
 apiVersion: v1

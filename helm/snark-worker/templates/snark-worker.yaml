@@ -99,7 +99,7 @@ spec:
         - name: MINA_CLIENT_TRUSTLIST
           value: "10.0.0.0/8"
         - name: CODA_SNARK_KEY
-          value: {{ $.Values.publicKey | quote }}
+          value: {{ $.Values.publicKey | trim | quote }}
         - name: CODA_SNARK_FEE
           value: {{ $.Values.snarkFee | quote }}
         - name: DAEMON_EXTERNAL_PORT
@@ -141,6 +141,8 @@ spec:
         {{- end }}
         - name: actual-libp2p
           mountPath: /root/libp2p-keys
+        - name: scripts
+          mountPath: "/scripts"
       volumes:
       {{- if $.Values.mina.runtimeConfig }}
       - name: daemon-config
@@ -150,6 +152,13 @@ spec:
       - name: actual-libp2p
         emptyDir: {}
       {{ include "sideCar.bpfDebugger.volume" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
+      - name: scripts
+        configMap:
+          defaultMode: 0755
+          name: scripts
+          items:
+          - key: "unset-k8s-env.sh"
+            path: "unset-k8s-env.sh"
 {{- include "nodeSelector.preemptible" $.Values | indent 6 }}
 
 ---
