@@ -45,6 +45,7 @@ RUN apt-get update \
     libprocps-dev \
     libsodium-dev \
     libssl-dev \
+    libcurl4-gnutls-dev \
     build-essential \
     capnproto \
     cmake \
