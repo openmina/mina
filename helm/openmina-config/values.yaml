@@ -1,17 +1,30 @@
-testnetName: testnet
+testnetName: mina-daily-testnet
 mina:
   image: adrnagy/mina:cluster-daily
   privkeyPass:
   exposeGraphql: true
-  customEntrypoint: /home/opam/app/mina
   useCustomEntrypoint: true
+  customEntrypoint: /scripts/unset-k8s-env.sh
   runtimeConfig: "../openmina-config/resources/daemon.json"
   seedPeers:
     - /dns4/seed1/tcp/10909/p2p/12D3KooWSerUDVnrkA67DswMFQm6wwHMtsNAjTDiX2HfAYEoJcHH
 frontend:
   image: directcuteo/mina-frontend:vanilla2
   nodePort: 31319
-  nodes: [ "seed1", "prod1", "prod2", "node1", "node2", "node3", "node4"]
+  # nodes: [ "seed1", "prod1", "prod2", "prod3", "prod4", "prod5", "node1", "node2", "node3", "node4", "snarker1", "snarker2"]
+  nodes:
+    - seed1
+    - prod1
+    - prod2
+    - prod3
+    - prod4
+    - prod5
+    - node1
+    - node2
+    - node3
+    - node4
+    - snarker1
+    - snarker2
 
 healthcheck:
   enabled: false
@@ -34,6 +47,19 @@ blockProducerConfigs:
   - name: prod2
     privateKeySecret: prod2-privkey-secret
     isolated: false
+  - name: prod3
+    privateKeySecret: prod3-privkey-secret
+    isolated: false
+  - name: prod4
+    privateKeySecret: prod4-privkey-secret
+    isolated: false
+  - name: prod5
+    privateKeySecret: prod5-privkey-secret
+    isolated: false
+
+snarkWorkersConfig:
+  count: 2
+  namePrefix: snarker
 
 resources:
   enable: true

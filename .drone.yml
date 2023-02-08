@@ -123,8 +123,9 @@ steps:
   - mkdir -p $HOME/.kube
   - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
   - helm upgrade seeds ./helm/seed-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/producer.yml
   - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade snark-workers ./helm/snark-worker --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/snark-worker.yml --set-file=publicKey=./helm/openmina-config/resources/key-06.pub
   - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
 ---
 kind: pipeline
@@ -173,7 +174,8 @@ steps:
   - mkdir -p $HOME/.kube
   - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
   - helm upgrade seeds ./helm/seed-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/producer.yml
   - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm upgrade snark-workers ./helm/snark-worker --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/snark-worker.yml --set-file=publicKey=./helm/openmina-config/resources/key-06.pub
   - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
 
