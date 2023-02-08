@@ -123,7 +123,7 @@ spec:
         - name: external-port
           protocol: TCP
           containerPort: {{ $.Values.mina.ports.p2p }}
-          hostPort: {{ $.Values.mina.ports.external }}
+          #hostPort: {{ $.Values.mina.ports.external }}
 {{$data := dict "name" $name "healthcheck" $.Values.healthcheck }}
 {{- include "healthcheck.seed.allChecks" $data | indent 8 }}
         imagePullPolicy: Always
