@@ -109,6 +109,12 @@ spec:
           value: "mina_network_block_data"
         - name: DAEMON_EXTERNAL_PORT
           value: {{ $.Values.mina.ports.p2p | quote }}
+        {{ if $.Values.mina.optimized }}
+        - name: MINA_SKIP_REDUNDANT_SNARK_VERIFICATIONS
+          value: "1"
+        - name: MINA_PARTIAL_STATEMENT_HASH
+          value: "1"
+        {{ end -}}
         {{ include "sideCar.bpfDebugger.envVar" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 8 }}
         ports:
         - name: client-port

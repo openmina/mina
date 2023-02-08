@@ -264,6 +264,12 @@ spec:
           value: {{ $.Values.mina.privkeyPass | quote }}
         - name: MINA_CLIENT_TRUSTLIST
           value: "10.0.0.0/8"
+        {{ if $.Values.mina.optimized }}
+        - name: MINA_SKIP_REDUNDANT_SNARK_VERIFICATIONS
+          value: "1"
+        - name: MINA_PARTIAL_STATEMENT_HASH
+          value: "1"
+        {{ end -}}
         {{ include "sideCar.bpfDebugger.envVar" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 8 }}
         ports:
         - name: client-port
