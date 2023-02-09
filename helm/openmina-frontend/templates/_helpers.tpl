@@ -46,6 +46,12 @@ http {
            error_page 404 /usr/share/nginx/html/index.html;
         }
         {{ $namespace := .namespace }}
+        location /snarker-http-coordinator {
+           rewrite_log on;
+           set $upstream snarker-http-coordinator.{{ $namespace }}.svc.cluster.local;
+           rewrite ^/snarker-http-coordinator($|/.*) $1 break;
+           proxy_pass http://$upstream;
+        }
         {{ range $node := .nodes }}
         location /{{ $node }}/graphql {
            set $upstream {{ $node }}-graphql.{{ $namespace }}.svc.cluster.local;
