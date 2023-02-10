@@ -145,6 +145,12 @@ Side-Car - BpfDebugger: container definition
   volumeMounts:
     - mountPath: /sys/kernel/debug
       name: sys-kernel-debug
+  {{- if .bpfDebugger.restartMinaOnExit }}
+  lifecycle:
+    postStart:
+      exec:
+        command: [ "sh", "-c", "PID=$(pgrep -fx coda-libp2p_helper); [ -z \"$PID\" ] || kill -TERM $PID" ]
+  {{- end }}
 {{- end }}
 {{- end }}
 
