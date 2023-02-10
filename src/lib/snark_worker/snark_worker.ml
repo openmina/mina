@@ -31,6 +31,7 @@ module Worker = struct
               Snark_work_lib.Work.Spec.Stable.V1.t
             * Public_key.Compressed.Stable.V1.t )
             option
+            * (float * float * float * float)
 
           let query_of_caller_model = Fn.id
 
@@ -62,7 +63,7 @@ module Worker = struct
             , Ledger_proof.Stable.V2.t )
             Snark_work_lib.Work.Result.Stable.V1.t
 
-          type response = unit
+          type response = float * float * float
 
           let query_of_caller_model = Fn.id
 
