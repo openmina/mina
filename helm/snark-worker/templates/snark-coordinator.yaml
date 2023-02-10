@@ -27,7 +27,7 @@ spec:
           requests:
             memory: 2G
             cpu: 1
-        image: binier/mina-snark-worker-rs:latest
+        image: {{ $.Values.mina.snarkCoordinatorImage | default "binier/mina-snark-worker-rs:latest" }}
         command: ["sh", "-c"]
         args:
           - |
