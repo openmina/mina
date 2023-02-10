@@ -99,6 +99,7 @@ steps:
   - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
 - name: prepare-chain-id
   image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
+  pull: always
   environment:
     MINA_LIBP2P_PASS: yoo
   volumes:
@@ -150,6 +151,7 @@ steps:
   - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
 - name: prepare-chain-id
   image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
+  pull: always
   environment:
     MINA_LIBP2P_PASS: yoo
   volumes:
