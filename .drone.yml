@@ -50,8 +50,8 @@ steps:
   image: alpine/git
   commands:
   - '[[ ! -n "${MINA_IMAGE}" ]] && echo "Continue" || exit 78'
-  - git clone $${MINA_REPO:-https://github.com/MinaProtocol/mina} .
-  - git checkout $${MINA_BRANCH}
+  - git clone $${MINA_REPO:-$${DRONE_REPO_LINK}} .
+  - git checkout $${MINA_BRANCH:-$${DRONE_BRANCH}}
   - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder > ./dockerfiles/stages/merged
   - echo "WORKDIR /root/" >> ./dockerfiles/stages/merged
   - echo "USER 0" >> ./dockerfiles/stages/merged
