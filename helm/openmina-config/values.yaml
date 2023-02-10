@@ -9,7 +9,7 @@ mina:
   seedPeers:
     - /dns4/seed1/tcp/10909/p2p/12D3KooWSerUDVnrkA67DswMFQm6wwHMtsNAjTDiX2HfAYEoJcHH
 frontend:
-  image: directcuteo/mina-frontend:vanilla2
+  image: directcuteo/mina-frontend:vanilla3
   nodePort: 31319
   # nodes: [ "seed1", "prod1", "prod2", "prod3", "prod4", "prod5", "node1", "node2", "node3", "node4", "snarker1", "snarker2"]
   nodes:

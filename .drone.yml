@@ -128,6 +128,10 @@ steps:
   - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
   - helm upgrade snark-workers ./helm/snark-worker --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/snark-worker.yml --set-file=publicKey=./helm/openmina-config/resources/key-06.pub
   - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+- name: deployed-frontend-url
+  image: alpine/helm:3.8.1
+  commands:
+  - echo http://1.k8.openmina.com:31319/
 ---
 kind: pipeline
 name: deploy-to-cluster-custom
@@ -180,4 +184,8 @@ steps:
   - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
   - helm upgrade snark-workers ./helm/snark-worker --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/snark-worker.yml --set-file=publicKey=./helm/openmina-config/resources/key-06.pub
   - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+- name: deployed-frontend-url
+  image: alpine/helm:3.8.1
+  commands:
+  - echo http://1.k8.openmina.com:31319/
 
