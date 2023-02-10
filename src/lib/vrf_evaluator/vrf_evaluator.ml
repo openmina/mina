@@ -379,7 +379,8 @@ module Worker = struct
         Logger.Consumer_registry.register ~id:"default"
           ~processor:(Logger.Processor.raw ())
           ~transport:
-            (Logger_file_system.dumb_logrotate ~directory:init_arg.conf_dir
+            (Logger_file_system.dumb_logrotate
+               ~directory:(init_arg.conf_dir ^ "/logs")
                ~log_filename:"mina-vrf-evaluator.log" ~max_size ~num_rotate ) ;
         [%log info] "Vrf_evaluator started" ;
         return (Worker_state.create init_arg)
