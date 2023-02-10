@@ -57,3 +57,6 @@ resources:
 
 bpfDebugger:
   enable: false
+
+logs:
+  enable: false

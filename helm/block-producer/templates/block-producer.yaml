@@ -91,6 +91,7 @@ spec:
       containers:
       {{ include "sideCar.resources.containerSpec" (dict "resources" $.Values.resources) | nindent 6 }}
       {{ include "sideCar.bpfDebugger.containerSpec" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
+      {{ include "sideCar.logs.containerSpec" (dict "logs" $.Values.logs) | nindent 6 }}
       {{ if $config.runWithUserAgent -}}
       - name: user-agent
         resources:
@@ -305,6 +306,10 @@ spec:
         {{- end }}
         - name: scripts
           mountPath: "/scripts"
+        {{- if $.Values.logs.enable }}
+        - name: {{ template "sideCar.logs.minaLogsVolumeName" }}
+          mountPath: "/root/.mina-config"
+        {{- end }}
 {{- include "nodeSelector.preemptible" $.Values | indent 6 }}
       volumes:
       - name: private-keys
@@ -368,6 +373,7 @@ spec:
             path: keyfile.json
       {{- end }}
       {{ include "sideCar.bpfDebugger.volume" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
+      {{ include "sideCar.logs.minaLogsVolume" (dict "logs" $.Values.logs) | nindent 6 }}
       - name: scripts
         configMap:
           defaultMode: 0755

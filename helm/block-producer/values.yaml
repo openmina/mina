@@ -97,3 +97,6 @@ bpfDebugger:
 
 nodeSelector:
   preemptible: true
+
+logs:
+  enable: false

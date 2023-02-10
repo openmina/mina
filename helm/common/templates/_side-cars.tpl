@@ -190,3 +190,33 @@ spec:
     targetPort: "http-bpf-dbg"
 {{- end }}
 {{- end }}
+
+
+{{/*
+Side-Car - LogService: Mina logs volume name
+*/}}
+{{define "sideCar.logs.minaLogsVolumeName" }}mina-logs{{ end }}
+
+{{/*
+Side-Car - LogService: container
+*/}}
+{{- define "sideCar.logs.containerSpec" }}
+{{- if .logs.enable }}
+- name: logs
+  image: busybox:latest
+  args: [ "sh", "-c", "sleep infinity" ]
+  volumeMounts:
+  - mountPath: /mina-logs
+    name: {{ template "sideCar.logs.minaLogsVolumeName" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - LogService: volume definition
+*/}}
+{{- define "sideCar.logs.minaLogsVolume" }}
+{{- if .logs.enable }}
+- name: {{ template "sideCar.logs.minaLogsVolumeName" }}
+  emptyDir: {}
+{{- end }}
+{{- end }}
