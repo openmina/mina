@@ -267,7 +267,7 @@ module Worker = struct
             ~processor:(Logger.Processor.raw ())
             ~transport:
               (Logger_file_system.dumb_logrotate
-                 ~directory:(Option.value_exn conf_dir)
+                 ~directory:(Option.value_exn conf_dir ^ "/logs")
                  ~log_filename:"mina-verifier.log" ~max_size ~num_rotate ) ) ;
         [%log info] "Verifier started" ;
         Worker_state.create

@@ -276,12 +276,13 @@ module Worker = struct
 
       let init_worker_state
           Worker_state.{ conf_dir; logger; proof_level; constraint_constants } =
+        let logs_dir = conf_dir ^ "/logs" in
         let max_size = 256 * 1024 * 512 in
         let num_rotate = 1 in
         Logger.Consumer_registry.register ~id:"default"
           ~processor:(Logger.Processor.raw ())
           ~transport:
-            (Logger_file_system.dumb_logrotate ~directory:conf_dir
+            (Logger_file_system.dumb_logrotate ~directory:logs_dir
                ~log_filename:"mina-prover.log" ~max_size ~num_rotate ) ;
         [%log info] "Prover started" ;
         Worker_state.create
