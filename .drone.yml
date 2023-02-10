@@ -31,7 +31,7 @@ steps:
     dockerfile: ./dockerfiles/stages/merged
     password:
       from_secret: docker_hub_password
-    repo: adrnagy/mina
+    repo: openmina/mina
     tags:
     - ${DRONE_COMMIT_SHA:0:8}
     username:
@@ -67,7 +67,7 @@ steps:
     dockerfile: ./dockerfiles/stages/merged
     password:
       from_secret: docker_hub_password
-    repo: adrnagy/mina
+    repo: openmina/mina
     tags:
     - ${DRONE_COMMIT_SHA:0:8}
     username:
@@ -98,7 +98,7 @@ steps:
   - cp helm/openmina-config/resources/daemon.json "$tmpfile"
   - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
 - name: prepare-chain-id
-  image: ${MINA_IMAGE:-adrnagy/mina:${DRONE_COMMIT_SHA:0:8}}
+  image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
   environment:
     MINA_LIBP2P_PASS: yoo
   volumes:
@@ -118,7 +118,7 @@ steps:
   - name: step-cache
     path: /step-cache
   commands:
-  - '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=adrnagy/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
+  - '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   - umask 0077
   - mkdir -p $HOME/.kube
   - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
@@ -149,7 +149,7 @@ steps:
   - cp helm/openmina-config/resources/daemon.json "$tmpfile"
   - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
 - name: prepare-chain-id
-  image: ${MINA_IMAGE:-adrnagy/mina:${DRONE_COMMIT_SHA:0:8}}
+  image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
   environment:
     MINA_LIBP2P_PASS: yoo
   volumes:
@@ -169,7 +169,7 @@ steps:
   - name: step-cache
     path: /step-cache
   commands:
-  - '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=adrnagy/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
+  - '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   - umask 0077
   - mkdir -p $HOME/.kube
   - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
