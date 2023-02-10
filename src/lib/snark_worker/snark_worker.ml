@@ -28,6 +28,7 @@ module Worker = struct
               Snark_work_lib.Work.Spec.Stable.V1.t
             * Public_key.Compressed.Stable.V1.t )
             option
+            * (float * float * float * float)
           [@@deriving bin_io, version { rpc }]
 
           let query_of_caller_model = Fn.id
@@ -59,7 +60,8 @@ module Worker = struct
             Snark_work_lib.Work.Result.Stable.V1.t
           [@@deriving bin_io, version { rpc }]
 
-          type response = unit [@@deriving bin_io, version { rpc }]
+          type response = float * float * float
+          [@@deriving bin_io, version { rpc }]
 
           let query_of_caller_model = Fn.id
 

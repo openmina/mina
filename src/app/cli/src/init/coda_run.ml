@@ -410,22 +410,37 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
   in
   let snark_worker_impls =
     [ implement Snark_worker.Rpcs_versioned.Get_work.Latest.rpc (fun () () ->
-          Deferred.return
-            (let open Option.Let_syntax in
+          let received_time = Unix.gettimeofday () in
+          let request_work_start_time = ref (-1.0) in
+          let request_work_end_time = ref (-1.0) in
+          let result =
+            let open Option.Let_syntax in
             let%bind key =
               Option.merge
                 (Mina_lib.snark_worker_key coda)
                 (Mina_lib.snark_coordinator_key coda)
                 ~f:Fn.const
             in
+            request_work_start_time := Unix.gettimeofday () ;
             let%map r = Mina_lib.request_work coda in
+            request_work_end_time := Unix.gettimeofday () ;
             [%log trace]
               ~metadata:[ ("work_spec", Snark_worker.Work.Spec.to_yojson r) ]
               "responding to a Get_work request with some new work" ;
             Mina_metrics.(Counter.inc_one Snark_work.snark_work_assigned_rpc) ;
-            (r, key)) )
+            (r, key)
+          in
+          let respond_time = Unix.gettimeofday () in
+          let times =
+            ( received_time
+            , !request_work_start_time
+            , !request_work_end_time
+            , respond_time )
+          in
+          Deferred.return (result, times) )
     ; implement Snark_worker.Rpcs_versioned.Submit_work.Latest.rpc
         (fun () (work : Snark_worker.Work.Result.t) ->
+          let received_time = Unix.gettimeofday () in
           Mina_metrics.(
             Counter.inc_one Snark_work.completed_snark_work_received_rpc) ;
           [%log trace] "received completed work from a snark worker"
@@ -438,7 +453,10 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
               | `Transition ->
                   Perf_histograms.add_span ~name:"snark_worker_transition_time"
                     total ) ;
-          Deferred.return @@ Mina_lib.add_work coda work )
+          let add_work_start_time = Unix.gettimeofday () in
+          Mina_lib.add_work mina work ;
+          let add_work_end_time = Unix.gettimeofday () in
+          Deferred.return (received_time, add_work_start_time, add_work_end_time) )
     ]
   in
   let create_graphql_server ~bind_to_address ~schema ~server_description port =
