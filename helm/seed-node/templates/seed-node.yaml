@@ -170,7 +170,7 @@ spec:
           mountPath: "/scripts"
         {{- if $.Values.logs.enable }}
         - name: {{ template "sideCar.logs.minaLogsVolumeName" }}
-          mountPath: "/root/.mina-config"
+          mountPath: "/root/.mina-config/logs"
         {{- end }}
       volumes:
       {{- if $.Values.mina.runtimeConfig }}
