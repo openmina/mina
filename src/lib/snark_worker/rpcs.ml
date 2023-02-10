@@ -28,6 +28,7 @@ module Make (Inputs : Intf.Inputs_intf) = struct
             Work.Spec.t
           * Public_key.Compressed.t )
           option
+          * (float * float * float * float)
       end
 
       module Caller = T
@@ -49,7 +50,7 @@ module Make (Inputs : Intf.Inputs_intf) = struct
           , Ledger_proof.t )
           Work.Result.t
 
-        type response = unit
+        type response = float * float * float
       end
 
       module Caller = T
