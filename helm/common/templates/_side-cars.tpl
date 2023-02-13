@@ -201,7 +201,7 @@ spec:
 {{/*
 Side-Car - LogService: Mina logs volume name
 */}}
-{{define "sideCar.logs.minaLogsVolumeName" }}mina-logs{{ end }}
+{{define "sideCar.logs.minaLogsVolumeName" }}config-dir{{ end }}
 
 {{/*
 Side-Car - LogService: container
