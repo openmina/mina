@@ -538,13 +538,12 @@ module Make (Inputs : Intf.Inputs_intf) :
           Logger.create () ~metadata:[ ("process", `String "Snark Worker") ]
         in
         Option.value_map ~default:() conf_dir ~f:(fun conf_dir ->
-            let logs_dir = conf_dir ^ "/logs" in
             let logrotate_max_size = 1024 * 10 in
             let logrotate_num_rotate = 1 in
             Logger.Consumer_registry.register ~id:Logger.Logger_id.snark_worker
               ~processor:(Logger.Processor.raw ())
               ~transport:
-                (Logger_file_system.dumb_logrotate ~directory:logs_dir
+                (Logger_file_system.dumb_logrotate ~directory:conf_dir
                    ~log_filename:"mina-snark-worker.log"
                    ~max_size:logrotate_max_size ~num_rotate:logrotate_num_rotate ) ) ;
         Signal.handle [ Signal.term ] ~f:(fun _signal ->

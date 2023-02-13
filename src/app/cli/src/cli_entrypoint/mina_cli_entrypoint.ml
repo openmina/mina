@@ -468,9 +468,7 @@ let setup_daemon logger =
     O1trace.thread "mina" (fun () ->
         let open Deferred.Let_syntax in
         let conf_dir = Mina_lib.Conf_dir.compute_conf_dir conf_dir in
-        let logs_dir = conf_dir ^ "/logs" in
         let%bind () = File_system.create_dir conf_dir in
-        let%bind () = File_system.create_dir logs_dir in
         let () =
           if is_background then (
             Core.printf "Starting background mina daemon. (Log Dir: %s)\n%!"
@@ -487,27 +485,27 @@ let setup_daemon logger =
         Logger.Consumer_registry.register ~id:Logger.Logger_id.mina
           ~processor:(Logger.Processor.raw ~log_level:file_log_level ())
           ~transport:
-            (Logger_file_system.dumb_logrotate ~directory:logs_dir
+            (Logger_file_system.dumb_logrotate ~directory:conf_dir
                ~log_filename:"mina.log" ~max_size:logrotate_max_size
                ~num_rotate:logrotate_num_rotate ) ;
         let best_tip_diff_log_size = 1024 * 1024 * 5 in
         Logger.Consumer_registry.register ~id:Logger.Logger_id.best_tip_diff
           ~processor:(Logger.Processor.raw ())
           ~transport:
-            (Logger_file_system.dumb_logrotate ~directory:logs_dir
+            (Logger_file_system.dumb_logrotate ~directory:conf_dir
                ~log_filename:"mina-best-tip.log"
                ~max_size:best_tip_diff_log_size ~num_rotate:1 ) ;
         let rejected_blocks_log_size = 1024 * 1024 * 5 in
         Logger.Consumer_registry.register ~id:Logger.Logger_id.rejected_blocks
           ~processor:(Logger.Processor.raw ())
           ~transport:
-            (Logger_file_system.dumb_logrotate ~directory:logs_dir
+            (Logger_file_system.dumb_logrotate ~directory:conf_dir
                ~log_filename:"mina-rejected-blocks.log"
                ~max_size:rejected_blocks_log_size ~num_rotate:50 ) ;
         Logger.Consumer_registry.register ~id:Logger.Logger_id.oversized_logs
           ~processor:(Logger.Processor.raw ())
           ~transport:
-            (Logger_file_system.dumb_logrotate ~directory:logs_dir
+            (Logger_file_system.dumb_logrotate ~directory:conf_dir
                ~log_filename:"mina-oversized-logs.log"
                ~max_size:logrotate_max_size ~num_rotate:logrotate_num_rotate ) ;
         let version_metadata =
