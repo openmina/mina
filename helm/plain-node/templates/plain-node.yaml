@@ -147,7 +147,7 @@ spec:
         {{- end }}
         {{- if $.Values.logs.enable }}
         - name: {{ template "sideCar.logs.minaLogsVolumeName" }}
-          mountPath: "/root/.mina-config/logs"
+          mountPath: "/root/.mina-config"
         {{- end }}
         - name: scripts
           mountPath: "/scripts"
