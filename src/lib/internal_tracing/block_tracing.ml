@@ -346,6 +346,11 @@ module External = struct
   let checkpoint_current ?status ?metadata ?blockchain_length checkpoint_name =
     match get_current_state_hash () with
     | None ->
+        Stdlib.Printf.printf
+          "++++ failed to get state hash when registering external checkpoint: \
+           %s\n\
+           %!"
+          (Checkpoint.to_string checkpoint_name) ;
         ()
     | Some state_hash ->
         checkpoint ?status ?metadata ?blockchain_length state_hash
@@ -397,6 +402,11 @@ module Processing = struct
         (* TODO: verify that this is safe to do, also find a better alternative *)
         Production.checkpoint ?metadata checkpoint_name
     | None, None ->
+        Stdlib.Printf.printf
+          "++++ failed to get state hash when registering processing \
+           checkpoint: %s\n\
+           %!"
+          (Checkpoint.to_string checkpoint_name) ;
         ()
     | None, Some block_id ->
         checkpoint ?status ?metadata ?source ?blockchain_length block_id
@@ -455,6 +465,11 @@ module Reconstruct = struct
   let checkpoint_current ?status ?metadata ?blockchain_length checkpoint_name =
     match Processing.get_current_state_hash () with
     | None ->
+        Stdlib.Printf.printf
+          "++++ failed to get state hash when registering reconstruct \
+           checkpoint: %s\n\
+           %!"
+          (Checkpoint.to_string checkpoint_name) ;
         ()
     | Some block_id ->
         checkpoint ?status ?metadata ?blockchain_length block_id checkpoint_name

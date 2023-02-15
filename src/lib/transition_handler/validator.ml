@@ -181,8 +181,8 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
             | `Header h ->
                 Mina_block.Validation.header_with_hash h
           in
-          let transition_hash = (With_hash.hash header_with_hash).state_hash in
-          Block_tracing.External.with_state_hash (Some transition_hash)
+          let state_hash = (With_hash.hash header_with_hash).state_hash in
+          Block_tracing.External.with_state_hash (Some state_hash)
           @@ fun () ->
           match
             verify_transition_or_header_is_relevant
@@ -194,7 +194,7 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
                 record_transition_is_relevant ~logger ~trust_system ~senders
                   ~time_controller header_with_hash
               in
-              Block_tracing.External.complete transition_hash ;
+              Block_tracing.External.complete state_hash ;
               Writer.write valid_transition_writer (b_or_h', `Gossip_map gd_map)
           | Error error ->
               record_transition_is_irrelevant ~logger ~trust_system ~senders
