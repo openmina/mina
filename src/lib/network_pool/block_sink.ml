@@ -63,21 +63,25 @@ let push sink (b_or_h, `Time_received tm, `Topic_and_vc (topic, cb)) =
       let processing_start_time =
         Block_time.(now time_controller |> to_time_exn)
       in
-      let sender, header =
+      let sender, header, kind =
         match b_or_h with
         | `Block b_env ->
             ( Envelope.Incoming.sender b_env
-            , Mina_block.header (Envelope.Incoming.data b_env) )
+            , Mina_block.header (Envelope.Incoming.data b_env)
+            , "block" )
         | `Header h_env ->
-            (Envelope.Incoming.sender h_env, Envelope.Incoming.data h_env)
+            ( Envelope.Incoming.sender h_env
+            , Envelope.Incoming.data h_env
+            , "header" )
       in
       let state_hash =
         (header |> Mina_block.Header.protocol_state |> Protocol_state.hashes)
           .state_hash
       in
       let blockchain_length = Mina_block.Header.blockchain_length header in
-      Block_tracing.External.checkpoint ~blockchain_length state_hash
-        `External_block_received ;
+      Block_tracing.External.checkpoint ~blockchain_length
+        ~metadata:[ ("kind", `String kind) ]
+        state_hash `External_block_received ;
       don't_wait_for
         ( match%map Mina_net2.Validation_callback.await cb with
         | Some `Accept ->
