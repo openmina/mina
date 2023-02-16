@@ -209,8 +209,13 @@ Side-Car - LogService: container
 {{- define "sideCar.logs.containerSpec" }}
 {{- if .logs.enable }}
 - name: logs
-  image: busybox:latest
-  args: [ "sh", "-c", "sleep infinity" ]
+  image: {{ .logs.image }}
+  imagePullPolicy: Always
+  args: [ "--dir=/mina-logs", "--address=0.0.0.0:81" ]
+  ports:
+  - name: http-logs
+    protocol: TCP
+    containerPort: 81
   volumeMounts:
   - mountPath: /mina-logs
     name: {{ template "sideCar.logs.minaLogsVolumeName" }}
@@ -224,5 +229,27 @@ Side-Car - LogService: volume definition
 {{- if .logs.enable }}
 - name: {{ template "sideCar.logs.minaLogsVolumeName" }}
   emptyDir: {}
+{{- end }}
+{{- end }}
+
+{{/*
+Side-Car - LogService: service definition
+*/}}
+{{- define "sideCar.logs.service" }}
+{{- if .logs.enable }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}-logs
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .name }}
+  ports:
+  - name: http-logs
+    protocol: TCP
+    port: 80
+    targetPort: "http-logs"
 {{- end }}
 {{- end }}

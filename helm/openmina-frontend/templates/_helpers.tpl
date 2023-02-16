@@ -47,7 +47,6 @@ http {
         }
         {{ $namespace := .namespace }}
         location /snarker-http-coordinator {
-           rewrite_log on;
            set $upstream snarker-http-coordinator.{{ $namespace }}.svc.cluster.local;
            rewrite ^/snarker-http-coordinator($|/.*) $1 break;
            proxy_pass http://$upstream;
@@ -61,13 +60,19 @@ http {
            set $upstream {{ $node }}-resources.{{ $namespace }}.svc.cluster.local;
            proxy_pass http://$upstream/resources;
         }
-        location /{{ $node }}/bpf-debugger/ {
+        location /{{ $node }}/bpf-debugger {
            set $upstream {{ $node }}-bpf-debugger.{{ $namespace }}.svc.cluster.local;
            rewrite ^/{{ $node }}/bpf-debugger/(.*) /$1 break;
            proxy_pass http://$upstream;
         }
         location /{{ $node }}/ptrace-debugger {
            set $upstream {{ $node }}-ptrace-debugger.{{ $namespace }}.svc.cluster.local;
+           proxy_pass http://$upstream;
+        }
+        location /{{ $node }}/logs {
+           rewrite_log on;
+           set $upstream {{ $node }}-logs.{{ $namespace }}.svc.cluster.local;
+           rewrite ^/{{ $node }}/logs/(.*) /$1 break;
            proxy_pass http://$upstream;
         }
         {{ end }}
