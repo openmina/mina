@@ -4,6 +4,7 @@ open Tick
 open Mina_base
 open Mina_state
 open Pickles_types
+open Internal_tracing
 
 include struct
   open Snarky_backendless.Request
@@ -105,6 +106,7 @@ let%snarkydef_ step ~(logger : Logger.t)
     ~(proof_level : Genesis_constants.Proof_level.t)
     ~(constraint_constants : Genesis_constants.Constraint_constants.t) new_state
     : _ Tick.Checked.t =
+  Block_tracing.Production.checkpoint `Produce_state_transition_proof_1 ;
   let new_state_hash =
     State_hash.var_of_hash_packed (Data_as_hash.hash new_state)
   in
@@ -141,10 +143,12 @@ let%snarkydef_ step ~(logger : Logger.t)
   in
   let%bind `Success updated_consensus_state, consensus_state =
     with_label __LOC__ (fun () ->
+        Block_tracing.Production.checkpoint `Produce_state_transition_proof_2 ;
         Consensus_state_hooks.next_state_checked ~constraint_constants
           ~prev_state:previous_state ~prev_state_hash:previous_state_hash
           transition txn_snark.supply_increase )
   in
+  Block_tracing.Production.checkpoint `Produce_state_transition_proof_3 ;
   let supercharge_coinbase =
     Consensus.Data.Consensus_state.supercharge_coinbase_var consensus_state
   in
@@ -186,6 +190,7 @@ let%snarkydef_ step ~(logger : Logger.t)
     (t, is_base_case)
   in
   let%bind txn_snark_should_verify, success =
+    Block_tracing.Production.checkpoint `Produce_state_transition_proof_4 ;
     let%bind non_pc_registers_didn't_change =
       non_pc_registers_equal_var
         (previous_state |> Protocol_state.blockchain_state).registers
@@ -269,9 +274,12 @@ let%snarkydef_ step ~(logger : Logger.t)
       Boolean.all [ updated_consensus_state; correct_coinbase_status ]
     in
     let%map () =
+      Block_tracing.Production.checkpoint `Produce_state_transition_proof_5 ;
       as_prover
         As_prover.(
           Let_syntax.(
+            Block_tracing.Production.checkpoint
+              `Produce_state_transition_proof_6 ;
             let%map txn_snark_input_correct =
               read Boolean.typ txn_snark_input_correct
             and nothing_changed = read Boolean.typ nothing_changed
@@ -281,6 +289,8 @@ let%snarkydef_ step ~(logger : Logger.t)
             and correct_coinbase_status =
               read Boolean.typ correct_coinbase_status
             and result = read Boolean.typ result in
+            Block_tracing.Production.checkpoint
+              `Produce_state_transition_proof_7 ;
             [%log trace]
               "blockchain snark update success: $result = \
                (transaction_snark_input_correct=$transaction_snark_input_correct \
@@ -323,6 +333,7 @@ let%snarkydef_ step ~(logger : Logger.t)
   let%map txn_snark_proof =
     exists (Typ.Internal.ref ()) ~request:(As_prover.return Txn_snark_proof)
   in
+  Block_tracing.Production.checkpoint `Produce_state_transition_proof_8 ;
   ( { Pickles.Inductive_rule.Previous_proof_statement.public_input =
         previous_blockchain_proof_input
     ; proof = previous_blockchain_proof
