@@ -92,7 +92,8 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
           let transition_hash =
             State_hash.With_state_hashes.state_hash transition_with_hash
           in
-          Block_tracing.External.with_state_hash (Some transition_hash)
+          let state_hash_b58 = State_hash.to_base58_check transition_hash in
+          Block_tracing.External.with_state_hash (Some state_hash_b58)
           @@ fun () ->
           let transition = With_hash.data transition_with_hash in
           let sender = Envelope.Incoming.sender transition_env in
@@ -121,12 +122,12 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
                 (Core_kernel.Time.diff
                    Block_time.(now time_controller |> to_time_exn)
                    transition_time ) ;
-              Block_tracing.External.complete transition_hash ;
+              Block_tracing.External.complete state_hash_b58 ;
               Writer.write valid_transition_writer
                 (`Block cached_transition, `Valid_cb vc)
           | Error (`In_frontier _) | Error (`In_process _) ->
               Block_tracing.External.failure ~reason:"In_frontier or In_process"
-                transition_hash ;
+                state_hash_b58 ;
               Trust_system.record_envelope_sender trust_system logger sender
                 ( Trust_system.Actions.Sent_old_gossip
                 , Some
@@ -136,7 +137,7 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~time_controller
                       ] ) )
           | Error `Disconnected ->
               Block_tracing.External.failure ~reason:"Disconnected"
-                transition_hash ;
+                state_hash_b58 ;
               Mina_metrics.(Counter.inc_one Rejected_blocks.worse_than_root) ;
               [%log error]
                 ~metadata:

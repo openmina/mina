@@ -62,8 +62,9 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
           state |> header |> Header.protocol_state |> Protocol_state.hashes)
           .state_hash
       in
+      let state_hash_b58 = State_hash.to_base58_check state_hash in
       let blockchain_length = Mina_block.blockchain_length state in
-      Block_tracing.External.checkpoint ~blockchain_length state_hash
+      Block_tracing.External.checkpoint ~blockchain_length state_hash_b58
         `External_block_received ;
       let processing_start_time =
         Block_time.(now time_controller |> to_time_exn)
@@ -109,7 +110,7 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
         with
         | `Capacity_exceeded ->
             Block_tracing.External.failure ~reason:"Capacity_exceeded"
-              state_hash ;
+              state_hash_b58 ;
             [%log warn] "$sender has sent many blocks. This is very unusual."
               ~metadata:[ ("sender", Envelope.Sender.to_yojson sender) ] ;
             Mina_net2.Validation_callback.fire_if_not_already_fired cb `Reject ;

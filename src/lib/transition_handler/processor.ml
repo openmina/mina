@@ -61,7 +61,10 @@ let add_and_finalize ~logger ~frontier ~catchup_scheduler
           |> State_hash.to_yojson )
       ]
     (Option.value_map valid_cb ~default:"without" ~f:(const "with")) ;
-  let state_hash = Transition_frontier.Breadcrumb.state_hash breadcrumb in
+  let state_hash =
+    State_hash.to_base58_check
+    @@ Transition_frontier.Breadcrumb.state_hash breadcrumb
+  in
   Block_tracing.Processing.with_state_hash (Some state_hash)
   @@ fun () ->
   Block_tracing.Processing.checkpoint_current `Add_and_finalize ;
@@ -127,7 +130,7 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
     (State_hash.With_state_hashes.state_hash t, With_hash.data t)
   in
   let metadata = [ ("state_hash", State_hash.to_yojson transition_hash) ] in
-  let state_hash = transition_hash in
+  let state_hash = State_hash.to_base58_check transition_hash in
   let blockchain_length = Mina_block.blockchain_length transition in
   Block_tracing.Processing.with_state_hash (Some state_hash)
   @@ fun () ->
@@ -328,8 +331,9 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                                * add the breadcrumb, it's no longer relevant when
                                * we're catching up *) ~f:(fun (b, valid_cb) ->
                               let state_hash =
-                                Frontier_base.Breadcrumb.state_hash
-                                  (Cached.peek b)
+                                State_hash.to_base58_check
+                                @@ Frontier_base.Breadcrumb.state_hash
+                                     (Cached.peek b)
                               in
                               let%map result =
                                 add_and_finalize ~logger ~only_if_present:true
@@ -368,12 +372,13 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                   | `Catchup_scheduler ->
                       () )
               | `Local_breadcrumb breadcrumb ->
-                  let state_hash =
+                  let state_hash_b58 =
                     Transition_frontier.Breadcrumb.validated_transition
                       (Cached.peek breadcrumb)
                     |> Mina_block.Validated.state_hash
+                    |> State_hash.to_base58_check
                   in
-                  Block_tracing.Processing.with_state_hash (Some state_hash)
+                  Block_tracing.Processing.with_state_hash (Some state_hash_b58)
                   @@ fun () ->
                   Block_tracing.Processing.checkpoint_current
                     `Begin_local_block_processing ;
@@ -396,11 +401,11 @@ let run ~context:(module Context : CONTEXT) ~verifier ~trust_system
                         ~source:`Internal breadcrumb ~valid_cb:None
                     with
                     | Ok () ->
-                        Block_tracing.Processing.complete state_hash ;
+                        Block_tracing.Processing.complete state_hash_b58 ;
                         ()
                     | Error err ->
                         Block_tracing.Processing.failure
-                          ~reason:(Error.to_string_hum err) state_hash ;
+                          ~reason:(Error.to_string_hum err) state_hash_b58 ;
                         [%log error]
                           ~metadata:
                             [ ("error", Error_json.error_to_yojson err) ]

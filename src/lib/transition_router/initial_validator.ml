@@ -253,13 +253,14 @@ let run ~logger ~trust_system ~verifier ~transition_reader
              , `Time_received time_received
              , `Valid_cb valid_cb )
            ->
-          let state_hash =
-            ( Envelope.Incoming.data transition_env
-            |> Mina_block.header |> Header.protocol_state
-            |> Protocol_state.hashes )
-              .state_hash
+          let state_hash_b58 =
+            State_hash.to_base58_check
+              ( Envelope.Incoming.data transition_env
+              |> Mina_block.header |> Header.protocol_state
+              |> Protocol_state.hashes )
+                .state_hash
           in
-          Block_tracing.External.with_state_hash (Some state_hash)
+          Block_tracing.External.with_state_hash (Some state_hash_b58)
           @@ fun () ->
           Block_tracing.External.checkpoint_current `Initial_validation ;
           if Ivar.is_full initialization_finish_signal then (
@@ -336,7 +337,7 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                       ~reason:
                         ( "Failed initial validation: "
                         ^ Sexp.to_string ([%sexp_of: validation_error] error) )
-                      state_hash ;
+                      state_hash_b58 ;
                     Mina_net2.Validation_callback.fire_if_not_already_fired
                       valid_cb `Reject ;
                     Interruptible.uninterruptible
@@ -358,7 +359,7 @@ let run ~logger ~trust_system ~verifier ~transition_reader
                     .state_hash
                 in
                 Block_tracing.External.failure
-                  ~reason:"Validation callback expired" state_hash ;
+                  ~reason:"Validation callback expired" state_hash_b58 ;
                 let metadata =
                   [ ("state_hash", State_hash.to_yojson state_hash)
                   ; ( "time_received"
