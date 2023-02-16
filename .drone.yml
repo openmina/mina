@@ -99,7 +99,6 @@ steps:
   - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
 - name: prepare-chain-id
   image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
-  pull: always
   environment:
     MINA_LIBP2P_PASS: yoo
   volumes:
@@ -123,11 +122,7 @@ steps:
   - umask 0077
   - mkdir -p $HOME/.kube
   - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
-  - helm upgrade seeds ./helm/seed-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/producer.yml
-  - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade snark-workers ./helm/snark-worker --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/snark-worker.yml --set-file=publicKey=./helm/openmina-config/resources/key-06.pub
-  - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm --namespace $${NAMESPACE:-mina-daily-testnet} status nodes
 - name: deployed-frontend-url
   image: alpine/helm:3.8.1
   commands:
@@ -155,7 +150,6 @@ steps:
   - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
 - name: prepare-chain-id
   image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
-  pull: always
   environment:
     MINA_LIBP2P_PASS: yoo
   volumes:
@@ -179,11 +173,7 @@ steps:
   - umask 0077
   - mkdir -p $HOME/.kube
   - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
-  - helm upgrade seeds ./helm/seed-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade producers ./helm/block-producer --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/producer.yml
-  - helm upgrade nodes ./helm/plain-node --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade snark-workers ./helm/snark-worker --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/snark-worker.yml --set-file=publicKey=./helm/openmina-config/resources/key-06.pub
-  - helm upgrade frontend ./helm/openmina-frontend --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  - helm --namespace $${NAMESPACE:-mina-daily-testnet} status nodes
 - name: deployed-frontend-url
   image: alpine/helm:3.8.1
   commands:
