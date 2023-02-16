@@ -106,6 +106,7 @@ let%snarkydef_ step ~(logger : Logger.t)
     ~(proof_level : Genesis_constants.Proof_level.t)
     ~(constraint_constants : Genesis_constants.Constraint_constants.t) new_state
     : _ Tick.Checked.t =
+  [%log info] "`Produce_state_transition_proof_1" ;
   Block_tracing.Production.checkpoint `Produce_state_transition_proof_1 ;
   let new_state_hash =
     State_hash.var_of_hash_packed (Data_as_hash.hash new_state)
@@ -143,11 +144,13 @@ let%snarkydef_ step ~(logger : Logger.t)
   in
   let%bind `Success updated_consensus_state, consensus_state =
     with_label __LOC__ (fun () ->
+        [%log info] "`Produce_state_transition_proof_2" ;
         Block_tracing.Production.checkpoint `Produce_state_transition_proof_2 ;
         Consensus_state_hooks.next_state_checked ~constraint_constants
           ~prev_state:previous_state ~prev_state_hash:previous_state_hash
           transition txn_snark.supply_increase )
   in
+  [%log info] "`Produce_state_transition_proof_3" ;
   Block_tracing.Production.checkpoint `Produce_state_transition_proof_3 ;
   let supercharge_coinbase =
     Consensus.Data.Consensus_state.supercharge_coinbase_var consensus_state
@@ -190,6 +193,7 @@ let%snarkydef_ step ~(logger : Logger.t)
     (t, is_base_case)
   in
   let%bind txn_snark_should_verify, success =
+    [%log info] "`Produce_state_transition_proof_4" ;
     Block_tracing.Production.checkpoint `Produce_state_transition_proof_4 ;
     let%bind non_pc_registers_didn't_change =
       non_pc_registers_equal_var
@@ -274,6 +278,7 @@ let%snarkydef_ step ~(logger : Logger.t)
       Boolean.all [ updated_consensus_state; correct_coinbase_status ]
     in
     let%map () =
+      [%log info] "`Produce_state_transition_proof_5" ;
       Block_tracing.Production.checkpoint `Produce_state_transition_proof_5 ;
       as_prover
         As_prover.(
@@ -291,7 +296,7 @@ let%snarkydef_ step ~(logger : Logger.t)
             and result = read Boolean.typ result in
             Block_tracing.Production.checkpoint
               `Produce_state_transition_proof_7 ;
-            [%log trace]
+            [%log info]
               "blockchain snark update success: $result = \
                (transaction_snark_input_correct=$transaction_snark_input_correct \
                ∨ nothing_changed \
