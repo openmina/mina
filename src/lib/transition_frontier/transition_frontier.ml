@@ -390,7 +390,8 @@ let root_snarked_ledger { persistent_root_instance; _ } =
 let add_breadcrumb_exn t breadcrumb =
   let open Deferred.Let_syntax in
   let state_hash = Breadcrumb.state_hash breadcrumb in
-  Block_tracing.Processing.with_state_hash (Some state_hash)
+  Block_tracing.Processing.with_state_hash
+    (Some (State_hash.to_base58_check state_hash))
   @@ fun () ->
   Block_tracing.Processing.checkpoint_current `Add_breadcrumb_to_frontier ;
   Block_tracing.Processing.checkpoint_current `Calculate_diffs ;

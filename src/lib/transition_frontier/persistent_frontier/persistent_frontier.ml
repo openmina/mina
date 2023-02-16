@@ -288,12 +288,13 @@ module Instance = struct
                    Error (`Fatal_error (Invalid_genesis_state_hash transition))
                    |> Deferred.return
              in
-             let state_hash =
-               ( With_hash.hash
-               @@ Mina_block.Validation.block_with_hash transition )
-                 .state_hash
+             let state_hash_b58 =
+               State_hash.to_base58_check
+                 ( With_hash.hash
+                 @@ Mina_block.Validation.block_with_hash transition )
+                   .state_hash
              in
-             Block_tracing.Reconstruct.with_state_hash (Some state_hash)
+             Block_tracing.Reconstruct.with_state_hash (Some state_hash_b58)
              @@ fun () ->
              let blockchain_length =
                Mina_block.(blockchain_length (Validation.block transition))
@@ -313,7 +314,7 @@ module Instance = struct
                  ~transition_receipt_time ()
              in
              let%map () = apply_diff Diff.(E (New_node (Full breadcrumb))) in
-             Block_tracing.Reconstruct.complete state_hash ;
+             Block_tracing.Reconstruct.complete state_hash_b58 ;
              breadcrumb ) )
         ~f:
           (Result.map_error ~f:(function
@@ -333,7 +334,8 @@ module Instance = struct
             | `Not_found _ as err ->
                 `Failure (Database.Error.not_found_message err) ) )
     in
-    Block_tracing.Reconstruct.with_state_hash (Some best_tip)
+    Block_tracing.Reconstruct.with_state_hash
+      (Some (State_hash.to_base58_check best_tip))
     @@ fun () ->
     let%map () = apply_diff Diff.(E (Best_tip_changed best_tip)) in
     (frontier, extensions)

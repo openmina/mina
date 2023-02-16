@@ -942,7 +942,9 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                         in
                         Block_tracing.Production.end_block_production
                           ~blockchain_length
-                          ~state_hash:protocol_state_hashes.state_hash
+                          ~state_hash:
+                            (State_hash.to_base58_check
+                               protocol_state_hashes.state_hash )
                           `Transition_accepted ;
                         [%log info] ~metadata
                           "Generated transition $state_hash was accepted into \

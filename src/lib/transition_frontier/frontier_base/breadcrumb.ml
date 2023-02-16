@@ -87,12 +87,13 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
     ~trust_system ~parent
     ~transition:(transition_with_validation : Mina_block.almost_valid_block)
     ~get_completed_work ~sender ~transition_receipt_time () =
-  let state_hash =
-    ( With_hash.hash
-    @@ Mina_block.Validation.block_with_hash transition_with_validation )
-      .state_hash
+  let state_hash_b58 =
+    State_hash.to_base58_check
+      ( With_hash.hash
+      @@ Mina_block.Validation.block_with_hash transition_with_validation )
+        .state_hash
   in
-  Block_tracing.Processing.with_state_hash (Some state_hash)
+  Block_tracing.Processing.with_state_hash (Some state_hash_b58)
   @@ fun () ->
   Block_tracing.Processing.checkpoint_current `Build_breadcrumb ;
   let metadata = compute_block_trace_metadata transition_with_validation in

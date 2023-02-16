@@ -205,8 +205,11 @@ let watch t ~timeout_duration ~cached_transition ~valid_cb =
     |> Mina_block.header |> Header.protocol_state
     |> Mina_state.Protocol_state.previous_state_hash
   in
+  let state_hash_b58 = State_hash.to_base58_check hash in
+  let parent_hash_b58 = State_hash.to_base58_check parent_hash in
   (* Done so that we can associate the download job started during catchup *)
-  Block_tracing.Processing.register_parent ~state_hash:hash ~parent_hash ;
+  Block_tracing.Processing.register_parent ~state_hash:state_hash_b58
+    ~parent_hash:parent_hash_b58 ;
   Option.value_map valid_cb ~default:() ~f:(fun data ->
       match Hashtbl.add t.validation_callbacks ~key:hash ~data with
       | `Ok ->

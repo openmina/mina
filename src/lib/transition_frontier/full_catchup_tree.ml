@@ -118,19 +118,29 @@ module Node = struct
 
   let trace_state_change t = function
     | State.Finished | State.Root _ ->
-        Block_tracing.Catchup.complete t.state_hash
+        Block_tracing.Catchup.complete (State_hash.to_base58_check t.state_hash)
     | State.Failed ->
-        Block_tracing.Catchup.failure t.state_hash
+        Block_tracing.Catchup.failure (State_hash.to_base58_check t.state_hash)
     | State.To_download _ ->
-        Block_tracing.Catchup.checkpoint t.state_hash `To_download
+        Block_tracing.Catchup.checkpoint
+          (State_hash.to_base58_check t.state_hash)
+          `To_download
     | State.To_initial_validate _ ->
-        Block_tracing.Catchup.checkpoint t.state_hash `To_initial_validate
+        Block_tracing.Catchup.checkpoint
+          (State_hash.to_base58_check t.state_hash)
+          `To_initial_validate
     | State.To_verify _ ->
-        Block_tracing.Catchup.checkpoint t.state_hash `To_verify
+        Block_tracing.Catchup.checkpoint
+          (State_hash.to_base58_check t.state_hash)
+          `To_verify
     | State.Wait_for_parent _ ->
-        Block_tracing.Catchup.checkpoint t.state_hash `Wait_for_parent
+        Block_tracing.Catchup.checkpoint
+          (State_hash.to_base58_check t.state_hash)
+          `Wait_for_parent
     | State.To_build_breadcrumb _ ->
-        Block_tracing.Catchup.checkpoint t.state_hash `To_build_breadcrumb
+        Block_tracing.Catchup.checkpoint
+          (State_hash.to_base58_check t.state_hash)
+          `To_build_breadcrumb
 
   let set_state t s =
     trace_state_change t s ;

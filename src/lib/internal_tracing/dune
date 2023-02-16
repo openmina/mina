@@ -12,7 +12,6 @@
   yojson
   async_kernel
   ;; local libraries
-  mina_base
   mina_numbers)
  (preprocess
   (pps ppx_jane ppx_deriving_yojson))

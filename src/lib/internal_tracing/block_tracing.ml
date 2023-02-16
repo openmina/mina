@@ -54,7 +54,7 @@ module Distributions = struct
 end
 
 module Registry = struct
-  type t = (Mina_base.State_hash.t, Trace.t) Hashtbl.t
+  type t = (string, Trace.t) Hashtbl.t
 
   type produced_registry = (Mina_numbers.Global_slot.t, Trace.t) Hashtbl.t
 
@@ -82,9 +82,9 @@ module Registry = struct
   type traces = { traces : trace_info list; produced_traces : trace_info list }
   [@@deriving to_yojson]
 
-  let registry : t = Hashtbl.create (module Mina_base.State_hash)
+  let registry : t = Hashtbl.create (module String)
 
-  let catchup_registry : t = Hashtbl.create (module Mina_base.State_hash)
+  let catchup_registry : t = Hashtbl.create (module String)
 
   let produced_registry : produced_registry =
     Hashtbl.create (module Mina_numbers.Global_slot)
@@ -145,12 +145,10 @@ module Registry = struct
   let find_produced_trace slot = Hashtbl.find produced_registry slot
 
   let find_trace_from_string key =
-    match Mina_base.State_hash.of_base58_check key with
-    | Ok state_hash ->
-        find_trace state_hash
-    | Error _ -> (
-        try find_produced_trace (Mina_numbers.Global_slot.of_string key)
-        with _ -> None )
+    if String.length key > 50 then find_trace key
+    else
+      try find_produced_trace (Mina_numbers.Global_slot.of_string key)
+      with _ -> None
 
   (* TODO: cleanup this and find a better way *)
   let all_traces ?max_length ?height () =
@@ -162,8 +160,7 @@ module Registry = struct
     in
     let catchup_traces =
       Hashtbl.to_alist catchup_registry
-      |> List.filter_map ~f:(fun (key, item) ->
-             let state_hash = Mina_base.State_hash.to_base58_check key in
+      |> List.filter_map ~f:(fun (state_hash, item) ->
              let Trace.
                    { blockchain_length
                    ; source
@@ -190,8 +187,7 @@ module Registry = struct
       Hashtbl.to_alist registry
       |> List.filter ~f:(fun (s, _) ->
              Option.is_none (Hashtbl.find catchup_registry s) )
-      |> List.filter_map ~f:(fun (key, item) ->
-             let state_hash = Mina_base.State_hash.to_base58_check key in
+      |> List.filter_map ~f:(fun (state_hash, item) ->
              let Trace.
                    { blockchain_length
                    ; source
@@ -260,14 +256,14 @@ module Registry = struct
     Hashtbl.update registry block_id
       ~f:(Trace.push ~status ~source ?blockchain_length entry)
 
-  let push_metadata ~metadata (block_id : Mina_base.State_hash.t) =
+  let push_metadata ~metadata block_id =
     Hashtbl.change registry block_id ~f:(Trace.push_metadata ~metadata)
 
-  let push_global_metadata ~metadata (block_id : Mina_base.State_hash.t) =
+  let push_global_metadata ~metadata block_id =
     Hashtbl.change registry block_id ~f:(Trace.push_global_metadata ~metadata)
 
   let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
-      (block_id : Mina_base.State_hash.t) checkpoint =
+      block_id checkpoint =
     push_entry ~status ~source ?blockchain_length block_id
       (Trace.Entry.make ?metadata checkpoint)
 
@@ -343,8 +339,7 @@ end
 
 module External = struct
   let current_state_hash_key =
-    Univ_map.Key.create ~name:"current_state_hash"
-      Mina_base.State_hash.sexp_of_t
+    Univ_map.Key.create ~name:"current_state_hash" String.sexp_of_t
 
   let with_state_hash state_hash f =
     Async_kernel.Async_kernel_scheduler.with_local current_state_hash_key
@@ -380,8 +375,7 @@ end
 (* TODO: some processing can happen during block production, account for that *)
 module Processing = struct
   let current_state_hash_key =
-    Univ_map.Key.create ~name:"current_state_hash"
-      Mina_base.State_hash.sexp_of_t
+    Univ_map.Key.create ~name:"current_state_hash" String.sexp_of_t
 
   let with_state_hash state_hash f =
     Async_kernel.Async_kernel_scheduler.with_local current_state_hash_key
@@ -390,10 +384,10 @@ module Processing = struct
   let get_current_state_hash () =
     Async_kernel.Async_kernel_scheduler.find_local current_state_hash_key
 
-  let parent_registry = Hashtbl.create (module Mina_base.State_hash)
+  let parent_registry = Hashtbl.create (module String)
 
   let register_parent ~state_hash ~parent_hash =
-    assert (not (Mina_base.State_hash.equal state_hash parent_hash)) ;
+    assert (not (String.equal state_hash parent_hash)) ;
     ignore @@ Hashtbl.add parent_registry ~data:state_hash ~key:parent_hash
 
   let get_registered_child parent_hash =

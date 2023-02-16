@@ -164,7 +164,8 @@ let verify_transition ~context:(module Context : CONTEXT) ~trust_system
   | Ok x ->
       Block_tracing.External.complete
         ( Validation.block_with_hash transition_with_hash
-        |> State_hash.With_state_hashes.state_hash ) ;
+        |> State_hash.With_state_hashes.state_hash |> State_hash.to_base58_check
+        ) ;
       [%log trace]
         ~metadata:[ ("state_hash", state_hash) ]
         "initial_validate: validation is successful" ;
@@ -662,7 +663,7 @@ let create_node ~downloader t x =
           Breadcrumb.block root |> Mina_block.blockchain_length
         in
         Block_tracing.Catchup.complete ~blockchain_length
-          (Breadcrumb.state_hash root) ;
+          (Breadcrumb.state_hash root |> State_hash.to_base58_check) ;
         ( Node.State.Finished
         , Breadcrumb.state_hash root
         , Breadcrumb.consensus_state root
@@ -670,7 +671,9 @@ let create_node ~downloader t x =
         , Breadcrumb.parent_hash root
         , Ivar.create_full (Ok `Added_to_frontier) )
     | `Hash (h, l, parent) ->
-        Block_tracing.Catchup.checkpoint ~blockchain_length:l h `To_download ;
+        Block_tracing.Catchup.checkpoint ~blockchain_length:l
+          (State_hash.to_base58_check h)
+          `To_download ;
         ( Node.State.To_download
             (download "create_node" downloader ~key:(h, l) ~attempts)
         , h
@@ -686,7 +689,8 @@ let create_node ~downloader t x =
         let blockchain_length =
           Validation.block t |> Mina_block.blockchain_length
         in
-        Block_tracing.Catchup.checkpoint ~blockchain_length state_hash
+        Block_tracing.Catchup.checkpoint ~blockchain_length
+          (State_hash.to_base58_check state_hash)
           `To_verify ;
         ( Node.State.To_verify (b, valid_cb)
         , state_hash
@@ -1223,7 +1227,7 @@ let run_catchup ~context:(module Context : CONTEXT) ~trust_system ~verifier
                     in
                     ( match
                         Block_tracing.Processing.get_registered_child
-                          target_parent_hash
+                          (State_hash.to_base58_check target_parent_hash)
                       with
                     | None ->
                         () (* TODO: what to do here? *)
