@@ -29,7 +29,7 @@ let status_to_yojson = Util.flatten_yojson_variant status_to_yojson
 
 type t =
   { source : block_source
-  ; blockchain_length : Mina_numbers.Length.t
+  ; blockchain_length : int
   ; checkpoints : Entry.t list
   ; other_checkpoints : Entry.t list
   ; status : status
@@ -38,7 +38,7 @@ type t =
   }
 [@@deriving to_yojson]
 
-let empty ?(blockchain_length = Mina_numbers.Length.zero) source =
+let empty ?(blockchain_length = 0) source =
   { source
   ; blockchain_length
   ; checkpoints = []

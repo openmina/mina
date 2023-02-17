@@ -299,7 +299,8 @@ module Instance = struct
              Block_tracing.Reconstruct.with_state_hash (Some state_hash_b58)
              @@ fun () ->
              let blockchain_length =
-               Mina_block.(blockchain_length (Validation.block transition))
+               Mina_numbers.Length.to_int
+               @@ Mina_block.(blockchain_length (Validation.block transition))
              in
              Block_tracing.Reconstruct.checkpoint_current ~blockchain_length
                `Loaded_transition_from_storage ;

@@ -56,11 +56,11 @@ end
 module Registry = struct
   type t = (string, Trace.t) Hashtbl.t
 
-  type produced_registry = (Mina_numbers.Global_slot.t, Trace.t) Hashtbl.t
+  type produced_registry = (int, Trace.t) Hashtbl.t
 
   type trace_info =
     { source : Trace.block_source
-    ; blockchain_length : Mina_numbers.Length.t
+    ; blockchain_length : int
     ; state_hash : string
     ; status : Trace.status
     ; started_at : float
@@ -70,9 +70,7 @@ module Registry = struct
   [@@deriving to_yojson]
 
   let trace_info_to_yojson t =
-    let blockchain_length_int =
-      Mina_numbers.Length.to_int t.blockchain_length
-    in
+    let blockchain_length_int = t.blockchain_length in
     match trace_info_to_yojson t with
     | `Assoc fields ->
         `Assoc (("blockchain_length_int", `Int blockchain_length_int) :: fields)
@@ -86,8 +84,7 @@ module Registry = struct
 
   let catchup_registry : t = Hashtbl.create (module String)
 
-  let produced_registry : produced_registry =
-    Hashtbl.create (module Mina_numbers.Global_slot)
+  let produced_registry : produced_registry = Hashtbl.create (module Int)
 
   let postprocess_checkpoints trace =
     let next_timestamp = ref (List.hd_exn trace).Trace.Entry.started_at in
@@ -146,17 +143,12 @@ module Registry = struct
 
   let find_trace_from_string key =
     if String.length key > 50 then find_trace key
-    else
-      try find_produced_trace (Mina_numbers.Global_slot.of_string key)
-      with _ -> None
+    else try find_produced_trace (Int.of_string key) with _ -> None
 
   (* TODO: cleanup this and find a better way *)
   let all_traces ?max_length ?height () =
     let matches_height blockchain_length =
-      let blockchain_length_int =
-        Mina_numbers.Length.to_int blockchain_length
-      in
-      Option.value_map ~default:true ~f:(( = ) blockchain_length_int) height
+      Option.value_map ~default:true ~f:(( = ) blockchain_length) height
     in
     let catchup_traces =
       Hashtbl.to_alist catchup_registry
@@ -213,7 +205,7 @@ module Registry = struct
     let traces =
       traces @ catchup_traces
       |> List.sort ~compare:(fun a b ->
-             Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
+             Int.compare a.blockchain_length b.blockchain_length )
     in
     let produced_traces =
       Hashtbl.to_alist produced_registry
@@ -238,7 +230,7 @@ module Registry = struct
              ; metadata
              } )
       |> List.sort ~compare:(fun a b ->
-             Mina_numbers.Length.compare a.blockchain_length b.blockchain_length )
+             Int.compare a.blockchain_length b.blockchain_length )
     in
     match max_length with
     | None ->
@@ -278,9 +270,7 @@ module Registry = struct
 
   let push_produced_entry ~status slot entry =
     (* FIXME: not a valid conversion *)
-    let blockchain_length =
-      Mina_numbers.Length.of_int @@ Mina_numbers.Global_slot.to_int slot
-    in
+    let blockchain_length = slot in
     Hashtbl.update produced_registry slot
       ~f:(Trace.push ~status ~blockchain_length ~source:`Internal entry)
 
@@ -289,8 +279,7 @@ module Registry = struct
 end
 
 module Production = struct
-  let current_slot_key =
-    Univ_map.Key.create ~name:"current_slot" Mina_numbers.Global_slot.sexp_of_t
+  let current_slot_key = Univ_map.Key.create ~name:"current_slot" Int.sexp_of_t
 
   let with_slot slot f =
     Async_kernel.Async_kernel_scheduler.with_local current_slot_key slot ~f

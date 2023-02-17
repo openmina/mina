@@ -656,7 +656,9 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
             log_bootstrap_mode () ; Interruptible.return ()
         | Some frontier -> (
             Block_tracing.Production.with_slot
-              (Some (Consensus.Data.Block_data.global_slot block_data))
+              (Some
+                 ( Consensus.Data.Block_data.global_slot block_data
+                 |> Mina_numbers.Global_slot.to_int ) )
             @@ fun () ->
             Block_tracing.Production.begin_block_production () ;
             let open Transition_frontier.Extensions in
@@ -941,6 +943,7 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                         let blockchain_length =
                           Breadcrumb.block breadcrumb
                           |> Mina_block.blockchain_length
+                          |> Mina_numbers.Length.to_int
                         in
                         Block_tracing.Production.end_block_production
                           ~blockchain_length
@@ -959,6 +962,7 @@ let run ~context:(module Context : CONTEXT) ~vrf_evaluator ~prover ~verifier
                         let blockchain_length =
                           Breadcrumb.block breadcrumb
                           |> Mina_block.blockchain_length
+                          |> Mina_numbers.Length.to_int
                         in
                         Block_tracing.Production.end_block_production
                           ~blockchain_length `Transition_accept_timeout ;
