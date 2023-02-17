@@ -11,9 +11,10 @@
   sexplib0
   yojson
   async_kernel
+  bin_prot.shape
  )
  (preprocess
-  (pps ppx_jane ppx_deriving_yojson))
+  (pps ppx_jane ppx_deriving_yojson ppx_bin_prot))
  (instrumentation
   (backend bisect_ppx))
  (synopsis "Block tracing"))

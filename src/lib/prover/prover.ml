@@ -4,6 +4,7 @@ open Mina_base
 open Mina_state
 open Mina_block
 open Blockchain_snark
+open Internal_tracing
 
 module type S = Intf.S
 
@@ -49,7 +50,8 @@ module Worker_state = struct
       -> Ledger_proof.t option
       -> Consensus.Data.Prover_state.t
       -> Pending_coinbase_witness.t
-      -> Blockchain.t Async.Deferred.Or_error.t
+      -> (Blockchain.t * Block_tracing.Production.Proof_timings.t)
+         Async.Deferred.Or_error.t
 
     val verify : Protocol_state.Value.t -> Proof.t -> bool Deferred.t
   end
@@ -133,8 +135,13 @@ module Worker_state = struct
                            }
                            next_state
                        in
-                       Blockchain_snark.Blockchain.create ~state:next_state
-                         ~proof )
+                       let blockchain =
+                         Blockchain_snark.Blockchain.create ~state:next_state
+                           ~proof
+                       in
+                       ( blockchain
+                       , Block_tracing.Production.Proof_timings.take_global ()
+                       ) )
                  in
                  Or_error.iter_error res ~f:(fun e ->
                      [%log error]
@@ -167,8 +174,13 @@ module Worker_state = struct
                           ~constraint_constants ~pending_coinbase )
                      next_state
                    |> Or_error.map ~f:(fun () ->
-                          Blockchain_snark.Blockchain.create ~state:next_state
-                            ~proof:Mina_base.Proof.blockchain_dummy )
+                          let blockchain =
+                            Blockchain_snark.Blockchain.create ~state:next_state
+                              ~proof:Mina_base.Proof.blockchain_dummy
+                          in
+                          ( blockchain
+                          , Block_tracing.Production.Proof_timings.take_global
+                              () ) )
                  in
                  Or_error.iter_error res ~f:(fun e ->
                      [%log error]
@@ -186,9 +198,10 @@ module Worker_state = struct
                    _state_for_handler _pending_coinbase =
                  Deferred.return
                  @@ Ok
-                      (Blockchain_snark.Blockchain.create
-                         ~proof:Mina_base.Proof.blockchain_dummy
-                         ~state:next_state )
+                      ( Blockchain_snark.Blockchain.create
+                          ~proof:Mina_base.Proof.blockchain_dummy
+                          ~state:next_state
+                      , Block_tracing.Production.Proof_timings.take_global () )
 
                let verify _ _ = Deferred.return true
              end : S )
@@ -214,7 +227,9 @@ module Functions = struct
 
   let extend_blockchain =
     create Extend_blockchain_input.Stable.Latest.bin_t
-      [%bin_type_class: Blockchain.Stable.Latest.t Or_error.t]
+      [%bin_type_class:
+        (Blockchain.Stable.Latest.t * Block_tracing.Production.Proof_timings.t)
+        Or_error.t]
       (fun
         w
         { chain
@@ -244,7 +259,11 @@ module Worker = struct
     type 'w functions =
       { initialized : ('w, unit, [ `Initialized ]) F.t
       ; extend_blockchain :
-          ('w, Extend_blockchain_input.t, Blockchain.t Or_error.t) F.t
+          ( 'w
+          , Extend_blockchain_input.t
+          , (Blockchain.t * Block_tracing.Production.Proof_timings.t) Or_error.t
+          )
+          F.t
       ; verify_blockchain : ('w, Blockchain.t, bool) F.t
       }
 
@@ -393,7 +412,8 @@ let extend_blockchain { connection; logger; _ } chain next_state block
       ~arg:input
     >>| Or_error.join
   with
-  | Ok x ->
+  | Ok (x, timings) ->
+      Block_tracing.Production.Proof_timings.apply_to_tracing timings ;
       Ok x
   | Error e ->
       [%log error]

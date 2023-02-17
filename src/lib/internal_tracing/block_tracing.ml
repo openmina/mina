@@ -254,10 +254,10 @@ module Registry = struct
   let push_global_metadata ~metadata block_id =
     Hashtbl.change registry block_id ~f:(Trace.push_global_metadata ~metadata)
 
-  let checkpoint ?(status = `Pending) ?metadata ~source ?blockchain_length
-      block_id checkpoint =
+  let checkpoint ?started_at ?(status = `Pending) ?metadata ~source
+      ?blockchain_length block_id checkpoint =
     push_entry ~status ~source ?blockchain_length block_id
-      (Trace.Entry.make ?metadata checkpoint)
+      (Trace.Entry.make ?started_at ?metadata checkpoint)
 
   let push_catchup_entry ~status ~source ?blockchain_length block_id entry =
     Hashtbl.update catchup_registry block_id
@@ -274,8 +274,10 @@ module Registry = struct
     Hashtbl.update produced_registry slot
       ~f:(Trace.push ~status ~blockchain_length ~source:`Internal entry)
 
-  let produced_checkpoint ?(status = `Pending) ?metadata slot checkpoint =
-    push_produced_entry ~status slot (Trace.Entry.make ?metadata checkpoint)
+  let produced_checkpoint ?(status = `Pending) ?started_at ?metadata slot
+      checkpoint =
+    push_produced_entry ~status slot
+      (Trace.Entry.make ?started_at ?metadata checkpoint)
 end
 
 module Production = struct
@@ -288,9 +290,14 @@ module Production = struct
     Async_kernel.Async_kernel_scheduler.find_local current_slot_key
 
   (* FIXME: only production and processing checkpoints should be allowed *)
-  let checkpoint ?metadata (checkpoint : Checkpoint.t) =
+  let checkpoint ?started_at ?metadata (checkpoint : Checkpoint.t) =
     Option.iter (get_current_slot ()) ~f:(fun slot ->
-        Registry.produced_checkpoint ?metadata slot (checkpoint :> Checkpoint.t) )
+        Registry.produced_checkpoint ?started_at ?metadata slot
+          (checkpoint :> Checkpoint.t) )
+
+  let push_entry ?(status = `Pending) entry =
+    Option.iter (get_current_slot ()) ~f:(fun slot ->
+        Registry.push_produced_entry ~status slot entry )
 
   let begin_block_production () = checkpoint `Begin_block_production
 
@@ -324,6 +331,50 @@ module Production = struct
       ~f:
         (Hashtbl.change Registry.produced_registry
            ~f:(Trace.push_global_metadata ~metadata) )
+
+  module Proof_timings = struct
+    let ( ! ) = Stdlib.( ! )
+
+    let ( := ) = Stdlib.( := )
+
+    let ref = Stdlib.ref
+
+    type entry =
+      { started_at : float; checkpoint : Checkpoint.t; metadata : string }
+    [@@deriving bin_io]
+
+    type t = entry list [@@deriving bin_io]
+
+    let apply_to_tracing t =
+      List.iter t ~f:(fun v ->
+          let metadata =
+            match Yojson.Safe.from_string v.metadata with
+            | `Assoc v ->
+                v
+            | _ ->
+                assert false
+          in
+          Trace.Entry.make ~started_at:v.started_at ~metadata v.checkpoint
+          |> push_entry )
+
+    let global = ref []
+
+    let push ?metadata t checkpoint =
+      List.append t
+        [ { started_at = Unix.gettimeofday ()
+          ; checkpoint
+          ; metadata = Option.value metadata ~default:"{}"
+          }
+        ]
+
+    let push_global ?metadata checkpoint =
+      global := push !global checkpoint ?metadata
+
+    let take_global () =
+      let timings = !global in
+      global := [] ;
+      timings
+  end
 end
 
 module External = struct
