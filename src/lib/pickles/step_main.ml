@@ -8,6 +8,7 @@ open Import
 open Impls.Step
 open Step_main_inputs
 open Step_verifier
+open Internal_tracing
 module B = Inductive_rule.B
 
 (* Converts from the one hot vector representation of a number
@@ -270,6 +271,10 @@ let step_main :
     let open Requests.Step in
     let open Impls.Step in
     with_label "step_main" (fun () ->
+        let (_ : unit) =
+          Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_9
+        in
         let module Max_proofs_verified = ( val max_proofs_verified : Nat.Add.Intf
                                              with type n = max_proofs_verified
                                          )
@@ -374,8 +379,16 @@ let step_main :
           in
           go prevs previous_proof_statements
         in
+        let (_ : unit) =
+          Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_10
+        in
         let bulletproof_challenges =
           with_label "prevs_verified" (fun () ->
+              let (_ : unit) =
+                Block_tracing.Production.Proof_timings.push_global
+                  `Produce_state_transition_proof_11
+              in
               let rec go :
                   type vars vals prev_vals ns1 ns2 n.
                      (vars, ns1, ns2) H3.T(Per_proof_witness).t
@@ -470,6 +483,10 @@ let step_main :
               in
               Boolean.Assert.all vs ; chalss )
         in
+        let (_ : unit) =
+          Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_12
+        in
         let messages_for_next_step_proof =
           let challenge_polynomial_commitments =
             let module M =
@@ -484,6 +501,10 @@ let step_main :
             in
             let module V = H3.To_vector (Inner_curve) in
             V.f proofs_verified (M.f prevs)
+          in
+          let (_ : unit) =
+            Block_tracing.Production.Proof_timings.push_global
+              `Produce_state_transition_proof_13
           in
           with_label "hash_messages_for_next_step_proof" (fun () ->
               let hash_messages_for_next_step_proof =
@@ -512,6 +533,10 @@ let step_main :
                     (* Note: the bulletproof_challenges here are unpadded! *)
                     bulletproof_challenges
                 } )
+        in
+        let (_ : unit) =
+          Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_14
         in
         ( { Types.Step.Statement.proof_state =
               { unfinalized_proofs; messages_for_next_step_proof }
