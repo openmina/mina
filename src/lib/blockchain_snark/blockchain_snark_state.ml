@@ -288,7 +288,7 @@ let%snarkydef_ step ~(logger : Logger.t)
       as_prover
         As_prover.(
           Let_syntax.(
-            Block_tracing.Production.checkpoint
+            Block_tracing.Production.Proof_timings.push_global
               `Produce_state_transition_proof_6 ;
             let%map txn_snark_input_correct =
               read Boolean.typ txn_snark_input_correct
@@ -299,7 +299,7 @@ let%snarkydef_ step ~(logger : Logger.t)
             and correct_coinbase_status =
               read Boolean.typ correct_coinbase_status
             and result = read Boolean.typ result in
-            Block_tracing.Production.checkpoint
+            Block_tracing.Production.Proof_timings.push_global
               `Produce_state_transition_proof_7 ;
             [%log info]
               "blockchain snark update success: $result = \
