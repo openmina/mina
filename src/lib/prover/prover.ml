@@ -413,6 +413,13 @@ let extend_blockchain { connection; logger; _ } chain next_state block
     >>| Or_error.join
   with
   | Ok (x, timings) ->
+      [%log info] "[extend_blockchain] timings = $timings"
+        ~metadata:
+          [ ( "timings"
+            , `String
+                ( timings |> Block_tracing.Production.Proof_timings.to_yojson
+                |> Yojson.Safe.to_string ) )
+          ] ;
       Block_tracing.Production.Proof_timings.apply_to_tracing timings ;
       Ok x
   | Error e ->

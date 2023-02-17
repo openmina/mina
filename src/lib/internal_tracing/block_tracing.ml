@@ -341,9 +341,9 @@ module Production = struct
 
     type entry =
       { started_at : float; checkpoint : Checkpoint.t; metadata : string }
-    [@@deriving bin_io]
+    [@@deriving bin_io, yojson]
 
-    type t = entry list [@@deriving bin_io]
+    type t = entry list [@@deriving bin_io, yojson]
 
     let apply_to_tracing t =
       List.iter t ~f:(fun v ->

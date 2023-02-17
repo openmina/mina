@@ -67,7 +67,7 @@ type external_block_validation_checkpoint =
   | `Register_transition_for_processing
   | `Validate_transition_complete
   | `Failure ]
-[@@deriving bin_io, to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let external_block_validation_checkpoint_to_yojson =
   Util.flatten_yojson_variant external_block_validation_checkpoint_to_yojson
@@ -129,7 +129,7 @@ type block_processing_checkpoint =
   | `Schedule_catchup
   | `Download_ancestry_state_hashes
   | `Failure ]
-[@@deriving bin_io, to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let block_processing_checkpoint_to_yojson =
   Util.flatten_yojson_variant block_processing_checkpoint_to_yojson
@@ -142,7 +142,7 @@ type catchup_checkpoint =
   | `To_build_breadcrumb
   | `Catchup_job_finished
   | `Failure ]
-[@@deriving bin_io, to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let catchup_checkpoint_to_yojson =
   Util.flatten_yojson_variant catchup_checkpoint_to_yojson
@@ -152,7 +152,7 @@ type t =
   | external_block_validation_checkpoint
   | catchup_checkpoint
   | block_processing_checkpoint ]
-[@@deriving bin_io, to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let to_string (c : t) =
   match to_yojson c with `String name -> name | _ -> assert false
