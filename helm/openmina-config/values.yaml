@@ -68,7 +68,7 @@ resources:
 
 bpfDebugger:
   enable: true
-  image: akoptelov/mina-network-debugger:bef771e
+  image: openminabot/mina-network-debugger:97c25db8
   chainId: fb56cf6ab26cadd5c9c84b0348751f02516116a2d4a65c2f16a1c34308cf0328
 
 nodeSelector:
