@@ -131,7 +131,9 @@ let process_transition ~context:(module Context : CONTEXT) ~trust_system
   in
   let metadata = [ ("state_hash", State_hash.to_yojson transition_hash) ] in
   let state_hash = State_hash.to_base58_check transition_hash in
-  let blockchain_length = Mina_block.blockchain_length transition in
+  let blockchain_length =
+    Mina_numbers.Length.to_int @@ Mina_block.blockchain_length transition
+  in
   Block_tracing.Processing.with_state_hash (Some state_hash)
   @@ fun () ->
   Block_tracing.Processing.checkpoint_current ~source:`External

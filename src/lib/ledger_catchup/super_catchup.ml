@@ -661,6 +661,7 @@ let create_node ~downloader t x =
     | `Root root ->
         let blockchain_length =
           Breadcrumb.block root |> Mina_block.blockchain_length
+          |> Mina_numbers.Length.to_int
         in
         Block_tracing.Catchup.complete ~blockchain_length
           (Breadcrumb.state_hash root |> State_hash.to_base58_check) ;
@@ -671,7 +672,8 @@ let create_node ~downloader t x =
         , Breadcrumb.parent_hash root
         , Ivar.create_full (Ok `Added_to_frontier) )
     | `Hash (h, l, parent) ->
-        Block_tracing.Catchup.checkpoint ~blockchain_length:l
+        Block_tracing.Catchup.checkpoint
+          ~blockchain_length:(Mina_numbers.Length.to_int l)
           (State_hash.to_base58_check h)
           `To_download ;
         ( Node.State.To_download
@@ -688,6 +690,7 @@ let create_node ~downloader t x =
         in
         let blockchain_length =
           Validation.block t |> Mina_block.blockchain_length
+          |> Mina_numbers.Length.to_int
         in
         Block_tracing.Catchup.checkpoint ~blockchain_length
           (State_hash.to_base58_check state_hash)

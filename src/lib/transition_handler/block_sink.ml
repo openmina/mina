@@ -63,7 +63,9 @@ let push sink (`Transition e, `Time_received tm, `Valid_cb cb) =
           .state_hash
       in
       let state_hash_b58 = State_hash.to_base58_check state_hash in
-      let blockchain_length = Mina_block.blockchain_length state in
+      let blockchain_length =
+        Mina_numbers.Length.to_int @@ Mina_block.blockchain_length state
+      in
       Block_tracing.External.checkpoint ~blockchain_length state_hash_b58
         `External_block_received ;
       let processing_start_time =

@@ -38,6 +38,7 @@ let validate_transition ~context:(module Context : CONTEXT) ~frontier
   let blockchain_length =
     Envelope.Incoming.data enveloped_transition
     |> Mina_block.Validation.block |> Mina_block.blockchain_length
+    |> Mina_numbers.Length.to_int
   in
   Block_tracing.External.checkpoint_current ~blockchain_length
     `Check_transition_not_in_frontier ;
