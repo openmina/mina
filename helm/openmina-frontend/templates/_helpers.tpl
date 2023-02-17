@@ -14,7 +14,7 @@
             "explorer",
             "tracing",
             "resources",
-            "logs",
+            "logs"
           ],
           "name": "{{.name}}"
         }

@@ -211,7 +211,10 @@ Side-Car - LogService: container
 - name: logs
   image: {{ .logs.image }}
   imagePullPolicy: Always
-  args: [ "--dir=/mina-logs", "--address=0.0.0.0:81" ]
+  args:
+    - --dir=/mina-logs
+    - --address=0.0.0.0:81
+    - --tar-file-prefix={{ .name }}-logs
   ports:
   - name: http-logs
     protocol: TCP
