@@ -615,10 +615,11 @@ let wrap
                         } )
                   |> Wrap_hack.pad_accumulator )
             in
-            let (_ : unit) =
+            let%map.Promise resp =
               Internal_tracing.Block_tracing.Production.Proof_timings
               .push_global
-                `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
+                `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done ;
+              resp
             in
             resp )
           ~input_typ:input
