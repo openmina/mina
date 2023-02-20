@@ -117,8 +117,11 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Produce_state_transition_proof_step_generate_witness_conv
       ; `Produce_state_transition_proof_step_backend_tick_proof_create_async
       ; `Produce_state_transition_proof_step_backend_tick_proof_create_async_done
-      ; `Produce_state_transition_proof_wrap_proof
-      ; `Produce_state_transition_proof_wrap_proof_done
+      ; `Produce_state_transition_proof_wrap
+      ; `Produce_state_transition_proof_wrap_generate_witness_conv
+      ; `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
+      ; `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
+      ; `Produce_state_transition_proof_wrap_done
       ; `Produce_state_transition_proof_1
       ; `Produce_state_transition_proof_2
       ; `Produce_state_transition_proof_3

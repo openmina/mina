@@ -751,10 +751,6 @@ struct
                 handler ) )
         ()
     in
-    let (_ : unit) =
-      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
-        `Produce_state_transition_proof_13
-    in
     let prev_evals =
       extract_from_proofs
         ( module struct
@@ -785,10 +781,6 @@ struct
           }
       ; messages_for_next_wrap_proof
       }
-    in
-    let (_ : unit) =
-      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
-        `Produce_state_transition_proof_14
     in
     ( { P.Base.Step.proof = next_proof
       ; statement = next_statement

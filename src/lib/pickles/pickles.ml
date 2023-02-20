@@ -787,7 +787,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
             in
             let (_ : unit) =
               Internal_tracing.Block_tracing.Production.Proof_timings
-              .push_global `Produce_state_transition_proof_wrap_proof
+              .push_global `Produce_state_transition_proof_wrap
             in
             let proof =
               { proof with
@@ -810,7 +810,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
             in
             let (_ : unit) =
               Internal_tracing.Block_tracing.Production.Proof_timings
-              .push_global `Produce_state_transition_proof_wrap_proof_done
+              .push_global `Produce_state_transition_proof_wrap_done
             in
             ( return_value
             , auxiliary_value

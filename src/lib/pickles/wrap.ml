@@ -587,23 +587,40 @@ let wrap
   let%map.Promise next_proof =
     let (T (input, conv, _conv_inv)) = Impls.Wrap.input () in
     Common.time "wrap proof" (fun () ->
+        let (_ : unit) =
+          Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_wrap_generate_witness_conv
+        in
         Impls.Wrap.generate_witness_conv
           ~f:(fun { Impls.Wrap.Proof_inputs.auxiliary_inputs; public_inputs } () ->
-            Backend.Tock.Proof.create_async ~primary:public_inputs
-              ~auxiliary:auxiliary_inputs pk
-              ~message:
-                ( Vector.map2
-                    (Vector.extend_exn
-                       prev_statement.proof_state.messages_for_next_step_proof
-                         .challenge_polynomial_commitments max_proofs_verified
-                       (Lazy.force Dummy.Ipa.Wrap.sg) )
-                    messages_for_next_wrap_proof_prepared
-                      .old_bulletproof_challenges
-                    ~f:(fun sg chals ->
-                      { Tock.Proof.Challenge_polynomial.commitment = sg
-                      ; challenges = Vector.to_array chals
-                      } )
-                |> Wrap_hack.pad_accumulator ) )
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global
+                `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
+            in
+            let resp =
+              Backend.Tock.Proof.create_async ~primary:public_inputs
+                ~auxiliary:auxiliary_inputs pk
+                ~message:
+                  ( Vector.map2
+                      (Vector.extend_exn
+                         prev_statement.proof_state.messages_for_next_step_proof
+                           .challenge_polynomial_commitments max_proofs_verified
+                         (Lazy.force Dummy.Ipa.Wrap.sg) )
+                      messages_for_next_wrap_proof_prepared
+                        .old_bulletproof_challenges
+                      ~f:(fun sg chals ->
+                        { Tock.Proof.Challenge_polynomial.commitment = sg
+                        ; challenges = Vector.to_array chals
+                        } )
+                  |> Wrap_hack.pad_accumulator )
+            in
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global
+                `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
+            in
+            resp )
           ~input_typ:input
           ~return_typ:(Snarky_backendless.Typ.unit ())
           (fun x () : unit ->
