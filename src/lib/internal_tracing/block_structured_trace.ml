@@ -112,6 +112,11 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       [ `Consensus_state_update; `Consensus_state_update_done ]
   | `Produce_state_transition_proof ->
       [ `Produce_state_transition_proof_step
+      ; `Produce_state_transition_proof_step_compute_prev_proof_parts
+      ; `Produce_state_transition_proof_step_compute_prev_proof_parts_done
+      ; `Produce_state_transition_proof_step_generate_witness_conv
+      ; `Produce_state_transition_proof_step_backend_tick_proof_create_async
+      ; `Produce_state_transition_proof_step_backend_tick_proof_create_async_done
       ; `Produce_state_transition_proof_wrap_proof
       ; `Produce_state_transition_proof_wrap_proof_done
       ; `Produce_state_transition_proof_1
