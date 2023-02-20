@@ -97,7 +97,6 @@ let build ?skip_staged_ledger_verification ~logger ~precomputed_values ~verifier
   Block_tracing.Processing.checkpoint_current `Build_breadcrumb ;
   let metadata = compute_block_trace_metadata transition_with_validation in
   Block_tracing.Processing.push_global_metadata metadata ;
-  Block_tracing.Production.push_global_metadata metadata ;
   O1trace.thread "build_breadcrumb" (fun () ->
       let open Deferred.Let_syntax in
       match%bind
