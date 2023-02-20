@@ -32,26 +32,6 @@ type block_production_checkpoint =
   | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
   | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
   | `Produce_state_transition_proof_wrap_done
-  | `Produce_state_transition_proof_1
-  | `Produce_state_transition_proof_2
-  | `Produce_state_transition_proof_3
-  | `Produce_state_transition_proof_4
-  | `Produce_state_transition_proof_5
-  | `Produce_state_transition_proof_6
-  | `Produce_state_transition_proof_7
-  | `Produce_state_transition_proof_8
-  | `Produce_state_transition_proof_9
-  | `Produce_state_transition_proof_10
-  | `Produce_state_transition_proof_11
-  | `Produce_state_transition_proof_12
-  | `Produce_state_transition_proof_13
-  | `Produce_state_transition_proof_14
-  | `Produce_state_transition_proof_15
-  | `Produce_state_transition_proof_16
-  | `Produce_state_transition_proof_17
-  | `Produce_state_transition_proof_18
-  | `Produce_state_transition_proof_19
-  | `Produce_state_transition_proof_20
   | `Produce_state_transition_proof_done
   | `Produce_chain_transition_proof
   | `Produce_validated_transition
