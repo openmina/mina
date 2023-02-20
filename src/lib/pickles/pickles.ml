@@ -774,6 +774,10 @@ module Make_str (_ : Wire_types.Concrete) = struct
           in
           let step_vk = fst (Lazy.force step_vk) in
           let wrap ?handler next_state =
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global `Produce_state_transition_proof_15
+            in
             let wrap_vk = Lazy.force wrap_vk in
             let%bind.Promise ( proof
                              , return_value
@@ -799,6 +803,10 @@ module Make_str (_ : Wire_types.Concrete) = struct
                 ~step_plonk_indices:(Lazy.force step_vks) ~actual_wrap_domains
                 (Impls.Wrap.Keypair.pk (fst (Lazy.force wrap_pk)))
                 proof
+            in
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global `Produce_state_transition_proof_16
             in
             ( return_value
             , auxiliary_value
