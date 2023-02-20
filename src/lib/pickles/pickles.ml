@@ -765,6 +765,10 @@ module Make_str (_ : Wire_types.Concrete) = struct
           let _, prev_vars_length = b.proofs_verified in
           let step handler next_state =
             let wrap_vk = Lazy.force wrap_vk in
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global `Produce_state_transition_proof_step
+            in
             S.f ?handler branch_data next_state ~prevs_length:prev_vars_length
               ~self ~step_domains ~self_dlog_plonk_index:wrap_vk.commitments
               ~public_input ~auxiliary_typ
@@ -774,16 +778,16 @@ module Make_str (_ : Wire_types.Concrete) = struct
           in
           let step_vk = fst (Lazy.force step_vk) in
           let wrap ?handler next_state =
-            let (_ : unit) =
-              Internal_tracing.Block_tracing.Production.Proof_timings
-              .push_global `Produce_state_transition_proof_15
-            in
             let wrap_vk = Lazy.force wrap_vk in
             let%bind.Promise ( proof
                              , return_value
                              , auxiliary_value
                              , actual_wrap_domains ) =
               step handler ~maxes:(module Maxes) next_state
+            in
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global `Produce_state_transition_proof_wrap_proof
             in
             let proof =
               { proof with
@@ -806,7 +810,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
             in
             let (_ : unit) =
               Internal_tracing.Block_tracing.Production.Proof_timings
-              .push_global `Produce_state_transition_proof_16
+              .push_global `Produce_state_transition_proof_wrap_proof_done
             in
             ( return_value
             , auxiliary_value

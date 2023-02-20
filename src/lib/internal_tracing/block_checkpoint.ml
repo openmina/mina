@@ -21,6 +21,9 @@ type block_production_checkpoint =
   | `Consensus_state_update_done
   | `Generate_transition_done
   | `Produce_state_transition_proof
+  | `Produce_state_transition_proof_step
+  | `Produce_state_transition_proof_wrap_proof
+  | `Produce_state_transition_proof_wrap_proof_done
   | `Produce_state_transition_proof_1
   | `Produce_state_transition_proof_2
   | `Produce_state_transition_proof_3

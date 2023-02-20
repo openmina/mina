@@ -147,6 +147,10 @@ struct
       in
       let plonk0 = t.statement.proof_state.deferred_values.plonk in
       let plonk =
+        let (_ : unit) =
+          Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_1
+        in
         let domain =
           Branch_data.domain t.statement.proof_state.deferred_values.branch_data
         in
@@ -192,10 +196,17 @@ struct
                  ~domain_generator:Backend.Tick.Field.domain_generator )
             plonk_minimal combined_evals
         in
-        time "plonk_checks" (fun () ->
-            Plonk_checks.Type1.derive_plonk
-              (module Tick.Field)
-              ~env ~shift:Shifts.tick1 plonk_minimal combined_evals )
+        let res =
+          time "plonk_checks" (fun () ->
+              Plonk_checks.Type1.derive_plonk
+                (module Tick.Field)
+                ~env ~shift:Shifts.tick1 plonk_minimal combined_evals )
+        in
+        let (_ : unit) =
+          Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_2
+        in
+        res
       in
       let data = Types_map.lookup_basic tag in
       let (module Local_max_proofs_verified) = data.max_proofs_verified in
@@ -401,6 +412,11 @@ struct
           ~endo:Endo.Wrap_inner_curve.base ~mds:Tock_field_sponge.params.mds
           tock_plonk_minimal tock_combined_evals
       in
+
+      let (_ : unit) =
+        Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+          `Produce_state_transition_proof_3
+      in
       let combined_inner_product =
         let e = t.proof.openings.evals in
         let b_polys =
@@ -434,6 +450,11 @@ struct
         combine ~which_eval:`Fst ~ft_eval:ft_eval0 As_field.zeta
         + (r * combine ~which_eval:`Snd ~ft_eval:t.proof.openings.ft_eval1 zetaw)
       in
+
+      let (_ : unit) =
+        Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+          `Produce_state_transition_proof_4
+      in
       let chal = Challenge.Constant.of_tock_field in
       let plonk =
         Plonk_checks.Type2.derive_plonk
@@ -443,6 +464,11 @@ struct
       in
       let shifted_value =
         Shifted_value.Type2.of_field (module Tock.Field) ~shift:Shifts.tock2
+      in
+
+      let (_ : unit) =
+        Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+          `Produce_state_transition_proof_5
       in
       ( `Sg challenge_polynomial_commitment
       , { Types.Step.Proof_state.Per_proof.deferred_values =
@@ -472,6 +498,10 @@ struct
       , x_hat
       , witness
       , `Actual_wrap_domain dlog_vk.domain.log_size_of_group )
+    in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_6
     in
     let challenge_polynomial_commitments = ref None in
     let unfinalized_proofs = ref None in
@@ -550,6 +580,10 @@ struct
       prev_proofs := Some prev_proofs' ;
       actual_wrap_domains := Some actual_wrap_domains'
     in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_7
+    in
     let unfinalized_proofs_extended =
       lazy
         (Vector.extend
@@ -582,6 +616,10 @@ struct
       go
         (Option.value_exn !prev_proofs)
         branch_data.rule.prevs prev_values_length
+    in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_8
     in
     let messages_for_next_step_proof :
         _ Reduced_messages_for_next_proof_over_same_field.Step.t Lazy.t =
@@ -620,6 +658,10 @@ struct
            ~dlog_plonk_index:self_dlog_plonk_index
            (Lazy.force messages_for_next_step_proof) )
     in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_9
+    in
     let messages_for_next_wrap_proof_padded =
       let rec pad :
           type n k maxes pvals lws lhs.
@@ -651,6 +693,10 @@ struct
            (Vector.map (Option.value_exn !statements_with_hashes) ~f:(fun s ->
                 s.proof_state.messages_for_next_wrap_proof ) )
            Maxes.maxes Maxes.length )
+    in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_10
     in
     let handler (Snarky_backendless.Request.With { request; respond } as r) =
       let k x = respond (Provide x) in
@@ -703,6 +749,10 @@ struct
                } )
            |> to_list) )
     in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_11
+    in
     let%map.Promise (next_proof : Tick.Proof.t), next_statement_hashed =
       let (T (input, _conv, conv_inv)) =
         Impls.Step.input ~proofs_verified:Max_proofs_verified.n
@@ -723,6 +773,10 @@ struct
                   ~message:(Lazy.force prev_challenge_polynomial_commitments)
                   pk
               in
+              let (_ : unit) =
+                Internal_tracing.Block_tracing.Production.Proof_timings
+                .push_global `Produce_state_transition_proof_12
+              in
               (proof, next_statement_hashed) )
             ~input_typ:Impls.Step.Typ.unit ~return_typ:input
             (fun () () ->
@@ -730,6 +784,10 @@ struct
                 (fun () -> conv_inv (branch_data.main ~step_domains ()))
                 handler ) )
         ()
+    in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_13
     in
     let prev_evals =
       extract_from_proofs
@@ -761,6 +819,10 @@ struct
           }
       ; messages_for_next_wrap_proof
       }
+    in
+    let (_ : unit) =
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_14
     in
     ( { P.Base.Step.proof = next_proof
       ; statement = next_statement
