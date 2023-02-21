@@ -646,9 +646,15 @@ let wrap
               }
           } )
   in
+  Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+    `Produce_state_transition_proof_wrap_statement_to_minimal ;
+  let statement =
+    Types.Wrap.Statement.to_minimal next_statement ~to_option:Opt.to_option
+  in
+  Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+    `Produce_state_transition_proof_wrap_statement_to_minimal_done ;
   ( { proof = next_proof
-    ; statement =
-        Types.Wrap.Statement.to_minimal next_statement ~to_option:Opt.to_option
+    ; statement
     ; prev_evals =
         { Plonk_types.All_evals.evals =
             { public_input = x_hat_evals; evals = proof.openings.evals }

@@ -29,8 +29,16 @@ type block_production_checkpoint =
   | `Produce_state_transition_proof_step_backend_tick_proof_create_async_done
   | `Produce_state_transition_proof_wrap
   | `Produce_state_transition_proof_wrap_generate_witness_conv
+  | `Produce_state_transition_proof_generate_witness_conv_auxilary_input
+  | `Produce_state_transition_proof_generate_witness_conv_auxilary_input_done
+  | `Produce_state_transition_proof_wrap_new_bulletproof_challenges
+  | `Produce_state_transition_proof_wrap_new_bulletproof_challenges_done
+  | `Produce_state_transition_proof_wrap_incrementally_verify_proof
+  | `Produce_state_transition_proof_wrap_incrementally_verify_proof_done
   | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
   | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
+  | `Produce_state_transition_proof_wrap_statement_to_minimal
+  | `Produce_state_transition_proof_wrap_statement_to_minimal_done
   | `Produce_state_transition_proof_wrap_done
   | `Produce_state_transition_proof_done
   | `Produce_chain_transition_proof
