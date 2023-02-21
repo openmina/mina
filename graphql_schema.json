@@ -14175,6 +14175,12 @@
               "description": "Block with traces",
               "args": [
                 {
+                  "name": "height",
+                  "description": "Only return traces with matching height.",
+                  "type": { "kind": "SCALAR", "name": "Int", "ofType": null },
+                  "defaultValue": null
+                },
+                {
                   "name": "maxLength",
                   "description":
                     "The maximum number of block traces to return.",

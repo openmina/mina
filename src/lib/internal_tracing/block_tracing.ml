@@ -153,10 +153,16 @@ module Registry = struct
         with _ -> None )
 
   (* TODO: cleanup this and find a better way *)
-  let all_traces ?max_length () =
+  let all_traces ?max_length ?height () =
+    let matches_height blockchain_length =
+      let blockchain_length_int =
+        Mina_numbers.Length.to_int blockchain_length
+      in
+      Option.value_map ~default:true ~f:(( = ) blockchain_length_int) height
+    in
     let catchup_traces =
       Hashtbl.to_alist catchup_registry
-      |> List.map ~f:(fun (key, item) ->
+      |> List.filter_map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
              let Trace.
                    { blockchain_length
@@ -168,20 +174,23 @@ module Registry = struct
                    } =
                item
              in
-             { state_hash
-             ; blockchain_length
-             ; source
-             ; status
-             ; started_at = Trace.started_at item
-             ; total_time
-             ; metadata
-             } )
+             if matches_height blockchain_length then
+               Some
+                 { state_hash
+                 ; blockchain_length
+                 ; source
+                 ; status
+                 ; started_at = Trace.started_at item
+                 ; total_time
+                 ; metadata
+                 }
+             else None )
     in
     let traces =
       Hashtbl.to_alist registry
       |> List.filter ~f:(fun (s, _) ->
              Option.is_none (Hashtbl.find catchup_registry s) )
-      |> List.map ~f:(fun (key, item) ->
+      |> List.filter_map ~f:(fun (key, item) ->
              let state_hash = Mina_base.State_hash.to_base58_check key in
              let Trace.
                    { blockchain_length
@@ -193,14 +202,17 @@ module Registry = struct
                    } =
                item
              in
-             { state_hash
-             ; blockchain_length
-             ; source
-             ; status
-             ; started_at = Trace.started_at item
-             ; total_time
-             ; metadata
-             } )
+             if matches_height blockchain_length then
+               Some
+                 { state_hash
+                 ; blockchain_length
+                 ; source
+                 ; status
+                 ; started_at = Trace.started_at item
+                 ; total_time
+                 ; metadata
+                 }
+             else None )
     in
     let traces =
       traces @ catchup_traces
