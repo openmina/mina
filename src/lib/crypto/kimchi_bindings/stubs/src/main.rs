@@ -28,6 +28,7 @@ use wires_15_stubs::{
     CamlProofEvaluations,
     CamlProverCommitments,
     CamlProverProof,
+    CamlProverProveMetadata,
     CamlRandomOracles,
     CamlScalarChallenge,
     CamlWire,
@@ -99,6 +100,7 @@ fn generate_types_bindings(mut w: impl std::io::Write, env: &mut Env) {
     decl_type!(w, env, CamlLookupCommitments::<T1> => "lookup_commitments");
     decl_type!(w, env, CamlProverCommitments::<T1> => "prover_commitments");
     decl_type!(w, env, CamlProverProof<T1, T2> => "prover_proof");
+    decl_type!(w, env, CamlProverProveMetadata => "prover_prove_metadata");
 
     decl_type!(w, env, CamlWire => "wire");
     decl_type!(w, env, GateType => "gate_type");

@@ -62,6 +62,8 @@ pub use {
         wires::caml::CamlWire,
     },
     kimchi::proof::caml::{CamlLookupEvaluations, CamlProofEvaluations},
-    kimchi::prover::caml::{CamlLookupCommitments, CamlProverCommitments, CamlProverProof},
+    kimchi::prover::caml::{
+        CamlLookupCommitments, CamlProverCommitments, CamlProverProof, CamlProverProveMetadata,
+    },
     oracle::sponge::caml::CamlScalarChallenge,
 };

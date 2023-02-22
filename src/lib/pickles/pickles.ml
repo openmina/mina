@@ -2604,25 +2604,28 @@ module Make_str (_ : Wire_types.Concrete) = struct
                             ~f:(fun { Impls.Wrap.Proof_inputs.auxiliary_inputs
                                     ; public_inputs
                                     } () ->
-                              Backend.Tock.Proof.create_async
-                                ~primary:public_inputs
-                                ~auxiliary:auxiliary_inputs pk
-                                ~message:
-                                  ( Vector.map2
-                                      (Vector.extend_exn
-                                         prev_statement.proof_state
-                                           .messages_for_next_step_proof
-                                           .challenge_polynomial_commitments
-                                         max_proofs_verified
-                                         (Lazy.force Dummy.Ipa.Wrap.sg) )
-                                      messages_for_next_wrap_proof_prepared
-                                        .old_bulletproof_challenges
-                                      ~f:(fun sg chals ->
-                                        { Tock.Proof.Challenge_polynomial
-                                          .commitment = sg
-                                        ; challenges = Vector.to_array chals
-                                        } )
-                                  |> Wrap_hack.pad_accumulator ) )
+                              let%map.Promise resp, meta =
+                                Backend.Tock.Proof.create_async
+                                  ~primary:public_inputs
+                                  ~auxiliary:auxiliary_inputs pk
+                                  ~message:
+                                    ( Vector.map2
+                                        (Vector.extend_exn
+                                           prev_statement.proof_state
+                                             .messages_for_next_step_proof
+                                             .challenge_polynomial_commitments
+                                           max_proofs_verified
+                                           (Lazy.force Dummy.Ipa.Wrap.sg) )
+                                        messages_for_next_wrap_proof_prepared
+                                          .old_bulletproof_challenges
+                                        ~f:(fun sg chals ->
+                                          { Tock.Proof.Challenge_polynomial
+                                            .commitment = sg
+                                          ; challenges = Vector.to_array chals
+                                          } )
+                                    |> Wrap_hack.pad_accumulator )
+                              in
+                              resp )
                             ~input_typ:input
                             ~return_typ:(Snarky_backendless.Typ.unit ())
                             (fun x () : unit -> wrap_main (conv x))
@@ -3495,25 +3498,28 @@ module Make_str (_ : Wire_types.Concrete) = struct
                             ~f:(fun { Impls.Wrap.Proof_inputs.auxiliary_inputs
                                     ; public_inputs
                                     } () ->
-                              Backend.Tock.Proof.create_async
-                                ~primary:public_inputs
-                                ~auxiliary:auxiliary_inputs pk
-                                ~message:
-                                  ( Vector.map2
-                                      (Vector.extend_exn
-                                         prev_statement.proof_state
-                                           .messages_for_next_step_proof
-                                           .challenge_polynomial_commitments
-                                         max_proofs_verified
-                                         (Lazy.force Dummy.Ipa.Wrap.sg) )
-                                      messages_for_next_wrap_proof_prepared
-                                        .old_bulletproof_challenges
-                                      ~f:(fun sg chals ->
-                                        { Tock.Proof.Challenge_polynomial
-                                          .commitment = sg
-                                        ; challenges = Vector.to_array chals
-                                        } )
-                                  |> Wrap_hack.pad_accumulator ) )
+                              let%map.Promise resp, meta =
+                                Backend.Tock.Proof.create_async
+                                  ~primary:public_inputs
+                                  ~auxiliary:auxiliary_inputs pk
+                                  ~message:
+                                    ( Vector.map2
+                                        (Vector.extend_exn
+                                           prev_statement.proof_state
+                                             .messages_for_next_step_proof
+                                             .challenge_polynomial_commitments
+                                           max_proofs_verified
+                                           (Lazy.force Dummy.Ipa.Wrap.sg) )
+                                        messages_for_next_wrap_proof_prepared
+                                          .old_bulletproof_challenges
+                                        ~f:(fun sg chals ->
+                                          { Tock.Proof.Challenge_polynomial
+                                            .commitment = sg
+                                          ; challenges = Vector.to_array chals
+                                          } )
+                                    |> Wrap_hack.pad_accumulator )
+                              in
+                              resp )
                             ~input_typ:input
                             ~return_typ:(Snarky_backendless.Typ.unit ())
                             (fun x () : unit -> wrap_main (conv x))

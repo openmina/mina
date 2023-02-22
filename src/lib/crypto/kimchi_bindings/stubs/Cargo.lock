@@ -490,6 +490,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "itoa"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fad582f4b9e86b6caa621cabeb0963332d92eea04729ab12892c2533951e6440"
+
+[[package]]
 name = "kimchi"
 version = "0.1.0"
 dependencies = [
@@ -518,6 +524,7 @@ dependencies = [
  "rayon",
  "rmp-serde 1.1.1",
  "serde",
+ "serde_json",
  "serde_with",
  "strum",
  "strum_macros",
@@ -927,6 +934,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97477e48b4cf8603ad5f7aaf897467cf42ab4218a38ef76fb14c2d6773a6d6a8"
 
 [[package]]
+name = "ryu"
+version = "1.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b4b9743ed687d4b4bcedf9ff5eaa7398495ae14e61cba0a295704edbc7decde"
+
+[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -968,6 +981,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.93"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cad406b69c91885b5107daf2c29572f6c8cdb3c66826821e286c533490c0bc76"
+dependencies = [
+ "itoa",
+ "ryu",
+ "serde",
 ]
 
 [[package]]
@@ -1174,6 +1198,7 @@ dependencies = [
  "rayon",
  "rmp-serde 0.15.5",
  "serde",
+ "serde_json",
  "sprs",
 ]
 
@@ -1197,3 +1222,8 @@ dependencies = [
  "syn",
  "synstructure",
 ]
+
+[[patch.unused]]
+name = "ocaml-gen"
+version = "0.1.4"
+source = "git+https://github.com/openmina/ocaml-gen#24db12c4291e72c0ed99d3532f986e91863dcf41"

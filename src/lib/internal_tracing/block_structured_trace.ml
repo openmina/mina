@@ -133,6 +133,11 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Produce_state_transition_proof_wrap_statement_to_minimal_done
       ; `Produce_state_transition_proof_wrap_done
       ]
+  | `Produce_state_transition_proof_step_backend_tick_proof_create_async ->
+      [ `Produce_state_transition_proof_step_backend_request_init
+      ; `Produce_state_transition_proof_step_backend_request_received
+      ; `Produce_state_transition_proof_step_backend_finished
+      ]
   | `Apply_staged_ledger_diff ->
       [ `Update_coinbase_stack
       ; `Update_coinbase_stack_done

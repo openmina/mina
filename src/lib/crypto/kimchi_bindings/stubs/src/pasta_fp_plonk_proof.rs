@@ -12,7 +12,7 @@ use commitment_dlog::commitment::{CommitmentCurve, PolyComm};
 use commitment_dlog::evaluation_proof::OpeningProof;
 use groupmap::GroupMap;
 use kimchi::proof::{ProofEvaluations, ProverCommitments, ProverProof, RecursionChallenge};
-use kimchi::prover::caml::CamlProverProof;
+use kimchi::prover::caml::{CamlProverProof, CamlProverProveMetadata};
 use kimchi::prover_index::ProverIndex;
 use kimchi::{circuits::polynomial::COLUMNS, verifier::batch_verify};
 use mina_curves::pasta::{Fp, Fq, Pallas, Vesta, VestaParameters};
@@ -32,7 +32,8 @@ pub fn caml_pasta_fp_plonk_proof_create(
     witness: Vec<CamlFpVector>,
     prev_challenges: Vec<CamlFp>,
     prev_sgs: Vec<CamlGVesta>,
-) -> Result<CamlProverProof<CamlGVesta, CamlFp>, ocaml::Error> {
+) -> Result<(CamlProverProof<CamlGVesta, CamlFp>, CamlProverProveMetadata), ocaml::Error> {
+    let init_t = std::time::SystemTime::now();
     {
         let ptr: &mut commitment_dlog::srs::SRS<Vesta> =
             unsafe { &mut *(std::sync::Arc::as_ptr(&index.as_ref().0.srs) as *mut _) };
@@ -74,7 +75,7 @@ pub fn caml_pasta_fp_plonk_proof_create(
     // Release the runtime lock so that other threads can run using it while we generate the proof.
     runtime.releasing_runtime(|| {
         let group_map = GroupMap::<Fq>::setup();
-        let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+        let (proof, mut meta) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
             &group_map,
             witness,
             &[],
@@ -83,7 +84,11 @@ pub fn caml_pasta_fp_plonk_proof_create(
             None,
         )
         .map_err(|e| ocaml::Error::Error(e.into()))?;
-        Ok(proof.into())
+
+        meta.set_checkpoint(|v| &mut v.request_received_t, init_t);
+        meta.set_checkpoint_now(|v| &mut v.finished_t);
+
+        Ok((proof.into(), meta.into()))
     })
 }
 
@@ -194,7 +199,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_lookup(
     (
         CamlPastaFpPlonkIndex(Box::new(index)),
         public_input.into(),
-        proof.into(),
+        proof.0.into(),
     )
 }
 

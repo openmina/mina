@@ -359,16 +359,17 @@ module Production = struct
 
     let global = ref []
 
-    let push ?metadata t checkpoint =
+    let push ?metadata ?time t checkpoint =
+      let started_at = Option.value time ~default:(Unix.gettimeofday ()) in
       List.append t
-        [ { started_at = Unix.gettimeofday ()
+        [ { started_at
           ; checkpoint
           ; metadata = Option.value metadata ~default:"{}"
           }
         ]
 
-    let push_global ?metadata checkpoint =
-      global := push !global checkpoint ?metadata
+    let push_global ?metadata ?time checkpoint =
+      global := push !global checkpoint ?metadata ?time
 
     let take_global () =
       let timings = !global in

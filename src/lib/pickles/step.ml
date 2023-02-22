@@ -732,11 +732,26 @@ struct
                 .push_global
                   `Produce_state_transition_proof_step_backend_tick_proof_create_async
               in
-              let%map.Promise proof =
+              let (_ : unit) =
+                Internal_tracing.Block_tracing.Production.Proof_timings
+                .push_global
+                  `Produce_state_transition_proof_step_backend_request_init
+              in
+              let%map.Promise proof, meta =
                 Backend.Tick.Proof.create_async ~primary:public_inputs
                   ~auxiliary:auxiliary_inputs
                   ~message:(Lazy.force prev_challenge_polynomial_commitments)
                   pk
+              in
+              let (_ : unit) =
+                Internal_tracing.Block_tracing.Production.Proof_timings
+                .push_global ~time:meta.request_received_t
+                  `Produce_state_transition_proof_step_backend_request_received
+              in
+              let (_ : unit) =
+                Internal_tracing.Block_tracing.Production.Proof_timings
+                .push_global ~time:meta.finished_t
+                  `Produce_state_transition_proof_step_backend_finished
               in
               let (_ : unit) =
                 Internal_tracing.Block_tracing.Production.Proof_timings

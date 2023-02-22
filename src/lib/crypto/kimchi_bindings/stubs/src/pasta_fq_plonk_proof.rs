@@ -11,7 +11,7 @@ use commitment_dlog::commitment::{CommitmentCurve, PolyComm};
 use commitment_dlog::evaluation_proof::OpeningProof;
 use groupmap::GroupMap;
 use kimchi::proof::{ProofEvaluations, ProverCommitments, ProverProof, RecursionChallenge};
-use kimchi::prover::caml::CamlProverProof;
+use kimchi::prover::caml::{CamlProverProof, CamlProverProveMetadata};
 use kimchi::prover_index::ProverIndex;
 use kimchi::{circuits::polynomial::COLUMNS, verifier::batch_verify};
 use mina_curves::pasta::{Fp, Fq, Pallas, PallasParameters};
@@ -28,7 +28,14 @@ pub fn caml_pasta_fq_plonk_proof_create(
     witness: Vec<CamlFqVector>,
     prev_challenges: Vec<CamlFq>,
     prev_sgs: Vec<CamlGPallas>,
-) -> Result<CamlProverProof<CamlGPallas, CamlFq>, ocaml::Error> {
+) -> Result<
+    (
+        CamlProverProof<CamlGPallas, CamlFq>,
+        CamlProverProveMetadata,
+    ),
+    ocaml::Error,
+> {
+    let init_t = std::time::SystemTime::now();
     {
         let ptr: &mut commitment_dlog::srs::SRS<Pallas> =
             unsafe { &mut *(std::sync::Arc::as_ptr(&index.as_ref().0.srs) as *mut _) };
@@ -70,12 +77,17 @@ pub fn caml_pasta_fq_plonk_proof_create(
     // Release the runtime lock so that other threads can run using it while we generate the proof.
     runtime.releasing_runtime(|| {
         let group_map = GroupMap::<Fp>::setup();
-        let proof = ProverProof::create_recursive::<
+        let prover_proof_create_recursive_t = std::time::SystemTime::now();
+        let (proof, mut meta) = ProverProof::create_recursive::<
             DefaultFqSponge<PallasParameters, PlonkSpongeConstantsKimchi>,
             DefaultFrSponge<Fq, PlonkSpongeConstantsKimchi>,
         >(&group_map, witness, &[], index, prev, None)
         .map_err(|e| ocaml::Error::Error(e.into()))?;
-        Ok(proof.into())
+
+        meta.set_checkpoint(|v| &mut v.request_received_t, init_t);
+        meta.set_checkpoint_now(|v| &mut v.finished_t);
+
+        Ok((proof.into(), meta.into()))
     })
 }
 

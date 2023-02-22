@@ -615,7 +615,7 @@ let wrap
                         } )
                   |> Wrap_hack.pad_accumulator )
             in
-            let%map.Promise resp =
+            let%map.Promise resp, meta =
               Internal_tracing.Block_tracing.Production.Proof_timings
               .push_global
                 `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done ;
