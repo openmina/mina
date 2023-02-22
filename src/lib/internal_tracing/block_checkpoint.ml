@@ -37,6 +37,8 @@ type block_production_checkpoint =
   | `Produce_state_transition_proof_wrap_incrementally_verify_proof_done
   | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
   | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
+  | `Produce_state_transition_proof_wrap_hash_messages_for_next_wrap_proof
+  | `Produce_state_transition_proof_wrap_hash_messages_for_next_wrap_proof_done
   | `Produce_state_transition_proof_wrap_statement_to_minimal
   | `Produce_state_transition_proof_wrap_statement_to_minimal_done
   | `Produce_state_transition_proof_wrap_done
