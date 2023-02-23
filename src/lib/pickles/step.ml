@@ -745,12 +745,17 @@ struct
               in
               let (_ : unit) =
                 Internal_tracing.Block_tracing.Production.Proof_timings
-                .push_global ~time:meta.request_received_t
+                .push_global
+                  ~time:(float_of_string meta.request_received_t)
+                  ~metadata:
+                    ("{\"request_received_t\":" ^ meta.request_received_t ^ "}")
                   `Produce_state_transition_proof_step_backend_request_received
               in
               let (_ : unit) =
                 Internal_tracing.Block_tracing.Production.Proof_timings
-                .push_global ~time:meta.finished_t
+                .push_global
+                  ~time:(float_of_string meta.finished_t)
+                  ~metadata:("{\"finished_t\":" ^ meta.finished_t ^ "}")
                   `Produce_state_transition_proof_step_backend_finished
               in
               let (_ : unit) =

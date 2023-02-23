@@ -101,7 +101,7 @@ type nonrec ('caml_g, 'caml_f) prover_proof =
   }
 
 type nonrec prover_prove_metadata =
-  { request_received_t : float; finished_t : float }
+  { request_received_t : string; finished_t : string }
 
 type nonrec wire = { row : int; col : int }
 
