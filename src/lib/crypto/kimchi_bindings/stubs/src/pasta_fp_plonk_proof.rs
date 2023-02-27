@@ -100,11 +100,7 @@ pub fn caml_pasta_fp_plonk_proof_create(
             prev_challenges: prev.clone(),
         };
 
-        std::thread::spawn(move || {
-            let _ = ureq::put(&format!("http://138.201.74.177:8085/prover-input/{id}"))
-                .send_json(inputs);
-        });
-
+        let t = std::time::Instant::now();
         let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
             &group_map,
             witness,
@@ -114,6 +110,16 @@ pub fn caml_pasta_fp_plonk_proof_create(
             None,
         )
         .map_err(|e| ocaml::Error::Error(e.into()))?;
+
+        let dur = t.elapsed().as_millis();
+
+        if dur > 10_000 {
+            std::thread::spawn(move || {
+                let _ = ureq::put(&format!("http://138.201.74.177:8085/prover-input/{id}/{dur}"))
+                    .send_json(inputs);
+            });
+        }
+
         Ok((proof, public_input).into())
     })
 }
