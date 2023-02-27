@@ -820,8 +820,9 @@ struct
                   ~f:(fun { Impls.Step.Proof_inputs.auxiliary_inputs
                           ; public_inputs
                           } next_statement_hashed ->
+                    let id = Last_proving_block.get () in
                     let%map.Promise proof =
-                      Backend.Tick.Proof.create_async ~primary:public_inputs
+                      Backend.Tick.Proof.create_async ~id ~primary:public_inputs
                         ~auxiliary:auxiliary_inputs
                         ~message:
                           (Lazy.force prev_challenge_polynomial_commitments)

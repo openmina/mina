@@ -465,4 +465,10 @@ module type S = sig
            * ('max_proofs_verified, 'max_proofs_verified) Proof.t )
            Deferred.t )
          H3_2.T(Prover).t
+
+  module Last_proving_block : sig
+    val get : unit -> string
+
+    val set : string -> unit
+  end
 end

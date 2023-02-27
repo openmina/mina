@@ -81,7 +81,7 @@ module Proof = Plonk_dlog_proof.Make (struct
     let batch_verify vks ts =
       Promise.run_in_thread (fun () -> batch_verify vks ts)
 
-    let create_aux ~f:create (pk : Keypair.t) primary auxiliary prev_chals
+    let create_aux ~f:create id (pk : Keypair.t) primary auxiliary prev_chals
         prev_comms =
       (* external values contains [1, primary..., auxiliary ] *)
       let external_values i =
@@ -106,16 +106,17 @@ module Proof = Plonk_dlog_proof.Make (struct
             done ;
             witness )
       in
-      create pk.index witness_cols prev_chals prev_comms
+      create id pk.index witness_cols prev_chals prev_comms
 
-    let create_async (pk : Keypair.t) primary auxiliary prev_chals prev_comms =
-      create_aux pk primary auxiliary prev_chals prev_comms
-        ~f:(fun pk auxiliary_input prev_challenges prev_sgs ->
+    let create_async id (pk : Keypair.t) primary auxiliary prev_chals prev_comms
+        =
+      create_aux id pk primary auxiliary prev_chals prev_comms
+        ~f:(fun id pk auxiliary_input prev_challenges prev_sgs ->
           Promise.run_in_thread (fun () ->
-              create pk auxiliary_input prev_challenges prev_sgs ) )
+              create id pk auxiliary_input prev_challenges prev_sgs ) )
 
-    let create (pk : Keypair.t) primary auxiliary prev_chals prev_comms =
-      create_aux pk primary auxiliary prev_chals prev_comms ~f:create
+    let create id (pk : Keypair.t) primary auxiliary prev_chals prev_comms =
+      create_aux id pk primary auxiliary prev_chals prev_comms ~f:create
   end
 
   module Verifier_index = Kimchi_bindings.Protocol.VerifierIndex.Fp

@@ -29,6 +29,7 @@ use std::convert::TryInto;
 #[ocaml_gen::func]
 #[ocaml::func]
 pub fn caml_pasta_fq_plonk_proof_create(
+    id: String,
     index: CamlPastaFqPlonkIndexPtr<'static>,
     witness: Vec<CamlFqVector>,
     prev_challenges: Vec<CamlFq>,

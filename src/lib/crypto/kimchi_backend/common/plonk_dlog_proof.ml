@@ -93,7 +93,8 @@ module type Inputs_intf = sig
     type t = (Curve.Affine.Backend.t, Scalar_field.t) Kimchi_types.prover_proof
 
     val create :
-         Index.t
+         string
+      -> Index.t
       -> Scalar_field.Vector.t
       -> Scalar_field.Vector.t
       -> Scalar_field.t array
@@ -101,7 +102,8 @@ module type Inputs_intf = sig
       -> t
 
     val create_async :
-         Index.t
+         string
+      -> Index.t
       -> Scalar_field.Vector.t
       -> Scalar_field.Vector.t
       -> Scalar_field.t array
@@ -358,7 +360,7 @@ module Make (Inputs : Inputs_intf) = struct
   let to_backend chal_polys primary_input t =
     to_backend' chal_polys (List.to_array primary_input) t
 
-  let create ?message pk ~primary ~auxiliary =
+  let create ?id ?message pk ~primary ~auxiliary =
     let chal_polys =
       match (message : message option) with Some s -> s | None -> []
     in
@@ -372,10 +374,11 @@ module Make (Inputs : Inputs_intf) = struct
         ~f:(fun { Challenge_polynomial.commitment; _ } ->
           G.Affine.to_backend (Finite commitment) )
     in
-    let res = Backend.create pk primary auxiliary challenges commitments in
+    let id = Option.value id ~default:"none" in
+    let res = Backend.create id pk primary auxiliary challenges commitments in
     of_backend res
 
-  let create_async ?message pk ~primary ~auxiliary =
+  let create_async ?id ?message pk ~primary ~auxiliary =
     let chal_polys =
       match (message : message option) with Some s -> s | None -> []
     in
@@ -389,8 +392,9 @@ module Make (Inputs : Inputs_intf) = struct
         ~f:(fun { Challenge_polynomial.commitment; _ } ->
           G.Affine.to_backend (Finite commitment) )
     in
+    let id = Option.value id ~default:"none" in
     let%map.Promise res =
-      Backend.create_async pk primary auxiliary challenges commitments
+      Backend.create_async id pk primary auxiliary challenges commitments
     in
     of_backend res
 

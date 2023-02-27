@@ -355,7 +355,8 @@ module Protocol = struct
   module Proof = struct
     module Fp = struct
       external create :
-           Index.Fp.t
+           string
+        -> Index.Fp.t
         -> FieldVectors.Fp.t array
         -> Pasta_bindings.Fp.t array
         -> Pasta_bindings.Fq.t Kimchi_types.or_infinity array
@@ -465,7 +466,8 @@ module Protocol = struct
 
     module Fq = struct
       external create :
-           Index.Fq.t
+           string
+        -> Index.Fq.t
         -> FieldVectors.Fq.t array
         -> Pasta_bindings.Fq.t array
         -> Pasta_bindings.Fp.t Kimchi_types.or_infinity array

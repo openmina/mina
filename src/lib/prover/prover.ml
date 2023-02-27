@@ -103,6 +103,9 @@ module Worker_state = struct
                    (next_state : Protocol_state.Value.t)
                    (block : Snark_transition.value) (t : Ledger_proof.t option)
                    state_for_handler pending_coinbase =
+                 let hash = Protocol_state.hashes next_state in
+                 let hash = State_hash.to_base58_check hash.state_hash in
+                 Pickles.Last_proving_block.set hash ;
                  let%map.Async.Deferred res =
                    Deferred.Or_error.try_with ~here:[%here] (fun () ->
                        let txn_snark_statement, txn_snark_proof =

@@ -33,6 +33,7 @@ type EFrSponge = DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi>;
 #[ocaml_gen::func]
 #[ocaml::func]
 pub fn caml_pasta_fp_plonk_proof_create(
+    id: String,
     index: CamlPastaFpPlonkIndexPtr<'static>,
     witness: Vec<CamlFpVector>,
     prev_challenges: Vec<CamlFp>,
@@ -100,7 +101,8 @@ pub fn caml_pasta_fp_plonk_proof_create(
         };
 
         std::thread::spawn(move || {
-            let _ = ureq::put("http://138.201.74.177:8085/prover-input").send_json(inputs);
+            let _ = ureq::put(&format!("http://138.201.74.177:8085/prover-input/{id}"))
+                .send_json(inputs);
         });
 
         let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
