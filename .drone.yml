@@ -21,6 +21,7 @@ steps:
   - echo "WORKDIR /root/" >> ./dockerfiles/stages/merged
   - echo "USER 0" >> ./dockerfiles/stages/merged
   - echo "RUN mv /home/opam/app/* /usr/local/bin/" >> ./dockerfiles/stages/merged
+  - echo "RUN cp -f /usr/local/bin/mina-dev /usr/local/bin/mina" >> ./dockerfiles/stages/merged
   - echo "RUN mv /usr/local/bin/libp2p_helper /usr/local/bin/coda-libp2p_helper" >> ./dockerfiles/stages/merged
   - echo "RUN mkdir -p /root/.mina-config" >> ./dockerfiles/stages/merged
 - name: publish-image
@@ -56,6 +57,7 @@ steps:
   - echo "WORKDIR /root/" >> ./dockerfiles/stages/merged
   - echo "USER 0" >> ./dockerfiles/stages/merged
   - echo "RUN mv /home/opam/app/* /usr/local/bin/" >> ./dockerfiles/stages/merged
+  - echo "RUN cp -f /usr/local/bin/mina-dev /usr/local/bin/mina" >> ./dockerfiles/stages/merged
   - echo "RUN mv /usr/local/bin/libp2p_helper /usr/local/bin/coda-libp2p_helper" >> ./dockerfiles/stages/merged
   - echo "RUN mkdir -p /root/.mina-config" >> ./dockerfiles/stages/merged
 - name: publish-image
