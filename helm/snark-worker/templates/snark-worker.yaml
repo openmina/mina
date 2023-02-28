@@ -64,6 +64,9 @@ spec:
           {{- if $.Values.mina.exposeGraphql }}
           "-insecure-rest-server",
           {{- end -}}
+          {{- if $.Values.mina.usePodIp }}
+          "-external-ip", "$(DAEMON_POD_IP)",
+          {{- end }}
           "-external-port", "$(DAEMON_EXTERNAL_PORT)",
           "-metrics-port", "$(DAEMON_METRICS_PORT)",
           "-run-snark-worker", "$(CODA_SNARK_KEY)",
@@ -103,6 +106,10 @@ spec:
           value: {{ $.Values.publicKey | trim | quote }}
         - name: CODA_SNARK_FEE
           value: {{ $.Values.snarkFee | quote }}
+        - name: DAEMON_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         - name: DAEMON_EXTERNAL_PORT
           value: {{ $.Values.mina.ports.p2p | quote }}
         - name: WORK_SELECTION

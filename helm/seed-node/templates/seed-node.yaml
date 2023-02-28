@@ -79,6 +79,9 @@ spec:
           {{- if $.Values.mina.exposeGraphql }}
           "-insecure-rest-server",
           {{- end -}}
+          {{- if $.Values.mina.usePodIp }}
+          "-external-ip", "$(DAEMON_POD_IP)",
+          {{- end }}
           "-external-port", "$(DAEMON_EXTERNAL_PORT)",
           "-metrics-port", "$(DAEMON_METRICS_PORT)",
           "-enable-peer-exchange", "true",
@@ -127,6 +130,10 @@ spec:
           value: {{ $.Values.testnetName }}
         - name: GCLOUD_BLOCK_UPLOAD_BUCKET
           value: "mina_network_block_data"
+        - name: DAEMON_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         - name: DAEMON_EXTERNAL_PORT
           value: {{ default $.Values.mina.ports.p2p $config.externalPort | quote }}
         - name: MINA_LIBP2P_PASS

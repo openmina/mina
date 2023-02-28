@@ -228,6 +228,9 @@ spec:
           {{- if $.Values.mina.exposeGraphql }}
           "-insecure-rest-server",
           {{- end -}}
+          {{- if $.Values.mina.usePodIp }}
+          "-external-ip", "$(DAEMON_POD_IP)",
+          {{- end }}
           "-external-port", "$(DAEMON_EXTERNAL_PORT)",
           "-metrics-port", "$(DAEMON_METRICS_PORT)",
           "-block-producer-key", "/root/wallet-keys/key",
@@ -251,6 +254,10 @@ spec:
           value: {{ $.Values.mina.ports.client | quote }}
         - name: DAEMON_METRICS_PORT
           value: {{ $.Values.mina.ports.metrics | quote }}
+        - name: DAEMON_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         - name: DAEMON_EXTERNAL_PORT
           value: {{ default $.Values.mina.ports.p2p $config.externalPort | quote }}
         - name: GCLOUD_KEYFILE
