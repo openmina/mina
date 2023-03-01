@@ -171,7 +171,7 @@ Side-Car - BpfDebugger: BPF_ALIAS variable
 {{- define "sideCar.bpfDebugger.envVar" }}
 {{- if .bpfDebugger.enable }}
 - name: BPF_ALIAS
-  value: /coda/0.0.1/{{ .bpfDebugger.chainId }}-0.0.0.0
+  value: auto-0.0.0.0
 {{- end }}
 {{- end }}
 
