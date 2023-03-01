@@ -145,7 +145,7 @@ Side-Car - BpfDebugger: container definition
   volumeMounts:
     - mountPath: /sys/kernel/debug
       name: sys-kernel-debug
-  {{- if .bpfDebugger.restartMinaOnExit }}
+  {{- if .bpfDebugger.restartMina }}
   lifecycle:
     postStart:
       exec:
