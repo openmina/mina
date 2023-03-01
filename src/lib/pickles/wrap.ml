@@ -872,10 +872,28 @@ let wrap
   let%map.Promise next_proof =
     let (T (input, conv, _conv_inv)) = Impls.Wrap.input () in
     Common.time "wrap proof" (fun () ->
+        let (_ : unit) =
+          Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_wrap_generate_witness_conv
+        in
         Impls.Wrap.generate_witness_conv
           ~f:(fun { Impls.Wrap.Proof_inputs.auxiliary_inputs; public_inputs } () ->
-            Backend.Tock.Proof.create_async ~primary:public_inputs
-              ~auxiliary:auxiliary_inputs pk ~message:next_accumulator )
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global
+                `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
+            in
+            let resp =
+              Backend.Tock.Proof.create_async ~primary:public_inputs
+                ~auxiliary:auxiliary_inputs pk ~message:next_accumulator
+            in
+            let%map.Promise resp, meta =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_global
+                `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done ;
+              resp
+            in
+            resp )
           ~input_typ:input
           ~return_typ:(Snarky_backendless.Typ.unit ())
           (fun x () : unit ->
@@ -913,10 +931,16 @@ let wrap
               }
           } )
   in
+  Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+    `Produce_state_transition_proof_wrap_statement_to_minimal ;
+  let statement =
+    Types.Wrap.Statement.to_minimal next_statement
+      ~to_option:Opt.to_option_unsafe
+  in
+  Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+    `Produce_state_transition_proof_wrap_statement_to_minimal_done ;
   ( { proof = next_proof
-    ; statement =
-        Types.Wrap.Statement.to_minimal next_statement
-          ~to_option:Opt.to_option_unsafe
+    ; statement
     ; prev_evals =
         { Plonk_types.All_evals.evals =
             { public_input = x_hat_evals; evals = proof.openings.evals }

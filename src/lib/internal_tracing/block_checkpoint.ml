@@ -21,6 +21,31 @@ type block_production_checkpoint =
   | `Consensus_state_update_done
   | `Generate_transition_done
   | `Produce_state_transition_proof
+  | `Produce_state_transition_proof_step
+  | `Produce_state_transition_proof_step_compute_prev_proof_parts
+  | `Produce_state_transition_proof_step_compute_prev_proof_parts_done
+  | `Produce_state_transition_proof_step_generate_witness_conv
+  | `Produce_state_transition_proof_step_backend_tick_proof_create_async
+  | `Produce_state_transition_proof_step_backend_request_init
+  | `Produce_state_transition_proof_step_backend_request_received
+  | `Produce_state_transition_proof_step_backend_finished
+  | `Produce_state_transition_proof_step_backend_tick_proof_create_async_done
+  | `Produce_state_transition_proof_wrap
+  | `Produce_state_transition_proof_wrap_generate_witness_conv
+  | `Produce_state_transition_proof_generate_witness_conv_auxilary_input
+  | `Produce_state_transition_proof_generate_witness_conv_auxilary_input_done
+  | `Produce_state_transition_proof_wrap_new_bulletproof_challenges
+  | `Produce_state_transition_proof_wrap_new_bulletproof_challenges_done
+  | `Produce_state_transition_proof_wrap_incrementally_verify_proof
+  | `Produce_state_transition_proof_wrap_incrementally_verify_proof_done
+  | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
+  | `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
+  | `Produce_state_transition_proof_wrap_hash_messages_for_next_wrap_proof
+  | `Produce_state_transition_proof_wrap_hash_messages_for_next_wrap_proof_done
+  | `Produce_state_transition_proof_wrap_statement_to_minimal
+  | `Produce_state_transition_proof_wrap_statement_to_minimal_done
+  | `Produce_state_transition_proof_wrap_done
+  | `Produce_state_transition_proof_done
   | `Produce_chain_transition_proof
   | `Produce_validated_transition
   | `Send_breadcrumb_to_transition_frontier
@@ -28,7 +53,7 @@ type block_production_checkpoint =
   | `Transition_accepted
   | `Transition_accept_timeout
   | `Failure ]
-[@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let block_production_checkpoint_to_yojson =
   Util.flatten_yojson_variant block_production_checkpoint_to_yojson
@@ -46,7 +71,7 @@ type external_block_validation_checkpoint =
   | `Register_transition_for_processing
   | `Validate_transition_complete
   | `Failure ]
-[@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let external_block_validation_checkpoint_to_yojson =
   Util.flatten_yojson_variant external_block_validation_checkpoint_to_yojson
@@ -108,7 +133,7 @@ type block_processing_checkpoint =
   | `Schedule_catchup
   | `Download_ancestry_state_hashes
   | `Failure ]
-[@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let block_processing_checkpoint_to_yojson =
   Util.flatten_yojson_variant block_processing_checkpoint_to_yojson
@@ -121,7 +146,7 @@ type catchup_checkpoint =
   | `To_build_breadcrumb
   | `Catchup_job_finished
   | `Failure ]
-[@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let catchup_checkpoint_to_yojson =
   Util.flatten_yojson_variant catchup_checkpoint_to_yojson
@@ -131,7 +156,7 @@ type t =
   | external_block_validation_checkpoint
   | catchup_checkpoint
   | block_processing_checkpoint ]
-[@@deriving to_yojson, enumerate, equal, hash, sexp_of, compare]
+[@@deriving bin_io, yojson, enumerate, equal, hash, sexp_of, compare]
 
 let to_string (c : t) =
   match to_yojson c with `String name -> name | _ -> assert false

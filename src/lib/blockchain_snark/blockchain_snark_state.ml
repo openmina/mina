@@ -329,7 +329,7 @@ let%snarkydef_ step ~(logger : Logger.t)
             and correct_coinbase_status =
               read Boolean.typ correct_coinbase_status
             and result = read Boolean.typ result in
-            [%log trace]
+            [%log info]
               "blockchain snark update success: $result = \
                (transaction_snark_input_correct=$transaction_snark_input_correct \
                ∨ nothing_changed \

@@ -560,6 +560,10 @@ struct
     let auxiliary_value = ref None in
     let actual_wrap_domains = ref None in
     let compute_prev_proof_parts prev_proof_requests =
+      let (_ : unit) =
+        Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+          `Produce_state_transition_proof_step_compute_prev_proof_parts
+      in
       let ( challenge_polynomial_commitments'
           , unfinalized_proofs'
           , statements_with_hashes'
@@ -625,7 +629,9 @@ struct
       x_hats := Some x_hats' ;
       witnesses := Some witnesses' ;
       prev_proofs := Some prev_proofs' ;
-      actual_wrap_domains := Some actual_wrap_domains'
+      actual_wrap_domains := Some actual_wrap_domains' ;
+      Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+        `Produce_state_transition_proof_step_compute_prev_proof_parts_done
     in
     let unfinalized_proofs = lazy (Option.value_exn !unfinalized_proofs) in
     let unfinalized_proofs_extended =
@@ -816,17 +822,49 @@ struct
                unaffected.
             *)
             Or_error.try_with ~backtrace:true (fun () ->
+                let (_ : unit) =
+                  Internal_tracing.Block_tracing.Production.Proof_timings
+                  .push_global
+                    `Produce_state_transition_proof_step_generate_witness_conv
+                in
                 Impls.Step.generate_witness_conv
                   ~f:(fun { Impls.Step.Proof_inputs.auxiliary_inputs
                           ; public_inputs
                           } next_statement_hashed ->
+                    let (_ : unit) =
+                      Internal_tracing.Block_tracing.Production.Proof_timings
+                      .push_global
+                        `Produce_state_transition_proof_step_backend_tick_proof_create_async
+                    in
+                    let (_ : unit) =
+                      Internal_tracing.Block_tracing.Production.Proof_timings
+                      .push_global
+                        `Produce_state_transition_proof_step_backend_request_init
+                    in
                     let id = Last_proving_block.get () in
-                    let%map.Promise proof =
+                    let%map.Promise proof, meta =
                       Backend.Tick.Proof.create_async ~id ~primary:public_inputs
                         ~auxiliary:auxiliary_inputs
                         ~message:
                           (Lazy.force prev_challenge_polynomial_commitments)
                         pk
+                    in
+                    let (_ : unit) =
+                      Internal_tracing.Block_tracing.Production.Proof_timings
+                      .push_global
+                        ~time:(float_of_string meta.request_received_t)
+                        `Produce_state_transition_proof_step_backend_request_received
+                    in
+                    let (_ : unit) =
+                      Internal_tracing.Block_tracing.Production.Proof_timings
+                      .push_global
+                        ~time:(float_of_string meta.finished_t)
+                        `Produce_state_transition_proof_step_backend_finished
+                    in
+                    let (_ : unit) =
+                      Internal_tracing.Block_tracing.Production.Proof_timings
+                      .push_global
+                        `Produce_state_transition_proof_step_backend_tick_proof_create_async_done
                     in
                     (proof, next_statement_hashed) )
                   ~input_typ:Impls.Step.Typ.unit ~return_typ:input

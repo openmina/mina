@@ -598,7 +598,7 @@ macro_rules! impl_proof {
                     DefaultFrSponge<_, PlonkSpongeConstantsKimchi>,
                 >(&group_map, witness, &[], index, prev, None);
                 return match maybe_proof {
-                    Ok(proof) => (proof, public_input).into(),
+                    Ok((proof, _)) => (proof, public_input).into(),
                     Err(err) => {
                         log(&err.to_string());
                         panic!("thrown an error")

@@ -36,6 +36,7 @@
    kimchi_backend.pasta.basic
    data_hash_lib
    ppx_version.runtime
+   internal_tracing
  )
  (inline_tests)
  (preprocess

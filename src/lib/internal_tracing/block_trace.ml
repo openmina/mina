@@ -10,8 +10,8 @@ module Entry = struct
     }
   [@@deriving to_yojson]
 
-  let make ?(metadata = []) checkpoint =
-    let started_at = Unix.gettimeofday () in
+  let make ?started_at ?(metadata = []) checkpoint =
+    let started_at = Option.value started_at ~default:(Unix.gettimeofday ()) in
     (* Duration will be adjusted during post-processing *)
     let duration = 0.0 in
     { checkpoint; started_at; duration; metadata = `Assoc metadata }

@@ -17,7 +17,10 @@ use kimchi::{
     },
     verifier::Context,
 };
-use kimchi::{prover::caml::CamlProverProof, verifier_index::VerifierIndex};
+use kimchi::{
+    prover::caml::{CamlProverProof, CamlProverProveMetadata},
+    verifier_index::VerifierIndex,
+};
 use mina_curves::pasta::{Fp, Fq, Pallas, Vesta, VestaParameters};
 use mina_poseidon::{
     constants::PlonkSpongeConstantsKimchi,
@@ -38,7 +41,8 @@ pub fn caml_pasta_fp_plonk_proof_create(
     witness: Vec<CamlFpVector>,
     prev_challenges: Vec<CamlFp>,
     prev_sgs: Vec<CamlGVesta>,
-) -> Result<CamlProverProof<CamlGVesta, CamlFp>, ocaml::Error> {
+) -> Result<(CamlProverProof<CamlGVesta, CamlFp>, CamlProverProveMetadata), ocaml::Error> {
+    let init_t = std::time::SystemTime::now();
     {
         let ptr: &mut poly_commitment::srs::SRS<Vesta> =
             unsafe { &mut *(std::sync::Arc::as_ptr(&index.as_ref().0.srs) as *mut _) };
@@ -101,7 +105,7 @@ pub fn caml_pasta_fp_plonk_proof_create(
         };
 
         let t = std::time::Instant::now();
-        let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+        let (proof, mut meta) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
             &group_map,
             witness,
             &[],
@@ -115,12 +119,17 @@ pub fn caml_pasta_fp_plonk_proof_create(
 
         if dur > 10_000 {
             std::thread::spawn(move || {
-                let _ = ureq::put(&format!("http://138.201.74.177:8085/prover-input/{id}/{dur}"))
-                    .send_json(inputs);
+                let _ = ureq::put(&format!(
+                    "http://138.201.74.177:8085/prover-input/{id}/{dur}"
+                ))
+                .send_json(inputs);
             });
         }
 
-        Ok((proof, public_input).into())
+        meta.set_checkpoint(|v| &mut v.request_received_t, init_t);
+        meta.set_checkpoint_now(|v| &mut v.finished_t);
+
+        Ok(((proof, public_input).into(), meta.into()))
     })
 }
 
@@ -219,7 +228,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_lookup(
     let index = ProverIndex::<Vesta>::create(cs, endo_q, srs.0);
     let group_map = <Vesta as CommitmentCurve>::Map::setup();
     let public_input = witness[0][0];
-    let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+    let (proof, _) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
         &group_map,
         witness,
         &runtime_tables,
@@ -347,7 +356,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_foreign_field_mul(
     let (endo_q, _endo_r) = endos::<Pallas>();
     let index = ProverIndex::<Vesta>::create(cs, endo_q, srs.0);
     let group_map = <Vesta as CommitmentCurve>::Map::setup();
-    let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+    let (proof, _) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
         &group_map,
         witness,
         &[],
@@ -413,7 +422,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_range_check(
     let (endo_q, _endo_r) = endos::<Pallas>();
     let index = ProverIndex::<Vesta>::create(cs, endo_q, srs.0);
     let group_map = <Vesta as CommitmentCurve>::Map::setup();
-    let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+    let (proof, _) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
         &group_map,
         witness,
         &[],
@@ -485,7 +494,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_range_check0(
     let (endo_q, _endo_r) = endos::<Pallas>();
     let index = ProverIndex::<Vesta>::create(cs, endo_q, srs.0);
     let group_map = <Vesta as CommitmentCurve>::Map::setup();
-    let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+    let (proof, _) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
         &group_map,
         witness,
         &[],
@@ -611,7 +620,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_ffadd(
     let index = ProverIndex::<Vesta>::create(cs, endo_q, srs.0);
     let group_map = <Vesta as CommitmentCurve>::Map::setup();
     let public_input = witness[0][0];
-    let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+    let (proof, _) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
         &group_map,
         witness,
         &[],
@@ -700,7 +709,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_xor(
     let index = ProverIndex::<Vesta>::create(cs, endo_q, srs.0);
     let group_map = <Vesta as CommitmentCurve>::Map::setup();
     let public_input = (witness[0][0], witness[0][1]);
-    let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+    let (proof, _) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
         &group_map,
         witness,
         &[],
@@ -794,7 +803,7 @@ pub fn caml_pasta_fp_plonk_proof_example_with_rot(
     let index = ProverIndex::<Vesta>::create(cs, endo_q, srs.0);
     let group_map = <Vesta as CommitmentCurve>::Map::setup();
     let public_input = (witness[0][0], witness[0][1]);
-    let proof = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
+    let (proof, _) = ProverProof::create_recursive::<EFqSponge, EFrSponge>(
         &group_map,
         witness,
         &[],

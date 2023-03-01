@@ -1372,6 +1372,10 @@ module Make_str (_ : Wire_types.Concrete) = struct
               let _, prev_vars_length = b.proofs_verified in
               let step =
                 let wrap_vk = Lazy.force wrap_vk in
+                let (_ : unit) =
+                  Internal_tracing.Block_tracing.Production.Proof_timings
+                  .push_global `Produce_state_transition_proof_step
+                in
                 S.f branch_data () ~feature_flags ~prevs_length:prev_vars_length
                   ~self ~public_input:(Input typ)
                   ~auxiliary_typ:Impls.Step.Typ.unit ~step_domains
@@ -1792,7 +1796,7 @@ module Make_str (_ : Wire_types.Concrete) = struct
                       .prepare
                         next_statement.proof_state.messages_for_next_wrap_proof
                     in
-                    let%map.Promise next_proof =
+                    let%map.Promise next_proof, meta =
                       let (T (input, conv, _conv_inv)) = Impls.Wrap.input () in
                       Common.time "wrap proof" (fun () ->
                           Impls.Wrap.generate_witness_conv

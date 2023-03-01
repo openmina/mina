@@ -259,6 +259,11 @@ let wrap_main
         in
         let new_bulletproof_challenges =
           with_label __LOC__ (fun () ->
+              let (_ : unit) =
+                Internal_tracing.Block_tracing.Production.Proof_timings
+                .push_global
+                  `Produce_state_transition_proof_wrap_new_bulletproof_challenges
+              in
               let evals =
                 let ty =
                   let ty =
@@ -363,6 +368,11 @@ let wrap_main
                     Boolean.(Assert.any [ finalized; not should_finalize ]) ;
                     chals )
               in
+              let (_ : unit) =
+                Internal_tracing.Block_tracing.Production.Proof_timings
+                .push_global
+                  `Produce_state_transition_proof_wrap_new_bulletproof_challenges_done
+              in
               chals )
         in
         let prev_statement =
@@ -421,6 +431,10 @@ let wrap_main
                   ~request:(fun () -> Req.Messages) )
           in
           let sponge = Wrap_verifier.Opt.create sponge_params in
+          let (_ : unit) =
+            Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+              `Produce_state_transition_proof_wrap_incrementally_verify_proof
+          in
           with_label __LOC__ (fun () ->
               Wrap_verifier.incrementally_verify_proof max_proofs_verified
                 ~actual_proofs_verified_mask ~step_domains
@@ -437,6 +451,10 @@ let wrap_main
                 ~sg_old:prev_step_accs
                 ~advice:{ b; combined_inner_product }
                 ~messages ~which_branch ~openings_proof ~plonk )
+        in
+        let (_ : unit) =
+          Internal_tracing.Block_tracing.Production.Proof_timings.push_global
+            `Produce_state_transition_proof_wrap_incrementally_verify_proof_done
         in
         with_label __LOC__ (fun () ->
             Boolean.Assert.is_true bulletproof_success ) ;

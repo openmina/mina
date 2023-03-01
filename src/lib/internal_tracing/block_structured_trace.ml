@@ -110,6 +110,34 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ]
   | `Generate_transition ->
       [ `Consensus_state_update; `Consensus_state_update_done ]
+  | `Produce_state_transition_proof ->
+      [ `Produce_state_transition_proof_step
+      ; `Produce_state_transition_proof_step_compute_prev_proof_parts
+      ; `Produce_state_transition_proof_step_compute_prev_proof_parts_done
+      ; `Produce_state_transition_proof_step_generate_witness_conv
+      ; `Produce_state_transition_proof_step_backend_tick_proof_create_async
+      ; `Produce_state_transition_proof_step_backend_tick_proof_create_async_done
+      ; `Produce_state_transition_proof_wrap
+      ; `Produce_state_transition_proof_wrap_generate_witness_conv
+      ; `Produce_state_transition_proof_generate_witness_conv_auxilary_input
+      ; `Produce_state_transition_proof_generate_witness_conv_auxilary_input_done
+      ; `Produce_state_transition_proof_wrap_new_bulletproof_challenges
+      ; `Produce_state_transition_proof_wrap_new_bulletproof_challenges_done
+      ; `Produce_state_transition_proof_wrap_incrementally_verify_proof
+      ; `Produce_state_transition_proof_wrap_incrementally_verify_proof_done
+      ; `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
+      ; `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done
+      ; `Produce_state_transition_proof_wrap_hash_messages_for_next_wrap_proof
+      ; `Produce_state_transition_proof_wrap_hash_messages_for_next_wrap_proof_done
+      ; `Produce_state_transition_proof_wrap_statement_to_minimal
+      ; `Produce_state_transition_proof_wrap_statement_to_minimal_done
+      ; `Produce_state_transition_proof_wrap_done
+      ]
+  | `Produce_state_transition_proof_step_backend_tick_proof_create_async ->
+      [ `Produce_state_transition_proof_step_backend_request_init
+      ; `Produce_state_transition_proof_step_backend_request_received
+      ; `Produce_state_transition_proof_step_backend_finished
+      ]
   | `Apply_staged_ledger_diff ->
       [ `Update_coinbase_stack
       ; `Update_coinbase_stack_done

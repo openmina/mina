@@ -48,6 +48,7 @@
    kimchi_backend.pasta
    kimchi_backend.pasta.basic
    mina_wire_types
+   internal_tracing
  )
  (preprocessor_deps "../../config.mlh")
  (instrumentation (backend bisect_ppx))
