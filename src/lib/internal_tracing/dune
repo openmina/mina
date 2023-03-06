@@ -12,6 +12,8 @@
   yojson
   async_kernel
   bin_prot.shape
+  ;; local libraries
+  kimchi_types
  )
  (preprocess
   (pps ppx_jane ppx_deriving_yojson ppx_bin_prot))

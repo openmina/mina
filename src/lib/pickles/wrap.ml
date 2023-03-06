@@ -883,9 +883,13 @@ let wrap
               .push_global
                 `Produce_state_transition_proof_wrap_backend_tock_proof_create_async
             in
-            let%map.Promise resp, _meta =
+            let%map.Promise resp, meta =
               Backend.Tock.Proof.create_async ~primary:public_inputs
                 ~auxiliary:auxiliary_inputs pk ~message:next_accumulator
+            in
+            let (_ : unit) =
+              Internal_tracing.Block_tracing.Production.Proof_timings
+              .push_kimchi_traces meta
             in
             Internal_tracing.Block_tracing.Production.Proof_timings.push_global
               `Produce_state_transition_proof_wrap_backend_tock_proof_create_async_done ;

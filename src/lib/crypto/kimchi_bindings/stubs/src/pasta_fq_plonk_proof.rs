@@ -89,7 +89,6 @@ pub fn caml_pasta_fq_plonk_proof_create(
     // Release the runtime lock so that other threads can run using it while we generate the proof.
     runtime.releasing_runtime(|| {
         let group_map = GroupMap::<Fp>::setup();
-        let prover_proof_create_recursive_t = std::time::SystemTime::now();
         let (proof, mut meta) = ProverProof::create_recursive::<
             DefaultFqSponge<PallasParameters, PlonkSpongeConstantsKimchi>,
             DefaultFrSponge<Fq, PlonkSpongeConstantsKimchi>,

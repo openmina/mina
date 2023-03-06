@@ -376,6 +376,81 @@ module Production = struct
     let take_global () =
       let timings = !global in
       reset_global () ; timings
+
+    let push_kimchi_traces (meta : Kimchi_types.prover_prove_metadata) =
+      push_global
+        ~time:(float_of_string meta.request_received)
+        `Produce_state_transition_proof_kimchi_request_received ;
+
+      push_global
+        ~time:(float_of_string meta.create_recursive)
+        `Produce_state_transition_proof_kimchi_create_recursive ;
+
+      push_global
+        ~time:(float_of_string meta.pad_witness)
+        `Produce_state_transition_proof_kimchi_pad_witness ;
+
+      push_global
+        ~time:(float_of_string meta.set_up_fq_sponge)
+        `Produce_state_transition_proof_kimchi_set_up_fq_sponge ;
+
+      push_global
+        ~time:(float_of_string meta.commit_to_witness_columns)
+        `Produce_state_transition_proof_kimchi_commit_to_witness_columns ;
+
+      let use_lookup_t, use_lookup_meta = meta.use_lookup in
+      push_global
+        ~time:(float_of_string use_lookup_t)
+        ~metadata:use_lookup_meta
+        `Produce_state_transition_proof_kimchi_use_lookup ;
+
+      push_global
+        ~time:(float_of_string meta.z_permutation_aggregation_polynomial)
+        `Produce_state_transition_proof_kimchi_z_permutation_aggregation_polynomial ;
+
+      push_global
+        ~time:(float_of_string meta.eval_witness_polynomials_over_domains)
+        `Produce_state_transition_proof_kimchi_eval_witness_polynomials_over_domains ;
+
+      push_global
+        ~time:(float_of_string meta.compute_index_evals)
+        `Produce_state_transition_proof_kimchi_compute_index_evals ;
+
+      push_global
+        ~time:(float_of_string meta.compute_quotient_poly)
+        `Produce_state_transition_proof_kimchi_compute_quotient_poly ;
+
+      push_global
+        ~time:(float_of_string meta.lagrange_basis_eval_zeta_poly)
+        `Produce_state_transition_proof_kimchi_lagrange_basis_eval_zeta_poly ;
+
+      push_global
+        ~time:(float_of_string meta.lagrange_basis_eval_zeta_omega_poly)
+        `Produce_state_transition_proof_kimchi_lagrange_basis_eval_zeta_omega_poly ;
+
+      push_global
+        ~time:(float_of_string meta.chunk_eval_zeta_omega_poly)
+        `Produce_state_transition_proof_kimchi_chunk_eval_zeta_omega_poly ;
+
+      push_global
+        ~time:(float_of_string meta.compute_ft_poly)
+        `Produce_state_transition_proof_kimchi_compute_ft_poly ;
+
+      push_global
+        ~time:(float_of_string meta.ft_eval_zeta_omega)
+        `Produce_state_transition_proof_kimchi_ft_eval_zeta_omega ;
+
+      push_global
+        ~time:(float_of_string meta.build_polynomials)
+        `Produce_state_transition_proof_kimchi_build_polynomials ;
+
+      push_global
+        ~time:(float_of_string meta.create_aggregated_evaluation_proof)
+        `Produce_state_transition_proof_kimchi_create_aggregated_evaluation_proof ;
+
+      push_global
+        ~time:(float_of_string meta.finished)
+        `Produce_state_transition_proof_kimchi_finished
   end
 end
 
