@@ -108,6 +108,7 @@ module Worker_state = struct
                  let hash = Protocol_state.hashes next_state in
                  let hash = State_hash.to_base58_check hash.state_hash in
                  Pickles.Last_proving_block.set hash ;
+                 Block_tracing.Production.Proof_timings.reset_global () ;
                  let%map.Async.Deferred res =
                    Deferred.Or_error.try_with ~here:[%here] (fun () ->
                        let txn_snark_statement, txn_snark_proof =

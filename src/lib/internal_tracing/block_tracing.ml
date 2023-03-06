@@ -371,10 +371,11 @@ module Production = struct
     let push_global ?metadata ?time checkpoint =
       global := push !global checkpoint ?metadata ?time
 
+    let reset_global () = global := []
+
     let take_global () =
       let timings = !global in
-      global := [] ;
-      timings
+      reset_global () ; timings
   end
 end
 
