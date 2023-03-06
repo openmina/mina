@@ -134,9 +134,25 @@ let checkpoint_children (c : Checkpoint.t) : Checkpoint.t list =
       ; `Produce_state_transition_proof_wrap_done
       ]
   | `Produce_state_transition_proof_step_backend_tick_proof_create_async ->
-      [ `Produce_state_transition_proof_step_backend_request_init
-      ; `Produce_state_transition_proof_step_backend_request_received
-      ; `Produce_state_transition_proof_step_backend_finished
+      [ `Produce_state_transition_proof_kimchi_request_init
+      ; `Produce_state_transition_proof_kimchi_request_received
+      ; `Produce_state_transition_proof_kimchi_create_recursive
+      ; `Produce_state_transition_proof_kimchi_pad_witness
+      ; `Produce_state_transition_proof_kimchi_set_up_fq_sponge
+      ; `Produce_state_transition_proof_kimchi_commit_to_witness_columns
+      ; `Produce_state_transition_proof_kimchi_use_lookup
+      ; `Produce_state_transition_proof_kimchi_z_permutation_aggregation_polynomial
+      ; `Produce_state_transition_proof_kimchi_eval_witness_polynomials_over_domains
+      ; `Produce_state_transition_proof_kimchi_compute_index_evals
+      ; `Produce_state_transition_proof_kimchi_compute_quotient_poly
+      ; `Produce_state_transition_proof_kimchi_lagrange_basis_eval_zeta_poly
+      ; `Produce_state_transition_proof_kimchi_lagrange_basis_eval_zeta_omega_poly
+      ; `Produce_state_transition_proof_kimchi_chunk_eval_zeta_omega_poly
+      ; `Produce_state_transition_proof_kimchi_compute_ft_poly
+      ; `Produce_state_transition_proof_kimchi_ft_eval_zeta_omega
+      ; `Produce_state_transition_proof_kimchi_build_polynomials
+      ; `Produce_state_transition_proof_kimchi_create_aggregated_evaluation_proof
+      ; `Produce_state_transition_proof_kimchi_finished
       ]
   | `Apply_staged_ledger_diff ->
       [ `Update_coinbase_stack

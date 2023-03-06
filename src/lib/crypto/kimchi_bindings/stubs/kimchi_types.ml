@@ -119,7 +119,25 @@ type nonrec ('caml_g, 'caml_f) prover_proof =
   }
 
 type nonrec prover_prove_metadata =
-  { request_received_t : string; finished_t : string }
+  { request_received : string
+  ; create_recursive : string
+  ; pad_witness : string
+  ; set_up_fq_sponge : string
+  ; commit_to_witness_columns : string
+  ; use_lookup : string * string
+  ; z_permutation_aggregation_polynomial : string
+  ; eval_witness_polynomials_over_domains : string
+  ; compute_index_evals : string
+  ; compute_quotient_poly : string
+  ; lagrange_basis_eval_zeta_poly : string
+  ; lagrange_basis_eval_zeta_omega_poly : string
+  ; chunk_eval_zeta_omega_poly : string
+  ; compute_ft_poly : string
+  ; ft_eval_zeta_omega : string
+  ; build_polynomials : string
+  ; create_aggregated_evaluation_proof : string
+  ; finished : string
+  }
 
 type nonrec wire = { row : int; col : int }
 

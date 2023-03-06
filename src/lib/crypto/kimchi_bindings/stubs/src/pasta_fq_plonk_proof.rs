@@ -96,8 +96,8 @@ pub fn caml_pasta_fq_plonk_proof_create(
         >(&group_map, witness, &[], index, prev, None)
         .map_err(|e| ocaml::Error::Error(e.into()))?;
 
-        meta.set_checkpoint(|v| &mut v.request_received_t, init_t);
-        meta.set_checkpoint_now(|v| &mut v.finished_t);
+        meta.set_checkpoint(|v| &mut v.request_received, init_t);
+        meta.set_checkpoint_now(|v| &mut v.finished);
 
         Ok(((proof, public_input).into(), meta.into()))
     })
