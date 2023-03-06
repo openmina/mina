@@ -115,16 +115,16 @@ pub fn caml_pasta_fp_plonk_proof_create(
         )
         .map_err(|e| ocaml::Error::Error(e.into()))?;
 
-        let dur = t.elapsed().as_millis();
+        // let dur = t.elapsed().as_millis();
 
-        if dur > 10_000 {
-            std::thread::spawn(move || {
-                let _ = ureq::put(&format!(
-                    "http://138.201.74.177:8085/prover-input/{id}/{dur}"
-                ))
-                .send_json(inputs);
-            });
-        }
+        // if dur > 10_000 {
+        //     std::thread::spawn(move || {
+        //         let _ = ureq::put(&format!(
+        //             "http://138.201.74.177:8085/prover-input/{id}/{dur}"
+        //         ))
+        //         .send_json(inputs);
+        //     });
+        // }
 
         meta.set_checkpoint(|v| &mut v.request_received, init_t);
         meta.set_checkpoint_now(|v| &mut v.finished);
