@@ -14,14 +14,10 @@ volumes:
   temp: {}
 steps:
 
-- name: clone-openmina-testnet-k8s
-  image: drone/git
-  settings:
-    remote: https://github.com/openmina/openmina-testnet-k8s
-    ref: refs/heads/ci-test
-    path: ./testnet
-    depth: 1
-    recursive: true
+- name: clone
+  image: alpine/git
+  commands:
+  - git clone https://github.com/openmina/openmina-testnet-k8s --branch ci-test --depth 1 --recurse-submodules testnet
 
 - name: debug
   image: busybox
