@@ -76,7 +76,7 @@ steps:
     # 120 times, 10s pause = 20min, should be enough to get to height 10
     for i in $$(seq 120); do
        HEIGHT=$$(kubectl exec deployment/node1 -c mina -- mina client status | grep "Block height" | cut -d ":" -f 2)
-       if [ -n "$${HEIGHT}" ] && [ "$${HEIGHT}" -ge ${HEIGHT_WAIT} ]; then
+       if [ -n "$${HEIGHT}" ] && [ "$${HEIGHT}" -ge "$${HEIGHT_WAIT}" ]; then
            echo "node1 reached height ${HEIGHT_WAIT}"
            exit
        fi
@@ -88,7 +88,7 @@ steps:
 kind: pipeline
 name: run-zkapps
 type: docker
-depends-on: [ deploy-to-cluster-custom ]
+depends_on: [ deploy-to-cluster-custom ]
 
 trigger:
   event: [ custom ]
@@ -99,6 +99,11 @@ environment:
 
 steps:
 
+- name: clone
+  image: alpine/git
+  commands:
+  - git clone https://github.com/openmina/mina-sample-zkapp --depth 1 mina-sample-zkapp
+
 - name: configure
   image: alpine/k8s:1.26.1
   environment:
@@ -107,7 +112,6 @@ steps:
     KUBECONFIG: kube-config
   commands:
   - umask 0077
-  - mkdir -p $HOME/.kube
   - echo "$DRONE_KUBECONFIG" > kube-config
   - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
 
@@ -116,7 +120,7 @@ steps:
   environment:
     KUBECONFIG: kube-config
   commands:
-  - helm install $${RELEASE_NAME} . $${COUNT:+--set=transactionCount=$${COUNT}} $${PARALLELISM:+--set=parallelism=$${PARALLELISM}} --set=suffix=$${SUFFIX}
+  - helm install $${RELEASE_NAME} mina-sample-zkapp $${COUNT:+--set=transactionCount=$${COUNT}} $${PARALLELISM:+--set=parallelism=$${PARALLELISM}} --set=suffix=$${SUFFIX}
 
 - name: run
   image: alpine/k8s:1.26.1
@@ -143,13 +147,13 @@ steps:
     TYPE=$$(kubectl get job/send-zkapps-$${SUFFIX} -o jsonpath='{.status.conditions[?(@.status=="True")].type}')
     if [ "$${TYPE}" != "Complete" ]; then echo "Error running job: $${MSG}"; exit 1; fi
 
-- name: clean-up
-  image: alpine/k8s:1.26.1
-  environment:
-    KUBECONFIG: kube-config
-  commands:
-  - helm delete $${RELEASE_NAME}
-  when:
-    status:
-    - success
-    - failure
+# - name: clean-up
+#   image: alpine/k8s:1.26.1
+#   environment:
+#     KUBECONFIG: kube-config
+#   commands:
+#   - helm delete $${RELEASE_NAME}
+#   when:
+#     status:
+#     - success
+#     - failure
