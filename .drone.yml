@@ -19,9 +19,14 @@ steps:
   settings:
     remote: https://github.com/openmina/openmina-testnet-k8s
     ref: refs/heads/ci-test
-    path: testnet
+    path: ./testnet
     depth: 1
     recursive: true
+
+- name: debug
+  image: busybox
+  comands:
+  - ls -l .
 
 - name: prepare-deamon-json
   image: busybox
