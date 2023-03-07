@@ -17,7 +17,8 @@ steps:
 - name: clone
   image: alpine/git
   commands:
-  - git clone https://github.com/openmina/openmina-testnet-k8s --branch ci-test --depth 1 --recurse-submodules=mina testnet
+  - git clone https://github.com/openmina/openmina-testnet-k8s --branch ci-test --depth 1 testnet
+  - cd testnet && git submodule update --init
 
 - name: debug
   image: busybox
@@ -37,7 +38,6 @@ steps:
     KUBECONFIG: kube-config
   commands:
   - echo "$DRONE_KUBECONFIG" > $${KUBECONFIG}
-  - wc $${KUBECONFIG}
   - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
 
 - name: deploy-to-cluster
@@ -47,6 +47,6 @@ steps:
   commands:
   #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   #- export MINA_IMAGE=TODO
-  - testnet/deploy.sh delete --all
-  - testnet/deploy.sh deploy --seeds
-  - testnet/deploy.sh deploy --producers --snarkers --nodes --frontend
+  - testnet/deploy.sh delete --all --force
+  - testnet/deploy.sh deploy --seeds --force
+  - testnet/deploy.sh deploy --producers --snarkers --nodes --frontend --force
