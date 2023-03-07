@@ -88,6 +88,8 @@ steps:
 kind: pipeline
 name: run-zkapps
 type: docker
+clone:
+  disable: true
 depends_on: [ deploy-to-cluster-custom ]
 
 trigger:
