@@ -46,6 +46,22 @@ steps:
   - echo "$DRONE_KUBECONFIG" > $${KUBECONFIG}
   - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
 
+- name: log-seed
+  image: alpine/k8s:1.26.1
+  detach: true
+  environment:
+    KUBECONFIG: kube-config
+  commands:
+  - while ! kubectl logs deployment/seed1 --container mina --follow; do "waiting for seed1 to start"; sleep 10; done
+
+- name: log-node
+  image: alpine/k8s:1.26.1
+  detach: true
+  environment:
+    KUBECONFIG: kube-config
+  commands:
+  - while ! kubectl logs deployment/node1 --container mina --follow; do "waiting for node1 to start"; sleep 10; done
+
 - name: deploy-seeds
   image: alpine/k8s:1.26.1
   environment:
@@ -76,9 +92,13 @@ steps:
     # 120 times, 10s pause = 20min, should be enough to get to height 10
     for i in $$(seq 120); do
        HEIGHT=$$(kubectl exec deployment/node1 -c mina -- mina client status | grep "Block height" | cut -d ":" -f 2)
-       if [ -n "$${HEIGHT}" ] && [ "$${HEIGHT}" -ge "$${HEIGHT_WAIT}" ]; then
-           echo "node1 reached height ${HEIGHT_WAIT}"
-           exit
+       if [ -n "$${HEIGHT}" ]; then
+           if [ "$${HEIGHT}" -ge "$${HEIGHT_WAIT}" ]; then
+              echo "node1 reached height ${HEIGHT_WAIT}"
+              exit
+           else
+              echo "node1 still at height ${HEIGHT}"
+           fi
        fi
        sleep 10
     done
