@@ -37,10 +37,11 @@ steps:
       from_secret: k8s_config
     KUBECONFIG: kube-config
   commands:
+  - umask 0077
   - echo "$DRONE_KUBECONFIG" > $${KUBECONFIG}
   - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
 
-- name: deploy-to-cluster
+- name: deploy-seeds
   image: alpine/k8s:1.26.1
   environment:
     KUBECONFIG: kube-config
@@ -49,4 +50,29 @@ steps:
   #- export MINA_IMAGE=TODO
   - testnet/deploy.sh delete --all --force
   - testnet/deploy.sh deploy --seeds --force
+  - kubectl wait deployment/seed1 --for=condition=Available --timeout=10m
+
+- name: deploy-nodes
+  image: alpine/k8s:1.26.1
+  environment:
+    KUBECONFIG: kube-config
+  commands:
+  #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
+  #- export MINA_IMAGE=TODO
   - testnet/deploy.sh deploy --producers --snarkers --nodes --frontend --force
+
+- name: wait-for-height-10
+  image: alpine/k8s:1.26.1
+  environment:
+    KUBECONFIG: kube-config
+  commands:
+  - |
+    # 120 times, 10s pause = 20min, should be enough to get to height 10
+    for i in $$(seq 120); do
+       HEIGHT=$$(kubectl exec deployment/prod01 -c mina -- mina client status | grep "Block height" | cut -d ":" -f 2)
+       if [ -n $${HEIGHT} ] && [ "$HEIGHT" -ge 10 ]; then
+           echo "prod01 reached height 10"
+           exit
+       fi
+       sleep 10
+    done
