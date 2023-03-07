@@ -2,6 +2,8 @@
 kind: pipeline
 name: deploy-to-cluster-custom
 type: docker
+clone:
+  disable: true
 trigger:
   event:
   - custom
@@ -12,7 +14,7 @@ volumes:
   temp: {}
 steps:
 
-- name: clone
+- name: clone-openmina-testnet-k8s
   image: drone/git
   settings:
     remote: https://github.com/openmina/openmina-testnet-k8s
