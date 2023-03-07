@@ -17,13 +17,7 @@ steps:
   - '[[ ! -n "${MINA_IMAGE}" ]] && echo "Continue" || exit 78'
   - git clone https://github.com/MinaProtocol/mina.git .
   - git checkout $${MINA_BRANCH}
-  - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder > ./dockerfiles/stages/merged
-  - echo "WORKDIR /root/" >> ./dockerfiles/stages/merged
-  - echo "USER 0" >> ./dockerfiles/stages/merged
-  - echo "RUN mv /home/opam/app/* /usr/local/bin/" >> ./dockerfiles/stages/merged
-  - echo "RUN cp -f /usr/local/bin/mina-dev /usr/local/bin/mina" >> ./dockerfiles/stages/merged
-  - echo "RUN mv /usr/local/bin/libp2p_helper /usr/local/bin/coda-libp2p_helper" >> ./dockerfiles/stages/merged
-  - echo "RUN mkdir -p /root/.mina-config" >> ./dockerfiles/stages/merged
+  - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder ./dockerfiles/stages/99-openmina-tail > ./dockerfiles/stages/merged
 - name: publish-image
   image: plugins/docker
   settings:
@@ -53,13 +47,7 @@ steps:
   - '[[ ! -n "${MINA_IMAGE}" ]] && echo "Continue" || exit 78'
   - git clone $${MINA_REPO:-$${DRONE_REPO_LINK}} .
   - git checkout $${MINA_BRANCH:-$${DRONE_BRANCH}}
-  - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder > ./dockerfiles/stages/merged
-  - echo "WORKDIR /root/" >> ./dockerfiles/stages/merged
-  - echo "USER 0" >> ./dockerfiles/stages/merged
-  - echo "RUN mv /home/opam/app/* /usr/local/bin/" >> ./dockerfiles/stages/merged
-  - echo "RUN cp -f /usr/local/bin/mina-dev /usr/local/bin/mina" >> ./dockerfiles/stages/merged
-  - echo "RUN mv /usr/local/bin/libp2p_helper /usr/local/bin/coda-libp2p_helper" >> ./dockerfiles/stages/merged
-  - echo "RUN mkdir -p /root/.mina-config" >> ./dockerfiles/stages/merged
+  - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder ./dockerfiles/stages/99-openmina-tail > ./dockerfiles/stages/merged
 - name: publish-image
   image: plugins/docker
   settings:
@@ -74,6 +62,7 @@ steps:
     - ${DRONE_COMMIT_SHA:0:8}
     username:
       from_secret: docker_hub_username
+
 ---
 kind: pipeline
 name: deploy-to-cluster
@@ -99,19 +88,6 @@ steps:
   - tmpfile=$(mktemp);
   - cp helm/openmina-config/resources/daemon.json "$tmpfile"
   - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
-- name: prepare-chain-id
-  image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
-  pull: always
-  environment:
-    MINA_LIBP2P_PASS: yoo
-  volumes:
-  - name: step-cache
-    path: /step-cache
-  commands:
-  - mkdir -p /root/libp2p-keys/
-  - mina libp2p generate-keypair --privkey-path /root/libp2p-keys/key && /bin/chmod -R 0700 /root/libp2p-keys/
-  - mina daemon --config-file ./helm/openmina-config/resources/daemon.json --libp2p-keypair /root/libp2p-keys/key --seed &
-  - ./scripts/drone-get-chain-id.sh /step-cache/chain_id
 - name: prepare-frontend-port
   image: ellerbrock/alpine-bash-curl-ssl
   user: root
@@ -146,6 +122,7 @@ steps:
   commands:
   - 'echo "Frontend: http://1.k8.openmina.com:$(cat /step-cache/fe_port)"'
   - 'echo "Namespace: $${NAMESPACE:-mina-daily-testnet}"'
+
 ---
 kind: pipeline
 name: deploy-to-cluster-custom
@@ -153,61 +130,57 @@ type: docker
 trigger:
   event:
   - custom
-depends_on:
-- build-image-custom
+# depends_on:
+# - build-image-custom
 volumes:
 - name: step-cache
   temp: {}
 steps:
+
+- name: clone
+  image: drone/git
+  settings:
+    remote: https://github.com/openmina/openmina-testnet-k8s
+    ref: refs/heads/ci-test
+    path: testnet
+    depth: 1
+    recursive: true
+
 - name: prepare-deamon-json
-  image: apteno/alpine-jq
+  image: busybox
   commands:
-  - export CURRENT_TIMESTAMP=$(date -u -Iseconds)
-  - echo $CURRENT_TIMESTAMP
-  - tmpfile=$(mktemp);
-  - cp helm/openmina-config/resources/daemon.json "$tmpfile"
-  - jq --arg new_date $CURRENT_TIMESTAMP '.genesis.genesis_state_timestamp = $new_date' "$tmpfile" >./helm/openmina-config/resources/daemon.json
-- name: prepare-chain-id
-  image: ${MINA_IMAGE:-openmina/mina:${DRONE_COMMIT_SHA:0:8}}
-  pull: always
-  environment:
-    MINA_LIBP2P_PASS: yoo
-  volumes:
-  - name: step-cache
-    path: /step-cache
-  commands:
-  - mkdir -p /root/libp2p-keys/
-  - mina libp2p generate-keypair --privkey-path /root/libp2p-keys/key && /bin/chmod -R 0700 /root/libp2p-keys/
-  - mina daemon --config-file ./helm/openmina-config/resources/daemon.json --libp2p-keypair /root/libp2p-keys/key --seed &
-  - ./scripts/drone-get-chain-id.sh /step-cache/chain_id
-- name: prepare-frontend-port
-  image: ellerbrock/alpine-bash-curl-ssl
-  user: root
-  volumes:
-  - name: step-cache
-    path: /step-cache
-  commands:
-  - bash -c "./scripts/drone-determine-cluster-port.sh /step-cache/fe_port"
-- name: deploy-to-cluster
-  image: alpine/helm:3.8.1
+  - sed -e "s/\${TIMESTAMP}/$(date -u -Iseconds -d 00:00)/" testnet/resources/daemon.template.json > testnet/resources/daemon.json
+
+- name: prepare-kubeconfig
+  image: alpine/k8s:1.26.1
   environment:
     DRONE_KUBECONFIG:
       from_secret: k8s_config
+    KUBECONFIG: /step-cache/kubeconfig
   volumes:
   - name: step-cache
     path: /step-cache
   commands:
-  - '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
-  - umask 0077
-  - mkdir -p $HOME/.kube
-  - echo "$DRONE_KUBECONFIG" > $HOME/.kube/config
-  - helm upgrade seeds ./helm/seed-node --namespace $${NAMESPACE:-mina-daily-testnet} --set=frontend.nodePort=$(cat /step-cache/fe_port) --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade producers ./helm/block-producer --namespace $${NAMESPACE:-mina-daily-testnet} --set=frontend.nodePort=$(cat /step-cache/fe_port) --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/producer.yml
-  - helm upgrade nodes ./helm/plain-node --namespace $${NAMESPACE:-mina-daily-testnet} --set=frontend.nodePort=$(cat /step-cache/fe_port) --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
-  - helm upgrade snark-workers ./helm/snark-worker --namespace $${NAMESPACE:-mina-daily-testnet} --set=frontend.nodePort=$(cat /step-cache/fe_port) --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install --values=./helm/openmina-config/values/snark-worker.yml --set-file=publicKey=./helm/openmina-config/resources/key-06.pub
-  - helm upgrade frontend ./helm/openmina-frontend --namespace $${NAMESPACE:-mina-daily-testnet} --set=frontend.nodePort=$(cat /step-cache/fe_port) --values=./helm/openmina-config/values.yaml --set=bpfDebugger.chainId=$(cat /step-cache/chain_id) --set-file=mina.runtimeConfig=./helm/openmina-config/resources/daemon.json --set=mina.image=$${MINA_IMAGE} --install
+  # - umask 0077
+  - echo $${DRONE_KUBECONFIG} > $${KUBECONFIG}
+  - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
+
+- name: deploy-to-cluster
+  image: alpine/k8s:1.26.1
+  environment:
+    KUBECONFIG: /step-cache/kubeconfig
+  volumes:
+  - name: step-cache
+    path: /step-cache
+  commands:
+  #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
+  #- export MINA_IMAGE=TODO
+  - testnet/deploy.sh delete --all
+  - testnet/deploy.sh deploy --seeds
+  - testnet/deploy.sh deploy --producers --snarkers --nodes --frontend
+
 - name: deployement-info
-  image: alpine/helm:3.8.1
+  image: alpine/k8s:1.26.1
   volumes:
   - name: step-cache
     path: /step-cache
