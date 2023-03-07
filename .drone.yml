@@ -17,7 +17,7 @@ steps:
 - name: clone
   image: alpine/git
   commands:
-  - git clone https://github.com/openmina/openmina-testnet-k8s --branch ci-test --depth 1 --recurse-submodules testnet
+  - git clone https://github.com/openmina/openmina-testnet-k8s --branch ci-test --depth 1 --recurse-submodules=mina testnet
 
 - name: debug
   image: busybox
@@ -34,35 +34,19 @@ steps:
   environment:
     DRONE_KUBECONFIG:
       from_secret: k8s_config
-    KUBECONFIG: /step-cache/kubeconfig
-  volumes:
-  - name: step-cache
-    path: /step-cache
+    KUBECONFIG: kube-config
   commands:
-  # - umask 0077
-  - echo $${DRONE_KUBECONFIG} > $${KUBECONFIG}
+  - echo "$DRONE_KUBECONFIG" > $${KUBECONFIG}
+  - wc $${KUBECONFIG}
   - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
 
 - name: deploy-to-cluster
   image: alpine/k8s:1.26.1
   environment:
-    KUBECONFIG: /step-cache/kubeconfig
-  volumes:
-  - name: step-cache
-    path: /step-cache
+    KUBECONFIG: kube-config
   commands:
   #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   #- export MINA_IMAGE=TODO
   - testnet/deploy.sh delete --all
   - testnet/deploy.sh deploy --seeds
   - testnet/deploy.sh deploy --producers --snarkers --nodes --frontend
-
-- name: deployement-info
-  image: alpine/k8s:1.26.1
-  volumes:
-  - name: step-cache
-    path: /step-cache
-  commands:
-  - 'echo "Frontend: http://1.k8.openmina.com:$(cat /step-cache/fe_port)"'
-  - 'echo "Namespace: $${NAMESPACE:-mina-daily-testnet}"'
-
