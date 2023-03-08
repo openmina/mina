@@ -83,12 +83,13 @@ steps:
   - $${OM}/deploy.sh deploy --producers --snarkers --nodes --frontend --force
   - kubectl wait $${NODES_WAIT_RESOURCE} --for=condition=Available --timeout=$${NODES_WAIT_TIMEOUT}
 
-- name: wait-for-height
+- name: testnet-is-ready
   image: alpine/k8s:1.26.1
   environment:
     KUBECONFIG: kube-config
   commands:
-  - $${OM}/wait-for-height.sh $${NODES_WAIT_RESOURCE} $${TAREGET_HEIGHT}
+  - $${OM}/kube-utils.sh mina-testnet-available $${NODES_WAIT_TIMEOUT}
+  - $${OM}/kube-utils.sh mina-testnet-same-height 3
 
 ---
 
