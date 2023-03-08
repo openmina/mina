@@ -60,6 +60,13 @@ steps:
   - 'echo "Frontend: http://1.k8.openmina.com:$PORT"'
   - 'echo "Namespace: $${NAMESPACE:-testnet-default}"'
 
+- name: delete-old-testnet
+  image: alpine/k8s:1.26.1
+  environment:
+    KUBECONFIG: kube-config
+  commands:
+  - $${OM}/deploy.sh delete --all --force
+
 - name: prepare-deamon-json
   image: busybox
   commands:
@@ -77,8 +84,13 @@ steps:
   commands:
   #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   #- export MINA_IMAGE=TODO
-  - $${OM}/deploy.sh delete --all --force
   - $${OM}/deploy.sh deploy --seeds --force
+
+- name: seeds-are-ready
+  image: alpine/k8s:1.26.1
+  environment:
+    KUBECONFIG: kube-config
+  commands:
   - kubectl wait $${SEEDS_WAIT_RESOURCE} --for=condition=Available --timeout=$${SEEDS_WAIT_TIMEOUT}
 
 - name: log-node
@@ -104,7 +116,6 @@ steps:
   #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   #- export MINA_IMAGE=TODO
   - $${OM}/deploy.sh deploy --producers --snarkers --nodes --frontend --force
-  - kubectl wait $${NODES_WAIT_RESOURCE} --for=condition=Available --timeout=$${NODES_WAIT_TIMEOUT}
 
 - name: testnet-is-ready
   image: alpine/k8s:1.26.1
