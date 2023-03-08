@@ -29,7 +29,7 @@ environment:
   # timeout to wait when deploying Mina nodes
   NODES_WAIT_TIMEOUT: 15m
   # retries to check all nodes to be at the same level
-  HEIGHT_WAIT_RETRIES: 10
+  HEIGHT_WAIT_RETRIES: 20
   # period to wait before retrying
   HEIGHT_WAIT_PERIOD: 15
 
