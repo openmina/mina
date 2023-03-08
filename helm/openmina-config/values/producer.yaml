@@ -1,0 +1,3 @@
+mina:
+  cpuRequest: 8
+  memRequest: "8.0Gi"
