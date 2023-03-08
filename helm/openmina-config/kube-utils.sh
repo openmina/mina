@@ -56,8 +56,11 @@ mina_testnet_available() {
 mina_testnet_same_height_() {
     for NAME in $(mina_deployments); do
         HEIGHT="$(mina_blockchain_height "deployment/$NAME")" #
+        if [ -z "$HEIGHT" ]; then
+            echo "$NAME did not respond height"
+            return 1
+        fi
         echo "$NAME is at $HEIGHT"
-        if [ -z "$HEIGHT" ]; then exit 1; fi
         if [ -z "$PREV_HEIGHT" ]; then
             PREV_HEIGHT="${HEIGHT}"
         elif [ "$HEIGHT" -eq "$PREV_HEIGHT" ]; then
@@ -67,7 +70,7 @@ mina_testnet_same_height_() {
             PREV_HEIGHT="${HEIGHT}"
         else
             echo "Height is different, $PREV_HEIGHT vs $HEIGHT"
-            exit 3
+            return 1
         fi
     done
 }
@@ -76,8 +79,12 @@ mina_testnet_same_height() {
     RETRIES="$1"
     for _ in $(seq "$RETRIES"); do
         echo "Checking testnet height..."
-        mina_testnet_same_height_ && exit
-        echo "Retrying"
+        if mina_testnet_same_height_; then
+            exit
+        else
+            echo "Retrying in 30s"
+            sleep 30
+        fi
     done
     exit 1
 }
