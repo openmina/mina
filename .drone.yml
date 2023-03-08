@@ -28,6 +28,10 @@ environment:
   NODES_WAIT_RESOURCE: deployment/node1
   # timeout to wait when deploying Mina nodes
   NODES_WAIT_TIMEOUT: 15m
+  # retries to check all nodes to be at the same level
+  HEIGHT_WAIT_RETRIES: 10
+  # period to wait before retrying
+  HEIGHT_WAIT_PERIOD: 15
 
 defs:
 - &log
@@ -123,7 +127,7 @@ steps:
     KUBECONFIG: kube-config
   commands:
   - $${OM}/kube-utils.sh mina-testnet-available $${NODES_WAIT_TIMEOUT}
-  - $${OM}/kube-utils.sh mina-testnet-same-height 3
+  - $${OM}/kube-utils.sh mina-testnet-same-height $${HEIGHT_WAIT_RETRIES} $${HEIGHT_WAIT_PERIOD}
 
 ---
 

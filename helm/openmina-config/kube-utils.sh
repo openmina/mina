@@ -81,13 +81,14 @@ mina_testnet_same_height_() {
 
 mina_testnet_same_height() {
     RETRIES="$1"
+    PERIOD="$2"
     for _ in $(seq "$RETRIES"); do
         echo "Checking testnet height..."
         if mina_testnet_same_height_; then
             exit
         else
-            echo "Retrying in 30s"
-            sleep 30
+            echo "Retrying in ${PERIOD}s"
+            sleep "$PERIOD"
         fi
     done
     exit 1
