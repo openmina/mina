@@ -27,9 +27,14 @@ module Plonk_checks = struct
     Plonk_checks.Make (Shifted_value.Type2) (Plonk_checks.Scalars.Tock)
 end
 
+(* TODO: properly set up this *)
+let logger = Logger.create ()
+
 let verify_heterogenous (ts : Instance.t list) =
   let module Plonk = Types.Wrap.Proof_state.Deferred_values.Plonk in
   let module Tick_field = Backend.Tick.Field in
+  [%log internal] "Verify_heterogenous"
+    ~metadata:[ ("count", `Int (List.length ts)) ] ;
   let tick_field : _ Plonk_checks.field = (module Tick_field) in
   let check, result =
     let r = ref [] in
@@ -45,6 +50,7 @@ let verify_heterogenous (ts : Instance.t list) =
     in
     ((fun (lab, b) -> if not b then r := lab :: !r), result)
   in
+  [%log internal] "Compute_plonks_and_chals" ;
   let in_circuit_plonks, computed_bp_chals =
     List.map ts
       ~f:(fun
@@ -295,8 +301,10 @@ let verify_heterogenous (ts : Instance.t list) =
         (plonk, bulletproof_challenges) )
     |> List.unzip
   in
+  [%log internal] "Compute_plonks_and_chals_done" ;
   let open Backend.Tock.Proof in
   let open Promise.Let_syntax in
+  [%log internal] "Accumulator_check" ;
   let%bind accumulator_check =
     Ipa.Step.accumulator_check
       (List.map ts ~f:(fun (T (_, _, _, _, T t)) ->
@@ -306,8 +314,10 @@ let verify_heterogenous (ts : Instance.t list) =
                t.statement.proof_state.deferred_values.bulletproof_challenges ) )
       )
   in
+  [%log internal] "Accumulator_check_done" ;
   Common.time "batch_step_dlog_check" (fun () ->
       check (lazy "batch_step_dlog_check", accumulator_check) ) ;
+  [%log internal] "Dlog_check" ;
   let%map dlog_check =
     batch_verify
       (List.map2_exn ts in_circuit_plonks
@@ -345,25 +355,26 @@ let verify_heterogenous (ts : Instance.t list) =
            let input =
              tock_unpadded_public_input_of_statement prepared_statement
            in
-           ( key.index
-           , t.proof
-           , input
-           , Some
-               (Wrap_hack.pad_accumulator
-                  (Vector.map2
-                     ~f:(fun g cs ->
-                       { Challenge_polynomial.challenges =
-                           Vector.to_array (Ipa.Wrap.compute_challenges cs)
-                       ; commitment = g
-                       } )
-                     (Vector.extend_front_exn
-                        t.statement.messages_for_next_step_proof
-                          .challenge_polynomial_commitments
-                        Max_proofs_verified.n
-                        (Lazy.force Dummy.Ipa.Wrap.sg) )
-                     t.statement.proof_state.messages_for_next_wrap_proof
-                       .old_bulletproof_challenges ) ) ) ) )
+           [%log internal] "Compute_message" ;
+           let message =
+             Wrap_hack.pad_accumulator
+               (Vector.map2
+                  ~f:(fun g cs ->
+                    { Challenge_polynomial.challenges =
+                        Vector.to_array (Ipa.Wrap.compute_challenges cs)
+                    ; commitment = g
+                    } )
+                  (Vector.extend_front_exn
+                     t.statement.messages_for_next_step_proof
+                       .challenge_polynomial_commitments Max_proofs_verified.n
+                     (Lazy.force Dummy.Ipa.Wrap.sg) )
+                  t.statement.proof_state.messages_for_next_wrap_proof
+                    .old_bulletproof_challenges )
+           in
+           [%log internal] "Compute_message_done" ;
+           (key.index, t.proof, input, Some message) ) )
   in
+  [%log internal] "Dlog_check_done" ;
   Common.time "dlog_check" (fun () -> check (lazy "dlog_check", dlog_check)) ;
   result ()
 
