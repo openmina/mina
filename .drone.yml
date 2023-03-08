@@ -95,9 +95,9 @@ steps:
 kind: pipeline
 name: run-zkapps
 type: docker
-# TODO: move this test to mina repo
 clone:
-  disable: true
+  ref: openmina-ci
+  depth: 1
 depends_on: [ deploy-to-cluster-custom ]
 
 trigger:
@@ -109,11 +109,6 @@ environment:
 
 steps:
 
-- name: clone
-  image: alpine/git
-  commands:
-  - git clone https://github.com/openmina/mina-sample-zkapp --depth 1 mina-sample-zkapp
-
 - name: configure
   image: alpine/k8s:1.26.1
   environment:
@@ -122,7 +117,7 @@ steps:
     KUBECONFIG: kube-config
   commands:
   - umask 0077
-  - echo "$DRONE_KUBECONFIG" > kube-config
+  - echo "$DRONE_KUBECONFIG" > "$KUBECONFIG"
   - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
 
 - name: start
@@ -130,7 +125,7 @@ steps:
   environment:
     KUBECONFIG: kube-config
   commands:
-  - helm install $${RELEASE_NAME} mina-sample-zkapp $${COUNT:+--set=transactionCount=$${COUNT}} $${PARALLELISM:+--set=parallelism=$${PARALLELISM}} --set=suffix=$${SUFFIX}
+  - helm install $${RELEASE_NAME} helm/zkapps $${COUNT:+--set=transactionCount=$${COUNT}} $${PARALLELISM:+--set=parallelism=$${PARALLELISM}} --set=suffix=$${SUFFIX}
 
 - name: run
   image: alpine/k8s:1.26.1
