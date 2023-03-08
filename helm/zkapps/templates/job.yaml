@@ -9,15 +9,6 @@ spec:
       labels:
         app:  {{ include "mina-sample-zkapp.job-name" . }}
     spec:
-      # affinity:
-      #   podAntiAffinity:
-      #     requiredDuringSchedulingIgnoredDuringExecution:
-      #     - labelSelector:
-      #         matchExpressions:
-      #         - key: app
-      #           operator: In
-      #           values: [ send-zkapps ]
-      #       topologyKey: "kubernetes.io/hostname"
       runtimeClassName: kata-clh
       initContainers:
       - name: controller-is-ready
@@ -50,4 +41,4 @@ spec:
             memory: {{ $.Values.mem }}
             {{ end }}
       restartPolicy: {{ $.Values.restartPolicy | default "OnFailure" }}
-  backoffLimit: 2
+  backoffLimit: {{ div ($.Values.parallelism | default 1) 3 }}
