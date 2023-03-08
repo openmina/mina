@@ -1,5 +1,5 @@
 mina:
-  cpuRequest: 2
+  cpuRequest: 4
   memRequest: "12.0Gi"
 
 healthcheck:
