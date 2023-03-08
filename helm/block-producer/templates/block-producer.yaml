@@ -298,7 +298,7 @@ spec:
           containerPort: {{ default $.Values.mina.ports.p2p $config.externalPort }}
           #hostPort: {{ default $.Values.mina.ports.external $config.externalPort }}
 {{$data := dict "name" $config.name "healthcheck" $.Values.healthcheck }}
-{{- include "healthcheck.daemon.allChecks" $data | indent 8 }}
+{{- include "healthcheck.blockProducer.allChecks" $data | indent 8 }}
         imagePullPolicy: Always
         volumeMounts:
         - name: wallet-keys
