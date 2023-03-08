@@ -74,7 +74,7 @@ steps:
 - name: prepare-deamon-json
   image: busybox
   commands:
-  - sed -e "s/\$${TIMESTAMP}/$(date -u -Iseconds -d 00:00)/" $${OM}/resources/daemon.template.json > $${OM}/resources/daemon.json
+  - sed -e "s/\$${TIMESTAMP}/$(date -u -Iseconds | sed -e 's/:..+/:00+/')/" $${OM}/resources/daemon.template.json > $${OM}/resources/daemon.json
 
 - name: log-seed
   <<: *log
