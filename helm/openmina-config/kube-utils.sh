@@ -54,6 +54,7 @@ mina_testnet_available() {
 }
 
 mina_testnet_same_height_() {
+    PREV_HEIGHT=""
     for NAME in $(mina_deployments); do
         HEIGHT="$(mina_blockchain_height "deployment/$NAME")" #
         if [ -z "$HEIGHT" ]; then
@@ -61,7 +62,10 @@ mina_testnet_same_height_() {
             return 1
         fi
         echo "$NAME is at $HEIGHT"
-        if [ -z "$PREV_HEIGHT" ]; then
+        if [ "$HEIGHT" -eq 1 ]; then
+            echo "Genesis block"
+            return 1
+        elif [ -z "$PREV_HEIGHT" ]; then
             PREV_HEIGHT="${HEIGHT}"
         elif [ "$HEIGHT" -eq "$PREV_HEIGHT" ]; then
             continue
