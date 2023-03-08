@@ -205,7 +205,7 @@ operate() {
         ;;
         delete)
             if [ -z "$DRY_RUN" ]; then
-                $HELM delete "$NAME" || true
+                $HELM delete "$NAME" --wait --timeout=1m || true
             else
                 echo $HELM delete "$NAME"
             fi
