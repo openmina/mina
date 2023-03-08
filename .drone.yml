@@ -143,6 +143,8 @@ trigger:
   event: [ custom ]
 
 environment:
+  # path to openmina tooling
+  OM: helm/openmina-config
   RELEASE_NAME: zkapps-drone-${DRONE_BUILD_NUMBER}
   SUFFIX: ${DRONE_BUILD_NUMBER}
 
