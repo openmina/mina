@@ -81,7 +81,7 @@ steps:
   environment:
     KUBECONFIG: kube-config
   commands:
-  - $${OM}/wait-for-height $${NODES_WAIT_RESOURCE} $${TAREGET_HEIGHT}
+  - $${OM}/wait-for-height.sh $${NODES_WAIT_RESOURCE} $${TAREGET_HEIGHT}
 
 ---
 
