@@ -65,6 +65,11 @@ steps:
   commands:
   - sed -e "s/\$${TIMESTAMP}/$(date -u -Iseconds -d 00:00)/" $${OM}/resources/daemon.template.json > $${OM}/resources/daemon.json
 
+- name: log-seed
+  <<: *log
+  environment:
+    NAME: seed1
+
 - name: deploy-seeds
   image: alpine/k8s:1.26.1
   environment:
@@ -75,19 +80,6 @@ steps:
   - $${OM}/deploy.sh delete --all --force
   - $${OM}/deploy.sh deploy --seeds --force
   - kubectl wait $${SEEDS_WAIT_RESOURCE} --for=condition=Available --timeout=$${SEEDS_WAIT_TIMEOUT}
-
-# - name: log-node
-#   image: alpine/k8s:1.26.1
-#   detach: true
-#   environment:
-#     KUBECONFIG: kube-config
-#   commands:
-#   - while ! kubectl logs deployment/node1 --container mina --follow; do echo "waiting for node1 to start..."; sleep 10; done
-
-- name: log-seed
-  <<: *log
-  environment:
-    NAME: seed1
 
 - name: log-node
   <<: *log
