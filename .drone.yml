@@ -29,6 +29,15 @@ environment:
   # timeout to wait when deploying Mina nodes
   NODES_WAIT_TIMEOUT: 15m
 
+defs:
+- &log
+  image: alpine/k8s:1.26.1
+  detach: true
+  environment:
+    KUBECONFIG: kube-config
+  commands:
+  - while ! kubectl logs deployment/$${NAME} --container mina --follow; do echo "waiting for $${NAME} to start..."; sleep 10; done
+
 steps:
 
 - name: prepare-kubeconfig
@@ -44,6 +53,8 @@ steps:
 
 - name: deployment-info
   image: alpine/k8s:1.26.1
+  environment:
+    KUBECONFIG: kube-config
   commands:
   - PORT="$$($${OM}/kube-utils.sh frontend-port $${NAMESPACE:-testnet-default})"
   - 'echo "Frontend: http://1.k8.openmina.com:$PORT"'
@@ -65,13 +76,33 @@ steps:
   - $${OM}/deploy.sh deploy --seeds --force
   - kubectl wait $${SEEDS_WAIT_RESOURCE} --for=condition=Available --timeout=$${SEEDS_WAIT_TIMEOUT}
 
-- name: log-node
-  image: alpine/k8s:1.26.1
-  detach: true
+# - name: log-node
+#   image: alpine/k8s:1.26.1
+#   detach: true
+#   environment:
+#     KUBECONFIG: kube-config
+#   commands:
+#   - while ! kubectl logs deployment/node1 --container mina --follow; do echo "waiting for node1 to start..."; sleep 10; done
+
+- name: log-seed
+  <<: *log
   environment:
-    KUBECONFIG: kube-config
-  commands:
-  - while ! kubectl logs deployment/node1 --container mina --follow; do echo "waiting for node1 to start..."; sleep 10; done
+    NAME: seed1
+
+- name: log-node
+  <<: *log
+  environment:
+    NAME: node1
+
+- name: log-producer
+  <<: *log
+  environment:
+    NAME: node1
+
+- name: log-snarker
+  <<: *log
+  environment:
+    NAME: snarker1
 
 - name: deploy-nodes
   image: alpine/k8s:1.26.1
