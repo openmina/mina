@@ -31,11 +31,6 @@ environment:
 
 steps:
 
-- name: prepare-deamon-json
-  image: busybox
-  commands:
-  - sed -e "s/\$${TIMESTAMP}/$(date -u -Iseconds -d 00:00)/" $${OM}/resources/daemon.template.json > $${OM}/resources/daemon.json
-
 - name: prepare-kubeconfig
   image: alpine/k8s:1.26.1
   environment:
@@ -46,6 +41,18 @@ steps:
   - umask 0077
   - echo "$DRONE_KUBECONFIG" > $${KUBECONFIG}
   - kubectl config set-context --current --namespace $${NAMESPACE:-testnet-default}
+
+- name: deployment-info
+  image: alpine/k8s:1.26.1
+  commands:
+  - PORT="$$($${OM}/kube-utils.sh frontend-port $${NAMESPACE:-testnet-default})"
+  - 'echo "Frontend: http://1.k8.openmina.com:$PORT"'
+  - 'echo "Namespace: $${NAMESPACE:-testnet-default}"'
+
+- name: prepare-deamon-json
+  image: busybox
+  commands:
+  - sed -e "s/\$${TIMESTAMP}/$(date -u -Iseconds -d 00:00)/" $${OM}/resources/daemon.template.json > $${OM}/resources/daemon.json
 
 - name: deploy-seeds
   image: alpine/k8s:1.26.1
@@ -144,19 +151,15 @@ steps:
   environment:
     KUBECONFIG: kube-config
   commands:
-  - |
-    kubectl wait --for=jsonpath='{.status.conditions[*].status}'=True job/send-zkapps-$${SUFFIX} --timeout=60m
-    MSG=$$(kubectl get job/send-zkapps-$${SUFFIX} -o jsonpath='{.status.conditions[?(@.status=="True")].message}')
-    TYPE=$$(kubectl get job/send-zkapps-$${SUFFIX} -o jsonpath='{.status.conditions[?(@.status=="True")].type}')
-    if [ "$${TYPE}" != "Complete" ]; then echo "Error running job: $${MSG}"; exit 1; fi
+  - $${OM}/kube-utils.sh wait-for-job-status job/send-zkapps-$${SUFFIX} 60m
 
-# - name: clean-up
-#   image: alpine/k8s:1.26.1
-#   environment:
-#     KUBECONFIG: kube-config
-#   commands:
-#   - helm delete $${RELEASE_NAME}
-#   when:
-#     status:
-#     - success
-#     - failure
+- name: clean-up
+  image: alpine/k8s:1.26.1
+  environment:
+    KUBECONFIG: kube-config
+  commands:
+  - helm delete $${RELEASE_NAME}
+  when:
+    status:
+    - success
+    # - failure
