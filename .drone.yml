@@ -20,6 +20,14 @@ environment:
   OM: helm/openmina-config
   # target height to wait for after deployment
   TARGET_HEIGHT: 8
+  # resource to wait for status when deploying Mina seeds
+  SEEDS_WAIT_RESOURCE: deployment/seed1
+  # timeout to wait when deploying Mina seeds
+  SEEDS_WAIT_TIMEOUT: 10m
+  # resource to wait for status when deploying Mina nodes
+  NODES_WAIT_RESOURCE: deployment/node1
+  # timeout to wait when deploying Mina nodes
+  NODES_WAIT_TIMEOUT: 15m
 
 steps:
 
@@ -48,7 +56,7 @@ steps:
   #- export MINA_IMAGE=TODO
   - $${OM}/deploy.sh delete --all --force
   - $${OM}/deploy.sh deploy --seeds --force
-  - kubectl wait deployment/seed1 --for=condition=Available --timeout=10m
+  - kubectl wait $${SEEDS_WAIT_RESOURCE} --for=condition=Available --timeout=$${SEEDS_WAIT_TIMEOUT}
 
 - name: log-node
   image: alpine/k8s:1.26.1
@@ -66,14 +74,14 @@ steps:
   #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   #- export MINA_IMAGE=TODO
   - $${OM}/deploy.sh deploy --producers --snarkers --nodes --frontend --force
-  - kubectl wait deployment/node1 --for=condition=Available --timeout=10m
+  - kubectl wait $${NODES_WAIT_RESOURCE} --for=condition=Available --timeout=$${NODES_WAIT_TIMEOUT}
 
 - name: wait-for-height
   image: alpine/k8s:1.26.1
   environment:
     KUBECONFIG: kube-config
   commands:
-  - $${OM}/wait-for-height deployment/node1 $${TAREGET_HEIGHT}
+  - $${OM}/wait-for-height $${NODES_WAIT_RESOURCE} $${TAREGET_HEIGHT}
 
 ---
 
