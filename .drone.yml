@@ -16,6 +16,7 @@ steps:
   - git clone $${MINA_REPO:-$${DRONE_REPO_LINK}} .
   - git checkout $${MINA_BRANCH:-$${DRONE_BRANCH}}
   - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder ./dockerfiles/stages/99-openmina-tail > ./dockerfiles/stages/merged
+  - echo "!dockerfiles/scripts/healthcheck-utilities.sh" >> .dockerignore
 
 - name: publish-image
   image: plugins/docker
