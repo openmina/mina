@@ -33,7 +33,7 @@ steps:
     - $${MINA_BRANCH:-$${DRONE_BRANCH}}-latest
     username:
       from_secret: docker_hub_username
-    cache_from: openmina/mina:${DRONE_BRANCH}-${DRONE_COMMIT_SHA:0:8}
+    cache_from: openmina/mina:${DRONE_BRANCH}-latest
 
 
 ---
