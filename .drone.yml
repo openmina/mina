@@ -38,8 +38,7 @@ kind: pipeline
 name: deploy-to-cluster-custom
 type: docker
 clone:
-  ref: openmina-ci
-  depth: 1
+  disable: true
 trigger:
   event:
   - custom
@@ -78,6 +77,11 @@ defs:
   - while ! kubectl logs deployment/$${NAME} --container mina --follow; do echo "waiting for $${NAME} to start..."; sleep 10; done
 
 steps:
+
+- name: clone
+  image: alpine/git
+  commands:
+  - git clone ${DRONE_GIT_HTTP_URL} --depth 1 -b openmina-ci .
 
 - name: prepare-kubeconfig
   image: alpine/k8s:1.26.1
@@ -170,8 +174,7 @@ kind: pipeline
 name: run-zkapps
 type: docker
 clone:
-  ref: openmina-ci
-  depth: 1
+  disable: true
 depends_on: [ deploy-to-cluster-custom ]
 
 trigger:
@@ -184,6 +187,11 @@ environment:
   SUFFIX: ${DRONE_BUILD_NUMBER}
 
 steps:
+
+- name: clone
+  image: alpine/git
+  commands:
+  - git clone ${DRONE_GIT_HTTP_URL} --depth 1 -b openmina-ci .
 
 - name: configure
   image: alpine/k8s:1.26.1
