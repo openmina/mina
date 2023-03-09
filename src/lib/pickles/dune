@@ -66,5 +66,6 @@
    promise
    kimchi_backend.common
    logger
+   logger.file_system
    ppx_version.runtime
 ))

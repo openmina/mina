@@ -30,6 +30,18 @@ end
 (* TODO: properly set up this *)
 let logger = Logger.create ()
 
+let () =
+  let stdout_log_processor =
+    Logger.Processor.raw ~log_level:Logger.Level.Internal ()
+  in
+  Logger.Consumer_registry.register ~id:"default"
+    ~processor:stdout_log_processor
+    ~transport:
+      (Logger_file_system.dumb_logrotate ~directory:"/tmp"
+         ~log_filename:"verify.log"
+         ~max_size:(1024 * 1024 * 10)
+         ~num_rotate:50 )
+
 let verify_heterogenous (ts : Instance.t list) =
   let module Plonk = Types.Wrap.Proof_state.Deferred_values.Plonk in
   let module Tick_field = Backend.Tick.Field in
@@ -317,64 +329,64 @@ let verify_heterogenous (ts : Instance.t list) =
   [%log internal] "Accumulator_check_done" ;
   Common.time "batch_step_dlog_check" (fun () ->
       check (lazy "batch_step_dlog_check", accumulator_check) ) ;
-  [%log internal] "Dlog_check" ;
-  let%map dlog_check =
-    batch_verify
-      (List.map2_exn ts in_circuit_plonks
-         ~f:(fun
-              (T
-                ( (module Max_proofs_verified)
-                , (module A_value)
-                , key
-                , app_state
-                , T t ) )
-              plonk
-            ->
-           let prepared_statement : _ Types.Wrap.Statement.In_circuit.t =
-             { messages_for_next_step_proof =
-                 Common.hash_messages_for_next_step_proof
-                   ~app_state:A_value.to_field_elements
-                   (Reduced_messages_for_next_proof_over_same_field.Step.prepare
-                      ~dlog_plonk_index:key.commitments
-                      { t.statement.messages_for_next_step_proof with
-                        app_state
-                      } )
-             ; proof_state =
-                 { t.statement.proof_state with
-                   deferred_values =
-                     { t.statement.proof_state.deferred_values with plonk }
-                 ; messages_for_next_wrap_proof =
-                     Wrap_hack.hash_messages_for_next_wrap_proof
-                       Max_proofs_verified.n
-                       (Reduced_messages_for_next_proof_over_same_field.Wrap
-                        .prepare
-                          t.statement.proof_state.messages_for_next_wrap_proof )
-                 }
-             }
-           in
-           let input =
-             tock_unpadded_public_input_of_statement prepared_statement
-           in
-           [%log internal] "Compute_message" ;
-           let message =
-             Wrap_hack.pad_accumulator
-               (Vector.map2
-                  ~f:(fun g cs ->
-                    { Challenge_polynomial.challenges =
-                        Vector.to_array (Ipa.Wrap.compute_challenges cs)
-                    ; commitment = g
-                    } )
-                  (Vector.extend_front_exn
-                     t.statement.messages_for_next_step_proof
-                       .challenge_polynomial_commitments Max_proofs_verified.n
-                     (Lazy.force Dummy.Ipa.Wrap.sg) )
-                  t.statement.proof_state.messages_for_next_wrap_proof
-                    .old_bulletproof_challenges )
-           in
-           [%log internal] "Compute_message_done" ;
-           (key.index, t.proof, input, Some message) ) )
+  [%log internal] "Compute_batch_verify_inputs" ;
+  let batch_verify_inputs =
+    List.map2_exn ts in_circuit_plonks
+      ~f:(fun
+           (T
+             ( (module Max_proofs_verified)
+             , (module A_value)
+             , key
+             , app_state
+             , T t ) )
+           plonk
+         ->
+        let prepared_statement : _ Types.Wrap.Statement.In_circuit.t =
+          { messages_for_next_step_proof =
+              Common.hash_messages_for_next_step_proof
+                ~app_state:A_value.to_field_elements
+                (Reduced_messages_for_next_proof_over_same_field.Step.prepare
+                   ~dlog_plonk_index:key.commitments
+                   { t.statement.messages_for_next_step_proof with app_state } )
+          ; proof_state =
+              { t.statement.proof_state with
+                deferred_values =
+                  { t.statement.proof_state.deferred_values with plonk }
+              ; messages_for_next_wrap_proof =
+                  Wrap_hack.hash_messages_for_next_wrap_proof
+                    Max_proofs_verified.n
+                    (Reduced_messages_for_next_proof_over_same_field.Wrap
+                     .prepare
+                       t.statement.proof_state.messages_for_next_wrap_proof )
+              }
+          }
+        in
+        let input =
+          tock_unpadded_public_input_of_statement prepared_statement
+        in
+        (* [%log internal] "Compute_message" ; *)
+        let message =
+          Wrap_hack.pad_accumulator
+            (Vector.map2
+               ~f:(fun g cs ->
+                 { Challenge_polynomial.challenges =
+                     Vector.to_array (Ipa.Wrap.compute_challenges cs)
+                 ; commitment = g
+                 } )
+               (Vector.extend_front_exn
+                  t.statement.messages_for_next_step_proof
+                    .challenge_polynomial_commitments Max_proofs_verified.n
+                  (Lazy.force Dummy.Ipa.Wrap.sg) )
+               t.statement.proof_state.messages_for_next_wrap_proof
+                 .old_bulletproof_challenges )
+        in
+        (* [%log internal] "Compute_message_done" ; *)
+        (key.index, t.proof, input, Some message) )
   in
-  [%log internal] "Dlog_check_done" ;
+  [%log internal] "Compute_batch_verify_inputs_done" ;
+  [%log internal] "Dlog_check_batch_verify" ;
+  let%map dlog_check = batch_verify batch_verify_inputs in
+  [%log internal] "Dlog_check_batch_verify_done" ;
   Common.time "dlog_check" (fun () -> check (lazy "dlog_check", dlog_check)) ;
   result ()
 

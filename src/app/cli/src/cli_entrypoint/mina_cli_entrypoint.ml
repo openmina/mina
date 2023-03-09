@@ -1654,11 +1654,7 @@ let internal_commands logger =
                          input_sexp ) )
             | `Json -> (
                 let%map input_line =
-                  match%map Reader.read_line (Lazy.force Reader.stdin) with
-                  | `Ok input_line ->
-                      input_line
-                  | `Eof ->
-                      failwith "early EOF while reading json"
+                  Reader.contents (Lazy.force Reader.stdin)
                 in
                 match mode with
                 | `Transaction -> (
