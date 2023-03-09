@@ -149,6 +149,7 @@ exec-daemon() {
     -client-port ${CLIENT_PORT} \
     -rest-port ${REST_PORT} \
     -insecure-rest-server \
+    -internal-tracing \
     -external-port ${EXTERNAL_PORT} \
     -metrics-port ${DAEMON_METRICS_PORT} \
     -libp2p-metrics-port ${LIBP2P_METRICS_PORT} \

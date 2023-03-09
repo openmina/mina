@@ -42,6 +42,8 @@ module Blockchain = Blockchain
 
 module Worker_state = struct
   module type S = sig
+    val logger : unit -> Logger.t option
+
     val extend_blockchain :
          Blockchain.t
       -> Protocol_state.Value.t
@@ -57,6 +59,7 @@ module Worker_state = struct
   (* bin_io required by rpc_parallel *)
   type init_arg =
     { conf_dir : string
+    ; enable_internal_tracing : bool
     ; logger : Logger.Stable.Latest.t
     ; proof_level : Genesis_constants.Proof_level.t
     ; constraint_constants : Genesis_constants.Constraint_constants.t
@@ -99,10 +102,15 @@ module Worker_state = struct
                let (_ : Pickles.Dirty.t) =
                  Pickles.Cache_handle.generate_or_load B.cache_handle
 
+               let logger () = Some logger
+
                let extend_blockchain (chain : Blockchain.t)
                    (next_state : Protocol_state.Value.t)
                    (block : Snark_transition.value) (t : Ledger_proof.t option)
                    state_for_handler pending_coinbase =
+                 let logger =
+                   Option.value (logger ()) ~default:(Logger.null ())
+                 in
                  let%map.Async.Deferred res =
                    Deferred.Or_error.try_with ~here:[%here] (fun () ->
                        let txn_snark_statement, txn_snark_proof =
@@ -139,10 +147,15 @@ module Worker_state = struct
              ( module struct
                module Transaction_snark = Transaction_snark
 
+               let logger () = Some logger
+
                let extend_blockchain (chain : Blockchain.t)
                    (next_state : Protocol_state.Value.t)
                    (block : Snark_transition.value) (t : Ledger_proof.t option)
                    state_for_handler pending_coinbase =
+                 let logger =
+                   Option.value (logger ()) ~default:(Logger.null ())
+                 in
                  let t, _proof = ledger_proof_opt next_state t in
                  let res =
                    Blockchain_snark.Blockchain_snark_state.check ~proof_level
@@ -172,6 +185,8 @@ module Worker_state = struct
          | None ->
              ( module struct
                module Transaction_snark = Transaction_snark
+
+               let logger () = Some logger
 
                let extend_blockchain _chain next_state _block _ledger_proof
                    _state_for_handler _pending_coinbase =
@@ -217,6 +232,8 @@ module Functions = struct
         }
       ->
         let (module W) = Worker_state.get w in
+        Logger.with_logger (W.logger ())
+        @@ fun () ->
         W.extend_blockchain chain next_state block ledger_proof prover_state
           pending_coinbase )
 
@@ -267,7 +284,13 @@ module Worker = struct
         }
 
       let init_worker_state
-          Worker_state.{ conf_dir; logger; proof_level; constraint_constants } =
+          Worker_state.
+            { conf_dir
+            ; enable_internal_tracing
+            ; logger
+            ; proof_level
+            ; constraint_constants
+            } =
         let max_size = 256 * 1024 * 512 in
         let num_rotate = 1 in
         Logger.Consumer_registry.register ~id:"default"
@@ -275,9 +298,21 @@ module Worker = struct
           ~transport:
             (Logger_file_system.dumb_logrotate ~directory:conf_dir
                ~log_filename:"mina-prover.log" ~max_size ~num_rotate ) ;
+        Logger.Consumer_registry.register ~id:Logger.Logger_id.mina
+          ~processor:Internal_tracing.For_logger.processor
+          ~transport:
+            (Internal_tracing.For_logger.json_lines_rotate_transport
+               ~directory:(conf_dir ^ "/internal-tracing")
+               ~log_filename:"prover.jsonl" () ) ;
+        if enable_internal_tracing then Internal_tracing.toggle ~logger `Enabled ;
         [%log info] "Prover started" ;
         Worker_state.create
-          { conf_dir; logger; proof_level; constraint_constants }
+          { conf_dir
+          ; enable_internal_tracing
+          ; logger
+          ; proof_level
+          ; constraint_constants
+          }
 
       let init_connection_state ~connection:_ ~worker_state:_ () = Deferred.unit
     end
@@ -296,11 +331,17 @@ let create ~logger ~pids ~conf_dir ~proof_level ~constraint_constants =
       ~metadata:[ ("err", Error_json.error_to_yojson err) ] ;
     Error.raise err
   in
+  let enable_internal_tracing = Internal_tracing.is_enabled () in
   let%map connection, process =
     (* HACK: Need to make connection_timeout long since creating a prover can take a long time*)
     Worker.spawn_in_foreground_exn ~connection_timeout:(Time.Span.of_min 1.)
       ~on_failure ~shutdown_on:Connection_closed ~connection_state_init_arg:()
-      { conf_dir; logger; proof_level; constraint_constants }
+      { conf_dir
+      ; enable_internal_tracing
+      ; logger
+      ; proof_level
+      ; constraint_constants
+      }
   in
   [%log info]
     "Daemon started process of kind $process_kind with pid $prover_pid"

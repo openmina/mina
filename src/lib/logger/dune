@@ -6,7 +6,9 @@
  (libraries
    ;; opam libraries
    result
+   core
    core_kernel
+   async_kernel
    sexplib0
    bin_prot.shape
    base.caml
