@@ -3,19 +3,22 @@ kind: pipeline
 name: build-image-custom
 type: docker
 clone:
-  ref: ${MINA_BRANCH:-${DRONE_BRANCH}}
+  disable: true
 trigger:
   event:
   - custom
 steps:
 
-- name: prepare-dockerfiles
+- name: clone
   image: alpine/git
   commands:
-  - '[[ -z "${MINA_IMAGE}" ]] && echo "Continue" || exit 78'
-  - git clone $${MINA_REPO:-$${DRONE_REPO_LINK}} .
-  - git checkout $${MINA_BRANCH:-$${DRONE_BRANCH}}
-  - cat ./dockerfiles/stages/1-build-deps ./dockerfiles/stages/2-opam-deps ./dockerfiles/stages/3-builder ./dockerfiles/stages/99-openmina-tail > ./dockerfiles/stages/merged
+  - git clone $${MINA_REPO:-$${DRONE_REPO_LINK}} --depth 1 --recurse-submodules -b $${MINA_BRANCH:-$${DRONE_BRANCH}} .
+
+- name: prepare-dockerfiles
+  image: busybox
+  commands:
+  - wget https://github.com/openmina/mina/raw/openmina-ci/dockerfiles/stages/99-openmina-tail -o dockerfiles/stages/99-openmina-tail
+  - cat dockerfiles/stages/{1-build-deps,2-opam-deps,3-builder,99-openmina-tail} > ./dockerfiles/stages/merged
   - echo "!dockerfiles/scripts/healthcheck-utilities.sh" >> .dockerignore
 
 - name: publish-image
@@ -33,7 +36,7 @@ steps:
     - $${MINA_BRANCH:-$${DRONE_BRANCH}}-latest
     username:
       from_secret: docker_hub_username
-    cache_from: openmina/mina:${DRONE_BRANCH}-latest
+    cache_from: openmina/mina:$${MINA_BRANCH:-$${DRONE_BRANCH}}-latest
 
 
 ---
@@ -41,7 +44,7 @@ kind: pipeline
 name: deploy-to-cluster-custom
 type: docker
 clone:
-  disable: true
+  depth: 1
 trigger:
   event:
   - custom
@@ -84,7 +87,7 @@ steps:
 - name: clone
   image: alpine/git
   commands:
-  - git clone ${DRONE_GIT_HTTP_URL} --depth 1 -b openmina-ci .
+  - git clone ${DRONE_REPO_LINK} --depth 1 -b ${DRONE_BRANCH} .
 
 - name: prepare-kubeconfig
   image: alpine/k8s:1.26.1
@@ -177,7 +180,7 @@ kind: pipeline
 name: run-zkapps
 type: docker
 clone:
-  disable: true
+  depth: 1
 depends_on: [ deploy-to-cluster-custom ]
 
 trigger:
@@ -190,11 +193,6 @@ environment:
   SUFFIX: ${DRONE_BUILD_NUMBER}
 
 steps:
-
-- name: clone
-  image: alpine/git
-  commands:
-  - git clone ${DRONE_GIT_HTTP_URL} --depth 1 -b openmina-ci .
 
 - name: configure
   image: alpine/k8s:1.26.1
