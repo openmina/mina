@@ -84,11 +84,6 @@ defs:
 
 steps:
 
-- name: clone
-  image: alpine/git
-  commands:
-  - git clone ${DRONE_REPO_LINK} --depth 1 -b ${DRONE_BRANCH} .
-
 - name: prepare-kubeconfig
   image: alpine/k8s:1.26.1
   environment:
