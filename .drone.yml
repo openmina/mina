@@ -18,7 +18,7 @@ steps:
   image: busybox
   commands:
   - wget https://github.com/openmina/mina/raw/openmina-ci/dockerfiles/stages/99-openmina-tail -o dockerfiles/stages/99-openmina-tail
-  - cat dockerfiles/stages/{1-build-deps,2-opam-deps,3-builder,99-openmina-tail} > ./dockerfiles/stages/merged
+  - for f in 1-build-deps 2-opam-deps 3-builder 99-openmina-tail; do cat dockerfiles/stages/$$f; done > ./dockerfiles/stages/merged
   - echo "!dockerfiles/scripts/healthcheck-utilities.sh" >> .dockerignore
 
 - name: publish-image
