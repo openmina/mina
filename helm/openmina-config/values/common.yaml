@@ -75,5 +75,8 @@ logs:
   enable: true
   image: openmina/mina-logs-service:b5d32468
 
+aggregator:
+  image: openmina/mina-aggregator:latest
+
 nodeSelector:
   preemptible: false

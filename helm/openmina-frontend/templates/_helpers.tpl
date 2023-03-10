@@ -52,6 +52,11 @@ http {
            rewrite ^/snarker-http-coordinator($|/.*) $1 break;
            proxy_pass http://$upstream;
         }
+        location /aggregator {
+           set $upstream aggregator.{{ $namespace }}.svc.cluster.local;
+           rewrite ^/aggregator/(.*) $1 break;
+           proxy_pass http://$upstream;
+        }
         {{ range $node := .nodes }}
         location /{{ $node }}/graphql {
            set $upstream {{ $node }}-graphql.{{ $namespace }}.svc.cluster.local;
