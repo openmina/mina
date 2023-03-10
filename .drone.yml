@@ -127,7 +127,6 @@ steps:
   environment:
     KUBECONFIG: kube-config
   commands:
-  #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
   - export MINA_IMAGE=openmina/mina:$${MINA_BRANCH:-$${DRONE_BRANCH}}-${DRONE_COMMIT_SHA:0:8}
   - $${OM}/deploy.sh deploy --seeds --force
 
@@ -158,8 +157,7 @@ steps:
   environment:
     KUBECONFIG: kube-config
   commands:
-  #- '[[ ! -n "${MINA_IMAGE}" ]] && export MINA_IMAGE=openmina/mina:$${DRONE_COMMIT_SHA:0:8} || export MINA_IMAGE=$${MINA_IMAGE}'
-  #- export MINA_IMAGE=TODO
+  - export MINA_IMAGE=openmina/mina:$${MINA_BRANCH:-$${DRONE_BRANCH}}-${DRONE_COMMIT_SHA:0:8}
   - $${OM}/deploy.sh deploy --producers --snarkers --nodes --frontend --force
 
 - name: testnet-is-ready
