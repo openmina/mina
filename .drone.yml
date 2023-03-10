@@ -12,7 +12,7 @@ steps:
 - name: clone
   image: alpine/git
   commands:
-  - git clone $${MINA_REPO:-$${DRONE_REPO_LINK}} --depth 1 --recurse-submodules -b $${MINA_BRANCH:-$${DRONE_BRANCH}} .
+  - git clone $${MINA_REPO:-$${DRONE_REPO_LINK}} --depth 1 -b $${MINA_BRANCH:-$${DRONE_BRANCH}} .
 
 - name: prepare-dockerfiles
   image: busybox
@@ -36,7 +36,7 @@ steps:
     - $${MINA_BRANCH:-$${DRONE_BRANCH}}-latest
     username:
       from_secret: docker_hub_username
-    cache_from: openmina/mina:$${MINA_BRANCH:-$${DRONE_BRANCH}}-latest
+    cache_from: openmina/mina:${MINA_BRANCH:-${DRONE_BRANCH}}-latest
 
 
 ---
