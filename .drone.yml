@@ -18,6 +18,7 @@ steps:
   image: busybox
   commands:
   - wget https://github.com/openmina/mina/raw/openmina-ci/dockerfiles/stages/99-openmina-tail -O dockerfiles/stages/99-openmina-tail
+  - sed -i -e "s/zlib1g-dev/zlib1g-dev jq/" dockerfiles/stages/1-build-deps
   - for f in 1-build-deps 2-opam-deps 3-builder 99-openmina-tail; do cat dockerfiles/stages/$$f; done > ./dockerfiles/stages/merged
   - echo "!dockerfiles/scripts/healthcheck-utilities.sh" >> .dockerignore
 
