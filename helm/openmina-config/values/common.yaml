@@ -78,5 +78,9 @@ logs:
 aggregator:
   image: openmina/mina-aggregator:latest
 
+ciFrontend:
+  image: directcuteo/mina-ci-frontend:reports7
+  nodePort: 31356
+
 nodeSelector:
   preemptible: false
