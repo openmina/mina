@@ -32,6 +32,7 @@
    async_kernel
    bin_prot.shape
    ;; local libraries
+   logger
    mina_wire_types
    kimchi_bindings
    kimchi_types

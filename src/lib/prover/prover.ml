@@ -234,8 +234,14 @@ module Functions = struct
         let (module W) = Worker_state.get w in
         Logger.with_logger (W.logger ())
         @@ fun () ->
-        W.extend_blockchain chain next_state block ledger_proof prover_state
-          pending_coinbase )
+        let logger = Logger.get_logger () in
+        [%log internal] "Prover_extend_blockchain" ;
+        let%map.Async.Deferred res =
+          W.extend_blockchain chain next_state block ledger_proof prover_state
+            pending_coinbase
+        in
+        [%log internal] "Prover_extend_blockchain_done" ;
+        res )
 
   let verify_blockchain =
     create Blockchain.Stable.Latest.bin_t
