@@ -910,6 +910,8 @@ module Side_loaded = struct
         let to_field_elements =
           let (Typ typ) = typ in
           fun x -> fst (typ.value_to_fields x)
+
+        let sexp_of_t = sexp_of_opaque
       end : Intf.Statement_value
         with type t = t )
     in
@@ -1029,11 +1031,15 @@ let compile_with_wrap_main_override_promise :
     type t = a_var
 
     let to_field_elements = a_var_to_fields
+
+    let sexp_of_t = sexp_of_opaque
   end in
   let module A_value = struct
     type t = a_value
 
     let to_field_elements = a_value_to_fields
+
+    let sexp_of_t = sexp_of_opaque
   end in
   let module Ret_var = struct
     type t = ret_var
@@ -1094,6 +1100,8 @@ let compile_with_wrap_main_override_promise :
     let to_field_elements =
       let (Typ typ) = typ in
       fun x -> fst (typ.value_to_fields x)
+
+    let sexp_of_t = sexp_of_opaque
   end in
   let module P = struct
     type statement = value

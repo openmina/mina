@@ -108,6 +108,23 @@ module Make (Shifted_value : Pickles_types.Shifted_value.S) (Sc : Scalars.S) : s
        ?with_label:(string -> (unit -> 't) -> 't)
     -> (module Field_intf with type t = 't)
     -> env:'t Scalars.Env.t
+    -> ?print_sexp_of_fields:
+         (   ( 't
+             , 't
+             , 't
+             , ('t, 'b) Pickles_types.Plonk_types.Opt.t
+             , ( 't
+                 Composition_types.Wrap.Proof_state.Deferred_values.Plonk
+                 .In_circuit
+                 .Lookup
+                 .t
+               , 'b )
+               Pickles_types.Plonk_types.Opt.t
+             , 'b )
+             Composition_types.Wrap.Proof_state.Deferred_values.Plonk.In_circuit
+             .t
+          -> string
+          -> unit )
     -> shift:'t Shifted_value.Shift.t
     -> feature_flags:Plonk_types.Opt.Flag.t Plonk_types.Features.t
     -> ( 't

@@ -69,7 +69,7 @@ let verify_heterogenous (ts : Instance.t list) =
 
     let sexp_of_plonk =
       Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
-        sexp_of_constant_scallar_challenge
+        sexp_of_constant_scallar_challenge Bool.sexp_of_t
 
     let sexp_of_shifted_tick_field =
       let sexp_of_tick_as_int tf =
@@ -158,7 +158,7 @@ let verify_heterogenous (ts : Instance.t list) =
           let open Debug in
           Deferred_values.sexp_of_t
             (Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
-               sexp_of_constant_scallar_challenge )
+               sexp_of_constant_scallar_challenge Bool.sexp_of_t )
             sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
             sexp_of_bulletproof_challenges Branch_data.sexp_of_t
             statement.proof_state.deferred_values
@@ -182,7 +182,7 @@ let verify_heterogenous (ts : Instance.t list) =
           let open Debug in
           Deferred_values.sexp_of_t
             (Plonk.Minimal.sexp_of_t Challenge.Constant.sexp_of_t
-               sexp_of_constant_scallar_challenge )
+               sexp_of_constant_scallar_challenge Bool.sexp_of_t )
             Tick.Field.sexp_of_t sexp_of_shifted_tick_field
             sexp_of_bulletproof_challenges Branch_data.sexp_of_t output
         in
@@ -211,7 +211,7 @@ let verify_heterogenous (ts : Instance.t list) =
         in
         let sexp =
           Plonk.Minimal.sexp_of_t Tick.Field.sexp_of_t Tick.Field.sexp_of_t
-            tick_plonk_minimal
+            sexp_of_bool tick_plonk_minimal
         in
         Debug.value "tick_plonk_minimal" ~sexp ~loc:__LOC__ ;
         let sexp =
@@ -302,7 +302,8 @@ let verify_heterogenous (ts : Instance.t list) =
                .sexp_of_t Tick.Field.sexp_of_t Tick.Field.sexp_of_t
                  Tick.Field.sexp_of_t
                  (fun _ -> Sexp.Atom "<opaque>")
-                 fields )
+                 (fun _ -> Sexp.Atom "<opaque>")
+                 Bool.sexp_of_t fields )
             ~loc
         in
         let plonk =
@@ -446,13 +447,14 @@ let verify_heterogenous (ts : Instance.t list) =
   let sexp_of_plonk_in_circuit_lookup =
     let open Debug in
     Plonk.In_circuit.Lookup.sexp_of_t sexp_of_constant_scallar_challenge
-      sexp_of_shifted_tick_field
   in
   let sexp_of_plonk_in_circuit =
     let open Debug in
     Plonk.In_circuit.sexp_of_t Challenge.Constant.sexp_of_t
       sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
+      (Option.sexp_of_t sexp_of_shifted_tick_field)
       (Option.sexp_of_t sexp_of_plonk_in_circuit_lookup)
+      Bool.sexp_of_t
   in
   let sexp = List.sexp_of_t sexp_of_plonk_in_circuit in_circuit_plonks in
   Debug.value "in_circuit_plonks" ~sexp ~loc:__LOC__ ;
@@ -473,7 +475,7 @@ let verify_heterogenous (ts : Instance.t list) =
   in
   let sexp =
     List.sexp_of_t
-      (sexp_of_pair Wrap.Step_acc.sexp_of_t
+      (sexp_of_pair Tock.Inner_curve.Affine.sexp_of_t
          (Vector.sexp_of_t Tick.Field.sexp_of_t Tick.Rounds.n) )
       accumulator_check_inputs
   in
@@ -529,9 +531,11 @@ let verify_heterogenous (ts : Instance.t list) =
           let open Debug in
           Types.Wrap.Statement.In_circuit.sexp_of_t Challenge.Constant.sexp_of_t
             sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
+            (Option.sexp_of_t sexp_of_shifted_tick_field)
             (Option.sexp_of_t
                (Plonk.In_circuit.Lookup.sexp_of_t
-                  sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field ) )
+                  sexp_of_constant_scallar_challenge ) )
+            Bool.sexp_of_t
             (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
             Types.Digest.Constant.sexp_of_t
             (Vector.sexp_of_t Int64.sexp_of_t Nat.N4.n)
@@ -570,7 +574,7 @@ let verify_heterogenous (ts : Instance.t list) =
         (key.index, t.proof, input, Some padded_accumulator) )
   in
   Debug.checkpoint "Call dlog_check batch_verify" ~loc:__LOC__ ;
-  let%bind dlog_check = batch_verify dlog_check_inputs in
+  let%map dlog_check = batch_verify dlog_check_inputs in
   Common.time "dlog_check" (fun () -> check (lazy "dlog_check", dlog_check)) ;
   result ()
 

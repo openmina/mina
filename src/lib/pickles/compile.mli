@@ -20,6 +20,8 @@ module type Statement_intf = sig
   type t
 
   val to_field_elements : t -> field array
+
+  val sexp_of_t : t -> Sexp.t
 end
 
 module type Statement_var_intf =

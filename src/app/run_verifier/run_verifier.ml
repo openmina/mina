@@ -1,7 +1,6 @@
 open Core
 open Async
 open Blockchain_snark
-open Mina_base
 open Mina_state
 
 let parse_json_or_binprot_file path =
@@ -43,6 +42,8 @@ let get_input file =
       (state, proof, previous_state_hash, delta_block_chain_proof) )
 
 let run () =
+  Random.self_init () ;
+  Stdlib.Printf.printf "Starting verifier\n%!" ;
   let files = ref @@ List.tl_exn @@ Array.to_list @@ Sys.get_argv () in
   Stdlib.Printf.printf "Module name: %s\n%!" __MODULE__ ;
   Stdlib.Printf.printf "To set a breakpoint in this file: break @ %s LINE\n%!"
@@ -71,9 +72,7 @@ let run () =
   let after_time = Unix.gettimeofday () in
   Stdlib.Printf.printf "Blockchain snark module creation time: %fs\n%!"
     (after_time -. before_time) ;
-  let verify : (Protocol_state.Value.t * Proof.t) list -> bool =
-    B.Proof.verify
-  in
+  let verify = B.Proof.verify in
   let pop_file () =
     match !files with
     | [] ->
@@ -95,8 +94,8 @@ let run () =
         let after_time = Unix.gettimeofday () in
         Stdlib.Printf.printf "Verification time: %fs\n%!"
           (after_time -. before_time) ;
-        match result with
-        | true ->
+        match%bind result with
+        | Ok () ->
             Stdlib.Printf.printf "Proofs verified successfully.\n%!" ;
             let tfvr =
               Transition_chain_verifier.verify ~target_hash:previous_state_hash
@@ -110,13 +109,13 @@ let run () =
                 Stdlib.Printf.printf
                   "Delta block chain proof verified successfully.\n%!" ) ;
             loop ()
-        | false ->
-            Stdlib.Printf.printf "Proofs failed to verify.\n%!" ;
+        | Error err ->
+            Stdlib.Printf.printf "Proofs failed to verify: %s\n%!"
+              (Error.to_string_hum err) ;
             loop () )
   in
   loop ()
 
 let () =
-  Random.self_init () ;
-  Stdlib.Printf.printf "Starting verifier\n%!" ;
-  run ()
+  Command.async ~summary:"Run verifier" (Command.Param.return run)
+  |> Command.run

@@ -504,7 +504,7 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
             | None ->
                 Plonk_types.Opt.None
             | Some joint_combiner ->
-                Some { joint_combiner } )
+                Some { In_circuit.Lookup.joint_combiner } )
         ; optional_column_scalars =
             { range_check0 =
                 compute_feature (Index RangeCheck0) feature_flags.range_check0

@@ -145,7 +145,7 @@ module Make (W : Pickles_types.Nat.Intf) (MLMB : Pickles_types.Nat.Intf) : sig
 
   val to_yojson_full : t Pickles_types.Sigs.jsonable
 
-  val of_yojson : [> `String of string ] -> (t, string) result
+  val of_yojson : Yojson.Safe.t -> (t, string) result
 end
 
 module Proofs_verified_2 : sig

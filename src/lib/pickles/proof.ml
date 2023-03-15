@@ -324,7 +324,7 @@ module Make (W : Nat.Intf) (MLMB : Nat.Intf) = struct
 
   let to_yojson x = `String (to_base64 x)
 
-  let of_yojson = function
+  let of_yojson : Yojson.Safe.t -> (t, string) result = function
     | `String x ->
         of_base64 x
     | other ->
