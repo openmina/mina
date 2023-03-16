@@ -6,7 +6,7 @@ open Import
 
 let full_cached_domains =
   [ Domains.{ h = Pow_2_roots_of_unity 15 }
-  ; Domains.{ h = Pow_2_roots_of_unity 16 }
+  ; Domains.{ h = Pow_2_roots_of_unity 15 }
   ; Domains.{ h = Pow_2_roots_of_unity 15 }
   ; Domains.{ h = Pow_2_roots_of_unity 14 }
   ; Domains.{ h = Pow_2_roots_of_unity 15 }
@@ -168,7 +168,7 @@ let create
   in
   Timer.clock __LOC__ ;
   let own_domains =
-    if true then pop_cached_domain ()
+    if false then pop_cached_domain ()
     else
       let main =
         step
@@ -185,7 +185,7 @@ let create
         (T (Snarky_backendless.Typ.unit (), Fn.id, Fn.id))
         etyp main
   in
-  ( if false then
+  ( if true then
     let ys = Domains.to_yojson own_domains |> Yojson.Safe.to_string in
     printf "@@@@ Domains: %s\n%!" ys ) ;
   Timer.clock __LOC__ ;
