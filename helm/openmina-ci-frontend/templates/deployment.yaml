@@ -21,11 +21,11 @@ spec:
           command: ["sh", "-ce"]
           args:
             - |
-              AGGREGATOR_URL=$(echo $AGGREGATOR_URL) envsubst < /usr/share/nginx/html/assets/env.template.js > /usr/share/nginx/html/assets/env.js
+              envsubst < /usr/share/nginx/html/assets/env.template.js > /usr/share/nginx/html/assets/env.js
               exec nginx -c /nginx-conf/nginx.conf -g 'daemon off;'
           env:
             - name: AGGREGATOR_URL
-              value: http://1.k8.openmina.com:31356/aggregator
+              value: {{ .Values.backend | default "/aggregator" }}
           ports:
             - name: http
               containerPort: 80
