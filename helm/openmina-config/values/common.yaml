@@ -79,7 +79,7 @@ aggregator:
   image: openmina/mina-aggregator:latest
 
 ciFrontend:
-  image: directcuteo/mina-ci-frontend:reports22
+  image: directcuteo/mina-ci-frontend:reports23
   nodePort: 31356
 
 nodeSelector:
