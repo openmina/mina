@@ -1,25 +1,23 @@
-{{ if .Values.ingress }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
-  name: testnet-ingress
+  name: ci-ingress
 spec:
   ingressClassName: nginx
   rules:
-  - host: {{ .Values.ingress }}
+  - host: perf.ci.openmina.com
     http:
       paths:
       - backend:
           service:
-            name: frontend-service
+            name: ci-frontend-service
             port:
               number: 80
         path: /
         pathType: Prefix
   tls:
   - hosts:
-    - {{ .Values.ingress }}
+    - perf.ci.openmina.com
     secretName: ingress-tls
-{{ end }}
