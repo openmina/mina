@@ -38,6 +38,13 @@ spec:
           mountPath: /libp2p-keys
         - name: actual-libp2p
           mountPath: /root/libp2p-keys
+        resources:
+          requests:
+            memory: {{ $.Values.mina.memRequest }}
+            cpu: {{ $.Values.mina.cpuRequest }}
+          limits:
+            memory: {{ $.Values.mina.memRequest }}
+            cpu: {{ $.Values.mina.cpuRequest }}
       {{- else -}}
       - name: libp2p-perms
         image: {{ $.Values.mina.image | quote }}
@@ -51,6 +58,13 @@ spec:
         env:
           - name: MINA_LIBP2P_PASS
             value: {{ $.Values.mina.privkeyPass | quote }}
+        resources:
+          requests:
+            memory: {{ $.Values.mina.memRequest }}
+            cpu: {{ $.Values.mina.cpuRequest }}
+          limits:
+            memory: {{ $.Values.mina.memRequest }}
+            cpu: {{ $.Values.mina.cpuRequest }}
       {{- end }}
       containers:
       {{ include "sideCar.resources.containerSpec" (dict "resources" $.Values.resources) | nindent 6 }}
@@ -58,7 +72,6 @@ spec:
       {{ include "sideCar.logs.containerSpec" (dict "logs" $.Values.logs "name" $config.name) | nindent 6 }}
       - name: mina
         resources:
-          limits:
           requests:
             memory: {{ $.Values.mina.memRequest }}
             cpu: {{ $.Values.mina.cpuRequest }}
