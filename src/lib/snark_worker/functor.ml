@@ -549,6 +549,13 @@ module Make (Inputs : Intf.Inputs_intf) :
         Option.value_map ~default:() conf_dir ~f:(fun conf_dir ->
             let logrotate_max_size = 1024 * 10 in
             let logrotate_num_rotate = 1 in
+            Logger.Consumer_registry.register ~id:Logger.Logger_id.mina
+              ~processor:Internal_tracing.For_logger.processor
+              ~transport:
+                (Internal_tracing.For_logger.json_lines_rotate_transport
+                   ~directory:(conf_dir ^ "/internal-tracing")
+                   ~log_filename:"tx-proof-tracing.jsonl" () ) ;
+            don't_wait_for @@ Internal_tracing.toggle ~logger `Enabled ;
             Logger.Consumer_registry.register ~id:Logger.Logger_id.snark_worker
               ~processor:(Logger.Processor.raw ())
               ~transport:
@@ -563,6 +570,8 @@ module Make (Inputs : Intf.Inputs_intf) :
           Option.value ~default:Genesis_constants.Proof_level.compiled
             proof_level
         in
+        Internal_tracing.Context_logger.with_logger (Some logger)
+        @@ fun () ->
         main
           (module Rpcs_versioned)
           ~logger ~proof_level daemon_port
