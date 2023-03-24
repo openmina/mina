@@ -183,7 +183,7 @@ module Snark_worker = struct
       let our_binary = Sys.executable_name in
       Process.create_exn () ~prog:our_binary ?env
         ~args:
-          ( "internal" :: Snark_worker.Intf.command_name :: "-conf-dir"
+          ( "internal" :: Snark_worker.Intf.command_name :: "-config-directory"
           :: conf_dir
           :: Snark_worker.arguments ~proof_level
                ~daemon_address:
