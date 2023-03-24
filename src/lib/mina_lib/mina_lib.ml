@@ -172,7 +172,8 @@ let log_snark_coordinator_warning (config : Config.t) snark_worker =
         ()
 
 module Snark_worker = struct
-  let run_process ~logger ~proof_level pids client_port kill_ivar num_threads =
+  let run_process ~logger ~proof_level ~conf_dir pids client_port kill_ivar
+      num_threads =
     let env =
       Option.map
         ~f:(fun num -> `Extend [ ("RAYON_NUM_THREADS", string_of_int num) ])
@@ -182,7 +183,8 @@ module Snark_worker = struct
       let our_binary = Sys.executable_name in
       Process.create_exn () ~prog:our_binary ?env
         ~args:
-          ( "internal" :: Snark_worker.Intf.command_name
+          ( "internal" :: Snark_worker.Intf.command_name :: "-conf-dir"
+          :: conf_dir
           :: Snark_worker.arguments ~proof_level
                ~daemon_address:
                  (Host_and_port.create ~host:"127.0.0.1" ~port:client_port)
@@ -253,7 +255,7 @@ module Snark_worker = struct
         [%log' debug t.config.logger] !"Starting snark worker process" ;
         log_snark_worker_warning t ;
         let%map snark_worker_process =
-          run_process ~logger:t.config.logger
+          run_process ~logger:t.config.logger ~conf_dir:t.config.conf_dir
             ~proof_level:t.config.precomputed_values.proof_level t.config.pids
             t.config.gossip_net_params.addrs_and_ports.client_port kill_ivar
             t.config.snark_worker_config.num_threads
