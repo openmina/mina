@@ -1060,7 +1060,7 @@
               "deprecationReason": null
             },
             {
-              "name": "editActionState",
+              "name": "editSequenceState",
               "description": null,
               "args": [],
               "type": {
@@ -1254,7 +1254,7 @@
               "defaultValue": null
             },
             {
-              "name": "editActionState",
+              "name": "editSequenceState",
               "description": null,
               "type": {
                 "kind": "NON_NULL",
@@ -2436,7 +2436,7 @@
               "deprecationReason": null
             },
             {
-              "name": "actionState",
+              "name": "sequenceState",
               "description": null,
               "args": [],
               "type": { "kind": "SCALAR", "name": "Field", "ofType": null },
@@ -2516,7 +2516,7 @@
               "defaultValue": null
             },
             {
-              "name": "actionState",
+              "name": "sequenceState",
               "description": null,
               "type": { "kind": "SCALAR", "name": "Field", "ofType": null },
               "defaultValue": null
@@ -7132,7 +7132,7 @@
               "deprecationReason": null
             },
             {
-              "name": "actionState",
+              "name": "sequenceState",
               "description": null,
               "args": [],
               "type": { "kind": "SCALAR", "name": "Field", "ofType": null },
@@ -7846,7 +7846,7 @@
               "deprecationReason": null
             },
             {
-              "name": "editActionState",
+              "name": "editSequenceState",
               "description": null,
               "args": [],
               "type": {
@@ -11107,8 +11107,8 @@
         },
         {
           "kind": "SCALAR",
-          "name": "Action",
-          "description": "action",
+          "name": "SequenceEvent",
+          "description": "sequence event",
           "fields": null,
           "inputFields": null,
           "interfaces": null,
@@ -11355,9 +11355,9 @@
               "deprecationReason": null
             },
             {
-              "name": "editActionState",
+              "name": "editSequenceState",
               "description":
-                "Authorization required to edit the action state",
+                "Authorization required to edit the sequence state",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -12031,8 +12031,8 @@
               "deprecationReason": null
             },
             {
-              "name": "actionState",
-              "description": "Action state associated with this account",
+              "name": "sequenceEvents",
+              "description": "Sequence events associated with this account",
               "args": [],
               "type": {
                 "kind": "LIST",
@@ -12042,7 +12042,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "SCALAR",
-                    "name": "Action",
+                    "name": "SequenceEvent",
                     "ofType": null
                   }
                 }

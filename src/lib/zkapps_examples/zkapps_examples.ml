@@ -42,7 +42,7 @@ module Account_update_under_construction = struct
                    ; Ignore
                    ; Ignore
                    ]
-               ; action_state = Ignore
+               ; sequence_state = Ignore
                ; proved_state = Ignore
                ; is_new = Ignore
                } )
