@@ -263,26 +263,18 @@ assert_different_history() {
     NS1=$2
     RES2=$3
     NS2=$4
-    while true; do
-        HIST1=$(mina_node_history $RES1 $NS1)
-        HIST2=$(mina_node_history $RES2 $NS2)
-        H1=$(echo $HIST1 | sed -e "s/ .*//")
-        H2=$(echo $HIST2 | sed -e "s/ .*//")
-        if [ $H1 -eq $H2 ]; then
-            echo "history for $RES1:"
-            echo $HIST1
-            echo "history for $RES2:"
-            echo $HIST2
-            if [ "$HIST1" != "$HIST2" ]; then
-                echo "Diverged history detected"
-                exit
-            else
-                echo "History should be diverged!"
-                exit 1
-            fi
-        fi
-        sleep 10
-    done
+    HASH1=$(mina_graphql_ns $RES1 $NS1 'query {bestChain(maxLength: 1) {stateHash}}' | jq -r '.data.bestChain[0].stateHash')
+    HASH2=$(mina_graphql_ns $RES2 $NS2 'query {bestChain(maxLength: 1) {stateHash}}' | jq -r '.data.bestChain[0].stateHash')
+    R1=$(mina_graphql_ns $RES2 $NS2 "query {block(stateHash: \\\"$HASH1\\\") {stateHash}}" | jq -r '.data')
+    R2=$(mina_graphql_ns $RES1 $NS1 "query {block(stateHash: \\\"$HASH2\\\") {stateHash}}" | jq -r '.data')
+    if [ "$R1" != null ]; then
+        echo "Block both segments share block $HASH1"
+        exit 1
+    elif [ "$R2" != null ]; then
+        echo "Block both segments share block $HASH2"
+        exit 1
+    fi
+    echo "Diverged history detected: blocks $HASH1 and $HASH2 belong to different branches"
 }
 
 CMD=$1
