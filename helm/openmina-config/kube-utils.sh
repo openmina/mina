@@ -92,12 +92,12 @@ mina_testnet_available() {
 assert_mina_testnet_available() {
     if [ -z "$1" ]; then
         for NAME in $(mina_deployments); do
-            $KUBECTL wait "$NAME" --for=condition=Available --timeout="0s" || exit 1
+            $KUBECTL wait "$NAME" --for=condition=Available --timeout="60s" || exit 1
         done
     else
         for NS in $*; do
             for NAME in $(mina_deployments $NS); do
-                $KUBECTL --namespace=$NS wait "$NAME" --for=condition=Available --timeout="0s" || exit 1
+                $KUBECTL --namespace=$NS wait "$NAME" --for=condition=Available --timeout="60s" || exit 1
             done
         done
     fi
