@@ -1,10 +1,9 @@
 (include ../../dune.flags.inc)
-
 (executable
  (package transaction_fuzzer)
- ;;(name transaction_fuzzer)
+;(name transaction_fuzzer)
  (public_name transaction_fuzzer)
- (modes byte exe)
+ (modes exe)
  (libraries
    ;;opam libraries
    async_unix
@@ -20,6 +19,8 @@
    base_quickcheck
    ppx_inline_test.config
    graphql-async
+   bisect_ppx.runtime
+   bisect_ppx.common
    ;;local libraries
    pickles
    kimchi_backend.pasta

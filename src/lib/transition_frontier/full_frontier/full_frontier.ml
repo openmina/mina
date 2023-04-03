@@ -127,7 +127,7 @@ let close ~loc _t =
 let create ~context:(module Context : CONTEXT) ~root_data ~root_ledger
     ~consensus_local_state ~max_length ~persistent_root_instance
     ~time_controller =
-  Printf.eprintf "MY_LOG.FULL_FRONTIER.CREATE\n%!" ;
+  (*Printf.eprintf "MY_LOG.FULL_FRONTIER.CREATE\n%!" ;*)
   let open Context in
   let open Root_data in
   let transition_receipt_time = None in
@@ -148,7 +148,7 @@ let create ~context:(module Context : CONTEXT) ~root_data ~root_ledger
   let root_blockchain_state_ledger_hash =
     Blockchain_state.snarked_ledger_hash root_blockchain_state
   in
-  Printf.eprintf "MY_LOG.FULL_FRONTIER.CREATE1\n%!" ;
+  (*Printf.eprintf "MY_LOG.FULL_FRONTIER.CREATE1\n%!" ;*)
   assert (
     Frozen_ledger_hash.equal
       (Frozen_ledger_hash.of_ledger_hash
