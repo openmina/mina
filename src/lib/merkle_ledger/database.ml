@@ -152,7 +152,7 @@ module Make (Inputs : Inputs_intf) :
   let depth t = Rust.database_depth t
 
   let create ?directory_name ~depth () =
-    Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.CREATE\n%!" ;
+    (*Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.CREATE\n%!" ;*)
     let rust_db = Rust.database_create depth directory_name in
     rust_db
   (* assert (depth < 0xfe) ; *)
@@ -177,7 +177,7 @@ module Make (Inputs : Inputs_intf) :
   (* } *)
 
   let create_checkpoint t ~directory_name () =
-    Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.CREATE_CHECKPOINT\n%!" ;
+    (*Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.CREATE_CHECKPOINT\n%!" ;*)
     let _ = directory_name in
     Rust.database_create_checkpoint t directory_name
   (* let uuid = Uuid_unix.create () in *)
@@ -190,7 +190,7 @@ module Make (Inputs : Inputs_intf) :
   (* } *)
 
   let make_checkpoint t ~directory_name =
-    Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.MAKE_CHECKPOINT\n%!" ;
+    (*Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.MAKE_CHECKPOINT\n%!" ;*)
     let _ = directory_name in
     Rust.database_make_checkpoint t directory_name
   (* Kvdb.make_checkpoint t.kvdb directory_name *)
@@ -236,7 +236,7 @@ module Make (Inputs : Inputs_intf) :
   (*   Kvdb.remove kvdb ~key:(Location.serialize ~ledger_depth:depth location) *)
 
   let get mdb location =
-    Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.GET\n%!" ;
+    (*Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.GET\n%!" ;*)
     let addr = location_to_rust location in
     (* let addr = Location.to_path_exn location |> Addr.to_string in *)
     Rust.database_get mdb addr |> Option.map ~f:account_from_rust
@@ -245,8 +245,8 @@ module Make (Inputs : Inputs_intf) :
   (* get_bin mdb location Account.bin_read_t *)
 
   let get_batch mdb locations =
-    Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.GET_BATCH %d\n%!"
-      (List.length locations) ;
+    (*Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.GET_BATCH %d\n%!"
+      (List.length locations) ;*)
     let addrs = List.map locations ~f:location_to_rust in
     Rust.database_get_batch mdb addrs
     |> List.map ~f:(fun (addr, account) ->
@@ -759,7 +759,7 @@ module Make (Inputs : Inputs_intf) :
   end
 
   let set mdb location account =
-    Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.SET\n%!" ;
+    (*Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.SET\n%!" ;*)
     let location = location_to_rust location in
     Rust.database_set mdb location (account_to_rust account)
 
@@ -780,7 +780,7 @@ module Make (Inputs : Inputs_intf) :
   (* set mdb (Location.Account addr) account *)
 
   let get_or_create_account mdb account_id account =
-    Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.GET_OR_CREATE_ACCOUNT\n%!" ;
+    (*Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.GET_OR_CREATE_ACCOUNT\n%!" ;*)
     let account_id = account_id_to_rust account_id in
     let account = account_to_rust account in
     match Rust.database_get_or_create_account mdb account_id account with
@@ -913,11 +913,11 @@ module Make (Inputs : Inputs_intf) :
   (*     set_hash t hash_loc Hash.empty_account ) *)
 
   let merkle_path mdb location =
-    let empty = Account.empty in
+    (*let empty = Account.empty in
     let hash_empty = Hash.hash_account empty in
     Printf.eprintf "MY_LOG.MERKLE_LEDGER.DATABASE.MERKLE_PATH %s\n%!"
-      (* (Hash.to_base58_check hash_empty) ; *)
-      (Snark_params.Tick.Field.to_string hash_empty) ;
+       (Hash.to_base58_check hash_empty) ;
+      (Snark_params.Tick.Field.to_string hash_empty) ; *)
     Rust.database_merkle_path mdb (location_to_rust location)
     |> List.map ~f:path_from_rust
 

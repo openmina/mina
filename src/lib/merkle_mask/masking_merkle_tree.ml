@@ -108,7 +108,7 @@ module Make (Inputs : Inputs_intf.S) = struct
   (* type unattached = t [@@deriving sexp] *)
 
   let create ~depth () =
-    Printf.eprintf "MY_LOG.MERKLE_MASK.MASKING.CREATE\n%!" ;
+    (*Printf.eprintf "MY_LOG.MERKLE_MASK.MASKING.CREATE\n%!" ;*)
     let rust_mask = Rust.mask_create depth in
     rust_mask
 

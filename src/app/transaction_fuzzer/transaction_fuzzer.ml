@@ -1,5 +1,4 @@
 open Core
-(*open Async*)
 open Mina_base
 open Mina_transaction
 module Rust = Mina_tree.Rust
@@ -8,24 +7,9 @@ module Ledger = Mina_ledger.Ledger
 module Length = Mina_numbers.Length
 module Global_slot = Mina_numbers.Global_slot
 
-(* let constraint_constants = Genesis_constants.Constraint_constants.compiled *)
 
-let proof_level = Genesis_constants.Proof_level.Full
 
-let constraint_constants: Genesis_constants.Constraint_constants.t = {
-  sub_windows_per_window = 11
-  ; ledger_depth = 35
-  ; work_delay = 2
-  ; block_window_duration_ms = 180000
-  ; transaction_capacity_log_2 = 7
-  ; pending_coinbase_depth = 5
-  ; coinbase_amount =
-      Currency.Amount.of_int 720000000000
-  ; supercharged_coinbase_factor = 2
-  ; account_creation_fee =
-      Currency.Fee.of_int 1000000000
-  ; fork = None
-}
+
 
 let txn_state_view: Zkapp_precondition.Protocol_state.View.t = {
   snarked_ledger_hash = Fp.of_string("19095410909873291354237217869735884756874834695933531743203428046904386166496")
@@ -58,7 +42,21 @@ let txn_state_view: Zkapp_precondition.Protocol_state.View.t = {
     }
   }
 
+
+let constraint_constants: (Genesis_constants.Constraint_constants.t option) ref = ref None
+
+let deserialize_constants constants_bytes =
+  Bin_prot.Reader.of_bytes [%bin_reader: Genesis_constants.Constraint_constants.t] constants_bytes
+
+
+let set_constraint_constants constants_bytes = constraint_constants := Some (deserialize_constants constants_bytes)
+
+
 let create_initial_accounts accounts =
+  let constraint_constants = match !constraint_constants with
+  | Some(constraint_constants) -> constraint_constants
+  | None -> failwith "constraint_constants not initialized"
+  in
   let packed =
     Genesis_ledger_helper.Ledger.packed_genesis_ledger_of_accounts
       ~depth:constraint_constants.ledger_depth (lazy (List.map ~f:(fun a -> (None, a)) accounts))
@@ -79,13 +77,18 @@ let set_initial_accounts accounts_bytes =
 let apply_tx user_command_bytes =
   try
     let command = Bin_prot.Reader.of_bytes [%bin_reader: User_command.Stable.Latest.t] user_command_bytes in
+    (*Core_kernel.printf !"%{sexp:User_command.t}\n%!" command;*)
     let tx = Transaction.Command command in
+    let constraint_constants = match !constraint_constants with
+      | Some(constraint_constants) -> constraint_constants
+      | None -> failwith "constraint_constants not initialized"
+    in
     let ledger = match !ledger with
       | Some(ledger) -> ledger
       | None -> failwith "ledger not initialized"
     in
-    let applied = Ledger.apply_transaction ~constraint_constants ~txn_state_view ledger tx in
-      Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t Or_error.t}\n%!" applied;
+    let _applied = Ledger.apply_transaction ~constraint_constants ~txn_state_view ledger tx in
+    (*Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t Or_error.t}\n%!" applied;*)
     let ledger_hash = Ledger.merkle_root ledger in
     Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
   with
@@ -94,9 +97,35 @@ let apply_tx user_command_bytes =
     Core_kernel.printf !"except: %s\n%s\n%!" msg bt;
     raise e
 
+let get_coverage _ =
+  List.map (Bisect.Runtime.get_coverage_flattened ()) ~f:(
+    fun {filename; points; counts} -> (
+      filename,
+      Array.fold_right points ~f:(fun x acc -> (Int64.of_int x) :: acc) ~init:[],
+      Array.fold_right counts ~f:(fun x acc -> (Int64.of_int x) :: acc) ~init:[]
+    )
+  )
+
+let run_command =
+  Command.basic
+    ~summary:"Run the fuzzer"
+    Command.Param.(map
+      (anon ("seed" %: int))
+      ~f:(fun seed ->
+        fun () -> Rust.transaction_fuzzer (Int64.of_int seed) set_constraint_constants set_initial_accounts apply_tx get_coverage
+        ))
+
+let reproduce_command =
+  Command.basic
+    ~summary:"Reproduce fuzzcase"
+    Command.Param.(map
+      (anon ("fuzzcase" %: string))
+      ~f:(fun fuzzcase ->
+        fun () -> Rust.transaction_fuzzer_reproduce set_constraint_constants set_initial_accounts apply_tx (Bytes.of_string fuzzcase)
+        ))
+
 let () =
-Printexc.record_backtrace true;
-Core_kernel.printf !"starting...\n%!";
-Rust.transaction_fuzzer set_initial_accounts apply_tx
-
-
+  Command.run
+    (Command.group ~summary:"transaction_fuzzer"
+      [ "run", run_command;
+        "reproduce", reproduce_command ])
