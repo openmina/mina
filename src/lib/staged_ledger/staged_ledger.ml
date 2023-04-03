@@ -674,9 +674,9 @@ module T = struct
                   (*   "MY_LOG.update_ledger_and_get_statements OK\n%!" ; *)
                   (res :: acc, updated_pending_coinbase_stack_state)
               | Error err ->
-                  Core.Printf.eprintf
+                  (*Core.Printf.eprintf
                     "MY_LOG.update_ledger_and_get_statements ERR=%s\n%!"
-                    (Staged_ledger_error.to_string err) ;
+                    (Staged_ledger_error.to_string err) ;*)
                   raise (Exit err) ) )
       |> Deferred.Result.map_error ~f:(function
            | Exit err ->

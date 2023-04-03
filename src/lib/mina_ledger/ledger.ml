@@ -209,14 +209,14 @@ module Ledger_inner = struct
    *   mask *)
 
   let create_ephemeral_with_base ~depth () =
-    Printf.eprintf "MY_LOG.MINA_LEDGER.LEDGER.create_ephemeral_with_base\n%!" ;
+    (*Printf.eprintf "MY_LOG.MINA_LEDGER.LEDGER.create_ephemeral_with_base\n%!" ;*)
     let maskable = Null.create ~depth () in
     let casted = Any_ledger.cast (module Null) maskable in
     let mask = Mask.create ~depth () in
     (casted, Maskable.register_mask casted mask)
 
   let create_ephemeral ~depth () =
-    Printf.eprintf "MY_LOG.MINA_LEDGER.LEDGER.create_ephemeral\n%!" ;
+    (*Printf.eprintf "MY_LOG.MINA_LEDGER.LEDGER.create_ephemeral\n%!" ;*)
     let _base, mask = create_ephemeral_with_base ~depth () in
     mask
 
@@ -230,7 +230,7 @@ module Ledger_inner = struct
       This should *NOT* be used to create a ledger for other purposes.
   *)
   let empty ~depth () =
-    Printf.eprintf "MY_LOG.MINA_LEDGER.LEDGER.empty\n%!" ;
+    (*Printf.eprintf "MY_LOG.MINA_LEDGER.LEDGER.empty\n%!" ;*)
     let mask = Mask.create ~depth () in
     (* We don't register the mask here. This is only used in transaction logic,
        where we don't want to unregister. Transaction logic is also
