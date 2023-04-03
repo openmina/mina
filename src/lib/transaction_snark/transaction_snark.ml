@@ -3078,6 +3078,8 @@ module Make_str (A : Wire_types.Concrete) = struct
       ; prevs = []
       ; main =
           (fun { public_input = x } ->
+            let logger = Internal_tracing.Context_logger.get () in
+            [%log internal] "Base.rule" ;
             Run.run_checked (main ~constraint_constants x) ;
             { previous_proof_statements = []
             ; public_output = ()
@@ -3230,6 +3232,8 @@ module Make_str (A : Wire_types.Concrete) = struct
       ; prevs = [ self; self ]
       ; main =
           (fun { public_input = x } ->
+            let logger = Internal_tracing.Context_logger.get () in
+            [%log internal] "Merge.rule" ;
             let s1, s2 = Run.run_checked (main x) in
             let p1, p2 =
               Run.exists
@@ -4004,6 +4008,8 @@ module Make_str (A : Wire_types.Concrete) = struct
     let of_transaction_union ~statement ~init_stack transaction state_body
         global_slot handler =
       let open Async in
+      let logger = Internal_tracing.Context_logger.get () in
+      [%log internal] "of_transaction_union" ;
       let%map (), (), proof =
         base
           ~handler:
@@ -4011,6 +4017,7 @@ module Make_str (A : Wire_types.Concrete) = struct
                global_slot init_stack )
           statement
       in
+      [%log internal] "of_transaction_union_done" ;
       { statement; proof }
 
     let of_non_zkapp_command_transaction ~statement ~init_stack

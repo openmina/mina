@@ -826,14 +826,57 @@ struct
                           ; public_inputs
                           } next_statement_hashed ->
                     [%log internal] "Backend_tick_proof_create_async" ;
+                    let public_inputs_list =
+                      List.init
+                        (Kimchi_bindings.FieldVectors.Fp.length public_inputs)
+                        ~f:(fun i ->
+                          `String
+                            (Pasta_bindings.Fp.to_string
+                               (Kimchi_bindings.FieldVectors.Fp.get
+                                  public_inputs i ) ) )
+                    in
+                    [%log internal]
+                      "Backend_tick_proof_create_async public_inputs: \
+                       $public_inputs"
+                      ~metadata:[ ("public_inputs", `List public_inputs_list) ] ;
+                    let message =
+                      Lazy.force prev_challenge_polynomial_commitments
+                    in
+                    let pasta_to_yojson fq =
+                      `String (Pasta_bindings.Fp.to_string fq)
+                    in
+                    let message_yojson =
+                      [%to_yojson:
+                        ( Kimchi_pasta_basic.Vesta.Affine.t
+                        , 'a )
+                        Tock.Proof.Challenge_polynomial.t_
+                        list] pasta_to_yojson message
+                    in
+                    let inputs_as_strings =
+                      List.init
+                        (Kimchi_bindings.FieldVectors.Fp.length auxiliary_inputs)
+                        ~f:(fun i ->
+                          Pasta_bindings.Fp.to_string
+                            (Kimchi_bindings.FieldVectors.Fp.get
+                               auxiliary_inputs i ) )
+                    in
+                    List.iter (List.chunks_of ~length:100 inputs_as_strings)
+                      ~f:(fun chunk ->
+                        [%log internal]
+                          "Backend_tick_proof_create_async auxiliary_inputs \
+                           $chunk"
+                          ~metadata:
+                            [ ("chunk", [%to_yojson: string list] chunk) ] ) ;
+                    [%log internal]
+                      "Backend_tick_proof_create_async message: $message"
+                      ~metadata:[ ("message", message_yojson) ] ;
                     let%map.Promise proof =
                       Backend.Tick.Proof.create_async ~primary:public_inputs
-                        ~auxiliary:auxiliary_inputs
-                        ~message:
-                          (Lazy.force prev_challenge_polynomial_commitments)
-                        pk
+                        ~auxiliary:auxiliary_inputs ~message pk
                     in
-                    [%log internal] "Backend_tick_proof_create_async_done" ;
+                    [%log internal]
+                      "Backend_tick_proof_create_async_done proof: $proof"
+                      ~metadata:[ ("proof", Tick.Proof.to_yojson proof) ] ;
                     (proof, next_statement_hashed) )
                   ~input_typ:Impls.Step.Typ.unit ~return_typ:input
                   (fun () () ->

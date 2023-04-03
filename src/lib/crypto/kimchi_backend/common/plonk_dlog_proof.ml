@@ -148,6 +148,7 @@ module Make (Inputs : Inputs_intf) = struct
 
     type ('g, 'fq) t_ = ('g, 'fq) Challenge_polynomial.t =
       { challenges : 'fq array; commitment : 'g }
+    [@@deriving to_yojson]
   end
 
   type message = Challenge_polynomial.t list

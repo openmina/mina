@@ -97,11 +97,23 @@ module Make (Inputs : Intf.Inputs_intf) :
       ({ instances; fee } as spec : Work.Spec.t) =
     One_or_two.Deferred_result.map instances ~f:(fun w ->
         let open Deferred.Or_error.Let_syntax in
+        let logger = Internal_tracing.Context_logger.get () in
+        [%log internal] "perform_single; fee: $fee, pk: $pk, work: $work"
+          ~metadata:
+            [ ("pk", Public_key.Compressed.to_yojson public_key)
+            ; ("fee", Currency.Fee.to_yojson fee)
+            ; ("work", Work.Single.Spec.to_yojson w)
+            ] ;
         let%map proof, time =
           perform_single s
             ~message:(Mina_base.Sok_message.create ~fee ~prover:public_key)
             w
         in
+        [%log internal] "perform_single_done; time: $time, proof: $proof"
+          ~metadata:
+            [ ("time", Time_span_with_json.to_yojson time)
+            ; ("proof", Inputs.Ledger_proof.to_yojson proof)
+            ] ;
         ( proof
         , (time, match w with Transition _ -> `Transition | Merge _ -> `Merge)
         ) )
@@ -429,16 +441,22 @@ module Make (Inputs : Intf.Inputs_intf) :
           let%bind () = wait ~sec:random_delay () in
           go ()
       | Ok (Some (work, public_key), times) -> (
+          let metadata =
+            [ ("address", `String (Host_and_port.to_string daemon_address))
+            ; ( "work_ids"
+              , Transaction_snark_work.Statement.compact_json
+                  (One_or_two.map (Work.Spec.instances work)
+                     ~f:Work.Single.Spec.statement ) )
+            ]
+          in
+          [%log internal]
+            "SNARK work $work_ids received from $address. Starting proof \
+             generation"
+            ~metadata ;
           [%log info]
             "SNARK work $work_ids received from $address. Starting proof \
              generation"
-            ~metadata:
-              [ ("address", `String (Host_and_port.to_string daemon_address))
-              ; ( "work_ids"
-                , Transaction_snark_work.Statement.compact_json
-                    (One_or_two.map (Work.Spec.instances work)
-                       ~f:Work.Single.Spec.statement ) )
-              ] ;
+            ~metadata ;
 
           ( match !id_opt with
           | Some _ ->
@@ -498,14 +516,18 @@ module Make (Inputs : Intf.Inputs_intf) :
                 (Work.Result.transactions result)
                 logger ;
               let _ = notify_work_create_success (now ()) job_ids in
+              let metadata =
+                [ ("address", `String (Host_and_port.to_string daemon_address))
+                ; ( "work_ids"
+                  , Transaction_snark_work.Statement.compact_json
+                      (One_or_two.map (Work.Spec.instances work)
+                         ~f:Work.Single.Spec.statement ) )
+                ]
+              in
+              [%log internal]
+                "Submitted completed SNARK work $work_ids to $address" ~metadata ;
               [%log info] "Submitted completed SNARK work $work_ids to $address"
-                ~metadata:
-                  [ ("address", `String (Host_and_port.to_string daemon_address))
-                  ; ( "work_ids"
-                    , Transaction_snark_work.Statement.compact_json
-                        (One_or_two.map (Work.Spec.instances work)
-                           ~f:Work.Single.Spec.statement ) )
-                  ] ;
+                ~metadata ;
               let rec submit_work () =
                 match%bind
                   dispatch Rpcs_versioned.Submit_work.Latest.rpc
@@ -555,7 +577,8 @@ module Make (Inputs : Intf.Inputs_intf) :
               ~transport:
                 (Internal_tracing.For_logger.json_lines_rotate_transport
                    ~directory:(conf_dir ^ "/internal-tracing")
-                   ~log_filename:"tx-proof-tracing.jsonl" () ) ;
+                   ~log_filename:"tx-proof-tracing.jsonl" ()
+                   ~max_size:50_000_000 ) ;
             don't_wait_for @@ Internal_tracing.toggle ~logger `Enabled ;
             Logger.Consumer_registry.register ~id:Logger.Logger_id.snark_worker
               ~processor:(Logger.Processor.raw ())
