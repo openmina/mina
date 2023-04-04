@@ -433,38 +433,42 @@ let prove_from_input_sexp { connection; logger; _ } sexp =
 
 let extend_blockchain { connection; logger; _ } chain next_state block
     ledger_proof prover_state pending_coinbase =
-  let input =
-    { Extend_blockchain_input.chain
-    ; next_state
-    ; block
-    ; ledger_proof
-    ; prover_state
-    ; pending_coinbase
-    }
-  in
-  match%map
-    Worker.Connection.run connection ~f:Worker.functions.extend_blockchain
-      ~arg:input
-    >>| Or_error.join
-  with
-  | Ok x ->
-      Ok x
-  | Error e ->
-      [%log error]
-        ~metadata:
-          [ ( "input-sexp"
-            , `String (Sexp.to_string (Extend_blockchain_input.sexp_of_t input))
-            )
-          ; ( "input-bin-io"
-            , `String
-                (Base64.encode_exn
-                   (Binable.to_string
-                      (module Extend_blockchain_input.Stable.Latest)
-                      input ) ) )
-          ; ("error", Error_json.error_to_yojson e)
-          ]
-        "Prover failed: $error" ;
-      Error e
+  Scheduler.within'
+    ~monitor:(Monitor.create ~here:[%here] ())
+    (fun () ->
+      let input =
+        { Extend_blockchain_input.chain
+        ; next_state
+        ; block
+        ; ledger_proof
+        ; prover_state
+        ; pending_coinbase
+        }
+      in
+      match%map
+        Worker.Connection.run connection ~f:Worker.functions.extend_blockchain
+          ~arg:input
+        >>| Or_error.join
+      with
+      | Ok x ->
+          Ok x
+      | Error e ->
+          [%log error]
+            ~metadata:
+              [ ( "input-sexp"
+                , `String
+                    (Sexp.to_string (Extend_blockchain_input.sexp_of_t input))
+                )
+              ; ( "input-bin-io"
+                , `String
+                    (Base64.encode_exn
+                       (Binable.to_string
+                          (module Extend_blockchain_input.Stable.Latest)
+                          input ) ) )
+              ; ("error", Error_json.error_to_yojson e)
+              ]
+            "Prover failed: $error" ;
+          Error e )
 
 let prove t ~prev_state ~prev_state_proof ~next_state
     (transition : Internal_transition.t) pending_coinbase =
@@ -485,6 +489,8 @@ let prove t ~prev_state ~prev_state_proof ~next_state
   Blockchain_snark.Blockchain.proof chain
 
 let create_genesis_block t (genesis_inputs : Genesis_proof.Inputs.t) =
+  Scheduler.within' ~monitor:(Monitor.create ~here:[%here] ())
+  @@ fun () ->
   let start_time = Core.Time.now () in
   let genesis_ledger = Genesis_ledger.Packed.t genesis_inputs.genesis_ledger in
   let constraint_constants = genesis_inputs.constraint_constants in
