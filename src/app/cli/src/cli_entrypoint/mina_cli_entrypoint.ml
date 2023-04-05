@@ -985,11 +985,12 @@ let setup_daemon logger =
             in
             let monitors = get_monitors [ monitor ] monitor in
             List.map monitors ~f:(fun monitor ->
-                match Async_kernel.Monitor.sexp_of_t monitor with
-                | Sexp.List sexps ->
-                    `List (List.map ~f:Error_json.sexp_record_to_yojson sexps)
-                | Sexp.Atom _ ->
-                    failwith "Expeted a sexp list" )
+                `String (Info.to_string_hum monitor.name)
+                (* match Async_kernel.Monitor.sexp_of_t monitor with
+                   | Sexp.List sexps ->
+                       `List (List.map ~f:Error_json.sexp_record_to_yojson sexps)
+                   | Sexp.Atom _ ->
+                       failwith "Expeted a sexp list" *) )
           in
           Stream.iter
             (Async_kernel.Async_kernel_scheduler.long_cycles_with_context
@@ -999,10 +1000,11 @@ let setup_daemon logger =
               let monitor_infos = get_monitor_infos context.monitor in
               [%log debug]
                 ~metadata:
-                  [ ("long_async_cycle", `Float secs)
+                  [ ("long_async_time", `Float secs)
                   ; ("monitors", `List monitor_infos)
+                  ; ("long_kind", `String "cycle")
                   ]
-                "Long async cycle, $long_async_cycle seconds, $monitors" ;
+                "Long async cycle, $long_async_time seconds, $monitors" ;
               Mina_metrics.(
                 Runtime.Long_async_histogram.observe Runtime.long_async_cycle
                   secs) ) ;
@@ -1012,8 +1014,9 @@ let setup_daemon logger =
               let monitor_infos = get_monitor_infos context.monitor in
               [%log error]
                 ~metadata:
-                  [ ("long_async_job", `Float secs)
+                  [ ("long_async_time", `Float secs)
                   ; ("monitors", `List monitor_infos)
+                  ; ("long_kind", `String "job")
                   ; ( "most_recent_2_backtrace"
                     , `String
                         (String.concat ~sep:"␤"
@@ -1022,9 +1025,18 @@ let setup_daemon logger =
                                  (Execution_context.backtrace_history context)
                                  2 ) ) ) )
                   ]
-                "Long async job, $long_async_job seconds" ;
+                "Long async job, $long_async_time seconds" ;
               Mina_metrics.(
                 Runtime.Long_job_histogram.observe Runtime.long_async_job secs) ) ;
+          O1trace.Execution_timer.set_long_runtime_hook (fun name span ->
+              let secs = Time_ns.Span.to_sec span in
+              [%log debug]
+                "Long sync task, $long_async_time seconds, $thread_name"
+                ~metadata:
+                  [ ("long_async_time", `Float secs)
+                  ; ("thread_name", `String name)
+                  ; ("long_kind", `String "thread")
+                  ] ) ;
           let trace_database_initialization typ location =
             (* can't use %log ppx here, because we're using the passed-in location *)
             Logger.trace logger ~module_:__MODULE__ "Creating %s at %s"

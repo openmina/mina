@@ -282,13 +282,19 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
   (* Setup RPC server for client interactions *)
   let implement rpc f =
     Rpc.Rpc.implement rpc (fun () input ->
+        Scheduler.within'
+          ~monitor:
+            (Monitor.create
+               ~name:("rpc_serve_" ^ Rpc.Rpc.name rpc)
+               ~here:[%here] () )
+        @@ fun () ->
         O1trace.thread ("serve_" ^ Rpc.Rpc.name rpc) (fun () -> f () input) )
   in
   let implement_notrace = Rpc.Rpc.implement in
   let logger =
     Logger.extend
       (Mina_lib.top_level_logger coda)
-      [ ("coda_run", `String "Setting up server logs") ]
+      [ (*("coda_run", `String "Setting up server logs")*) ]
   in
   let client_impls =
     [ implement Daemon_rpcs.Send_user_commands.rpc (fun () ts ->
@@ -469,6 +475,11 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
   in
   let snark_worker_impls =
     [ implement Snark_worker.Rpcs_versioned.Get_work.Latest.rpc (fun () () ->
+          Internal_tracing.without_block
+          @@ fun () ->
+          Internal_tracing.Context_call.with_call_id
+          @@ fun () ->
+          [%log internal] "Handle_get_work_rpc" ;
           let received_time = Unix.gettimeofday () in
           let request_work_start_time = ref (-1.0) in
           let request_work_end_time = ref (-1.0) in
@@ -481,7 +492,7 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
                 ~f:Fn.const
             in
             request_work_start_time := Unix.gettimeofday () ;
-            let%map r = Mina_lib.request_work coda in
+            let%map r = Mina_lib.request_work ~logger coda in
             request_work_end_time := Unix.gettimeofday () ;
             [%log trace]
               ~metadata:[ ("work_spec", Snark_worker.Work.Spec.to_yojson r) ]
@@ -496,17 +507,24 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
             , !request_work_end_time
             , respond_time )
           in
+          [%log internal] "Handle_get_work_rpc_done" ;
           Deferred.return (result, times) )
     ; implement Snark_worker.Rpcs_versioned.Submit_work.Latest.rpc
         (fun () (work : Snark_worker.Work.Result.t) ->
+          Internal_tracing.without_block
+          @@ fun () ->
+          Internal_tracing.Context_call.with_call_id
+          @@ fun () ->
+          [%log internal] "Handle_submit_work_rpc" ;
           let received_time = Unix.gettimeofday () in
           [%log trace] "received completed work from a snark worker"
             ~metadata:
               [ ("work_spec", Snark_worker.Work.Spec.to_yojson work.spec) ] ;
           log_snark_work_metrics work ;
           let add_work_start_time = Unix.gettimeofday () in
-          Mina_lib.add_work coda work ;
+          Mina_lib.add_work ~logger coda work ;
           let add_work_end_time = Unix.gettimeofday () in
+          [%log internal] "Handle_submit_work_rpc_done" ;
           Deferred.return (received_time, add_work_start_time, add_work_end_time) )
     ; implement Snark_worker.Rpcs_versioned.Failed_to_generate_snark.Latest.rpc
         (fun
@@ -597,6 +615,8 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
       (On_port (Mina_lib.client_port coda))
   in
   O1trace.background_thread "serve_client_rpcs" (fun () ->
+      Internal_tracing.without_block
+      @@ fun () ->
       Deferred.ignore_m
         (Tcp.Server.create
            ~on_handler_error:
@@ -610,19 +630,30 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
                      ] ) )
            where_to_listen
            (fun address reader writer ->
+             Internal_tracing.Context_call.with_call_id
+             @@ fun () ->
+             [%log internal] "RPC_handle_new_client" ;
              let address = Socket.Address.Inet.addr address in
              if
                not
                  (Set.exists !client_trustlist ~f:(fun cidr ->
                       Unix.Cidr.does_match cidr address ) )
              then (
+               [%log internal] "RPC_handle_new_client_rejected" ;
                [%log error]
                  !"Rejecting client connection from $address, it is not \
                    present in the trustlist."
                  ~metadata:
                    [ ("$address", `String (Unix.Inet_addr.to_string address)) ] ;
                Deferred.unit )
-             else
+             else (
+               [%log internal] "RPC_handle_new_client_accepted" ;
+               let implementations =
+                 Rpc.Implementations.create_exn
+                   ~implementations:(client_impls @ snark_worker_impls)
+                   ~on_unknown_rpc:`Raise
+               in
+               [%log internal] "RPC_handle_new_client_implementations_created" ;
                Rpc.Connection.server_with_close
                  ~handshake_timeout:
                    (Time.Span.of_sec
@@ -636,11 +667,7 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
                         (Time_ns.Span.of_sec
                            Mina_compile_config.rpc_heartbeat_send_every_sec )
                       () )
-                 reader writer
-                 ~implementations:
-                   (Rpc.Implementations.create_exn
-                      ~implementations:(client_impls @ snark_worker_impls)
-                      ~on_unknown_rpc:`Raise )
+                 reader writer ~implementations
                  ~connection_state:(fun _ -> ())
                  ~on_handshake_error:
                    (`Call
@@ -654,7 +681,7 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
                            ; ( "address"
                              , `String (Unix.Inet_addr.to_string address) )
                            ] ;
-                       Deferred.unit ) ) ) ) )
+                       Deferred.unit ) ) ) ) ) )
 
 let coda_crash_message ~log_issue ~action ~error =
   let followup =

@@ -70,6 +70,8 @@ let with_state_hash state_hash f = with_block (Some (State_hash state_hash)) f
 
 let with_slot slot f = with_block (Some (Global_slot slot)) f
 
+let without_block f = with_block None f
+
 let get_current_block_id () =
   Async_kernel.Async_kernel_scheduler.find_local current_block_id_key
 

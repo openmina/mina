@@ -874,19 +874,23 @@ let best_chain ?max_length t =
   | _ ->
       Transition_frontier.root frontier :: best_tip_path
 
-let request_work t =
+let request_work ~logger t =
+  [%log internal] "Request_snark_work" ;
   let (module Work_selection_method) = t.config.work_selection_method in
   let fee = snark_work_fee t in
   let instances_opt =
     Work_selection_method.work ~logger:t.config.logger ~fee
       ~snark_pool:(snark_pool t) (snark_job_state t)
   in
+  [%log internal] "Request_snark_work"
+    ~metadata:[ ("found_work", `Bool (Option.is_some instances_opt)) ] ;
   Option.map instances_opt ~f:(fun instances ->
       { Snark_work_lib.Work.Spec.instances; fee } )
 
 let work_selection_method t = t.config.work_selection_method
 
-let add_work t (work : Snark_worker_lib.Work.Result.t) =
+let add_work ~logger t (work : Snark_worker_lib.Work.Result.t) =
+  [%log internal] "Add_snark_work" ;
   let (module Work_selection_method) = t.config.work_selection_method in
   let update_metrics () =
     let snark_pool = snark_pool t in
@@ -911,6 +915,9 @@ let add_work t (work : Snark_worker_lib.Work.Result.t) =
   ignore (Or_error.try_with (fun () -> update_metrics ()) : unit Or_error.t) ;
   Network_pool.Snark_pool.Local_sink.push t.pipes.snark_local_sink
     (Network_pool.Snark_pool.Resource_pool.Diff.of_result work, cb)
+  |> Deferred.map ~f:(fun () ->
+         [%log internal] "Add_snark_work_done" ;
+         () )
   |> Deferred.don't_wait_for
 
 let get_current_nonce t aid =
@@ -1395,7 +1402,9 @@ let create ?wallets (config : Config.t) =
   let catchup_mode = if config.super_catchup then `Super else `Normal in
   let constraint_constants = config.precomputed_values.constraint_constants in
   let consensus_constants = config.precomputed_values.consensus_constants in
-  let monitor = Option.value ~default:(Monitor.create ()) config.monitor in
+  let monitor =
+    Option.value ~default:(Monitor.create ~name:"mina_lib" ()) config.monitor
+  in
   Async.Scheduler.within' ~monitor (fun () ->
       O1trace.thread "mina_lib" (fun () ->
           let%bind prover =

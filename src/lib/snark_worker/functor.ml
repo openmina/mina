@@ -121,7 +121,7 @@ module Make (Inputs : Intf.Inputs_intf) :
 
   let dispatch rpc shutdown_on_disconnect query address =
     Scheduler.within'
-      ~monitor:(Monitor.create ~here:[%here] ())
+      ~monitor:(Monitor.create ~name:"Snark_worker/dispatch" ~here:[%here] ())
       (fun () ->
         let%map res =
           Rpc.Connection.with_client
@@ -139,7 +139,7 @@ module Make (Inputs : Intf.Inputs_intf) :
             (Tcp.Where_to_connect.of_host_and_port address)
             (fun conn ->
               Scheduler.within'
-                ~monitor:(Monitor.create ~here:[%here] ())
+                ~monitor:(Monitor.create ~name:"rpc_dispatch" ~here:[%here] ())
                 (fun () -> Rpc.Rpc.dispatch rpc conn query) )
         in
         match res with

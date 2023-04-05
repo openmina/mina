@@ -71,6 +71,8 @@ let exec_thread ~exec_same_thread ~exec_new_thread name =
   result
 
 let thread name f =
+  Scheduler.within' ~monitor:(Monitor.create ~name ())
+  @@ fun () ->
   exec_thread name ~exec_same_thread:f ~exec_new_thread:(fun fiber ->
       let ctx = Scheduler.current_execution_context () in
       let ctx = Thread.Fiber.apply_to_context fiber ctx in

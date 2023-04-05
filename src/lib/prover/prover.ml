@@ -434,7 +434,7 @@ let prove_from_input_sexp { connection; logger; _ } sexp =
 let extend_blockchain { connection; logger; _ } chain next_state block
     ledger_proof prover_state pending_coinbase =
   Scheduler.within'
-    ~monitor:(Monitor.create ~here:[%here] ())
+    ~monitor:(Monitor.create ~name:"extend_blockchain" ~here:[%here] ())
     (fun () ->
       let input =
         { Extend_blockchain_input.chain
@@ -489,7 +489,8 @@ let prove t ~prev_state ~prev_state_proof ~next_state
   Blockchain_snark.Blockchain.proof chain
 
 let create_genesis_block t (genesis_inputs : Genesis_proof.Inputs.t) =
-  Scheduler.within' ~monitor:(Monitor.create ~here:[%here] ())
+  Scheduler.within'
+    ~monitor:(Monitor.create ~name:"create_genesis_block" ~here:[%here] ())
   @@ fun () ->
   let start_time = Core.Time.now () in
   let genesis_ledger = Genesis_ledger.Packed.t genesis_inputs.genesis_ledger in

@@ -165,6 +165,12 @@ module Make (Rpc_intf : Network_peer.Rpc_intf.Rpc_interface_intf) :
               (Network_peer.Peer.to_multiaddr_string peer)
               ()
         | `Within_capacity ->
+            Scheduler.within'
+              ~monitor:
+                (Monitor.create
+                   ~name:("handle_rpc_" ^ Impl.name)
+                   ~here:[%here] () )
+            @@ fun () ->
             O1trace.thread (Printf.sprintf "handle_rpc_%s" Impl.name) (fun () ->
                 handler peer ~version q )
       in

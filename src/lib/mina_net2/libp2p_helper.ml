@@ -181,7 +181,7 @@ let handle_incoming_message t msg ~handle_push_message =
   in
   match msg with
   | RpcResponse rpc_response ->
-      Monitor.protect ~here:[%here]
+      Monitor.protect ~name:"handle_libp2p_ipc_rpc_response" ~here:[%here]
         ~finally:(fun () -> Deferred.unit)
         (fun () ->
           O1trace.sync_thread "handle_libp2p_ipc_rpc_response" (fun () ->
@@ -207,7 +207,7 @@ let handle_incoming_message t msg ~handle_push_message =
                      but not outstanding request was found" ) ;
           Deferred.unit )
   | PushMessage push_msg ->
-      Monitor.protect ~here:[%here]
+      Monitor.protect ~name:"handle_libp2p_ipc_push" ~here:[%here]
         ~finally:(fun () -> Deferred.unit)
         (fun () ->
           O1trace.thread "handle_libp2p_ipc_push" (fun () ->

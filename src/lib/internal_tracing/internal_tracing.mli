@@ -134,6 +134,8 @@ val with_state_hash : Mina_base.State_hash.t -> (unit -> 'a) -> 'a
     properly associated to the block being processed/produced. *)
 val with_slot : Mina_numbers.Global_slot.t -> (unit -> 'a) -> 'a
 
+val without_block : (unit -> 'a) -> 'a
+
 module For_logger : sig
   (** Returns a transport that outputs events to a json-lines file which gets rotated after it
       grows past the specified size limit. *)
