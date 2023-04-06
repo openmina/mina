@@ -475,6 +475,8 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
   in
   let snark_worker_impls =
     [ implement Snark_worker.Rpcs_versioned.Get_work.Latest.rpc (fun () () ->
+          Monitor.protect ~name:"rpc_get_work" ~finally:Deferred.return
+          @@ fun () ->
           Internal_tracing.without_block
           @@ fun () ->
           Internal_tracing.Context_call.with_call_id
@@ -511,6 +513,8 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
           Deferred.return (result, times) )
     ; implement Snark_worker.Rpcs_versioned.Submit_work.Latest.rpc
         (fun () (work : Snark_worker.Work.Result.t) ->
+          Monitor.protect ~name:"rpc_submit_work" ~finally:Deferred.return
+          @@ fun () ->
           Internal_tracing.without_block
           @@ fun () ->
           Internal_tracing.Context_call.with_call_id

@@ -882,7 +882,7 @@ let request_work ~logger t =
     Work_selection_method.work ~logger:t.config.logger ~fee
       ~snark_pool:(snark_pool t) (snark_job_state t)
   in
-  [%log internal] "Request_snark_work"
+  [%log internal] "Request_snark_work_done"
     ~metadata:[ ("found_work", `Bool (Option.is_some instances_opt)) ] ;
   Option.map instances_opt ~f:(fun instances ->
       { Snark_work_lib.Work.Spec.instances; fee } )
