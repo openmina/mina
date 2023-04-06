@@ -11,16 +11,16 @@ let on_job_enter' (fiber : Thread.Fiber.t) =
   Plugins.dispatch (fun (module Plugin : Plugins.Plugin_intf) ->
       Plugin.on_job_enter fiber )
 
-let on_job_exit' fiber elapsed_time =
+let on_job_exit' ~thread_kind fiber elapsed_time =
   Plugins.dispatch (fun (module Plugin : Plugins.Plugin_intf) ->
-      Plugin.on_job_exit fiber elapsed_time )
+      Plugin.on_job_exit ~thread_kind fiber elapsed_time )
 
 let on_job_enter ctx =
   Option.iter (Thread.Fiber.of_context ctx) ~f:on_job_enter'
 
 let on_job_exit ctx elapsed_time =
   Option.iter (Thread.Fiber.of_context ctx) ~f:(fun thread ->
-      on_job_exit' thread elapsed_time )
+      on_job_exit' ~thread_kind:"async_thread" thread elapsed_time )
 
 let current_sync_fiber = ref None
 
@@ -94,7 +94,7 @@ let sync_thread name f =
       let start_time = Time_ns.now () in
       let result = f () in
       let elapsed_time = Time_ns.abs_diff (Time_ns.now ()) start_time in
-      on_job_exit' fiber elapsed_time ;
+      on_job_exit' ~thread_kind:"sync_thread" fiber elapsed_time ;
       result )
 
 let () = Stdlib.(Async_kernel.Tracing.fns := { on_job_enter; on_job_exit })

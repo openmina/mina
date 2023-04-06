@@ -1028,14 +1028,15 @@ let setup_daemon logger =
                 "Long async job, $long_async_time seconds" ;
               Mina_metrics.(
                 Runtime.Long_job_histogram.observe Runtime.long_async_job secs) ) ;
-          O1trace.Execution_timer.set_long_runtime_hook (fun name span ->
+          O1trace.Execution_timer.set_long_runtime_hook
+            (fun thread_kind name span ->
               let secs = Time_ns.Span.to_sec span in
               [%log debug]
                 "Long sync task, $long_async_time seconds, $thread_name"
                 ~metadata:
                   [ ("long_async_time", `Float secs)
                   ; ("thread_name", `String name)
-                  ; ("long_kind", `String "thread")
+                  ; ("long_kind", `String thread_kind)
                   ] ) ;
           let trace_database_initialization typ location =
             (* can't use %log ppx here, because we're using the passed-in location *)

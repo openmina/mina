@@ -101,7 +101,7 @@ module T = struct
     emit_event
       (new_thread_event (O1trace.Thread.name fiber.thread) Thread_switch)
 
-  let on_job_exit _fiber _time_elapsed = ()
+  let on_job_exit ~thread_kind:_ _fiber _time_elapsed = ()
 
   (*
   let on_cycle_end () =

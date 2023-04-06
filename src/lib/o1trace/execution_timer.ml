@@ -25,12 +25,22 @@ let rec record_elapsed_time (fiber : Thread.Fiber.t) elapsed_time =
 let on_job_enter _fiber = ()
 
 let long_runtime_hook =
-  ref (fun (_name : string) (_time : Time_ns.Span.t) -> ())
+  ref (fun (_kind : string) (_name : string) (_time : Time_ns.Span.t) -> ())
 
-let on_job_exit fiber elapsed_time =
+let collect_names fiber =
+  let rec loop acc (fiber_opt : Thread.Fiber.t option) =
+    match fiber_opt with
+    | None ->
+        String.concat ~sep:"/" acc
+    | Some fiber ->
+        loop (fiber.thread.name :: acc) fiber.parent
+  in
+  loop [] (Some fiber)
+
+let on_job_exit ~thread_kind fiber elapsed_time =
   record_elapsed_time fiber elapsed_time ;
   if Float.(Time_ns.Span.to_ms elapsed_time >= 50.) then
-    !long_runtime_hook fiber.thread.name elapsed_time
+    !long_runtime_hook thread_kind (collect_names fiber) elapsed_time
 
 let elapsed_time_of_thread thread = !(Plugins.plugin_state (module T) thread)
 

@@ -28,7 +28,8 @@ module type Plugin_intf = sig
 
   val on_job_enter : Thread.Fiber.t -> unit
 
-  val on_job_exit : Thread.Fiber.t -> Time_ns.Span.t -> unit
+  val on_job_exit :
+    thread_kind:string -> Thread.Fiber.t -> Time_ns.Span.t -> unit
 end
 
 module Register_plugin (Plugin_spec : Plugin_spec_intf) () :

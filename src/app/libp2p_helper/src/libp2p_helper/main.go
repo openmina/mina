@@ -177,7 +177,7 @@ func main() {
 	for {
 		rawMsg, err := decoder.Decode()
 		if err != nil {
-			helperLog.Errorf("Error decoding raw message: %w", err)
+			helperLog.Errorf("Error decoding raw message: %w / %s", err, err)
 			os.Exit(2)
 			return
 		}
