@@ -42,6 +42,7 @@
    mina_metrics
    transition_frontier_extensions
    mina_ledger
+   o1trace
    ppx_version.runtime)
  (preprocess
   (pps ppx_mina ppx_version ppx_assert ppx_base ppx_let ppx_deriving.std ppx_deriving_yojson ppx_sexp_conv ppx_bin_prot

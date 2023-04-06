@@ -238,6 +238,8 @@ struct
                :: acc ) )
 
       let all_completed_work (t : t) : Transaction_snark_work.Info.t list =
+        O1trace.sync_thread "all_completed_work"
+        @@ fun () ->
         Statement_table.fold ~init:[] t.snark_tables.all
           ~f:(fun ~key ~data:{ proof = _; fee = { fee; prover } } acc ->
             let work_ids = Transaction_snark_work.Statement.work_ids key in
@@ -414,8 +416,10 @@ struct
       let add_snark ?(is_local = false) t ~work
           ~(proof : Ledger_proof.t One_or_two.t) ~fee =
         Throttle.enqueue t.snark_table_lock (fun () ->
-            Deferred.return
-              ( if work_is_referenced t work then (
+            let result =
+              O1trace.sync_thread "add_snark"
+              @@ fun () ->
+              if work_is_referenced t work then (
                 (*Note: fee against existing proofs and the new proofs are checked in
                   Diff.unsafe_apply which calls this function*)
                 Hashtbl.set t.snark_tables.all ~key:work ~data:{ proof; fee } ;
@@ -451,7 +455,9 @@ struct
                       , One_or_two.to_yojson
                           Transaction_snark.Statement.to_yojson work )
                     ] ;
-                `Statement_not_referenced ) )
+                `Statement_not_referenced
+            in
+            Deferred.return result )
 
       let verify_and_act t ~work ~sender =
         let statements, priced_proof = work in
