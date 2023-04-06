@@ -1390,7 +1390,7 @@ module Make (Inputs : Inputs_intf) = struct
           Amount.Signed.add_flagged local_state.excess
             Amount.Signed.(negate (of_unsigned account_creation_fee))
         in
-        Printf.eprintf "Amount_insufficient_to_create_account HERE\n%!";
+        (* Printf.eprintf "Amount_insufficient_to_create_account HERE\n%!"; *)
         let local_state =
           Local_state.add_check local_state Local_excess_overflow
             Bool.(not (pay_creation_fee_from_excess &&& excess_update_failed))
