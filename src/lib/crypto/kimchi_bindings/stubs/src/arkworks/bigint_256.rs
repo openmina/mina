@@ -185,6 +185,21 @@ pub fn caml_bigint_256_to_string(x: CamlBigInteger256) -> String {
     x.to_string()
 }
 
+extern "C" {
+    fn caml_hash_mix_int64(state: ocaml::Int, int64: i64) -> isize;
+}
+
+#[ocaml_gen::func]
+#[ocaml::func]
+pub fn caml_bigint_256_hash_fold(mut state: ocaml::Int, x: ocaml::Pointer<CamlBigInteger256>) -> ocaml::Int {
+    let [l1, l2, l3, l4] = x.as_ref().0.0;
+    state = unsafe { caml_hash_mix_int64(state, l1 as i64) };
+    state = unsafe { caml_hash_mix_int64(state, l2 as i64) };
+    state = unsafe { caml_hash_mix_int64(state, l3 as i64) };
+    state = unsafe { caml_hash_mix_int64(state, l4 as i64) };
+    return state
+}
+
 #[ocaml_gen::func]
 #[ocaml::func]
 pub fn caml_bigint_256_test_bit(

@@ -189,10 +189,20 @@ module Make (F : Input_intf) :
         in
         go 0 Bignum_bigint.one Bignum_bigint.zero
 
-      let hash_fold_t s x =
-        Bignum_bigint.hash_fold_t s (to_bignum_bigint (to_bigint x))
+      external fold_bigint256 :
+        Base_internalhash_types.state -> t -> Base_internalhash_types.state
+        = "caml_bigint_256_hash_fold"
+        [@@noalloc]
+
+      let hash_fold_t s x = fold_bigint256 s x
 
       let hash = Hash.of_fold hash_fold_t
+
+      (*let () =
+        eprintf "++++++ %d %d %d\n%!"
+          (hash (of_int 0))
+          (hash (of_int 1))
+          (hash (of_int 1000))*)
 
       let compare t1 t2 = Bigint.compare (to_bigint t1) (to_bigint t2)
 
