@@ -5,7 +5,7 @@ let coordinator_url =
   |> Option.value ~default:"http://localhost:8080"
 
 let query_coordinator identifiers =
-  let url = String.concat ~sep:"/" [ coordinator_url; "get-job" ] in
+  let url = String.concat ~sep:"/" [ coordinator_url; "snarker"; "pick-job" ] in
   match
     Ezcurl.put ~url ~content:(`String (String.concat ~sep:"\n" identifiers)) ()
   with
