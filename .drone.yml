@@ -223,6 +223,7 @@ defs:
     KUBECONFIG: kube-config
     ENDPOINT_URL: http://localhost:3085/graphql
   commands:
+  - sleep $${SLEEP_SECONDS}
   - apk add --no-cache openssl
   - export POD_NAME=$(kubectl get pods -o json | jq '.items[] | select(.metadata.name | startswith(env.POD_PREFIX)) | .metadata.name' | tr -d '"')
   - echo $${POD_NAME}
@@ -250,21 +251,25 @@ steps:
   <<: *wrk
   environment:
     POD_PREFIX: "snarker001"
+    SLEEP_SECONDS: 5
 
 - name: run-test-in-producer
   <<: *wrk
   environment:
     POD_PREFIX: "prod01"
+    SLEEP_SECONDS: 10
 
 - name: run-test-in-seed
   <<: *wrk
   environment:
     POD_PREFIX: "seed1"
+    SLEEP_SECONDS: 15
 
 - name: run-test-in-plain-node
   <<: *wrk
   environment:
     POD_PREFIX: "node1"
+    SLEEP_SECONDS: 20
 
 - name: wait-for-all-tests
   image: alpine/k8s:1.26.1
