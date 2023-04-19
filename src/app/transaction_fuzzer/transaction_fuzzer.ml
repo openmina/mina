@@ -113,8 +113,8 @@ let apply_tx user_command_bytes =
     let ledger_hash = Ledger.merkle_root ledger in
     Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
   with e ->
-    let msg = Exn.to_string e in
     let bt = Printexc.get_backtrace () in
+    let msg = Exn.to_string e in
     Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
     raise e
 
