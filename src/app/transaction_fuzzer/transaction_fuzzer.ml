@@ -7,7 +7,7 @@ module Ledger = Mina_ledger.Ledger
 module Length = Mina_numbers.Length
 module Global_slot = Mina_numbers.Global_slot
 
-let _txn_state_view : Zkapp_precondition.Protocol_state.View.t =
+let txn_state_view : Zkapp_precondition.Protocol_state.View.t =
   { snarked_ledger_hash =
       Fp.of_string
         "19095410909873291354237217869735884756874834695933531743203428046904386166496"
@@ -93,8 +93,8 @@ let apply_tx user_command_bytes =
         user_command_bytes
     in
     (*Core_kernel.printf !"%{sexp:User_command.t}\n%!" command;*)
-    let _tx = Transaction.Command command in
-    let _constraint_constants =
+    let tx = Transaction.Command command in
+    let constraint_constants =
       match !constraint_constants with
       | Some constraint_constants ->
           constraint_constants
@@ -108,7 +108,12 @@ let apply_tx user_command_bytes =
       | None ->
           failwith "ledger not initialized"
     in
-    (*let _applied = Ledger.apply_transaction ~constraint_constants ~txn_state_view ledger tx in*)
+    (*
+     let apply_transactions ~constraint_constants ~global_slot ~txn_state_view
+      ledger txns
+
+    *)
+    let _applied = Ledger.apply_transactions ~constraint_constants ~global_slot:txn_state_view.global_slot_since_genesis ~txn_state_view ledger [tx] in
     (*Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t Or_error.t}\n%!" applied;*)
     let ledger_hash = Ledger.merkle_root ledger in
     Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
