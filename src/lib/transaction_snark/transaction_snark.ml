@@ -3308,6 +3308,13 @@ module Make_str (A : Wire_types.Concrete) = struct
     , Nat.N5.n )
     Pickles.Tag.t
 
+  let time lab f =
+    let start = Time.now () in
+    let x = f () in
+    let stop = Time.now () in
+    eprintf "%s: %s\n%!" lab (Time.Span.to_string_hum (Time.diff stop start)) ;
+    x
+
   let system ~proof_level ~constraint_constants =
     Pickles.compile () ~cache:Cache_dir.cache ?proof_cache:!proof_cache
       ~override_wrap_domain:Pickles_base.Proofs_verified.N1

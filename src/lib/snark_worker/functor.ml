@@ -1,6 +1,108 @@
 open Core
 open Async
 
+module Request = struct
+  type 'job_request t = Await_readiness | Perform_job of 'job_request
+  [@@deriving bin_io_unversioned]
+end
+
+module Interrupt_handler = struct
+  type t =
+    | Pending_handler_setup
+    | Idle
+    | Child_running of Pid.t
+    | Child_cancelled of Pid.t
+
+  let state = ref Pending_handler_setup
+
+  let logger = ref (Logger.null ())
+
+  let kill_subprocess pid =
+    match Signal.send Signal.kill (`Pid pid) with
+    | `Ok ->
+        [%log' info !logger] "Kill signal sent to child: $pid"
+          ~metadata:[ ("pid", `Int (Pid.to_int pid)) ]
+    | `No_such_process ->
+        [%log' warn !logger] "Could not send kill signal, pid doesn't exist"
+
+  let interrupt current_state =
+    match current_state with
+    | Pending_handler_setup ->
+        (* NOTE: this cannot happen, it is the handler itself that calls this function *)
+        [%log' warn !logger]
+          "Warning, calling interrupt before setting up the handler" ;
+        current_state
+    | Idle ->
+        [%log' warn !logger]
+          "Warning, calling interrupt but there is no child running" ;
+        current_state
+    | Child_cancelled pid ->
+        [%log' warn !logger]
+          "Warning, calling interrupt but cancellation is already ongoing: $pid"
+          ~metadata:[ ("pid", `Int (Pid.to_int pid)) ] ;
+        current_state
+    | Child_running pid ->
+        kill_subprocess pid ; Child_cancelled pid
+
+  let maybe_setup_handler = function
+    | Pending_handler_setup ->
+        Signal.handle [ Signal.int ] ~f:(fun _ -> state := interrupt !state)
+    | Idle ->
+        ()
+    | Child_running _ | Child_cancelled _ ->
+        [%log' warn !logger]
+          "Warning, setting up a new pid with an older process still running"
+
+  (** Setups the interrupt handler so that the worker fork is killed when
+      the parent receives SIGINT. Returns a Deferred that will be resolved
+      once the fork process exits. *)
+  let setup ~logger:logger_ pid =
+    logger := logger_ ;
+    maybe_setup_handler !state ;
+    state := Child_running pid ;
+    Unix.waitpid pid
+
+  (** Called when the child has exit to check the cancellation status and update the state *)
+  let child_has_exit ~on_cancelled ~on_error =
+    match !state with
+    | Pending_handler_setup ->
+        [%log' warn !logger]
+          "Warning, got children exit without having even setup the interrupt \
+           handler (should not be possible)" ;
+        on_error ()
+    | Idle ->
+        on_error () (* TODO: warning, this should not happen *)
+    | Child_running _pid ->
+        state := Idle ;
+        (* This is an error *)
+        on_error ()
+    | Child_cancelled _pid ->
+        state := Idle ;
+        on_cancelled ()
+
+  (** Call before exiting the program, will kill any pending subprocess *)
+  let cleanup () =
+    match !state with
+    | Idle | Pending_handler_setup | Child_cancelled _ ->
+        ()
+    | Child_running pid ->
+        kill_subprocess pid
+end
+
+(** We use these to avoid using IO operations managed by Async which
+    can cause issues because of epoll and threads *)
+module Raw_io = struct
+  let really_read fd buf ~pos ~len =
+    Core_unix_bigstring_unix.really_read fd ~pos ~len buf
+
+  let read_bin_prot fd reader =
+    Bin_prot.Utils.bin_read_stream ~read:(really_read fd) reader
+
+  let write_bin_prot fd writer value =
+    let dump = Bin_prot.Utils.bin_dump ~header:true writer value in
+    Core_unix_bigstring_unix.really_write fd dump
+end
+
 module Time_span_with_json = struct
   type t = Time.Span.t
 
@@ -61,6 +163,25 @@ module Make (Inputs : Intf.Inputs_intf) :
   Intf.S0 with type ledger_proof := Inputs.Ledger_proof.t = struct
   open Inputs
   module Rpcs = Rpcs.Make (Inputs)
+
+  let outer_response_writer
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    Result.bin_writer_t
+      (Option.bin_writer_t Rpcs_versioned.Submit_work.Latest.bin_writer_query)
+      String.bin_writer_t
+
+  let inner_response_writer
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    Result.bin_writer_t Rpcs_versioned.Submit_work.Latest.bin_writer_query
+      String.bin_writer_t
+
+  let inner_response_reader
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    Result.bin_reader_t Rpcs_versioned.Submit_work.Latest.bin_reader_query
+      String.bin_reader_t
 
   module Work = struct
     open Snark_work_lib
@@ -387,6 +508,259 @@ module Make (Inputs : Intf.Inputs_intf) :
           (module Rpcs_versioned)
           ~logger ~proof_level daemon_port
           (Option.value ~default:true shutdown_on_disconnect))
+
+  let children_loop
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~logger ~writer
+      ~reader ~one_shot worker_state =
+    let rec loop () =
+      let continue () = if one_shot then exit 0 else loop () in
+      let input =
+        try
+          `Ok
+            (Raw_io.read_bin_prot reader
+               Rpcs_versioned.Get_work.Latest.bin_reader_response )
+        with _ -> `Eof
+      in
+      match input with
+      | `Eof ->
+          exit 0
+      | `Ok None ->
+          [%log error] "Received empty job, this should not happen." ;
+          Raw_io.write_bin_prot writer
+            (inner_response_writer (module Rpcs_versioned))
+            (Error "Received an empty job") ;
+          continue ()
+      | `Ok (Some (work, public_key)) -> (
+          let work_ids =
+            Transaction_snark_work.Statement.compact_json
+              (One_or_two.map (Work.Spec.instances work)
+                 ~f:Work.Single.Spec.statement )
+          in
+          [%log info] "SNARK work $work_ids received. Starting proof generation"
+            ~metadata:[ ("work_ids", work_ids) ] ;
+          let%bind result = perform worker_state public_key work in
+          match result with
+          | Error error ->
+              [%log info] "Error generating proof: $error"
+                ~metadata:
+                  [ ("work_ids", work_ids)
+                  ; ("error", `String (Error.to_string_hum error))
+                  ] ;
+              Raw_io.write_bin_prot writer
+                (inner_response_writer (module Rpcs_versioned))
+                (Error ("Error generating proof: " ^ Error.to_string_hum error)) ;
+              continue ()
+          | Ok result ->
+              [%log info] "Proof generated successfully"
+                ~metadata:[ ("work_ids", work_ids) ] ;
+              Raw_io.write_bin_prot writer
+                (inner_response_writer (module Rpcs_versioned))
+                (Ok result) ;
+              continue () )
+    in
+    loop ()
+
+  (** Run the loop that handles a fork instance and reading jobs from the parent process *)
+  let handle_jobs
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~wait_for_fork
+      ~one_shot ~writer ~reader ~logger () =
+    let rec loop () =
+      let continue () =
+        if one_shot then (
+          let%bind exit_status = wait_for_fork in
+          Interrupt_handler.state := Idle ;
+          [%log debug] "Stop from subworker process (expected): $status"
+            ~metadata:
+              [ ( "status"
+                , `String (Core_unix.Exit_or_signal.to_string_hum exit_status)
+                )
+              ] ;
+          Deferred.unit )
+        else loop ()
+      in
+      let handle_job job =
+        Writer.write_bin_prot writer
+          Rpcs_versioned.Get_work.V2.bin_writer_response job ;
+        let%bind () = Writer.flushed writer in
+        let%bind result =
+          choose
+            [ choice wait_for_fork (fun s -> `Child_exit s)
+            ; choice
+                (Reader.read_bin_prot reader
+                   (inner_response_reader (module Rpcs_versioned)) )
+                (fun data -> `Response data)
+            ]
+        in
+        let write_result =
+          Raw_io.write_bin_prot Core.Unix.stdout
+            (outer_response_writer (module Rpcs_versioned))
+        in
+        match result with
+        | `Child_exit exit_status ->
+            Interrupt_handler.child_has_exit
+              ~on_error:(fun () ->
+                [%log warn] "Unexpected stop from subworker process: $status"
+                  ~metadata:
+                    [ ( "status"
+                      , `String
+                          (Core_unix.Exit_or_signal.to_string_hum exit_status)
+                      )
+                    ] ;
+                write_result
+                  (Error
+                     ( "Worker subprocess stopped unexpectedly: "
+                     ^ Core_unix.Exit_or_signal.to_string_hum exit_status ) ) )
+              ~on_cancelled:(fun () ->
+                [%log info] "Worker subprocess has quit after cancel request" ;
+                write_result (Ok None) ) ;
+            Deferred.unit
+        | `Response rr -> (
+            match rr with
+            | `Eof ->
+                Interrupt_handler.child_has_exit
+                  ~on_error:(fun () ->
+                    [%log warn] "Unexpected EOF from worker subprocess" ;
+                    write_result
+                      (Error "EOF when reading from worker subprocess") )
+                  ~on_cancelled:(fun () ->
+                    [%log info]
+                      "EOF from worker subprocess after cancel request" ;
+                    write_result (Ok None) ) ;
+                Deferred.unit
+            | `Ok result ->
+                write_result (Result.map ~f:Option.some result) ;
+                continue () )
+      in
+      let%bind input =
+        try
+          return
+            (Raw_io.read_bin_prot Core_unix.stdin
+               (Request.bin_reader_t
+                  Rpcs_versioned.Get_work.Latest.bin_reader_response ) )
+        with exn ->
+          [%log info] "EOF or error when reading from stdin, quitting: $error"
+            ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;
+          Interrupt_handler.cleanup () ;
+          Core.exit 0
+      in
+      match input with
+      | Request.Await_readiness ->
+          [%log info] "Answering to readiness request" ;
+          Raw_io.write_bin_prot Core_unix.stdout Bool.bin_writer_t true ;
+          loop ()
+      | Request.Perform_job job ->
+          handle_job job
+    in
+    loop ()
+
+  let wrap_raw_fd ?(avoid_nonblock_if_possible = true) ~name raw_fd =
+    Fd.create ~avoid_nonblock_if_possible Fd.Kind.Fifo raw_fd
+      (Info.of_string name)
+
+  (** Run the loop that handles creating new forks when required.
+      Each time the worker fork is created, [handle_jobs] is called to handle it. *)
+  let fork_and_work
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~worker_state
+      ~always_fork ~logger () =
+    let rec loop () =
+      (* Cannot create Unix pipes with Async because that will create new
+         threads to handle the pipes in a non-blocking manner.
+         So first we create raw file descriptor pipes and then
+         wrap them in Reader/Writer when necessary, and not before. *)
+      let from_parent, to_fork = Core.Unix.pipe () in
+      let from_fork, to_parent = Core.Unix.pipe () in
+      (* epoll fails for some reason with these pipes in Async, so
+         [avoid_nonblock_if_possible] is used here to bypass epoll and have
+         a thread handle these pipes *)
+      match Core.Unix.fork () with
+      | `In_the_child ->
+          Core.Unix.close Core.Unix.stdin ;
+          Core.Unix.close to_fork ;
+          Core.Unix.close from_fork ;
+          children_loop
+            (module Rpcs_versioned)
+            ~one_shot:always_fork ~logger ~writer:to_parent ~reader:from_parent
+            worker_state
+      | `In_the_parent child_pid ->
+          [%log info] "Forked, child PID: $pid"
+            ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
+          let wait_for_fork = Interrupt_handler.setup ~logger child_pid in
+          upon wait_for_fork (fun exit_status ->
+              [%log info] "Child exited ($pid): $status"
+                ~metadata:
+                  [ ("pid", `Int (Pid.to_int child_pid))
+                  ; ( "status"
+                    , `String
+                        (Core_unix.Exit_or_signal.to_string_hum exit_status) )
+                  ] ) ;
+          Core.Unix.close from_parent ;
+          Core.Unix.close to_parent ;
+          let from_fork =
+            Reader.create (wrap_raw_fd ~name:"from_fork" from_fork)
+          in
+          let to_fork = Writer.create (wrap_raw_fd ~name:"to_fork" to_fork) in
+          let%bind () =
+            handle_jobs
+              (module Rpcs_versioned)
+              ~one_shot:always_fork ~wait_for_fork ~writer:to_fork
+              ~reader:from_fork ~logger ()
+          in
+          (* Make sure these are closed before forking again to avoid leaking
+             these descriptors to the children *)
+          let%bind () =
+            Deferred.all_unit [ Reader.close from_fork; Writer.close to_fork ]
+          in
+          let%bind () =
+            Deferred.all_unit
+              [ Reader.close_finished from_fork; Writer.close_finished to_fork ]
+          in
+          loop ()
+    in
+    loop ()
+
+  let command_from_stdio
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    let open Command.Let_syntax in
+    Command.async ~summary:"Run snark worker directly"
+      (let%map_open proof_level =
+         flag "--proof-level" ~doc:""
+           (optional_with_default Genesis_constants.Proof_level.Full
+              (Command.Arg_type.of_alist_exn
+                 [ ("Full", Genesis_constants.Proof_level.Full)
+                 ; ("Check", Check)
+                 ; ("None", None)
+                 ] ) )
+       and always_fork =
+         flag "--always-fork" ~aliases:[ "always-fork" ] (optional bool)
+           ~doc:"true|false Fork for every job (default:true)"
+       in
+       let always_fork = Option.value ~default:true always_fork in
+       fun () ->
+         let logger =
+           Logger.create () ~metadata:[ ("process", `String "Snark Worker") ]
+         in
+         [%log info] "Starting standalone snark worker..." ;
+         let open Async in
+         (* We toggle this flag so that rayon doesn't use the global thread pool. In doing
+            so we ensure that the forked child process is in charge of creating the
+            global pool so that no state is lost during the fork. *)
+         Kimchi_bindings.Rayon.toggle_thread_pool true ;
+         let%bind worker_state =
+           Worker_state.create
+             ~constraint_constants:
+               Genesis_constants.Constraint_constants.compiled ~proof_level ()
+         in
+         Kimchi_bindings.Rayon.toggle_thread_pool false ;
+         [%log info] "Snark worker state is initialized" ;
+         (* Lets run a full GC cycle before forking *)
+         Gc.compact () ;
+         fork_and_work
+           (module Rpcs_versioned)
+           ~worker_state ~always_fork ~logger () )
 
   let arguments ~proof_level ~daemon_address ~shutdown_on_disconnect =
     [ "-daemon-address"
