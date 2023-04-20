@@ -24,6 +24,7 @@ use wires_15_stubs::{
     },
     projective::{pallas::*, vesta::*},
     srs::{fp::*, fq::*},
+    rayon::*,
     CamlCircuitGate,
     CamlLookupCommitments,
     CamlOpeningProof,
@@ -287,6 +288,10 @@ fn generate_pasta_bindings(mut w: impl std::io::Write, env: &mut Env) {
 }
 
 fn generate_kimchi_bindings(mut w: impl std::io::Write, env: &mut Env) {
+    decl_module!(w, env, "Rayon", {
+        decl_func!(w, env, caml_toggle_rayon_thread_pool => "toggle_thread_pool");
+    });
+
     decl_module!(w, env, "FieldVectors", {
         decl_module!(w, env, "Fp", {
             decl_type!(w, env, CamlFpVector => "t");

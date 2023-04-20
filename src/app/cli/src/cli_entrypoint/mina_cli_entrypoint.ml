@@ -1630,7 +1630,6 @@ let audit_type_shapes : Command.t =
           (Sexp.to_string_hum exp) ()
     | List [] | List _ | Atom _ ->
         failwithf "bad format: %s" (Sexp.to_string_hum exp) ()
-  in
   let handle_shape (path : string) (shape : Bin_prot.Shape.t) (ty_decl : string)
       (good : int ref) (bad : int ref) =
     let open Bin_prot.Shape in
@@ -1651,6 +1650,24 @@ let audit_type_shapes : Command.t =
              handle_shape path shape ty_decl good bad ) ;
          Core.printf "good shapes:\n\t%d\nbad shapes:\n\t%d\n%!" !good !bad ;
          if !bad > 0 then Core.exit 1 ) )
+
+let dump_raw_type_shapes =
+  let pretty_flag =
+    let open Command.Param in
+    flag "--pretty" ~aliases:[ "-pretty" ] (optional bool)
+      ~doc:"true|false Pretty-print raw shapes"
+  in
+  Command.basic ~summary:"Print serialization shapes of versioned types"
+    (Command.Param.map pretty_flag ~f:(fun pretty () ->
+         Ppx_version_runtime.Shapes.iteri ~f:(fun ~key:path ~data:(shape, _) ->
+             let open Bin_prot.Shape in
+             let to_string =
+               if Option.value pretty ~default:false then
+                 Sexp.to_string_hum ?indent:None
+               else Sexp.to_string
+             in
+             let shape_sexp = sexp_of_t shape in
+             Core_kernel.printf "%s, %s\n" path (to_string shape_sexp) ) ) )
 
 [%%if force_updates]
 
@@ -1752,6 +1769,7 @@ let snark_hashes =
 
 let internal_commands logger =
   [ (Snark_worker.Intf.command_name, Snark_worker.command)
+  ; (Snark_worker.Intf.command_stdio_name, Snark_worker.command_stdio)
   ; ("snark-hashes", snark_hashes)
   ; ( "run-prover"
     , Command.async
@@ -1921,6 +1939,7 @@ let internal_commands logger =
               () ) ;
           Deferred.return ()) )
   ; ("dump-type-shapes", dump_type_shapes)
+  ; ("dump-raw-type-shapes", dump_raw_type_shapes)
   ; ("replay-blocks", replay_blocks logger)
   ; ("audit-type-shapes", audit_type_shapes)
   ; ( "test-genesis-block-generation"

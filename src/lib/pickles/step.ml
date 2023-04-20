@@ -832,6 +832,8 @@ struct
                           (Lazy.force prev_challenge_polynomial_commitments)
                         pk
                     in
+                    Printf.eprintf "STEP DONE\n%!" ;
+                    exit 0 ;
                     let%map.Promise proof =
                       match proof_cache with
                       | None ->

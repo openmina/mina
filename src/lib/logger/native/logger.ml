@@ -240,7 +240,7 @@ module Transport = struct
 
     let create () = ()
 
-    let transport () = print_endline
+    let transport () = prerr_endline
   end
 
   let stdout () = T ((module Stdout), Stdout.create ())

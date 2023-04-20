@@ -823,22 +823,24 @@ pub fn caml_pasta_fp_plonk_proof_verify(
     index: CamlPastaFpPlonkVerifierIndex,
     proof: CamlProverProof<CamlGVesta, CamlFp>,
 ) -> bool {
-    let group_map = <Vesta as CommitmentCurve>::Map::setup();
+    crate::rayon::maybe_run_in_local_pool(|| {
+        let group_map = <Vesta as CommitmentCurve>::Map::setup();
 
-    let (proof, public_input) = proof.into();
-    let verifier_index = index.into();
-    let context = Context {
-        verifier_index: &verifier_index,
-        proof: &proof,
-        public_input: &public_input,
-    };
+        let (proof, public_input) = proof.into();
+        let verifier_index = index.into();
+        let context = Context {
+            verifier_index: &verifier_index,
+            proof: &proof,
+            public_input: &public_input,
+        };
 
-    batch_verify::<
-        Vesta,
-        DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>,
-        DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi>,
-    >(&group_map, &[context])
-    .is_ok()
+        batch_verify::<
+            Vesta,
+            DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>,
+            DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi>,
+        >(&group_map, &[context])
+        .is_ok()
+    })
 }
 
 #[ocaml_gen::func]
@@ -847,31 +849,33 @@ pub fn caml_pasta_fp_plonk_proof_batch_verify(
     indexes: Vec<CamlPastaFpPlonkVerifierIndex>,
     proofs: Vec<CamlProverProof<CamlGVesta, CamlFp>>,
 ) -> bool {
-    let ts: Vec<_> = indexes
-        .into_iter()
-        .zip(proofs.into_iter())
-        .map(|(caml_index, caml_proof)| {
-            let verifier_index: VerifierIndex<Vesta> = caml_index.into();
-            let (proof, public_input): (ProverProof<_>, Vec<_>) = caml_proof.into();
-            (verifier_index, proof, public_input)
-        })
-        .collect();
-    let ts_ref: Vec<_> = ts
-        .iter()
-        .map(|(verifier_index, proof, public_input)| Context {
-            verifier_index,
-            proof,
-            public_input,
-        })
-        .collect();
-    let group_map = GroupMap::<Fq>::setup();
+    crate::rayon::maybe_run_in_local_pool(|| {
+        let ts: Vec<_> = indexes
+            .into_iter()
+            .zip(proofs.into_iter())
+            .map(|(caml_index, caml_proof)| {
+                let verifier_index: VerifierIndex<Vesta> = caml_index.into();
+                let (proof, public_input): (ProverProof<_>, Vec<_>) = caml_proof.into();
+                (verifier_index, proof, public_input)
+            })
+            .collect();
+        let ts_ref: Vec<_> = ts
+            .iter()
+            .map(|(verifier_index, proof, public_input)| Context {
+                verifier_index,
+                proof,
+                public_input,
+            })
+            .collect();
+        let group_map = GroupMap::<Fq>::setup();
 
-    batch_verify::<
-        Vesta,
-        DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>,
-        DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi>,
-    >(&group_map, &ts_ref)
-    .is_ok()
+        batch_verify::<
+            Vesta,
+            DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>,
+            DefaultFrSponge<Fp, PlonkSpongeConstantsKimchi>,
+        >(&group_map, &ts_ref)
+        .is_ok()
+    })
 }
 
 #[ocaml_gen::func]

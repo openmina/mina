@@ -1,5 +1,9 @@
 (* This file is generated automatically with ocaml_gen. *)
 
+module Rayon = struct
+  external toggle_thread_pool : bool -> unit = "caml_toggle_rayon_thread_pool"
+end
+
 module FieldVectors = struct
   module Fp = struct
     type nonrec t
