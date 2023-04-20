@@ -1478,6 +1478,24 @@ let dump_type_shapes =
              Core_kernel.printf "%s, %s, %s, %s\n" path digest shape_summary
                ty_decl ) ) )
 
+let dump_raw_type_shapes =
+  let pretty_flag =
+    let open Command.Param in
+    flag "--pretty" ~aliases:[ "-pretty" ] (optional bool)
+      ~doc:"true|false Pretty-print raw shapes"
+  in
+  Command.basic ~summary:"Print serialization shapes of versioned types"
+    (Command.Param.map pretty_flag ~f:(fun pretty () ->
+         Ppx_version_runtime.Shapes.iteri ~f:(fun ~key:path ~data:(shape, _) ->
+             let open Bin_prot.Shape in
+             let to_string =
+               if Option.value pretty ~default:false then
+                 Sexp.to_string_hum ?indent:None
+               else Sexp.to_string
+             in
+             let shape_sexp = sexp_of_t shape in
+             Core_kernel.printf "%s, %s\n" path (to_string shape_sexp) ) ) )
+
 [%%if force_updates]
 
 let rec ensure_testnet_id_still_good logger =
@@ -1747,6 +1765,7 @@ let internal_commands logger =
               () ) ;
           Deferred.return ()) )
   ; ("dump-type-shapes", dump_type_shapes)
+  ; ("dump-raw-type-shapes", dump_raw_type_shapes)
   ; ("replay-blocks", replay_blocks logger)
   ]
 
