@@ -1622,7 +1622,10 @@ module Body = struct
 
     let digest (t : t) =
       Random_oracle.Checked.(
-        hash ~init:Hash_prefix.zkapp_body (pack_input (to_input t)))
+        let inputs = pack_input (to_input t) in
+        (*Core_kernel.printf !"%{sexp:Account.Token_symbol.t array}\n%!" inputs;*)
+        hash ~init:Hash_prefix.zkapp_body inputs
+        )
   end
 
   let typ () : (Checked.t, t) Typ.t =
@@ -1701,7 +1704,11 @@ module Body = struct
       ]
 
   let digest (t : t) =
-    Random_oracle.(hash ~init:Hash_prefix.zkapp_body (pack_input (to_input t)))
+      Random_oracle.(
+        let inputs = pack_input (to_input t) in
+        Core_kernel.printf !"%{sexp:Field.t array}\n%!" inputs;
+        hash ~init:Hash_prefix.zkapp_body inputs
+        )
 
   module Digested = struct
     type t = Random_oracle.Digest.t
