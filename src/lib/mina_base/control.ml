@@ -106,6 +106,16 @@ let dummy_of_tag : Tag.t -> t = function
   | Proof ->
       let n2 = Pickles_types.Nat.N2.n in
       let proof = Pickles.Proof.dummy n2 n2 n2 ~domain_log2:15 in
+
+      (* let buf = Bigstring.create (Pickles.Proof.Proofs_verified_2.Stable.V2.bin_size_t proof) in *)
+      (* ignore (Pickles.Proof.Proofs_verified_2.Stable.V2.bin_write_t buf ~pos:0 proof : int) ; *)
+      (* let bytes = Bigstring.to_bytes buf in *)
+      (* let explode s = List.init (String.length s) ~f:(fun i -> String.get s i) in *)
+      (* let s = (String.concat ~sep:"," (List.map (explode (Bytes.to_string bytes)) ~f:(fun b -> string_of_int (Char.to_int b)))) in *)
+
+      (* Printf.eprintf !"proof_sexp=%{sexp: Pickles.Proof.Proofs_verified_2.Stable.V2.t}\n%!" proof; *)
+      (* Printf.eprintf !"proof_binprot=[%s]\n%!" s; *)
+
       Proof proof
   | Signature ->
       Signature Signature.dummy

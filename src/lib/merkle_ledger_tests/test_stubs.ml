@@ -39,37 +39,51 @@ end
 module Receipt = Mina_base.Receipt
 
 module Hash = struct
-  module T = struct
-    type t = Md5.t [@@deriving sexp, hash, compare, bin_io_unversioned, equal]
-  end
+  include Mina_base.Ledger_hash.Stable.V1
 
-  include T
+  let to_base58_check = Mina_base.Ledger_hash.to_base58_check
 
-  include Codable.Make_base58_check (struct
-    type t = T.t [@@deriving bin_io_unversioned]
+  let merge = Mina_base.Ledger_hash.merge
 
-    let description = "Ledger test hash"
+  let hash_account =
+    Fn.compose Mina_base.Ledger_hash.of_digest Mina_base.Account.digest
 
-    let version_byte = Base58_check.Version_bytes.ledger_test_hash
-  end)
-
-  include Hashable.Make_binable (T)
-
-  (* to prevent pre-image attack,
-   * important impossible to create an account such that (merge a b = hash_account account) *)
-
-  let hash_account account =
-    Md5.digest_string ("0" ^ Format.sprintf !"%{sexp: Account.t}" account)
-
-  let merge ~height a b =
-    let res =
-      Md5.digest_string
-        (sprintf "test_ledger_%d:" height ^ Md5.to_hex a ^ Md5.to_hex b)
-    in
-    res
-
-  let empty_account = hash_account Account.empty
+  let empty_account =
+    Mina_base.Ledger_hash.of_digest Mina_base.Account.empty_digest
 end
+
+(* module Hash = struct *)
+(*   module T = struct *)
+(*     type t = Md5.t [@@deriving sexp, hash, compare, bin_io_unversioned, equal] *)
+(*   end *)
+
+(*   include T *)
+
+(*   include Codable.Make_base58_check (struct *)
+(*     type t = T.t [@@deriving bin_io_unversioned] *)
+
+(*     let description = "Ledger test hash" *)
+
+(*     let version_byte = Base58_check.Version_bytes.ledger_test_hash *)
+(*   end) *)
+
+(*   include Hashable.Make_binable (T) *)
+
+(*   (\* to prevent pre-image attack, *)
+(*    * important impossible to create an account such that (merge a b = hash_account account) *\) *)
+
+(*   let hash_account account = *)
+(*     Md5.digest_string ("0" ^ Format.sprintf !"%{sexp: Account.t}" account) *)
+
+(*   let merge ~height a b = *)
+(*     let res = *)
+(*       Md5.digest_string *)
+(*         (sprintf "test_ledger_%d:" height ^ Md5.to_hex a ^ Md5.to_hex b) *)
+(*     in *)
+(*     res *)
+
+(*   let empty_account = hash_account Account.empty *)
+(* end *)
 
 module Intf = Merkle_ledger.Intf
 
@@ -202,15 +216,7 @@ module Base_inputs = struct
   module Key = Key
   module Account_id = Account_id
   module Token_id = Token_id
-
-  module Balance = struct
-    include Balance
-
-    let of_int = of_nanomina_int_exn
-
-    let to_int = to_nanomina_int
-  end
-
+  module Balance = Balance
   module Account = Account
   module Hash = Hash
 end

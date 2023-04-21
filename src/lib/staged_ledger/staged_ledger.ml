@@ -1,3 +1,5 @@
+[@@@ocaml.warning "-32"]
+
 [%%import "/src/config.mlh"]
 
 (* Only show stdout for failed inline tests. *)
@@ -2136,6 +2138,29 @@ let%test_module "staged ledger tests" =
       (ledger_proof, diff', is_new_stack, pc_update, supercharge_coinbase)
 
     let dummy_state_and_view ?global_slot () =
+      (* let buf = Bigstring.create (Side_loaded_verification_key.Stable.V2.bin_size_t vk.data) in *)
+      (* ignore (Side_loaded_verification_key.Stable.V2.bin_write_t buf ~pos:0 vk.data : int) ; *)
+      (* let bytes = Bigstring.to_bytes buf in *)
+      (* let explode s = List.init (String.length s) ~f:(fun i -> String.get s i) in *)
+      (* let s = (String.concat ~sep:"," (List.map (explode (Bytes.to_string bytes)) ~f:(fun b -> string_of_int (Char.to_int b)))) in *)
+
+      (* Core.Printf.eprintf !"vk=%{sexp: (Side_loaded_verification_key.t, Frozen_ledger_hash.t) With_hash.t}\n%!" vk; *)
+      (* Core.Printf.eprintf !"vk_binprot=[%s]\n%!" s; *)
+
+
+      (* let dummy = Proof.transaction_dummy in *)
+
+      (* let buf = Bigstring.create (Proof.Stable.V2.bin_size_t dummy) in *)
+      (* ignore (Proof.Stable.V2.bin_write_t buf ~pos:0 dummy : int) ; *)
+      (* let bytes = Bigstring.to_bytes buf in *)
+
+      (* let explode s = List.init (String.length s) ~f:(fun i -> String.get s i) in *)
+
+      (* let s = (String.concat ~sep:"," (List.map (explode (Bytes.to_string bytes)) ~f:(fun b -> string_of_int (Char.to_int b)))) in *)
+
+      (* Core.Printf.eprintf !"dummy proof= %{sexp: Proof.t}\n%!" dummy; *)
+      (* Core.Printf.eprintf !"dummy proof= %s\n%!" s; *)
+
       let state =
         let consensus_constants =
           let genesis_constants = Genesis_constants.for_unit_tests in
@@ -2152,6 +2177,19 @@ let%test_module "staged ledger tests" =
         in
         compile_time_genesis.data
       in
+      (* Core.Printf.eprintf *)
+      (*   !"PROTOCOL_STATE=%{sexp: Mina_state.Protocol_state.value}\n%!" state ; *)
+      (* Core.Printf.eprintf *)
+      (*   !"VIEW=%{sexp: Zkapp_precondition.Protocol_state.View.t}\n%!" (Mina_state.Protocol_state.Body.view (Mina_state.Protocol_state.body state))  ; *)
+
+      (* let buf = Bigstring.create (Mina_state.Protocol_state.Value.Stable.V2.bin_size_t state) in *)
+      (* ignore (Mina_state.Protocol_state.Value.Stable.V2.bin_write_t buf ~pos:0 state : int) ; *)
+      (* let bytes = Bigstring.to_bytes buf in *)
+      (* let explode s = List.init (String.length s) ~f:(fun i -> String.get s i) in *)
+      (* let s = (String.concat ~sep:"," (List.map (explode (Bytes.to_string bytes)) ~f:(fun b -> string_of_int (Char.to_int b)))) in *)
+
+      (* Core.Printf.eprintf !"state_binprot=[%s]\n%!" s; *)
+
       let state_with_global_slot =
         match global_slot with
         | None ->
