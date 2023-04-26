@@ -56,6 +56,16 @@
    mina_tree
    block_time
    mina_transaction
+   ;; txn pool
+   parallel
+   pipe_lib
+   network_pool
+   logger
+   precomputed_values
+   trust_system
+   verifier
+   child_processes
+   network_peer
  )
  (preprocessor_deps ../../config.mlh)
  (instrumentation (backend bisect_ppx))

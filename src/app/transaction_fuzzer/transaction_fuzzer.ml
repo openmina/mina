@@ -49,24 +49,58 @@ let txn_state_view : Zkapp_precondition.Protocol_state.View.t =
       }
   }
 
-let constraint_constants : Genesis_constants.Constraint_constants.t option ref =
-  ref None
+let ledger = ref (Mina_ledger.Ledger.create_ephemeral ~depth:10 ())
+
+let constraint_constants : Genesis_constants.Constraint_constants.t ref =
+  ref Genesis_constants.Constraint_constants.compiled
+
+module Staged_ledger = struct
+  type t = Mina_ledger.Ledger.t [@@deriving sexp]
+
+  let ledger = Fn.id
+end
+
+module Mock_transition_frontier = struct
+  open Pipe_lib
+
+  module Breadcrumb = struct
+    type t = Staged_ledger.t
+
+    let staged_ledger = Fn.id
+  end
+
+  type best_tip_diff =
+    { new_commands : User_command.Valid.t With_status.t list
+    ; removed_commands : User_command.Valid.t With_status.t list
+    ; reorg_best_tip : bool
+    }
+
+  type t = best_tip_diff Broadcast_pipe.Reader.t * Breadcrumb.t ref
+
+  let create : unit -> t * best_tip_diff Broadcast_pipe.Writer.t =
+   fun () ->
+    let pipe_r, pipe_w =
+      Broadcast_pipe.create
+        { new_commands = []; removed_commands = []; reorg_best_tip = false }
+    in
+    ((pipe_r, ledger), pipe_w)
+
+  let best_tip (_, best_tip) = !best_tip
+
+  let best_tip_diff_pipe (pipe, _) = pipe
+end
+
+let transaction_pool = ref None
 
 let deserialize_constants constants_bytes =
   Bin_prot.Reader.of_bytes
     [%bin_reader: Genesis_constants.Constraint_constants.t] constants_bytes
 
 let set_constraint_constants constants_bytes =
-  constraint_constants := Some (deserialize_constants constants_bytes)
+  constraint_constants := deserialize_constants constants_bytes
 
 let create_initial_accounts accounts =
-  let constraint_constants =
-    match !constraint_constants with
-    | Some constraint_constants ->
-        constraint_constants
-    | None ->
-        failwith "constraint_constants not initialized"
-  in
+  let constraint_constants = !constraint_constants in
   let packed =
     Genesis_ledger_helper.Ledger.packed_genesis_ledger_of_accounts
       ~depth:constraint_constants.ledger_depth
@@ -78,11 +112,9 @@ let deserialize_accounts accounts_bytes =
   Bin_prot.Reader.of_bytes [%bin_reader: Account.Stable.Latest.t list]
     accounts_bytes
 
-let ledger : Ledger.t option ref = ref None
-
 let set_initial_accounts accounts_bytes =
   let ledger_ = create_initial_accounts (deserialize_accounts accounts_bytes) in
-  ledger := Some ledger_ ;
+  ledger := ledger_ ;
   let ledger_hash = Ledger.merkle_root ledger_ in
   Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
 
@@ -94,26 +126,18 @@ let apply_tx user_command_bytes =
     in
     (*Core_kernel.printf !"%{sexp:User_command.t}\n%!" command;*)
     let tx = Transaction.Command command in
-    let constraint_constants =
-      match !constraint_constants with
-      | Some constraint_constants ->
-          constraint_constants
-      | None ->
-          failwith "constraint_constants not initialized"
-    in
-    let ledger =
-      match !ledger with
-      | Some ledger ->
-          ledger
-      | None ->
-          failwith "ledger not initialized"
-    in
+    let constraint_constants = !constraint_constants in
+    let ledger = !ledger in
     (*
      let apply_transactions ~constraint_constants ~global_slot ~txn_state_view
       ledger txns
 
     *)
-    let _applied = Ledger.apply_transactions ~constraint_constants ~global_slot:txn_state_view.global_slot_since_genesis ~txn_state_view ledger [tx] in
+    let _applied =
+      Ledger.apply_transactions ~constraint_constants
+        ~global_slot:txn_state_view.global_slot_since_genesis ~txn_state_view
+        ledger [ tx ]
+    in
     (*Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t Or_error.t}\n%!" applied;*)
     let ledger_hash = Ledger.merkle_root ledger in
     Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
@@ -131,6 +155,97 @@ let get_coverage _ =
       , Array.fold_right counts ~f:(fun x acc -> Int64.of_int x :: acc) ~init:[]
       ) )
 
+module Transaction_pool = struct
+  module Transaction_pool =
+    Network_pool.Transaction_pool.Make
+      (Staged_ledger)
+      (Mock_transition_frontier)
+
+  let setup with_logging =
+    Parallel.init_master () ;
+    let logger = if with_logging then Logger.create () else Logger.null () in
+    let precomputed_values = Lazy.force Precomputed_values.for_unit_tests in
+    let constraint_constants = !constraint_constants in
+    (* TODO: are these constants ok? *)
+    let consensus_constants = precomputed_values.consensus_constants in
+    let time_controller = Block_time.Controller.basic ~logger in
+    (* TODO: make proof level configurable *)
+    let proof_level = Genesis_constants.Proof_level.None in
+    let frontier, _best_tip_diff_w = Mock_transition_frontier.create () in
+    let _, _best_tip_ref = frontier in
+    let frontier_pipe_r, _frontier_pipe_w =
+      Pipe_lib.Broadcast_pipe.create @@ Some frontier
+    in
+    let trust_system = Trust_system.null () in
+    [%log info] "Starting verifier..." ;
+    let verifier =
+      Async.Thread_safe.block_on_async_exn (fun () ->
+          Verifier.create ~logger ~proof_level ~constraint_constants
+            ~conf_dir:(Some "/tmp")
+            ~pids:(Child_processes.Termination.create_pid_table ()) )
+    in
+    let config =
+      Transaction_pool.Resource_pool.make_config ~trust_system
+        ~pool_max_size:3000 ~verifier
+        ~genesis_constants:Genesis_constants.compiled
+    in
+    [%log info] "Creating transaction pool..." ;
+    let pool, _rsink, _lsink =
+      Transaction_pool.create ~config ~logger ~constraint_constants
+        ~consensus_constants ~time_controller
+        ~frontier_broadcast_pipe:frontier_pipe_r ~log_gossip_heard:false
+        ~on_remote_push:(Fn.const Async.Deferred.unit)
+    in
+    transaction_pool := Some pool
+
+  let verify_and_apply_impl cs =
+    let pool =
+      match !transaction_pool with
+      | None ->
+          failwith "transaction pool not setup"
+      | Some pool ->
+          pool
+    in
+    let peer =
+      Network_peer.Peer.create
+        (Unix.Inet_addr.of_string "1.2.3.4")
+        ~peer_id:(Network_peer.Peer.Id.unsafe_of_string "not used")
+        ~libp2p_port:8302
+    in
+    (* For logal use Network_peer.Envelope.Sender.Local *)
+    let sender = Network_peer.Envelope.Sender.Remote peer in
+    let diff = Network_peer.Envelope.Incoming.wrap ~data:cs ~sender in
+    let result =
+      Async.Thread_safe.block_on_async_exn
+      @@ fun () ->
+      Transaction_pool.Resource_pool.Diff.verify
+        (Transaction_pool.resource_pool pool)
+        diff
+    in
+    match result with
+    | Ok diff -> (
+        let result =
+          Async.Thread_safe.block_on_async_exn
+          @@ fun () ->
+          Transaction_pool.Resource_pool.Diff.unsafe_apply
+            (Transaction_pool.resource_pool pool)
+            diff
+        in
+        match result with
+        | Ok (`Accept, _, _) ->
+            true
+        | Ok (`Reject, _, _) | Error _ ->
+            false )
+    | Error _ ->
+        false
+
+  let verify_and_apply encoded =
+    let cmd =
+      Bin_prot.Reader.of_string User_command.Stable.V2.bin_reader_t encoded
+    in
+    verify_and_apply_impl [ cmd ]
+end
+
 let run_command =
   Command.basic ~summary:"Run the fuzzer"
     Command.Param.(
@@ -138,7 +253,8 @@ let run_command =
         (anon ("seed" %: int))
         ~f:(fun seed () ->
           Rust.transaction_fuzzer (Int64.of_int seed) set_constraint_constants
-            set_initial_accounts apply_tx get_coverage ))
+            set_initial_accounts apply_tx get_coverage Transaction_pool.setup
+            Transaction_pool.verify_and_apply ))
 
 let reproduce_command =
   Command.basic ~summary:"Reproduce fuzzcase"
@@ -152,4 +268,7 @@ let reproduce_command =
 let () =
   Command.run
     (Command.group ~summary:"transaction_fuzzer"
-       [ ("run", run_command); ("reproduce", reproduce_command) ] )
+       [ ("run", run_command)
+       ; ("reproduce", reproduce_command)
+       ; (Parallel.worker_command_name, Parallel.worker_command)
+       ] )
