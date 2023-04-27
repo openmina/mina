@@ -263,7 +263,8 @@ let reproduce_command =
         (anon ("fuzzcase" %: string))
         ~f:(fun fuzzcase () ->
           Rust.transaction_fuzzer_reproduce set_constraint_constants
-            set_initial_accounts apply_tx (Bytes.of_string fuzzcase) ))
+            set_initial_accounts apply_tx Transaction_pool.setup
+            Transaction_pool.verify_and_apply (Bytes.of_string fuzzcase) ))
 
 let () =
   Command.run
