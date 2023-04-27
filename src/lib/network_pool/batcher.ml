@@ -304,7 +304,7 @@ module Transaction_pool = struct
          (Array.map a ~f:(function `Valid c -> Some c | _ -> None)) )
 
   let create verifier : t =
-    let logger = Logger.create () in
+    let logger = Logger.null () in
     create ~compare_init:compare_envelope ~logger (fun (ds : input list) ->
         O1trace.thread "dispatching_transaction_pool_batcher_verification"
           (fun () ->
