@@ -80,6 +80,8 @@ let deserialize_accounts accounts_bytes =
 
 let ledger : Ledger.t option ref = ref None
 
+let verifier : Verifier.Prod.Worker_state.t option ref = ref None
+
 let set_initial_accounts accounts_bytes =
   let ledger_ = create_initial_accounts (deserialize_accounts accounts_bytes) in
   ledger := Some ledger_ ;
@@ -123,13 +125,59 @@ let apply_tx user_command_bytes =
     Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
     raise e
 
+let check_proof proof_bytes =
+      try
+        let logger = Logger.null () in
+        let proof =
+          Base.(Bin_prot.Reader.of_bytes [%bin_reader: (Ledger_proof.Stable.Latest.t * Mina_base.Sok_message.Stable.Latest.t)]
+            proof_bytes) in
+        (*Core_kernel.printf !"%{sexp:User_command.t}\n%!" command;*)
+        let constraint_constants =
+          match !constraint_constants with
+          | Some constraint_constants ->
+              constraint_constants
+          | None ->
+              failwith "constraint_constants not initialized"
+        in
+        let verifier =
+          match !verifier with
+          | Some verifier ->
+              verifier
+          | None ->
+              let v = Async.Thread_safe.block_on_async_exn (fun () ->
+                Verifier.Prod.Worker_state.create { logger; constraint_constants;
+                proof_level = Genesis_constants.Proof_level.Full; conf_dir = None;})
+              in
+              verifier := Some v ;
+              v
+              (* Verifier.Prod.Worker_state.create ~logger ~constraint_constants
+                ~proof_level:Genesis_constants.Proof_level.Full
+                ~conf_dir:None,
+                ~pids:) *)
+        in
+        let verify_transaction_snarks (w : Verifier.Prod.Worker_state.t) ts =
+          let (module M) = Verifier.Prod.Worker_state.get w in
+          M.verify_transaction_snarks ts in
+        let res = verify_transaction_snarks verifier [proof] in
+        let res = Async.Thread_safe.block_on_async_exn (fun () -> res) in
+        match res with
+        | Ok () -> 0
+        | Error _err -> 1
+          (* failwith (Error.to_string_hum err) *)
+      with e ->
+        let bt = Printexc.get_backtrace () in
+        let msg = Exn.to_string e in
+        Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
+        raise e
+
 let get_coverage _ =
-  List.map (Bisect.Runtime.get_coverage_flattened ())
+  []
+  (* List.map (Bisect.Runtime.get_coverage_flattened ())
     ~f:(fun { filename; points; counts } ->
       ( filename
       , Array.fold_right points ~f:(fun x acc -> Int64.of_int x :: acc) ~init:[]
       , Array.fold_right counts ~f:(fun x acc -> Int64.of_int x :: acc) ~init:[]
-      ) )
+      ) ) *)
 
 let run_command =
   Command.basic ~summary:"Run the fuzzer"
@@ -138,7 +186,7 @@ let run_command =
         (anon ("seed" %: int))
         ~f:(fun seed () ->
           Rust.transaction_fuzzer (Int64.of_int seed) set_constraint_constants
-            set_initial_accounts apply_tx get_coverage ))
+            set_initial_accounts check_proof get_coverage ))
 
 let reproduce_command =
   Command.basic ~summary:"Reproduce fuzzcase"

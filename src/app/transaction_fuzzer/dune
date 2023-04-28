@@ -56,6 +56,9 @@
    mina_tree
    block_time
    mina_transaction
+   ledger_proof
+   verifier
+   logger
  )
  (preprocessor_deps ../../config.mlh)
  (instrumentation (backend bisect_ppx))
