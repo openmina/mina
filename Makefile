@@ -328,6 +328,7 @@ run-transaction-fuzzer:
 		export REPORTS_PATH=`pwd`/fuzzing/reports/ && \
 		export RUST_BUILD_PATH=`pwd`/src/lib/mina_tree/ && \
 		export OCAML_BUILD_PATH=`pwd`/_build/default/ && \
+		export LLVM_PROFILE_FILE=/dev/null && \
 		export RUST_BACKTRACE=1 && \
 		mkdir -p $$FUZZCASES_PATH $$REPORTS_PATH && \
 		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run 0
