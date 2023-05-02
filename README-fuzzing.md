@@ -1,7 +1,7 @@
 
 ## Requirements
 
-A working `opam` install and Rust `nightly-2022-09-12`.
+A working `opam` install and Rust `nightly-2023-05-02`.
 
 ## Fuzzer setup
 
@@ -10,7 +10,7 @@ A working `opam` install and Rust `nightly-2022-09-12`.
 git clone -b transaction_fuzzer_rampup https://github.com/openmina/mina.git mina_transaction_fuzzer
 cd mina_transaction_fuzzer
 ## Set rustup override
-rustup override set nightly-2022-09-12
+rustup override set nightly-2023-05-02
 ## Initialize the git submodules
 git submodule update --init --recursive
 git config --local --add submodule.recurse true
