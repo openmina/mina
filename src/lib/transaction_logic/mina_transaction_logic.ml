@@ -697,7 +697,7 @@ module Make (L : Ledger_intf.S) :
         Ok (`New, Account.create account_id Balance.zero)
 
   let set_with_location ledger location account =
-    Core_kernel.printf !"set_with_location %{sexp:Account.t}\n%!" account;
+    (*Core_kernel.printf !"set_with_location %{sexp:Account.t}\n%!" account;*)
     match location with
     | `Existing location ->
         Ok (set ledger location account)
@@ -1340,7 +1340,7 @@ module Make (L : Ledger_intf.S) :
         let fee_payer_hash =
           Zkapp_command.Digest.Account_update.create account_update
         in
-        Core_kernel.printf !"fee_payer_hash %{sexp:Zkapp_command.Digest.Account_update.t} memo %{sexp:Field.t} commitment %{sexp:Field.t}\n%!" fee_payer_hash memo_hash commitment;
+        (*Core_kernel.printf !"fee_payer_hash %{sexp:Zkapp_command.Digest.Account_update.t} memo %{sexp:Field.t} commitment %{sexp:Field.t}\n%!" fee_payer_hash memo_hash commitment;*)
         Zkapp_command.Transaction_commitment.create_complete commitment
           ~memo_hash ~fee_payer_hash
 

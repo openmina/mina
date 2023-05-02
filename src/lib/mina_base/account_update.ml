@@ -1730,7 +1730,7 @@ module Body = struct
   let digest (t : t) =
       Random_oracle.(
         let inputs = pack_input (to_input t) in
-        Core_kernel.printf !"%{sexp:Field.t array}\n%!" inputs;
+        (*Core_kernel.printf !"%{sexp:Field.t array}\n%!" inputs;*)
         hash ~init:Hash_prefix.zkapp_body inputs
         )
 

@@ -65,8 +65,8 @@ module Chain_hash = struct
   (* prepend account_update index computed by Zkapp_command_logic.apply *)
   let cons_zkapp_command_commitment (index : Mina_numbers.Index.t)
       (e : Zkapp_command_elt.t) (t : t) =
-    let Zkapp_command_commitment inner = e in
-      Core_kernel.printf !"cons_zkapp_command_commitment elt hash %s old_hash %s\n%!" (Field.to_string inner) (Field.to_string t);
+    (*let Zkapp_command_commitment inner = e in
+      Core_kernel.printf !"cons_zkapp_command_commitment elt hash %s old_hash %s\n%!" (Field.to_string inner) (Field.to_string t);*)
 
     let open Random_oracle in
     let x =
