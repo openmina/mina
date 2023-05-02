@@ -316,6 +316,23 @@ else
 endif
 
 ########################################
+# Fuzzing
+
+_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe:
+	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
+		dune build --instrument-with bisect_ppx src/app/transaction_fuzzer/transaction_fuzzer.exe --profile=$(DUNE_PROFILE)
+
+run-transaction-fuzzer: _build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe
+	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
+		export FUZZCASES_PATH=`pwd`/fuzzing/fuzzcases/ && \
+		export REPORTS_PATH=`pwd`/fuzzing/reports/ && \
+		export RUST_BUILD_PATH=`pwd`/src/lib/mina_tree/ && \
+		export OCAML_BUILD_PATH=`pwd`/_build/default/ && \
+		export RUST_BACKTRACE=1 && \
+		mkdir -p $$FUZZCASES_PATH $$REPORTS_PATH && \
+		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run 0
+
+########################################
 # Diagrams for documentation
 
 %.dot.png: %.dot
