@@ -322,7 +322,9 @@ _build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe:
 	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
 		dune build --instrument-with bisect_ppx src/app/transaction_fuzzer/transaction_fuzzer.exe --profile=$(DUNE_PROFILE)
 
-run-transaction-fuzzer: _build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe
+build-transaction-fuzzer: _build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe
+
+run-transaction-fuzzer: build-transaction-fuzzer
 	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
 		export FUZZCASES_PATH=`pwd`/fuzzing/fuzzcases/ && \
 		export REPORTS_PATH=`pwd`/fuzzing/reports/ && \
