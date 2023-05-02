@@ -23,3 +23,6 @@
 [submodule "src/lib/mina_tree"]
 	path = src/lib/mina_tree
 	url = git@github.com:openmina/ledger.git
+[submodule "src/external/bisect_ppx"]
+	path = src/external/bisect_ppx
+	url = https://github.com/openmina/bisect_ppx.git
