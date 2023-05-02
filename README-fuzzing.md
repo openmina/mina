@@ -1,7 +1,9 @@
 
 ## Requirements
 
-A working `opam` install and Rust `nightly-2023-05-02`.
+- A working `opam` install
+- Rust `nightly-2023-05-02`
+- `libjemalloc-dev` package
 
 ## Fuzzer setup
 
