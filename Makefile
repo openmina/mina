@@ -318,13 +318,11 @@ endif
 ########################################
 # Fuzzing
 
-_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe:
+build-transaction-fuzzer:
 	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
 		dune build --instrument-with bisect_ppx src/app/transaction_fuzzer/transaction_fuzzer.exe --profile=$(DUNE_PROFILE)
 
-build-transaction-fuzzer: _build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe
-
-run-transaction-fuzzer: build-transaction-fuzzer
+run-transaction-fuzzer:
 	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
 		export FUZZCASES_PATH=`pwd`/fuzzing/fuzzcases/ && \
 		export REPORTS_PATH=`pwd`/fuzzing/reports/ && \
@@ -366,4 +364,4 @@ ml-docs: ocaml_checks
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
 # HACK: cat Makefile | egrep '^\w.*' | sed 's/:/ /' | awk '{print $1}' | grep -v myprocs | sort | xargs
 
-.PHONY: all build check-format clean client_sdk client_sdk_test_sigs deb dev mina-docker reformat doc_diagrams ml-docs macos-setup macos-setup-download setup-opam libp2p_helper dhall_types replayer missing_blocks_auditor extract_blocks archive_blocks genesis_ledger_from_tsv ocaml_version ocaml_word_size ocaml_checks
+.PHONY: all build check-format clean client_sdk client_sdk_test_sigs deb dev mina-docker reformat doc_diagrams ml-docs macos-setup macos-setup-download setup-opam libp2p_helper dhall_types replayer missing_blocks_auditor extract_blocks archive_blocks genesis_ledger_from_tsv ocaml_version ocaml_word_size ocaml_checks build-transaction-fuzzer run-transaction-fuzzer
