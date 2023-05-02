@@ -248,14 +248,22 @@ end
 
 let run_command =
   Command.basic ~summary:"Run the fuzzer"
-    Command.Param.(
-      map
-        (anon ("seed" %: int))
-        ~f:(fun seed () ->
-          let minimum_fee = Mina_compile_config.minimum_user_command_fee in
-          Rust.transaction_fuzzer (Int64.of_int seed) (Int64.of_int (Currency.Fee.to_mina_int minimum_fee)) set_constraint_constants
-            set_initial_accounts apply_tx get_coverage Transaction_pool.setup
-            Transaction_pool.verify_and_apply ))
+    Command.Let_syntax.(
+      let%map_open
+        seed = anon ("seed" %: int)
+      and
+        break_on_invariant = flag "invariant-break" (optional bool) ~doc:"Save fuzzcase and terminate fuzzer on invariant violations (default=false)"
+      in
+      fun () ->
+        let break_on_invariant = match break_on_invariant with
+          | Some b -> b
+          | None -> false
+        in
+        let minimum_fee = Mina_compile_config.minimum_user_command_fee in
+          Rust.transaction_fuzzer break_on_invariant (Int64.of_int seed) (Int64.of_int (Currency.Fee.to_mina_int minimum_fee)) set_constraint_constants
+          set_initial_accounts apply_tx get_coverage Transaction_pool.setup
+          Transaction_pool.verify_and_apply
+        )
 
 let reproduce_command =
   Command.basic ~summary:"Reproduce fuzzcase"
