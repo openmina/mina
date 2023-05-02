@@ -20,3 +20,6 @@
 [submodule "src/lib/snarky_js_bindings/snarkyjs"]
 	path = src/lib/snarky_js_bindings/snarkyjs
 	url = https://github.com/o1-labs/snarkyjs.git
+[submodule "src/lib/mina_tree"]
+	path = src/lib/mina_tree
+	url = git@github.com:openmina/ledger.git
