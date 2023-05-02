@@ -24,6 +24,7 @@
    kimchi_backend.pasta
    kimchi_backend.pasta.basic
    random_oracle
+   mina_compile_config
    mina_runtime_config
    transaction_witness
    transaction_protocol_state

@@ -252,7 +252,8 @@ let run_command =
       map
         (anon ("seed" %: int))
         ~f:(fun seed () ->
-          Rust.transaction_fuzzer (Int64.of_int seed) set_constraint_constants
+          let minimum_fee = Mina_compile_config.minimum_user_command_fee in
+          Rust.transaction_fuzzer (Int64.of_int seed) (Int64.of_int (Currency.Fee.to_mina_int minimum_fee)) set_constraint_constants
             set_initial_accounts apply_tx get_coverage Transaction_pool.setup
             Transaction_pool.verify_and_apply ))
 
