@@ -36,6 +36,12 @@ make build-transaction-fuzzer DUNE_PROFILE=devnet
 ## Running the fuzzer
 
 ```bash
-## Run the fuzzer (and build if necessary)
+## Run the fuzzer (and build with the specified profile if necessary)
 make run-transaction-fuzzer DUNE_PROFILE=devnet
+```
+
+By default the fuzzer will keep running if an invariant violation is found, to change this behavior use `INVARIANT_BREAK=true`:
+
+```bash
+make run-transaction-fuzzer INVARIANT_BREAK=true
 ```

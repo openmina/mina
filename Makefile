@@ -322,6 +322,8 @@ build-transaction-fuzzer:
 	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
 		dune build --instrument-with bisect_ppx src/app/transaction_fuzzer/transaction_fuzzer.exe --profile=$(DUNE_PROFILE)
 
+INVARIANT_BREAK := false
+
 run-transaction-fuzzer:
 	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
 		export FUZZCASES_PATH=`pwd`/fuzzing/fuzzcases/ && \
@@ -331,7 +333,7 @@ run-transaction-fuzzer:
 		export LLVM_PROFILE_FILE=/dev/null && \
 		export RUST_BACKTRACE=1 && \
 		mkdir -p $$FUZZCASES_PATH $$REPORTS_PATH && \
-		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run 0
+		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run -invariant-break $(INVARIANT_BREAK) 0
 
 ########################################
 # Diagrams for documentation
