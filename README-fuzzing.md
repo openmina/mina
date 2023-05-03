@@ -66,7 +66,7 @@ To visualize the process of fuzzing a Mina node, we have created a front end you
 Click on this link to open up the front end.
 
 
-![fuzzer1](https://user-images.githubusercontent.com/60480123/235865409-9a59e4c5-9ea7-4438-8a72-2b39304971ca.png)
+![fuzzer1](https://user-images.githubusercontent.com/60480123/235866162-27548c3f-c08b-4488-bfcd-96fa6cdb2799.png)
 
 
 By default, the website loads up the OCaml tab.
@@ -74,7 +74,7 @@ By default, the website loads up the OCaml tab.
 Click on the Rust tab to open up the fuzzing overview for Mina’s Rust code:
 
 
-![fuzzer2](https://user-images.githubusercontent.com/60480123/235865444-cd5afb25-a9b4-421d-b39d-04ce248ea706.png)
+![fuzzer2](https://user-images.githubusercontent.com/60480123/235866187-d4a080ff-ee05-4382-9877-f10bc3f31ded.png)
 
 
 On both the OCaml and Rust tabs, we can see, from top to bottom:
@@ -94,7 +94,8 @@ Clicking on **Path** will sort entries alphabetically. Click on it again to sort
 Now click on an entry in the list of files to open up the sidebar.
 
 
-![fuzzer3](https://user-images.githubusercontent.com/60480123/235865515-6d50b3c4-fbd7-48a6-8e2f-e4308aa75230.png)
+![fuzzer3](https://user-images.githubusercontent.com/60480123/235866217-526fe5b5-5a12-4866-a098-644a58265c28.png)
+
 
 
 The side bar displays the **Source Code** of the selected file along with the number of **total lines** and coverage (which lines have been fuzzed) being represented by **hit lines**.
