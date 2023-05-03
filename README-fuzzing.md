@@ -153,6 +153,20 @@ npx ng serve
 
 Then visit http://localhost:4200/ in your browser.
 
+### Report files
+
+When running the fuzzer, it is useful to specify a custom `REPORTS_PATH` value pointing to the directory where the front end application will find them:
+
+```bash
+## Cleanup old report files
+rm $(pwd)/openmina-fuzzing-ui/src/assets/reports/*
+## Run fuzzer and output report files where the front end can find them
+make run-transaction-fuzzer \
+    REPORTS_PATH=$(pwd)/openmina-fuzzing-ui/src/assets/reports/
+```
+
+If the frontend is up while the fuzzer is running, it will be automatically updated with the output from the fuzzer.
+
 ### Front end guide
 
 ![fuzzer1](https://user-images.githubusercontent.com/60480123/235866162-27548c3f-c08b-4488-bfcd-96fa6cdb2799.png)
