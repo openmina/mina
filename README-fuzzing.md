@@ -2,7 +2,7 @@
 
 We want to maximize the security and stability of the Mina network, and for such a complex and dynamic system, we need to use approaches that cover as many lines of code as possible. Additionally, testing must be scalable to keep pace with the growth of the network.
 
-One of the methods that are suitable for testing in such complex and challenging environments is fuzzing. This method of testing involves generating random inputs and feeding them into the system to trigger unexpected behaviors. This can cover a wide range of inputs, including edge cases that may not be considered during regular testing or through manual analysis. 
+One of the methods that are suitable for testing in such complex and challenging environments is *fuzzing*. This method of testing involves generating random inputs and feeding them into the system to trigger unexpected behaviors. This can cover a wide range of inputs, including edge cases that may not be considered during regular testing or through manual analysis. 
 
 The Mina Fuzzer specifically targets the transaction application logic which is the code that defines the rules and processes that govern how transactions are created, validated, and recorded on the blockchain. There are two kinds of transactions that are tested:
  
