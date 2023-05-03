@@ -61,6 +61,11 @@ By default the fuzzer will keep running if an invariant violation is found, to c
 make run-transaction-fuzzer INVARIANT_BREAK=true
 ```
 
+### Other options
+
+- `SEED` controls the seed value used by the fuzzer (default: `0`)
+- `REPORTS_PATH` defines the output directory where the report files will be saved (default: `./fuzzing/reports/`)
+
 ### Reproducing fuzzcases
 
 If a bug condition (for example, an invariant violation) is found the fuzzer will stop and save a fuzzcase file containing the actual ledger state and the transaction that triggered the bug condition.
@@ -128,20 +133,41 @@ transaction_pool_verify return: true
 apply_transaction return: Ok(())
 ```
 
-### Other options
-
-- `SEED` controls the seed value used by the fuzzer (default: `0`)
-- `REPORTS_PATH` defines the output directory where the report files will be saved (default: `./fuzzing/reports/`)
-
-
 ## The Front End
 
+To visualize the process of fuzzing a Mina node, we have created [a front end](https://github.com/openmina/openmina-fuzzing-ui) you can view via your internet browser.
 
+### Front end setup
 
-To visualize the process of fuzzing a Mina node, we have created a front end you can view via your internet browser.
+To install and run locally you can follow these steps:
 
-Click on this link to open up the front end.
+```bash
+## Clone the repository
+git clone https://github.com/openmina/openmina-fuzzing-ui.git
+cd openmina-fuzzing-ui
+## Install Angular CLI tools with npm
+npm install @angular/cli@15.0.0
+## Build and run the frontend
+npx ng serve
+```
 
+Then visit http://localhost:4200/ in your browser.
+
+### Report files
+
+When running the fuzzer, it is useful to specify a custom `REPORTS_PATH` value pointing to the directory where the front end application will find them:
+
+```bash
+## Cleanup old report files
+rm $(pwd)/openmina-fuzzing-ui/src/assets/reports/*
+## Run fuzzer and output report files where the front end can find them
+make run-transaction-fuzzer \
+    REPORTS_PATH=$(pwd)/openmina-fuzzing-ui/src/assets/reports/
+```
+
+If the frontend is up while the fuzzer is running, it will be automatically updated with the output from the fuzzer.
+
+### Front end guide
 
 ![fuzzer1](https://user-images.githubusercontent.com/60480123/235866162-27548c3f-c08b-4488-bfcd-96fa6cdb2799.png)
 
