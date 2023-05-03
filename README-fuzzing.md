@@ -61,6 +61,11 @@ By default the fuzzer will keep running if an invariant violation is found, to c
 make run-transaction-fuzzer INVARIANT_BREAK=true
 ```
 
+### Other options
+
+- `SEED` controls the seed value used by the fuzzer (default: `0`)
+- `REPORTS_PATH` defines the output directory where the report files will be saved (default: `./fuzzing/reports/`)
+
 ### Reproducing fuzzcases
 
 If a bug condition (for example, an invariant violation) is found the fuzzer will stop and save a fuzzcase file containing the actual ledger state and the transaction that triggered the bug condition.
@@ -127,12 +132,6 @@ transaction_pool_verify return: true
  => Invariant violation: increment_nonce permission
 apply_transaction return: Ok(())
 ```
-
-### Other options
-
-- `SEED` controls the seed value used by the fuzzer (default: `0`)
-- `REPORTS_PATH` defines the output directory where the report files will be saved (default: `./fuzzing/reports/`)
-
 
 ## The Front End
 
