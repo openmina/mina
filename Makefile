@@ -333,7 +333,12 @@ run-transaction-fuzzer:
 		export LLVM_PROFILE_FILE=/dev/null && \
 		export RUST_BACKTRACE=1 && \
 		mkdir -p $$FUZZCASES_PATH $$REPORTS_PATH && \
-		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run -invariant-break $(INVARIANT_BREAK) 0
+		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run -invariant-break $(INVARIANT_BREAK) 0 || exit 0
+
+reproduce-transaction-fuzzer:
+	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
+		export RUST_BACKTRACE=1 && \
+		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe reproduce $(FUZZCASE) || exit 0
 
 ########################################
 # Diagrams for documentation

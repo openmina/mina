@@ -61,6 +61,74 @@ By default the fuzzer will keep running if an invariant violation is found, to c
 make run-transaction-fuzzer INVARIANT_BREAK=true
 ```
 
+### Reproducing fuzzcases
+
+If a bug condition (for example, an invariant violation) is found the fuzzer will stop and save a fuzzcase file containing the actual ledger state and the transaction that triggered the bug condition.
+
+For example:
+
+```bash
+$ make run-transaction-fuzzer INVARIANT_BREAK=true
+export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
+	export FUZZCASES_PATH=`pwd`/fuzzing/fuzzcases/ && \
+	export REPORTS_PATH=`pwd`/fuzzing/reports/ && \
+	export RUST_BUILD_PATH=`pwd`/src/lib/mina_tree/ && \
+	export OCAML_BUILD_PATH=`pwd`/_build/default/ && \
+	export LLVM_PROFILE_FILE=/dev/null && \
+	export RUST_BACKTRACE=1 && \
+	mkdir -p $FUZZCASES_PATH $REPORTS_PATH && \
+	./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run -invariant-break true 0 || exit 0
+Saving coverage report (OCaml)
+Saving coverage report (Rust)
+=== COV Rust ===
+  1%   45/2437: src/scan_state/transaction_logic.rs
+  4%   11/ 230: src/scan_state/zkapp_logic.rs
+  2%   56/2667: Total
+
+=== COV OCaml ===
+  1%    9/ 451: src/lib/transaction_logic/zkapp_command_logic.ml
+  2%   30/1466: src/lib/network_pool/transaction_pool.ml
+  3%   40/1039: src/lib/transaction_logic/mina_transaction_logic.ml
+  6%   62/ 892: src/lib/mina_base/zkapp_command.ml
+ 14%  134/ 898: src/lib/mina_base/account_update.ml
+ 18%   46/ 247: src/lib/verifier/prod.ml
+ 18%  144/ 771: src/lib/mina_base/zkapp_precondition.ml
+  8%  465/5764: Total
+
+Environment variable MINA_TIME_OFFSET not found, using default of 0
+ => Invariant violation: increment_nonce permission
+Saving fuzzcase: /home/user/mina/fuzzing/fuzzcases/15380143365595797233957438716143531525663009213364747952469309100623056851816.fuzzcase
+```
+
+We can use fuzzcase files to reproduce bug conditions **deterministically**.
+
+To reproduce a fuzzcase we use `make reproduce-transaction-fuzzer` and pass the path to the fuzzcase file in the `FUZZCASE` variable:
+
+```bash
+$ make reproduce-transaction-fuzzer FUZZCASE=./fuzzing/fuzzcases/15380143365595797233957438716143531525663009213364747952469309100623056851816.fuzzcase
+export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
+	export RUST_BACKTRACE=1 && \
+	./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe reproduce ./fuzzing/fuzzcases/15380143365595797233957438716143531525663009213364747952469309100623056851816.fuzzcase || exit 0
+Loading fuzzcase: ./fuzzing/fuzzcases/15380143365595797233957438716143531525663009213364747952469309100623056851816.fuzzcase
+{"timestamp":"2023-05-03 12:41:34.108186Z","level":"Info","source":{"module":"Transaction_fuzzer","location":"File \"src/app/transaction_fuzzer/transaction_fuzzer.ml\", line 180, characters 4-15"},"message":"Starting verifier...","metadata":{}}
+{"timestamp":"2023-05-03 12:41:34.109521Z","level":"Info","source":{"module":"Verifier__Prod","location":"File \"src/lib/verifier/prod.ml\", line 315, characters 4-15"},"message":"Starting a new verifier process","metadata":{}}
+{"timestamp":"2023-05-03 12:41:34.489910Z","level":"Info","source":{"module":"Verifier__Prod","location":"File \"src/lib/verifier/prod.ml\", line 349, characters 4-15"},"message":"Daemon started process of kind $process_kind with pid $verifier_pid","metadata":{"process_kind":"Verifier","verifier_pid":726394}}
+{"timestamp":"2023-05-03 12:41:34.489997Z","level":"Info","source":{"module":"Transaction_fuzzer","location":"File \"src/app/transaction_fuzzer/transaction_fuzzer.ml\", line 192, characters 4-15"},"message":"Creating transaction pool...","metadata":{}}
+{"timestamp":"2023-05-03 12:41:34.490036Z","level":"Trace","source":{"module":"Network_pool__Network_pool_base","location":"File \"src/lib/network_pool/network_pool_base.ml\", line 233, characters 8-20"},"message":"Nothing to rebroadcast","metadata":{}}
+{"timestamp":"2023-05-03 12:41:34.561387Z","level":"Debug","source":{"module":"Network_pool__Transaction_pool","location":"File \"src/lib/network_pool/transaction_pool.ml\", line 820, characters 17-29"},"message":"Got frontier!","metadata":{}}
+Environment variable MINA_TIME_OFFSET not found, using default of 0
+{"timestamp":"2023-05-03 12:41:34.561437Z","level":"Debug","source":{"module":"Network_pool__Transaction_pool","location":"File \"src/lib/network_pool/transaction_pool.ml\", line 883, characters 17-29"},"message":"Re-validated transaction pool after restart: dropped 0 of 0 previously in pool","metadata":{}}
+{"timestamp":"2023-05-03 12:41:34.561454Z","level":"Debug","source":{"module":"Network_pool__Network_pool_base","location":"File \"src/lib/network_pool/network_pool_base.ml\", line 152, characters 8-30"},"message":"transaction_pool $rate_limiter","metadata":{"rate_limiter":{"by_ip":[],"by_peer_id":[]}}}
+{"timestamp":"2023-05-03 12:41:34.563000Z","level":"Trace","source":{"module":"Verifier__Prod","location":"File \"src/lib/verifier/prod.ml\", line 469, characters 4-16"},"message":"Verifier trying with $attempts_remaining","metadata":{"attempts_remaining":4}}
+{"timestamp":"2023-05-03 12:41:34.563069Z","level":"Trace","source":{"module":"Network_pool__Transaction_pool","location":"File \"src/lib/network_pool/transaction_pool.ml\", line 530, characters 6-28"},"message":"Diff: removed: $removed added: $added from best tip","metadata":{"added":[],"removed":[]}}
+{"timestamp":"2023-05-03 12:41:34.564572Z","level":"Debug","source":{"module":"Network_pool__Transaction_pool","location":"File \"src/lib/network_pool/transaction_pool.ml\", line 668, characters 6-28"},"message":"Finished handling diff. Old pool size 0, new pool size 0. Dropped 0 commands during backtracking to maintain max size.","metadata":{}}
+{"timestamp":"2023-05-03 12:41:34.574363Z","level":"Debug","source":{"module":"Network_pool__Transaction_pool","location":"File \"src/lib/network_pool/transaction_pool.ml\", line 1324, characters 8-30"},"message":"Dropping $num_for_add commands from pool while adding new commands, and $num_for_size commands due to pool size","metadata":{"num_for_add":0,"num_for_size":0}}
+transaction_pool_verify return: true
+ => Invariant violation: increment_nonce permission
+apply_transaction return: Ok(())
+```
+
+
 ## The Front End
 
 
