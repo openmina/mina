@@ -143,7 +143,7 @@ To install and run locally you can follow these steps:
 
 ```bash
 ## Clone the repository
-https://github.com/openmina/openmina-fuzzing-ui.git
+git clone https://github.com/openmina/openmina-fuzzing-ui.git
 cd openmina-fuzzing-ui
 ## Install Angular CLI tools with npm
 npm install @angular/cli@15.0.0
