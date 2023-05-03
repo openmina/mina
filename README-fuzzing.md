@@ -56,3 +56,61 @@ By default the fuzzer will keep running if an invariant violation is found, to c
 ```bash
 make run-transaction-fuzzer INVARIANT_BREAK=true
 ```
+
+## The Front End
+
+
+
+To visualize the process of fuzzing a Mina node, we have created a front end you can view via your internet browser. 
+
+Click on this link to open up the front end.
+
+
+![fuzzer1](https://user-images.githubusercontent.com/60480123/235865409-9a59e4c5-9ea7-4438-8a72-2b39304971ca.png)
+
+
+By default, the website loads up the OCaml tab.
+
+Click on the Rust tab to open up the fuzzing overview for Mina’s Rust code:
+
+
+![fuzzer2](https://user-images.githubusercontent.com/60480123/235865444-cd5afb25-a9b4-421d-b39d-04ce248ea706.png)
+
+
+On both the OCaml and Rust tabs, we can see, from top to bottom:
+
+**Overall coverage** - The overall percentage of the OCaml/Rust part of Mina’s codebase that has been fuzzed. It is color coded, with red for under 50% fuzzed, yellow for under 80% fuzzed, and green for over 80% fuzzed.
+
+**Search Files** - type in a file name or file path you want to filter out in the list below in real time.
+
+Below is a list of files of the OCaml/Rust part of the Mina codebase. On the left is their coverage percentage, both visualized as a bar and with a percentage next to it. The column to the right displays the file path for that file. Entries are updated in real time. 
+
+Clicking **Coverage** will sort these entries by how much percent they have been fuzzed in a descending order (from most fuzzed to least), clicking on it again will sort them in an ascending order. 
+
+ 
+
+Clicking on **Path** will sort entries alphabetically. Click on it again to sort in reverse alphabetical order.  
+
+Now click on an entry in the list of files to open up the sidebar.
+
+
+![fuzzer3](https://user-images.githubusercontent.com/60480123/235865515-6d50b3c4-fbd7-48a6-8e2f-e4308aa75230.png)
+
+
+The side bar displays the **Source Code** of the selected file along with the number of **total lines** and coverage (which lines have been fuzzed) being represented by **hit lines**.
+
+Coverage highlighting can be toggled on or off by clicking on the highlighter icon in the top right corner of the sidebar. 
+
+Each highlight piece of the code has a tooltip that shows the number of times the line was executed during the test run.
+
+The sidebar is color-coded:
+
+
+
+* A green highlight means the code was executed at least once on the entire line.
+* Yellow means the code was executed at least once on a part of the line and zero times on another part.
+* If the highlight is red, then the code was executed zero times.
+
+The user can copy a permalink(similar to GitHub) to a specific line of code by clicking on the line number.
+
+
