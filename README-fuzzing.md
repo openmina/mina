@@ -2,12 +2,16 @@
 
 We want to maximize the security and stability of the Mina network, and for such a complex and dynamic system, we need to use approaches that cover as many lines of code as possible. Additionally, testing must be scalable to keep pace with the growth of the network.
 
-One of the methods that are suitable for testing in such complex and challenging environments is *fuzzing*. This method of testing involves generating random inputs and feeding them into the system to trigger unexpected behaviors. This can cover a wide range of inputs, including edge cases that may not be considered during regular testing or through manual analysis. 
+One of the methods that are suitable for testing in such complex and challenging environments is *fuzzing*. This method of testing involves generating random inputs and feeding them into the system to trigger unexpected behaviors. This can cover a wide range of inputs, including edge cases that may not be considered during regular testing or through manual analysis.
 
-We have developed the Mina Transaction Fuzzer to specifically target the transaction application logic, which is the code that defines the rules and processes that govern how transactions are created, validated, and recorded on the blockchain. There are two kinds of transactions that are tested:
- 
+We have developed the Mina Transaction Fuzzer to specifically target the transaction application logic, which is the code that defines the rules and processes that govern how transactions are created, validated, and recorded on the blockchain.
+
+In Mina there are two kinds of transactions:
+
 * legacy transactions, which are signed MINA transfers.
 * zkApp transactions, which are more complex and can do multiple account updates (changes to the account’s properties, including changes to its balance) in a single transaction, also they support operations to work with custom tokens.
+
+This fuzzer focuses in testing the *zkApp* transaction kind.
 
 
 ## Requirements
@@ -61,7 +65,7 @@ make run-transaction-fuzzer INVARIANT_BREAK=true
 
 
 
-To visualize the process of fuzzing a Mina node, we have created a front end you can view via your internet browser. 
+To visualize the process of fuzzing a Mina node, we have created a front end you can view via your internet browser.
 
 Click on this link to open up the front end.
 
@@ -83,13 +87,13 @@ On both the OCaml and Rust tabs, we can see, from top to bottom:
 
 **Search Files** - type in a file name or file path you want to filter out in the list below in real time.
 
-Below is a list of files of the OCaml/Rust part of the Mina codebase. On the left is their coverage percentage, both visualized as a bar and with a percentage next to it. The column to the right displays the file path for that file. Entries are updated in real time. 
+Below is a list of files of the OCaml/Rust part of the Mina codebase. On the left is their coverage percentage, both visualized as a bar and with a percentage next to it. The column to the right displays the file path for that file. Entries are updated in real time.
 
-Clicking **Coverage** will sort these entries by how much percent they have been fuzzed in a descending order (from most fuzzed to least), clicking on it again will sort them in an ascending order. 
+Clicking **Coverage** will sort these entries by how much percent they have been fuzzed in a descending order (from most fuzzed to least), clicking on it again will sort them in an ascending order.
 
- 
 
-Clicking on **Path** will sort entries alphabetically. Click on it again to sort in reverse alphabetical order.  
+
+Clicking on **Path** will sort entries alphabetically. Click on it again to sort in reverse alphabetical order.
 
 Now click on an entry in the list of files to open up the sidebar.
 
@@ -100,7 +104,7 @@ Now click on an entry in the list of files to open up the sidebar.
 
 The side bar displays the **Source Code** of the selected file along with the number of **total lines** and coverage (which lines have been fuzzed) being represented by **hit lines**.
 
-Coverage highlighting can be toggled on or off by clicking on the highlighter icon in the top right corner of the sidebar. 
+Coverage highlighting can be toggled on or off by clicking on the highlighter icon in the top right corner of the sidebar.
 
 Each highlight piece of the code has a tooltip that shows the number of times the line was executed during the test run.
 
