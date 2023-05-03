@@ -135,12 +135,25 @@ apply_transaction return: Ok(())
 
 ## The Front End
 
+To visualize the process of fuzzing a Mina node, we have created [a front end](https://github.com/openmina/openmina-fuzzing-ui) you can view via your internet browser.
 
+### Front end setup
 
-To visualize the process of fuzzing a Mina node, we have created a front end you can view via your internet browser.
+To install and run locally you can follow these steps:
 
-Click on this link to open up the front end.
+```bash
+## Clone the repository
+https://github.com/openmina/openmina-fuzzing-ui.git
+cd openmina-fuzzing-ui
+## Install Angular CLI tools with npm
+npm install @angular/cli@15.0.0
+## Build and run the frontend
+npx ng serve
+```
 
+Then visit http://localhost:4200/ in your browser.
+
+### Front end guide
 
 ![fuzzer1](https://user-images.githubusercontent.com/60480123/235866162-27548c3f-c08b-4488-bfcd-96fa6cdb2799.png)
 
