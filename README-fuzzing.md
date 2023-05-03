@@ -61,6 +61,12 @@ By default the fuzzer will keep running if an invariant violation is found, to c
 make run-transaction-fuzzer INVARIANT_BREAK=true
 ```
 
+### Other options
+
+- `SEED` controls the seed value used by the fuzzer (default: `0`)
+- `REPORTS_PATH` defines the output directory where the report files will be saved (default: `./fuzzing/reports/`)
+
+
 ## The Front End
 
 
