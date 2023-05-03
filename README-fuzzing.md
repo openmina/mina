@@ -16,9 +16,9 @@ This fuzzer focuses in testing the *zkApp* transaction kind.
 
 ## Requirements
 
-- A working `opam` install
-- Rust `nightly-2023-05-02`
-- `libjemalloc-dev` package
+- A working `opam` install. See [here](https://opam.ocaml.org/doc/Install.html) for install instructions.
+- Rustup and Rust `nightly-2023-05-02`. See [here](https://rustup.rs/) for rustup install instructions.
+- `libjemalloc-dev` package (`apt-get install libjemalloc-dev` in Ubuntu).
 
 ## Fuzzer setup
 
@@ -127,6 +127,11 @@ transaction_pool_verify return: true
  => Invariant violation: increment_nonce permission
 apply_transaction return: Ok(())
 ```
+
+### Other options
+
+- `SEED` controls the seed value used by the fuzzer (default: `0`)
+- `REPORTS_PATH` defines the output directory where the report files will be saved (default: `./fuzzing/reports/`)
 
 
 ## The Front End
