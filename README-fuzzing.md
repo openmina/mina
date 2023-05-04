@@ -20,7 +20,7 @@ Assuming an environment on which the mina daemon can be built, the only extra re
 
 Otherwise the full list is:
 
-- In apt based Linux distributions: `apt install curl rsync git make unzip build-essential libbz2-dev zlib1g-dev libjemalloc-dev`
+- In apt based Linux distributions: `apt install curl rsync git make unzip build-essential libbz2-dev zlib1g-dev libjemalloc-dev capnproto`
 - A working [Go language](https://go.dev/) install (version 1.18.5).
 - A working OCaml and `opam` install. See [here](https://opam.ocaml.org/doc/Install.html) for install instructions.
 - Rustup and Rust `nightly-2023-05-02`. See [here](https://rustup.rs/) for rustup install instructions.
