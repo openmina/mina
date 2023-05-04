@@ -1,5 +1,5 @@
 
-### **The Mina Transaction Fuzzer**
+# **The Mina Transaction Fuzzer**
 
   
 
@@ -9,7 +9,7 @@ We want to maximize the security and stability of the Mina network, and for such
   
 For that purpose, we are utilizing a testing method known as fuzzing. We have developed the Mina Transaction Fuzzer to specifically target the transaction application logic, which is the code that defines the rules and processes that govern how transactions are created, validated, and recorded on the blockchain.
 
-### **What are we fuzzing?**
+## **What are we fuzzing?**
 
   
 
@@ -236,7 +236,7 @@ To authorize these updates, a transaction sends multiple account updates in a tr
   
   
 
-### **How we are fuzzing Mina**
+## **How we are fuzzing Mina**
 
   
 
@@ -328,7 +328,7 @@ For instance, it is possible that we have populated the ledger with too many acc
   
   
 
-### **A visual overview of Mina’s fuzzing**
+## **The Mina Fuzzer Front End**
 
   
 
@@ -336,7 +336,7 @@ To visualize the process of fuzzing a Mina node, we have created a front end you
 
   
 
-Click on[ this link](http://fuzz.ci.openmina.com/) to open up the front end.
+Click on [this link](http://fuzz.ci.openmina.com/) to open up the front end.
 
   
   
