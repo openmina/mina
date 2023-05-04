@@ -1,8 +1,15 @@
 
 # **The Mina Transaction Fuzzer**
 
-  
+ 
+## Table of Contents
+1. [Introduction](#Introduction)
+2. [What are we fuzzing?](#What-are-we-fuzzing?)
+3. [How we are fuzzing Mina](#How-we-are-fuzzing-Mina)
+4. [The Mina Fuzzer Front End](#The-Mina-Fuzzer-Front-End)
 
+
+## Introduction
 
 We want to maximize the security and stability of the Mina network, and for such a complex and dynamic system, we need to use approaches that cover unique algorithm paths.
 
