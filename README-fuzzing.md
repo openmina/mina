@@ -69,7 +69,7 @@ make run-transaction-fuzzer INVARIANT_BREAK=true
 ### Other options
 
 - `SEED` controls the seed value used by the fuzzer (default: `0`)
-- `REPORTS_PATH` defines the output directory where the report files will be saved (default: `./fuzzing/reports/`)
+- `FUZZER_OUTPUT_PATH` defines the output directory where the fuzzcase and report files will be saved (default: `./fuzzing/`)
 
 ### Reproducing fuzzcases
 
@@ -150,24 +150,26 @@ To install and run locally you can follow these steps:
 ## Clone the repository
 git clone https://github.com/openmina/openmina-fuzzing-ui.git
 cd openmina-fuzzing-ui
-## Install Angular CLI tools with npm
-npm install @angular/cli@15.0.0
+## Install dependencies
+npm install
+## Edit `src/environments/environment.ts` and modify the path
+## specified by `parentDirectoryAbsolutePath` and set the
+## path to where the fuzzer will output the report files, e.g:
+## `parentDirectoryAbsolutePath: "/tmp/fuzzing/reports"`
+nano src/environments/environment.ts
 ## Build and run the frontend
-npx ng serve
+npm run start
 ```
 
 Then visit http://localhost:4200/ in your browser.
 
 ### Report files
 
-When running the fuzzer, it is useful to specify a custom `REPORTS_PATH` value pointing to the directory where the front end application will find them:
+When running the fuzzer, it is useful to specify a custom `FUZZER_OUTPUT_PATH` value pointing to the directory where the front end application will find them:
 
 ```bash
-## Cleanup old report files
-rm $(pwd)/openmina-fuzzing-ui/src/assets/reports/*
 ## Run fuzzer and output report files where the front end can find them
-make run-transaction-fuzzer \
-    REPORTS_PATH=$(pwd)/openmina-fuzzing-ui/src/assets/reports/
+make run-transaction-fuzzer FUZZER_OUTPUT_PATH=/tmp/fuzzing
 ```
 
 If the frontend is up while the fuzzer is running, it will be automatically updated with the output from the fuzzer.
