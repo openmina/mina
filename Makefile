@@ -323,18 +323,20 @@ build-transaction-fuzzer:
 		dune build --instrument-with bisect_ppx src/app/transaction_fuzzer/transaction_fuzzer.exe --profile=$(DUNE_PROFILE)
 
 INVARIANT_BREAK := false
-REPORTS_PATH := $(shell echo $(CURDIR)/fuzzing/reports/)
+FUZZER_OUTPUT_PATH := $(shell echo $(CURDIR)/fuzzing)
 SEED := 0
 
 run-transaction-fuzzer:
-	export LD_LIBRARY_PATH=$(CURDIR)/_build/default/src/lib/mina_tree && \
-		export FUZZCASES_PATH=$(CURDIR)/fuzzing/fuzzcases/ && \
-		export REPORTS_PATH=$(REPORTS_PATH) && \
+	export FUZZ_SESSION_ID=$(shell date -u -Iseconds)_seed_$(SEED) && \
+		export LD_LIBRARY_PATH=$(CURDIR)/_build/default/src/lib/mina_tree && \
+		export FUZZCASES_PATH="$(FUZZER_OUTPUT_PATH)/fuzzcases/$$FUZZ_SESSION_ID/" && \
+		export REPORTS_PATH="$(FUZZER_OUTPUT_PATH)/reports/$$FUZZ_SESSION_ID/" && \
 		export RUST_BUILD_PATH=$(CURDIR)/src/lib/mina_tree/ && \
 		export OCAML_BUILD_PATH=$(CURDIR)/_build/default/ && \
 		export LLVM_PROFILE_FILE=/dev/null && \
 		export RUST_BACKTRACE=1 && \
 		mkdir -p $$FUZZCASES_PATH $$REPORTS_PATH && \
+		echo "\n=== Saving output to\n fuzzcases:\t$$FUZZCASES_PATH\n reports:\t$$REPORTS_PATH\n" && \
 		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe run -invariant-break $(INVARIANT_BREAK) $(SEED) || exit 0
 
 reproduce-transaction-fuzzer:
