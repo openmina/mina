@@ -138,7 +138,7 @@ let apply_tx user_command_bytes =
         ~global_slot:txn_state_view.global_slot_since_genesis ~txn_state_view
         ledger [ tx ]
     in
-    (*Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t Or_error.t}\n%!" applied;*)
+    (*Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t list Or_error.t}\n%!" _applied;*)
     let ledger_hash = Ledger.merkle_root ledger in
     Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
   with e ->
