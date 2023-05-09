@@ -117,6 +117,7 @@
 (package (name mina_stdlib))
 (package (name mina_transaction_logic))
 (package (name mina_transaction))
+(package (name mina_tree))
 (package (name mina_user_error))
 (package (name mina_version))
 (package (name mina_wire_types))

@@ -1,4 +1,5 @@
 open Core_kernel
+module Rust = Mina_tree.Rust
 
 module Make (Key : Binable.S) (Value : Binable.S) :
   Key_value_database.Intf.S
@@ -6,6 +7,7 @@ module Make (Key : Binable.S) (Value : Binable.S) :
      and type key := Key.t
      and type value := Value.t
      and type config := string = struct
+  (* type t = Rust.ondisk_database *)
   type t = Database.t
 
   let create directory = Database.create directory

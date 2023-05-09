@@ -19,6 +19,8 @@
    ;; local libraries
    file_system
    key_value_database
+
+   mina_tree
 )
  (preprocess
   (pps ppx_version ppx_jane))
