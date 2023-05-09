@@ -57,34 +57,23 @@ let set_batch t ?(remove_keys = [])
     ~(key_data_pairs : (Bigstring.t * Bigstring.t) list) : unit =
   Rust.ondisk_database_set_batch t
     (List.map remove_keys ~f:Bigstring.to_string)
-    (* (List.map key_data_pairs ~f:tuple_to_strings) *)
-    (List.map key_data_pairs ~f:(fun (a, b) ->
-         (Bigstring.to_string a, Bigstring.to_string b) ) )
-
-(* (Bigstring.to_string data) *)
-(* let batch = Rocks.WriteBatch.create () in
- * (\* write to batch *\)
- * List.iter key_data_pairs ~f:(fun (key, data) ->
- *     Rocks.WriteBatch.put batch key data ) ;
- * (\* Delete any key pairs *\)
- * List.iter remove_keys ~f:(fun key -> Rocks.WriteBatch.delete batch key) ;
- * (\* commit batch *\)
- * Rocks.write t.db batch *)
+    (List.map key_data_pairs ~f:tuple_to_strings)
 
 module Batch = struct
   type t = Mina_tree.ondisk_batch
 
   let remove t ~key =
-    Rust.ondisk_database_with_batch_remove t (Bigstring.to_string key)
+    Rust.ondisk_database_batch_remove t (Bigstring.to_string key)
 
   let set t ~key ~data =
-    Rust.ondisk_database_with_batch_set t (Bigstring.to_string key)
+    Rust.ondisk_database_batch_set t (Bigstring.to_string key)
       (Bigstring.to_string data)
 
-  let with_batch t ~f = Rust.ondisk_database_with_batch t f
-  (* let batch = Rocks.WriteBatch.create () in
-   * let result = f batch in
-   * Rocks.write t.db batch ; result *)
+  let with_batch t ~f =
+    let batch = Rust.ondisk_database_batch_create () in
+    let result = f batch in
+    Rust.ondisk_database_batch_run t batch ;
+    result
 end
 
 (* module Batch = struct
