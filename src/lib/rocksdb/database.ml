@@ -5,69 +5,35 @@ module Rust = Mina_tree.Rust
 
 type t = Mina_tree.ondisk_database
 
-(* type t = { uuid : Uuid.Stable.V1.t; db : (Rocks.t[@sexp.opaque]) } *)
-(* [@@deriving sexp] *)
-
-let tuple_to_strings (a, b) = (Bigstring.to_string a, Bigstring.to_string b)
-
-let tuple_of_strings (a, b) = (Bigstring.of_string a, Bigstring.of_string b)
-
 let create directory = Rust.ondisk_database_create directory
-(* let opts = Rocks.Options.create () in
- * Rocks.Options.set_create_if_missing opts true ;
- * Rocks.Options.set_prefix_extractor opts
- *   (Rocks.Options.SliceTransform.Noop.create_no_gc ()) ;
- * { uuid = Uuid_unix.create (); db = Rocks.open_db ~opts directory } *)
 
 let create_checkpoint t dir = Rust.ondisk_database_create_checkpoint t dir
-(* Rocks.checkpoint_create t.db ~dir ?log_size_for_flush:None () ;
- * create dir *)
 
 let make_checkpoint t dir = Rust.ondisk_database_make_checkpoint t dir
-(* Rocks.checkpoint_create t.db ~dir ?log_size_for_flush:None () *)
 
 let get_uuid t = Rust.ondisk_database_get_uuid t |> Uuid.of_string
-(* t.uuid *)
 
 let close t = Rust.ondisk_database_close t
-(* Rocks.close t.db *)
 
 let get t ~(key : Bigstring.t) : Bigstring.t option =
-  Rust.ondisk_database_get t (Bigstring.to_string key)
-  |> Option.map ~f:Bigstring.of_string
-
-(* let value = Rust.ondisk_database_get t (Bigstring.to_string key) in
- * Option.map value ~f:Bigstring.of_string *)
-
-(* Rocks.get ?pos:None ?len:None ?opts:None t.db key *)
+  Rust.ondisk_database_get t key
 
 let get_batch t ~(keys : Bigstring.t list) : Bigstring.t option list =
-  let values =
-    Rust.ondisk_database_get_batch t (List.map keys ~f:Bigstring.to_string)
-  in
-  List.map values ~f:(fun x -> Option.map x ~f:Bigstring.of_string)
+  Rust.ondisk_database_get_batch t keys
 
 let set t ~(key : Bigstring.t) ~(data : Bigstring.t) : unit =
-  Rust.ondisk_database_set t (Bigstring.to_string key)
-    (Bigstring.to_string data)
-(* Rocks.put ?key_pos:None ?key_len:None ?value_pos:None ?value_len:None
- *   ?opts:None t.db key data *)
+  Rust.ondisk_database_set t key data
 
 let set_batch t ?(remove_keys = [])
     ~(key_data_pairs : (Bigstring.t * Bigstring.t) list) : unit =
-  Rust.ondisk_database_set_batch t
-    (List.map remove_keys ~f:Bigstring.to_string)
-    (List.map key_data_pairs ~f:tuple_to_strings)
+  Rust.ondisk_database_set_batch t remove_keys key_data_pairs
 
 module Batch = struct
   type t = Mina_tree.ondisk_batch
 
-  let remove t ~key =
-    Rust.ondisk_database_batch_remove t (Bigstring.to_string key)
+  let remove t ~key = Rust.ondisk_database_batch_remove t key
 
-  let set t ~key ~data =
-    Rust.ondisk_database_batch_set t (Bigstring.to_string key)
-      (Bigstring.to_string data)
+  let set t ~key ~data = Rust.ondisk_database_batch_set t key data
 
   let with_batch t ~f =
     let batch = Rust.ondisk_database_batch_create () in
@@ -76,46 +42,12 @@ module Batch = struct
     result
 end
 
-(* module Batch = struct
- *   type t = Rocks.WriteBatch.t
- *
- *   let remove t ~key = Rocks.WriteBatch.delete t key
- *
- *   let set t ~key ~data = Rocks.WriteBatch.put t key data
- *
- *   let with_batch t ~f =
- *     let batch = Rocks.WriteBatch.create () in
- *     let result = f batch in
- *     Rocks.write t.db batch ; result
- * end *)
-
 let copy _t = failwith "copy: not implemented"
 
-let remove t ~(key : Bigstring.t) : unit =
-  Rust.ondisk_database_remove t (Bigstring.to_string key)
-(* Rocks.delete ?pos:None ?len:None ?opts:None t.db key *)
+let remove t ~(key : Bigstring.t) : unit = Rust.ondisk_database_remove t key
 
 let to_alist t : (Bigstring.t * Bigstring.t) list =
-  Rust.ondisk_database_to_alist t |> List.map ~f:tuple_of_strings
-
-(* let iterator = Rocks.Iterator.create t.db in
- * Rocks.Iterator.seek_to_last iterator ;
- * (\* iterate backwards and cons, to build list sorted by key *\)
- * let copy t =
- *   let tlen = Bigstring.length t in
- *   let new_t = Bigstring.create tlen in
- *   Bigstring.blit ~src:t ~dst:new_t ~src_pos:0 ~dst_pos:0 ~len:tlen ;
- *   new_t
- * in
- * let rec loop accum =
- *   if Rocks.Iterator.is_valid iterator then (
- *     let key = copy (Rocks.Iterator.get_key iterator) in
- *     let value = copy (Rocks.Iterator.get_value iterator) in
- *     Rocks.Iterator.prev iterator ;
- *     loop ((key, value) :: accum) )
- *   else accum
- * in
- * loop [] *)
+  Rust.ondisk_database_to_alist t
 
 let to_bigstring = Bigstring.of_string
 
