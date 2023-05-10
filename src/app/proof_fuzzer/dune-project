@@ -1,0 +1,4 @@
+(lang dune 3.3)
+(name proof_fuzzer)
+(implicit_transitive_deps false)
+(wrapped_executables false)

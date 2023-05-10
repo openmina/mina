@@ -322,6 +322,10 @@ build-transaction-fuzzer:
 	export LD_LIBRARY_PATH=$(CURDIR)/_build/default/src/lib/mina_tree && \
 		dune build --instrument-with bisect_ppx src/app/transaction_fuzzer/transaction_fuzzer.exe --profile=$(DUNE_PROFILE)
 
+build-proof-fuzzer:
+	export LD_LIBRARY_PATH=$(CURDIR)/_build/default/src/lib/mina_tree && \
+		dune build --instrument-with bisect_ppx src/app/proof_fuzzer/proof_fuzzer.exe --profile=$(DUNE_PROFILE)
+
 INVARIANT_BREAK := false
 FUZZER_OUTPUT_PATH := $(shell echo $(CURDIR)/fuzzing)
 SEED := 0
@@ -343,6 +347,19 @@ reproduce-transaction-fuzzer:
 	export LD_LIBRARY_PATH=`pwd`/_build/default/src/lib/mina_tree && \
 		export RUST_BACKTRACE=1 && \
 		./_build/default/src/app/transaction_fuzzer/transaction_fuzzer.exe reproduce $(FUZZCASE) || exit 0
+
+run-proof-fuzzer:
+	export FUZZ_SESSION_ID=$(shell date -u -Iseconds)_seed_$(SEED) && \
+		export LD_LIBRARY_PATH=$(CURDIR)/_build/default/src/lib/mina_tree && \
+		export FUZZCASES_PATH="$(FUZZER_OUTPUT_PATH)/fuzzcases/$$FUZZ_SESSION_ID/" && \
+		export REPORTS_PATH="$(FUZZER_OUTPUT_PATH)/reports/$$FUZZ_SESSION_ID/" && \
+		export RUST_BUILD_PATH=$(CURDIR)/src/lib/mina_tree/ && \
+		export OCAML_BUILD_PATH=$(CURDIR)/_build/default/ && \
+		export LLVM_PROFILE_FILE=/dev/null && \
+		export RUST_BACKTRACE=1 && \
+		mkdir -p $$FUZZCASES_PATH $$REPORTS_PATH && \
+		echo "\n=== Saving output to\n fuzzcases:\t$$FUZZCASES_PATH\n reports:\t$$REPORTS_PATH\n" && \
+		./_build/default/src/app/proof_fuzzer/proof_fuzzer.exe run $(SEED) || exit 0
 
 ########################################
 # Diagrams for documentation
