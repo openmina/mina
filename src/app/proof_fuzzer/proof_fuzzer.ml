@@ -1,4 +1,5 @@
 open Core
+open Async
 open Mina_base
 open Mina_transaction
 module Rust = Mina_tree.Rust
@@ -109,28 +110,80 @@ let create_tx_proof input_bytes =
       Base.(Bin_prot.Reader.of_bytes [%bin_reader: (Mina_base.Sok_message.Stable.Latest.t * Mina_state.Snarked_ledger_state.Stable.Latest.t * Transaction_witness.Stable.Latest.t)]
         input_bytes) in
     let sok_digest = Mina_base.Sok_message.digest message in
-    let (`If_this_is_used_it_should_have_a_comment_justifying_it tx) = Transaction.to_valid_unsafe w.transaction
-    in
-    let state_body_hash = Mina_state.Protocol_state.Body.hash w.protocol_state_body in
-    let pending_coinbase_stack =
-                Pending_coinbase.Stack.push_state state_body_hash
-                  w.block_global_slot
-                  input.source.pending_coinbase_stack
+    let (`If_this_is_used_it_should_have_a_comment_justifying_it tx) = Transaction.to_valid_unsafe w.transaction in
+    match w.transaction with
+    | Command (Zkapp_command zkapp_command) -> (
+      let witnesses_specs_stmts =
+        Or_error.try_with (fun () ->
+            Transaction_snark.zkapp_command_witnesses_exn
+              ~constraint_constants:M.constraint_constants
+              ~global_slot:w.block_global_slot
+              ~state_body:w.protocol_state_body
+              ~fee_excess:Currency.Amount.Signed.zero
+              [ ( `Pending_coinbase_init_stack w.init_stack
+                , `Pending_coinbase_of_statement
+                    { Transaction_snark
+                      .Pending_coinbase_stack_state
+                      .source =
+                        input.source.pending_coinbase_stack
+                    ; target =
+                        input.target.pending_coinbase_stack
+                    }
+                , `Sparse_ledger w.first_pass_ledger
+                , `Sparse_ledger w.second_pass_ledger
+                , `Connecting_ledger_hash
+                    input.connecting_ledger_left
+                , zkapp_command )
+              ]
+            |> List.rev )
+        |> Result.map_error ~f:(fun e ->
+                Error.createf
+                  !"Failed to generate inputs for \
+                    zkapp_command : %s: %s"
+                  ( Zkapp_command.to_yojson zkapp_command
+                  |> Yojson.Safe.to_string )
+                  (Error.to_string_hum e) ) in
+        match Or_error.ok_exn witnesses_specs_stmts with
+          | [] ->
+              failwith "no witnesses generated"
+          | (witness, spec, stmt) :: rest -> (
+              let p1 =
+                (M.of_zkapp_command_segment_exn ~witness ~statement:{ stmt with sok_digest } ~spec)
               in
-    let res = M.of_non_zkapp_command_transaction
-        (* ~statement:{ input with sok_digest } *)
-        ~statement:{ input with sok_digest; target={input.target with pending_coinbase_stack} }
-        { Transaction_protocol_state.Poly.transaction =
-            tx
-        ; block_data = w.protocol_state_body
-        ; global_slot = w.block_global_slot
-        }
-        ~init_stack:w.init_stack
-        (unstage
-            (Mina_ledger.Sparse_ledger.handler
-              w.first_pass_ledger ) ) in
-    let res = Async.Thread_safe.block_on_async_exn (fun () -> res) in
-    Bin_prot.Writer.to_bytes [%bin_writer: Ledger_proof.Stable.Latest.t] res
+              let (p1 : Ledger_proof.t) = Async.Thread_safe.block_on_async_exn (fun () -> p1) in
+              let p =
+                Deferred.List.fold ~init:p1 rest
+                  ~f:(fun acc (witness, spec, stmt) ->
+                    let%bind (prev : Ledger_proof.t) =
+                      Deferred.return acc
+                    in
+                    let%bind (curr : Ledger_proof.t) =
+                    (M.of_zkapp_command_segment_exn ~witness ~statement:{ stmt with sok_digest } ~spec)
+                    in
+                    Deferred.Or_error.ok_exn (M.merge ~sok_digest prev curr))
+              in
+              let p = Async.Thread_safe.block_on_async_exn (fun () -> p) in
+              (if
+                not (Transaction_snark.Statement.equal
+                  (Ledger_proof.statement p) input)
+              then
+                failwith "transaction snark statement mismatch") ;
+              Bin_prot.Writer.to_bytes [%bin_writer: Ledger_proof.Stable.Latest.t] p))
+    | _ -> (
+      let res = M.of_non_zkapp_command_transaction
+          ~statement:{ input with sok_digest }
+          { Transaction_protocol_state.Poly.transaction =
+              tx
+          ; block_data = w.protocol_state_body
+          ; global_slot = w.block_global_slot
+          }
+          ~init_stack:w.init_stack
+          (unstage
+              (Mina_ledger.Sparse_ledger.handler
+                w.first_pass_ledger ) ) in
+      let res = Async.Thread_safe.block_on_async_exn (fun () -> res) in
+      Bin_prot.Writer.to_bytes [%bin_writer: Ledger_proof.Stable.Latest.t] res
+    )
   with e ->
     let bt = Printexc.get_backtrace () in
     let msg = Exn.to_string e in
