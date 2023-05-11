@@ -49,6 +49,8 @@ let remove t ~(key : Bigstring.t) : unit = Rust.ondisk_database_remove t key
 let to_alist t : (Bigstring.t * Bigstring.t) list =
   Rust.ondisk_database_to_alist t
 
+let gc t : unit = Rust.ondisk_database_gc t
+
 let to_bigstring = Bigstring.of_string
 
 (* let%test_unit "get_batch" =

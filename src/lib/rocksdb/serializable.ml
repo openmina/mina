@@ -77,6 +77,8 @@ module GADT = struct
 
     val close : t -> unit
 
+    val gc : t -> unit
+
     val get : t -> key:'a g -> 'a option
 
     val get_raw : t -> key:'a g -> Bigstring.t option
@@ -127,6 +129,8 @@ module GADT = struct
     let create directory = Database.create directory
 
     let close = Database.close
+
+    let gc = Database.gc
 
     module T = Make_Serializer (Database)
     include T

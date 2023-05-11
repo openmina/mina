@@ -359,6 +359,7 @@ let move_root t ~new_root ~garbage =
            *)
           Batch.remove batch ~key:(Transition node_hash) ;
           Batch.remove batch ~key:(Arcs node_hash) ) ) ;
+  Rocks.gc t.db ;
   old_root_hash
 
 let get_transition t hash =
