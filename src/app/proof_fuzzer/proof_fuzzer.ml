@@ -92,12 +92,6 @@ with e ->
   Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
   raise e
 
-let get_sparse_ledger bytes =
-  let account_ids = Bin_prot.Reader.of_bytes [%bin_reader: Account_id.Stable.Latest.t list] bytes in
-  let ledger = !ledger in
-  let res = Mina_ledger.Sparse_ledger.of_ledger_subset_exn ledger account_ids in
-  Bin_prot.Writer.to_bytes [%bin_writer: Sparse_ledger_base.Stable.Latest.t] res
-
 let to_hex_string bytes = "0x" ^ (String.uppercase (Hex.encode ~reverse:false (Bytes.to_string bytes)))
 
 let create_tx_proof input_bytes =
@@ -188,7 +182,6 @@ let run_command =
             set_constraint_constants
             set_initial_accounts
             get_genesis_protocol_state
-            get_sparse_ledger
             create_tx_proof
             check_proof
             get_coverage
