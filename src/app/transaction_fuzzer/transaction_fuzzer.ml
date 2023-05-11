@@ -240,10 +240,16 @@ module Transaction_pool = struct
         false
 
   let verify_and_apply encoded =
-    let cmd =
-      Bin_prot.Reader.of_string User_command.Stable.V2.bin_reader_t encoded
-    in
-    verify_and_apply_impl [ cmd ]
+    try
+      let cmd =
+        Bin_prot.Reader.of_string User_command.Stable.V2.bin_reader_t encoded
+      in
+      verify_and_apply_impl [ cmd ]
+    with e ->
+      let bt = Printexc.get_backtrace () in
+      let msg = Exn.to_string e in
+      Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
+      raise e
 end
 
 let run_command =
