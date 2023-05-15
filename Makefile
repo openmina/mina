@@ -359,7 +359,7 @@ run-proof-fuzzer:
 		export RUST_BACKTRACE=1 && \
 		mkdir -p $$FUZZCASES_PATH $$REPORTS_PATH && \
 		echo "\n=== Saving output to\n fuzzcases:\t$$FUZZCASES_PATH\n reports:\t$$REPORTS_PATH\n" && \
-		./_build/default/src/app/proof_fuzzer/proof_fuzzer.exe run $(SEED) || exit 0
+		./_build/default/src/app/proof_fuzzer/proof_fuzzer.exe run-tx-witness-generation-fuzzer $(SEED) || exit 0
 
 ########################################
 # Diagrams for documentation

@@ -95,6 +95,64 @@ with e ->
 
 let to_hex_string bytes = "0x" ^ (String.uppercase (Hex.encode ~reverse:false (Bytes.to_string bytes)))
 
+let parse_create_tx_witness_inputs input_bytes =
+  let message, input, w = Base.(Bin_prot.Reader.of_bytes [%bin_reader: (Mina_base.Sok_message.Stable.Latest.t * Mina_state.Snarked_ledger_state.Stable.Latest.t * Transaction_witness.Stable.Latest.t)]
+    input_bytes) in
+  let sok_digest = Mina_base.Sok_message.digest message in
+  input, w, sok_digest
+
+let create_tx_witness input_bytes =
+  try
+    let constraint_constants = !constraint_constants in
+    let input, w, _sok_digest = parse_create_tx_witness_inputs input_bytes in
+    match w.transaction with
+    | Command (Zkapp_command zkapp_command) -> (
+      let witnesses_specs_stmts =
+        Or_error.try_with (fun () ->
+            Transaction_snark.zkapp_command_witnesses_exn
+              ~constraint_constants
+              ~global_slot:w.block_global_slot
+              ~state_body:w.protocol_state_body
+              ~fee_excess:Currency.Amount.Signed.zero
+              [ ( `Pending_coinbase_init_stack w.init_stack
+                , `Pending_coinbase_of_statement
+                    { Transaction_snark
+                      .Pending_coinbase_stack_state
+                      .source =
+                        input.source.pending_coinbase_stack
+                    ; target =
+                        input.target.pending_coinbase_stack
+                    }
+                , `Sparse_ledger w.first_pass_ledger
+                , `Sparse_ledger w.second_pass_ledger
+                , `Connecting_ledger_hash
+                    input.connecting_ledger_left
+                , zkapp_command )
+              ]
+            |> List.rev )
+        |> Result.map_error ~f:(fun e ->
+                Error.createf
+                  !"Failed to generate inputs for \
+                    zkapp_command : %s: %s"
+                  ( Zkapp_command.to_yojson zkapp_command
+                  |> Yojson.Safe.to_string )
+                  (Error.to_string_hum e) ) in
+        match Or_error.ok_exn witnesses_specs_stmts with
+          | [] ->
+              failwith "no witnesses generated"
+          | list ->
+            Bin_prot.Writer.to_bytes [%bin_writer: (
+              Transaction_snark.Zkapp_command_segment.Witness.Stable.Latest.t
+              * Transaction_snark.Zkapp_command_segment.Basic.Stable.Latest.t
+              * Transaction_snark.Statement.With_sok.Stable.Latest.t ) list] list
+    )
+    | _ -> failwith "witness generation for nonzkapp tx not implemented"
+  with e ->
+    let bt = Printexc.get_backtrace () in
+    let msg = Exn.to_string e in
+    Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
+    raise e
+
 let create_tx_proof input_bytes =
   let bytes = Bin_prot.Writer.to_bytes [%bin_writer: Pending_coinbase.Stack_versioned.Stable.Latest.t] Pending_coinbase.Stack.empty in
   Core_kernel.printf "init_stack_empty: \n%s\n" (to_hex_string bytes);
@@ -106,11 +164,8 @@ let create_tx_proof input_bytes =
 
                   let proof_level = Genesis_constants.Proof_level.Full
                 end) : Transaction_snark.S) in
-    let message, input, w =
-      Base.(Bin_prot.Reader.of_bytes [%bin_reader: (Mina_base.Sok_message.Stable.Latest.t * Mina_state.Snarked_ledger_state.Stable.Latest.t * Transaction_witness.Stable.Latest.t)]
-        input_bytes) in
-    let sok_digest = Mina_base.Sok_message.digest message in
-    let (`If_this_is_used_it_should_have_a_comment_justifying_it tx) = Transaction.to_valid_unsafe w.transaction in
+    let input, w, sok_digest = parse_create_tx_witness_inputs input_bytes in
+
     match w.transaction with
     | Command (Zkapp_command zkapp_command) -> (
       let witnesses_specs_stmts =
@@ -170,6 +225,7 @@ let create_tx_proof input_bytes =
                 failwith "transaction snark statement mismatch") ;
               Bin_prot.Writer.to_bytes [%bin_writer: Ledger_proof.Stable.Latest.t] p))
     | _ -> (
+      let (`If_this_is_used_it_should_have_a_comment_justifying_it tx) = Transaction.to_valid_unsafe w.transaction in
       let res = M.of_non_zkapp_command_transaction
           ~statement:{ input with sok_digest }
           { Transaction_protocol_state.Poly.transaction =
@@ -240,7 +296,25 @@ let run_command =
             get_coverage
           ))
 
+let run_tx_witness_generation_fuzzer_command =
+  Command.basic ~summary:"Run the transaction witness generation fuzzer"
+    Command.Param.(
+      map
+        (anon ("seed" %: int))
+        ~f:(fun seed () ->
+          Rust.tx_witness_generation_fuzzer
+            (Int64.of_int seed)
+            set_constraint_constants
+            set_initial_accounts
+            get_genesis_protocol_state
+            create_tx_witness
+            get_coverage
+          ))
+
 let () =
   Command.run
     (Command.group ~summary:"proof_fuzzer"
-       [ ("run", run_command) ] )
+      [
+        ("run", run_command);
+        ("run-tx-witness-generation-fuzzer", run_tx_witness_generation_fuzzer_command)
+      ] )
