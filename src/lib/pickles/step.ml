@@ -31,6 +31,8 @@ struct
     module Type2 = Plonk_checks.Make (Shifted_value.Type2) (Scalars.Tock)
   end
 
+  let last_proof = ref None
+
   (* The prover corresponding to the given inductive rule. *)
   let f
       (type (* The maximum number of proofs verified by one of the proof systems verified by this rule :)
@@ -820,12 +822,18 @@ struct
                   ~f:(fun { Impls.Step.Proof_inputs.auxiliary_inputs
                           ; public_inputs
                           } next_statement_hashed ->
-                    let%map.Promise proof =
+                    (* HACK(binier): to make proof generation faster *)
+                    let%map.Promise proof = match !last_proof with
+                    | Some proof -> Promise.return proof
+                    | None ->
+                      let%map.Promise proof =
                       Backend.Tick.Proof.create_async ~primary:public_inputs
                         ~auxiliary:auxiliary_inputs
                         ~message:
                           (Lazy.force prev_challenge_polynomial_commitments)
-                        pk
+                        pk in
+                      last_proof := Some proof ;
+                      proof
                     in
                     (proof, next_statement_hashed) )
                   ~input_typ:Impls.Step.Typ.unit ~return_typ:input

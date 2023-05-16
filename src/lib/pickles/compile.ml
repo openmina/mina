@@ -781,7 +781,7 @@ struct
                 }
             }
           in
-          (* TODO(binier): HACK to make proof generation faster *)
+          (* HACK(binier): to make proof generation faster *)
           match !last_proof with
           | Some v -> Promise.return v
           | _ -> (

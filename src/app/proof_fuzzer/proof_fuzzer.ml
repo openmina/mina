@@ -93,7 +93,7 @@ with e ->
   Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
   raise e
 
-let to_hex_string bytes = "0x" ^ (String.uppercase (Hex.encode ~reverse:false (Bytes.to_string bytes)))
+(* let to_hex_string bytes = "0x" ^ (String.uppercase (Hex.encode ~reverse:false (Bytes.to_string bytes))) *)
 
 let parse_create_tx_witness_inputs input_bytes =
   let message, input, w = Base.(Bin_prot.Reader.of_bytes [%bin_reader: (Mina_base.Sok_message.Stable.Latest.t * Mina_state.Snarked_ledger_state.Stable.Latest.t * Transaction_witness.Stable.Latest.t)]
@@ -162,8 +162,6 @@ let snark_module =
     end) : Transaction_snark.S )
 
 let create_tx_proof input_bytes =
-  let bytes = Bin_prot.Writer.to_bytes [%bin_writer: Pending_coinbase.Stack_versioned.Stable.Latest.t] Pending_coinbase.Stack.empty in
-  Core_kernel.printf "init_stack_empty: \n%s\n" (to_hex_string bytes);
   try
     let module M = (val Lazy.force snark_module) in
     let input, w, sok_digest = parse_create_tx_witness_inputs input_bytes in
