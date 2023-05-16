@@ -153,17 +153,19 @@ let create_tx_witness input_bytes =
     Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
     raise e
 
+let snark_module =
+  lazy
+    ( module Transaction_snark.Make (struct
+      let constraint_constants = !constraint_constants
+
+      let proof_level = Genesis_constants.Proof_level.Full
+    end) : Transaction_snark.S )
+
 let create_tx_proof input_bytes =
   let bytes = Bin_prot.Writer.to_bytes [%bin_writer: Pending_coinbase.Stack_versioned.Stable.Latest.t] Pending_coinbase.Stack.empty in
   Core_kernel.printf "init_stack_empty: \n%s\n" (to_hex_string bytes);
   try
-    let constraint_constants = !constraint_constants in
-    (* TODO(binier): maybe cache this *)
-    let (module M) = (module Transaction_snark.Make (struct
-                  let constraint_constants = constraint_constants
-
-                  let proof_level = Genesis_constants.Proof_level.Full
-                end) : Transaction_snark.S) in
+    let module M = (val Lazy.force snark_module) in
     let input, w, sok_digest = parse_create_tx_witness_inputs input_bytes in
 
     match w.transaction with
