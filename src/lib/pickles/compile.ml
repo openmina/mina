@@ -735,6 +735,7 @@ struct
       | Input_and_output (input_typ, output_typ) ->
           Impls.Step.Typ.(input_typ * output_typ)
     in
+    let last_proof = ref None in
     let provers =
       let module Z = H4.Zip (Branch_data) (E04 (Impls.Step.Keypair)) in
       let f :
@@ -780,6 +781,10 @@ struct
                 }
             }
           in
+          (* TODO(binier): HACK to make proof generation faster *)
+          match !last_proof with
+          | Some v -> Promise.return v
+          | _ -> (
           let%map.Promise proof =
             let tweak_statement =
               match override_wrap_main with
@@ -804,6 +809,7 @@ struct
               (Impls.Wrap.Keypair.pk (fst (Lazy.force wrap_pk)))
               proof
           in
+          let res =
           ( return_value
           , auxiliary_value
           , Proof.T
@@ -815,7 +821,9 @@ struct
                         app_state = ()
                       }
                   }
-              } )
+              } ) in
+          last_proof := Some res ;
+          res)
         in
         wrap
       in

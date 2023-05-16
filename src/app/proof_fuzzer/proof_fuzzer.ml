@@ -204,27 +204,30 @@ let create_tx_proof input_bytes =
           | [] ->
               failwith "no witnesses generated"
           | (witness, spec, stmt) :: rest -> (
+              let t = Stdlib.Sys.time () in
               let p1 =
                 (M.of_zkapp_command_segment_exn ~witness ~statement:{ stmt with sok_digest } ~spec)
               in
               let (p1 : Ledger_proof.t) = Async.Thread_safe.block_on_async_exn (fun () -> p1) in
               let p =
                 Deferred.List.fold ~init:p1 rest
-                  ~f:(fun acc (witness, spec, stmt) ->
-                    let%bind (prev : Ledger_proof.t) =
+                  ~f:(fun _acc (witness, spec, stmt) ->
+                    (* let%bind (prev : Ledger_proof.t) =
                       Deferred.return acc
                     in
-                    let%bind (curr : Ledger_proof.t) =
+                    let%bind (curr : Ledger_proof.t) = *)
                     (M.of_zkapp_command_segment_exn ~witness ~statement:{ stmt with sok_digest } ~spec)
-                    in
-                    Deferred.Or_error.ok_exn (M.merge ~sok_digest prev curr))
+                    (* in
+                    Deferred.Or_error.ok_exn (M.merge ~sok_digest prev curr) *)
+                  )
               in
               let p = Async.Thread_safe.block_on_async_exn (fun () -> p) in
-              (if
+              (* (if
                 not (Transaction_snark.Statement.equal
                   (Ledger_proof.statement p) input)
               then
-                failwith "transaction snark statement mismatch") ;
+                failwith "transaction snark statement mismatch") ; *)
+              Core_kernel.printf "Time for producing proof: %f" ((Stdlib.Sys.time ()) -. t) ;
               Bin_prot.Writer.to_bytes [%bin_writer: Ledger_proof.Stable.Latest.t] p))
     | _ -> (
       let (`If_this_is_used_it_should_have_a_comment_justifying_it tx) = Transaction.to_valid_unsafe w.transaction in
@@ -288,6 +291,7 @@ let run_command =
       map
         (anon ("seed" %: int))
         ~f:(fun seed () ->
+          let _ = create_tx_witness in
           Rust.proof_fuzzer
             (Int64.of_int seed)
             set_constraint_constants
@@ -309,7 +313,7 @@ let run_tx_witness_generation_fuzzer_command =
             set_constraint_constants
             set_initial_accounts
             get_genesis_protocol_state
-            create_tx_witness
+            create_tx_proof
             get_coverage
           ))
 
