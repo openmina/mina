@@ -95,6 +95,143 @@ with e ->
 
 (* let to_hex_string bytes = "0x" ^ (String.uppercase (Hex.encode ~reverse:false (Bytes.to_string bytes))) *)
 
+module Staged_ledger = struct
+  type t = Mina_ledger.Ledger.t [@@deriving sexp]
+
+  let ledger = Fn.id
+end
+
+module Mock_transition_frontier = struct
+  open Pipe_lib
+
+  module Breadcrumb = struct
+    type t = Staged_ledger.t
+
+    let staged_ledger = Fn.id
+  end
+
+  type best_tip_diff =
+    { new_commands : User_command.Valid.t With_status.t list
+    ; removed_commands : User_command.Valid.t With_status.t list
+    ; reorg_best_tip : bool
+    }
+
+  type t = best_tip_diff Broadcast_pipe.Reader.t * Breadcrumb.t ref
+
+  let create : unit -> t * best_tip_diff Broadcast_pipe.Writer.t =
+   fun () ->
+    let pipe_r, pipe_w =
+      Broadcast_pipe.create
+        { new_commands = []; removed_commands = []; reorg_best_tip = false }
+    in
+    ((pipe_r, ledger), pipe_w)
+
+  let best_tip (_, best_tip) = !best_tip
+
+  let best_tip_diff_pipe (pipe, _) = pipe
+end
+
+let transaction_pool = ref None
+
+module Transaction_pool = struct
+  module Transaction_pool =
+    Network_pool.Transaction_pool.Make
+      (Staged_ledger)
+      (Mock_transition_frontier)
+
+  let setup with_logging =
+    Parallel.init_master () ;
+    let logger = if with_logging then Logger.create () else Logger.null () in
+    let precomputed_values = Lazy.force Precomputed_values.for_unit_tests in
+    let constraint_constants = !constraint_constants in
+    (* TODO: are these constants ok? *)
+    let consensus_constants = precomputed_values.consensus_constants in
+    let time_controller = Block_time.Controller.basic ~logger in
+    (* TODO: make proof level configurable *)
+    let proof_level = Genesis_constants.Proof_level.None in
+    let frontier, _best_tip_diff_w = Mock_transition_frontier.create () in
+    let _, _best_tip_ref = frontier in
+    let frontier_pipe_r, _frontier_pipe_w =
+      Pipe_lib.Broadcast_pipe.create @@ Some frontier
+    in
+    let trust_system = Trust_system.null () in
+    [%log info] "Starting verifier..." ;
+    let verifier =
+      Async.Thread_safe.block_on_async_exn (fun () ->
+          Verifier.create ~logger ~proof_level ~constraint_constants
+            ~conf_dir:(Some "/tmp")
+            ~pids:(Child_processes.Termination.create_pid_table ()) )
+    in
+    let config =
+      Transaction_pool.Resource_pool.make_config ~trust_system
+        ~pool_max_size:3000 ~verifier
+        ~genesis_constants:Genesis_constants.compiled
+    in
+    [%log info] "Creating transaction pool..." ;
+    let pool, _rsink, _lsink =
+      Transaction_pool.create ~config ~logger ~constraint_constants
+        ~consensus_constants ~time_controller
+        ~frontier_broadcast_pipe:frontier_pipe_r ~log_gossip_heard:false
+        ~on_remote_push:(Fn.const Async.Deferred.unit)
+    in
+    transaction_pool := Some pool
+
+  let verify_and_apply_impl cs =
+    let pool =
+      match !transaction_pool with
+      | None ->
+          setup false ;
+          Option.value_exn !transaction_pool
+          (* failwith "transaction pool not setup" *)
+      | Some pool ->
+          pool
+    in
+    let peer =
+      Network_peer.Peer.create
+        (Unix.Inet_addr.of_string "1.2.3.4")
+        ~peer_id:(Network_peer.Peer.Id.unsafe_of_string "not used")
+        ~libp2p_port:8302
+    in
+    (* For logal use Network_peer.Envelope.Sender.Local *)
+    let sender = Network_peer.Envelope.Sender.Remote peer in
+    let diff = Network_peer.Envelope.Incoming.wrap ~data:cs ~sender in
+    let result =
+      Async.Thread_safe.block_on_async_exn
+      @@ fun () ->
+      Transaction_pool.Resource_pool.Diff.verify
+        (Transaction_pool.resource_pool pool)
+        diff
+    in
+    match result with
+    | Ok diff -> (
+        let result =
+          Async.Thread_safe.block_on_async_exn
+          @@ fun () ->
+          Transaction_pool.Resource_pool.Diff.unsafe_apply
+            (Transaction_pool.resource_pool pool)
+            diff
+        in
+        match result with
+        | Ok (`Accept, _, _) ->
+            true
+        | Ok (`Reject, _, _) | Error _ ->
+            false )
+    | Error _ ->
+        false
+
+  let verify_and_apply encoded =
+    try
+      let cmd =
+        Bin_prot.Reader.of_string User_command.Stable.V2.bin_reader_t encoded
+      in
+      verify_and_apply_impl [ cmd ]
+    with e ->
+      let bt = Printexc.get_backtrace () in
+      let msg = Exn.to_string e in
+      Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
+      raise e
+end
+
 let parse_create_tx_witness_inputs input_bytes =
   let message, input, w = Base.(Bin_prot.Reader.of_bytes [%bin_reader: (Mina_base.Sok_message.Stable.Latest.t * Mina_state.Snarked_ledger_state.Stable.Latest.t * Transaction_witness.Stable.Latest.t)]
     input_bytes) in
@@ -202,7 +339,7 @@ let create_tx_proof input_bytes =
           | [] ->
               failwith "no witnesses generated"
           | (witness, spec, stmt) :: rest -> (
-              let t = Stdlib.Sys.time () in
+              (* let t = Stdlib.Sys.time () in *)
               let p1 =
                 (M.of_zkapp_command_segment_exn ~witness ~statement:{ stmt with sok_digest } ~spec)
               in
@@ -225,7 +362,7 @@ let create_tx_proof input_bytes =
                   (Ledger_proof.statement p) input)
               then
                 failwith "transaction snark statement mismatch") ; *)
-              Core_kernel.printf "Time for producing proof: %f" ((Stdlib.Sys.time ()) -. t) ;
+              (* Core_kernel.printf "Time for producing proof: %f\n" ((Stdlib.Sys.time ()) -. t) ; *)
               Bin_prot.Writer.to_bytes [%bin_writer: Ledger_proof.Stable.Latest.t] p))
     | _ -> (
       let (`If_this_is_used_it_should_have_a_comment_justifying_it tx) = Transaction.to_valid_unsafe w.transaction in
@@ -246,8 +383,7 @@ let create_tx_proof input_bytes =
   with e ->
     let bt = Printexc.get_backtrace () in
     let msg = Exn.to_string e in
-    Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
-    raise e
+    failwith (Core_kernel.sprintf !"except: %s\n%s\n%!" msg bt)
 
 let check_proof proof_bytes =
   try
@@ -311,6 +447,7 @@ let run_tx_witness_generation_fuzzer_command =
             set_constraint_constants
             set_initial_accounts
             get_genesis_protocol_state
+            Transaction_pool.verify_and_apply
             create_tx_proof
             get_coverage
           ))
@@ -319,6 +456,7 @@ let () =
   Command.run
     (Command.group ~summary:"proof_fuzzer"
       [
-        ("run", run_command);
-        ("run-tx-witness-generation-fuzzer", run_tx_witness_generation_fuzzer_command)
+        ("run", run_command)
+        ; ("run-tx-witness-generation-fuzzer", run_tx_witness_generation_fuzzer_command)
+        ; (Parallel.worker_command_name, Parallel.worker_command)
       ] )
