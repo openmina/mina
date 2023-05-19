@@ -419,6 +419,31 @@ let check_proof proof_bytes =
     Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
     raise e
 
+let apply_tx user_command_bytes =
+  try
+    let command =
+      Bin_prot.Reader.of_bytes [%bin_reader: User_command.Stable.Latest.t]
+        user_command_bytes
+    in
+    let tx = Transaction.Command command in
+    let constraint_constants = !constraint_constants in
+    let ledger = !ledger in
+    let genesis_proof = Option.value_exn !genesis_proof in
+    let protocol_state = genesis_proof.protocol_state_with_hashes.data.body in
+    let txn_state_view = Mina_state.Protocol_state.Body.view protocol_state in
+    let _applied =
+      Ledger.apply_transactions ~constraint_constants
+        ~global_slot:txn_state_view.global_slot_since_genesis ~txn_state_view
+        ledger [ tx ]
+    in
+    let ledger_hash = Ledger.merkle_root ledger in
+    Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
+  with e ->
+    let bt = Printexc.get_backtrace () in
+    let msg = Exn.to_string e in
+    Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
+    raise e
+
 let run_command =
   Command.basic ~summary:"Run the fuzzer"
     Command.Param.(
@@ -448,6 +473,7 @@ let run_tx_witness_generation_fuzzer_command =
             set_initial_accounts
             get_genesis_protocol_state
             Transaction_pool.verify_and_apply
+            apply_tx
             create_tx_proof
             get_coverage
           ))
