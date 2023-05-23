@@ -5,28 +5,34 @@ module Rust = Mina_tree.Rust
 
 type t = Mina_tree.ondisk_database
 
-let create directory = Rust.ondisk_database_create directory
+exception DatabaseException of string
 
-let create_checkpoint t dir = Rust.ondisk_database_create_checkpoint t dir
+let unwrap (result : ('a, 'e) result) =
+  match result with Ok value -> value | Error e -> raise (DatabaseException e)
 
-let make_checkpoint t dir = Rust.ondisk_database_make_checkpoint t dir
+let create dir = Rust.ondisk_database_create dir |> unwrap
+
+let create_checkpoint t dir =
+  Rust.ondisk_database_create_checkpoint t dir |> unwrap
+
+let make_checkpoint t dir = Rust.ondisk_database_make_checkpoint t dir |> unwrap
 
 let get_uuid t = Rust.ondisk_database_get_uuid t |> Uuid.of_string
 
 let close t = Rust.ondisk_database_close t
 
 let get t ~(key : Bigstring.t) : Bigstring.t option =
-  Rust.ondisk_database_get t key
+  Rust.ondisk_database_get t key |> unwrap
 
 let get_batch t ~(keys : Bigstring.t list) : Bigstring.t option list =
-  Rust.ondisk_database_get_batch t keys
+  Rust.ondisk_database_get_batch t keys |> unwrap
 
 let set t ~(key : Bigstring.t) ~(data : Bigstring.t) : unit =
-  Rust.ondisk_database_set t key data
+  Rust.ondisk_database_set t key data |> unwrap
 
 let set_batch t ?(remove_keys = [])
     ~(key_data_pairs : (Bigstring.t * Bigstring.t) list) : unit =
-  Rust.ondisk_database_set_batch t remove_keys key_data_pairs
+  Rust.ondisk_database_set_batch t remove_keys key_data_pairs |> unwrap
 
 module Batch = struct
   type t = Mina_tree.ondisk_batch
@@ -38,16 +44,17 @@ module Batch = struct
   let with_batch t ~f =
     let batch = Rust.ondisk_database_batch_create () in
     let result = f batch in
-    Rust.ondisk_database_batch_run t batch ;
+    Rust.ondisk_database_batch_run t batch |> unwrap ;
     result
 end
 
 let copy _t = failwith "copy: not implemented"
 
-let remove t ~(key : Bigstring.t) : unit = Rust.ondisk_database_remove t key
+let remove t ~(key : Bigstring.t) : unit =
+  Rust.ondisk_database_remove t key |> unwrap
 
 let to_alist t : (Bigstring.t * Bigstring.t) list =
-  Rust.ondisk_database_to_alist t
+  Rust.ondisk_database_to_alist t |> unwrap
 
 let gc t : unit = Rust.ondisk_database_gc t
 
