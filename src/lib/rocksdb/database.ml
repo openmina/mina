@@ -17,9 +17,9 @@ let create_checkpoint t dir =
 
 let make_checkpoint t dir = Rust.ondisk_database_make_checkpoint t dir |> unwrap
 
-let get_uuid t = Rust.ondisk_database_get_uuid t |> Uuid.of_string
+let get_uuid t = Rust.ondisk_database_get_uuid t |> unwrap |> Uuid.of_string
 
-let close t = Rust.ondisk_database_close t
+let close t = Rust.ondisk_database_close t |> unwrap
 
 let get t ~(key : Bigstring.t) : Bigstring.t option =
   Rust.ondisk_database_get t key |> unwrap
