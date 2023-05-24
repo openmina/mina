@@ -56,7 +56,7 @@ let remove t ~(key : Bigstring.t) : unit =
 let to_alist t : (Bigstring.t * Bigstring.t) list =
   Rust.ondisk_database_to_alist t |> unwrap
 
-let gc t : unit = Rust.ondisk_database_gc t
+let gc t : unit = Rust.ondisk_database_gc t |> unwrap
 
 let to_bigstring = Bigstring.of_string
 
