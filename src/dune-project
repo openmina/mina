@@ -242,3 +242,4 @@
 (package (name zexe_backend))
 (package (name zkapp_command_builder))
 (package (name zkapps_examples))
+(package (name internal_tracing))
