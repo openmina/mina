@@ -201,14 +201,6 @@ module For_logger = struct
       json_lines
 
     let process () msg =
-      let handling_current_block_id_change =
-        handling_current_block_id_change ~last_block_id
-          ~make:Event.current_block
-      in
-      let handling_current_call_id_change =
-        handling_current_call_id_change ~last_call_id
-          ~make:Event.current_call_id
-      in
       let { Logger.Message.level; message; metadata; timestamp; _ } = msg in
       if is_enabled () && Logger.Level.equal level Logger.Level.Internal then
         let json_lines =
