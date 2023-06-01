@@ -449,7 +449,13 @@ impl Database {
 
         let value = self.read_value(value_offset, value_length)?;
 
-        decompress(value, header.value_is_compressed).map(Some)
+        let result = decompress(value, header.value_is_compressed).map(Some);
+
+        if self.buffer.capacity() >= 32 * 1024 * 1024 { // 16 MB
+            self.buffer = vec![0; BUFFER_DEFAULT_CAPACITY]
+        }
+
+        result
     }
 
     fn set_impl(&mut self, key: Key, value: Option<Value>) -> std::io::Result<()> {
