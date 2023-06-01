@@ -23,6 +23,7 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '10000'
         prometheus.io/path: '/metrics'
+        policy.cilium.io/proxy-visibility: "<Egress/53/UDP/DNS>,<Egress/80/TCP/HTTP>"
     spec:
       {{ include "sideCar.podAttrs" (dict "resources" $.Values.resources "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       containers:

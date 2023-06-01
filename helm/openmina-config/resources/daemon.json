@@ -1,10 +1,11 @@
 {
   "genesis": {
-    "slots_per_epoch": 3000,
-    "genesis_state_timestamp": "2023-04-12T00:00:00+00:00"
+    "k": 12,
+    "slots_per_epoch": 288,
+    "genesis_state_timestamp": "2023-06-01T15:30:00+00:00"
   },
   "proof": {
-    "block_window_duration_ms": 60000
+    "block_window_duration_ms": 30000
   },
   "ledger": {
     "name": "testnet",
