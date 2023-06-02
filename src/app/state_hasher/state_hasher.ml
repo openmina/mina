@@ -1,8 +1,9 @@
 open Core_kernel
 
-let state_json =
-  Yojson.Safe.from_string
-    {json|
+let protocol_state =
+  let json =
+    Yojson.Safe.from_string
+      {json|
 {
   "previous_state_hash": "3NLqUfUbgawgVQvqasV9zyC7LpLnnPGZoys4FiRazDQ8wHRraZU6",
   "body": {
@@ -22,10 +23,10 @@ let state_json =
           "first_pass_ledger": "jwejsBiFADjsiYntREQsZ482F9SKMWyJykVFsYVHnCfNPfTykzz",
           "second_pass_ledger": "jwejsBiFADjsiYntREQsZ482F9SKMWyJykVFsYVHnCfNPfTykzz",
           "pending_coinbase_stack": {
-            "data": "0x1dccd087c5c67bfd6816c2c6cf730228a84112732067f85614747c5d1ed5b935",
+            "data": "4QNrZFBTDQCPfEZqBZsaPYx8qdaNFv1nebUyCUsQW9QUJqyuD3un",
             "state": {
-              "init": "0x0000000000000000000000000000000000000000000000000000000000000000",
-              "curr": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              "init": "4Yx5U3t3EYQycZ91yj4478bHkLwGkhDHnPbCY9TxgUk69SQityej",
+              "curr": "4Yx5U3t3EYQycZ91yj4478bHkLwGkhDHnPbCY9TxgUk69SQityej"
             }
           },
           "local_state": {
@@ -36,11 +37,11 @@ let state_json =
             "token_id": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
             "excess": {
               "magnitude": "0",
-              "sgn": "Pos"
+              "sgn": ["Pos"]
             },
             "supply_increase": {
               "magnitude": "0",
-              "sgn": "Pos"
+              "sgn": ["Pos"]
             },
             "ledger": "jw6bz2wud1N6itRUHZ5ypo3267stk4UgzkiuWtAMPRZo9g4Udyd",
             "success": true,
@@ -53,10 +54,10 @@ let state_json =
           "first_pass_ledger": "jwejsBiFADjsiYntREQsZ482F9SKMWyJykVFsYVHnCfNPfTykzz",
           "second_pass_ledger": "jwejsBiFADjsiYntREQsZ482F9SKMWyJykVFsYVHnCfNPfTykzz",
           "pending_coinbase_stack": {
-            "data": "0x1dccd087c5c67bfd6816c2c6cf730228a84112732067f85614747c5d1ed5b935",
+            "data": "4QNrZFBTDQCPfEZqBZsaPYx8qdaNFv1nebUyCUsQW9QUJqyuD3un",
             "state": {
-              "init": "0x0000000000000000000000000000000000000000000000000000000000000000",
-              "curr": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              "init": "4Yx5U3t3EYQycZ91yj4478bHkLwGkhDHnPbCY9TxgUk69SQityej",
+              "curr": "4Yx5U3t3EYQycZ91yj4478bHkLwGkhDHnPbCY9TxgUk69SQityej"
             }
           },
           "local_state": {
@@ -67,11 +68,11 @@ let state_json =
             "token_id": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
             "excess": {
               "magnitude": "0",
-              "sgn": "Pos"
+              "sgn": ["Pos"]
             },
             "supply_increase": {
               "magnitude": "0",
-              "sgn": "Pos"
+              "sgn": ["Pos"]
             },
             "ledger": "jw6bz2wud1N6itRUHZ5ypo3267stk4UgzkiuWtAMPRZo9g4Udyd",
             "success": true,
@@ -84,20 +85,20 @@ let state_json =
         "connecting_ledger_right": "jwejsBiFADjsiYntREQsZ482F9SKMWyJykVFsYVHnCfNPfTykzz",
         "supply_increase": {
           "magnitude": "0",
-          "sgn": "Pos"
+          "sgn": ["Pos"]
         },
-        "fee_excess": {
-          "fee_token_l": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
-          "fee_excess_l": {
+        "fee_excess": [
+          {"token": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+          "amount": {
             "magnitude": "0",
-            "sgn": "Pos"
-          },
-          "fee_token_r": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
-          "fee_excess_r": {
+            "sgn": ["Pos"]
+          }},
+          {"token": "wSHV2S4qX9jFsLjQo8r1BsMLH2ZRKsZx6EJd1sbozGPieEC4Jf",
+          "amount": {
             "magnitude": "0",
-            "sgn": "Pos"
-          }
-        },
+            "sgn": ["Pos"]
+          }}
+        ],
         "sok_digest": null
       },
       "timestamp": "1685669640000",
@@ -163,9 +164,13 @@ let state_json =
   }
 }
   |json}
+  in
+  Mina_state.Protocol_state.value_of_yojson json |> Result.ok_or_failwith
 
 let () =
-  let state: Mina_state.Protocol_state.value =
-    Mina_state.Protocol_state.value_of_yojson state_json |> Result.ok_or_failwith
-  in let (state_hash, _) =  Mina_state.Protocol_state.hash_checked state
-  in println "foo"
+  let hash =
+    Mina_state.Protocol_state.hashes protocol_state
+    |> Mina_base.State_hash.State_hashes.state_hash
+    |> Mina_base.State_hash.to_base58_check
+  in
+  printf "%s\n" hash
