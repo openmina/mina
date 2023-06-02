@@ -1,0 +1,5 @@
+(executable
+ (name state_hasher)
+ (libraries mina_base mina_state yojson core_kernel)
+ (instrumentation (backend bisect_ppx))
+ (preprocess (pps ppx_version ppx_mina ppx_hash)))
