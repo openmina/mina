@@ -39,6 +39,9 @@ pub struct Database {
     buffer: Vec<u8>,
     /// Filename of the inner file
     filename: PathBuf,
+
+    previous_buffer_cap: usize,
+    previous_file_cap: usize,
 }
 
 /// Compute crc32 of an entry
@@ -309,6 +312,8 @@ impl Database {
             file: BufWriter::with_capacity(4 * 1024 * 1024, file), // 4 MB
             buffer: Vec::with_capacity(BUFFER_DEFAULT_CAPACITY),
             filename,
+            previous_file_cap: 0,
+            previous_buffer_cap: 0,
         })
     }
 
@@ -385,6 +390,8 @@ impl Database {
             file: BufWriter::with_capacity(4 * 1024 * 1024, reader.into_inner()), // 4 MB
             buffer: Vec::with_capacity(BUFFER_DEFAULT_CAPACITY),
             filename,
+            previous_file_cap: 0,
+            previous_buffer_cap: 0,
         })
     }
 
@@ -449,7 +456,19 @@ impl Database {
 
         let value = self.read_value(value_offset, value_length)?;
 
-        decompress(value, header.value_is_compressed).map(Some)
+        let res = decompress(value, header.value_is_compressed).map(Some);
+
+        if self.previous_buffer_cap != self.buffer.capacity() {
+            eprintln!("[MY_LOG] new[set] previous_buffer_cap={:?} prev={:?} file={:?}", self.buffer.capacity(), self.previous_buffer_cap, self.filename);
+            self.previous_buffer_cap = self.buffer.capacity();
+        }
+
+        if self.previous_file_cap != self.file.capacity() {
+            eprintln!("[MY_LOG] new[set] previous_file_cap={:?} prev={:?} file={:?}", self.file.capacity(), self.previous_file_cap, self.filename);
+            self.previous_file_cap = self.file.capacity();
+        }
+
+        res
     }
 
     fn set_impl(&mut self, key: Key, value: Option<Value>) -> std::io::Result<()> {
@@ -478,6 +497,16 @@ impl Database {
             self.index.remove(&key);
         } else {
             self.index.insert(key, header_offset);
+        }
+
+        if self.previous_buffer_cap != self.buffer.capacity() {
+            eprintln!("[MY_LOG] new[set] previous_buffer_cap={:?} prev={:?} file={:?}", self.buffer.capacity(), self.previous_buffer_cap, self.filename);
+            self.previous_buffer_cap = self.buffer.capacity();
+        }
+
+        if self.previous_file_cap != self.file.capacity() {
+            eprintln!("[MY_LOG] new[set] previous_file_cap={:?} prev={:?} file={:?}", self.file.capacity(), self.previous_file_cap, self.filename);
+            self.previous_file_cap = self.file.capacity();
         }
 
         Ok(())
