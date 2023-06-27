@@ -244,6 +244,7 @@ module Transaction_pool = struct
       let cmd =
         Bin_prot.Reader.of_string User_command.Stable.V2.bin_reader_t encoded
       in
+      (*Core_kernel.printf !"%{sexp:User_command.t}\n%!" cmd;*)
       verify_and_apply_impl [ cmd ]
     with e ->
       let bt = Printexc.get_backtrace () in
@@ -266,7 +267,7 @@ let run_command =
           | None -> false
         in
         let minimum_fee = Mina_compile_config.minimum_user_command_fee in
-          Rust.transaction_fuzzer break_on_invariant (Int64.of_int seed) (Int64.of_int (Currency.Fee.to_mina_int minimum_fee)) set_constraint_constants
+          Rust.transaction_fuzzer break_on_invariant (Int64.of_int seed) (Int64.of_int (Currency.Fee.to_nanomina_int minimum_fee)) set_constraint_constants
           set_initial_accounts apply_tx get_coverage Transaction_pool.setup
           Transaction_pool.verify_and_apply
         )
