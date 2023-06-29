@@ -1,5 +1,8 @@
 open Core
+(*open Base*)
+(*open Core_kernel*)
 open Mina_base
+
 open Mina_transaction
 module Rust = Mina_tree.Rust
 module Fp = Kimchi_pasta.Basic.Fp
@@ -118,6 +121,21 @@ let set_initial_accounts accounts_bytes =
   let ledger_hash = Ledger.merkle_root ledger_ in
   Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
 
+module ApplyTxResult = struct
+  [%%versioned
+  module Stable = struct
+    module V2 = struct
+      type t = {
+        root_hash : Fp.Stable.V1.t ;
+        apply_result : Mina_transaction_logic.Transaction_applied.Stable.V2.t list ;
+        error: string
+      }
+
+      let to_latest = Fn.id
+    end
+  end]
+end
+
 let apply_tx user_command_bytes =
   try
     let command =
@@ -133,14 +151,21 @@ let apply_tx user_command_bytes =
       ledger txns
 
     *)
-    let _applied =
+    let applied =
       Ledger.apply_transactions ~constraint_constants
         ~global_slot:txn_state_view.global_slot_since_genesis ~txn_state_view
         ledger [ tx ]
     in
-    (*Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t list Or_error.t}\n%!" _applied;*)
-    let ledger_hash = Ledger.merkle_root ledger in
-    Bin_prot.Writer.to_bytes [%bin_writer: Fp.t] ledger_hash
+    (*Core_kernel.printf !"%{sexp:Ledger.Transaction_applied.t list Or_error.t}\n%!" applied;*)
+    match applied with
+    | Ok applied -> let ret : ApplyTxResult.t = {
+      root_hash = Ledger.merkle_root ledger;
+      apply_result = applied;
+      error =  "" } in Bin_prot.Writer.to_bytes [%bin_writer: ApplyTxResult.Stable.Latest.t] ret
+    | Error e -> let ret : ApplyTxResult.t = {
+      root_hash = Ledger.merkle_root ledger;
+      apply_result = [];
+      error =  Error.to_string_hum e } in Bin_prot.Writer.to_bytes [%bin_writer: ApplyTxResult.Stable.Latest.t] ret
   with e ->
     let bt = Printexc.get_backtrace () in
     let msg = Exn.to_string e in
