@@ -14,11 +14,15 @@
    core
    core_kernel
    base
+   base.caml
    sexplib0
    base_quickcheck
    ppx_inline_test.config
    bisect_ppx.runtime
    bisect_ppx.common
+   bin_prot
+   bin_prot.shape
+   ppx_version.runtime
    ;;local libraries
    pickles
    kimchi_backend.pasta
