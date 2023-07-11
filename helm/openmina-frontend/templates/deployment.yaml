@@ -64,7 +64,7 @@ data:
     {
       "production": true,
       "aggregator": "/aggregator",
-      "isVanilla": {{ $.Values.isVanilla | default "false" }},
+      "isVanilla": {{ $.Values.frontend.isVanilla | default "false" }},
       "globalConfig": {
         "features": {
           "dashboard": ["nodes"],

@@ -1,2 +1,3 @@
 frontend:
   image: directcuteo/mina-frontend:4332938
+  isVanilla: true
