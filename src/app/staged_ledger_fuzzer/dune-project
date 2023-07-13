@@ -1,0 +1,4 @@
+(lang dune 3.3)
+(name staged_ledger_fuzzer)
+(implicit_transitive_deps false)
+(wrapped_executables false)
