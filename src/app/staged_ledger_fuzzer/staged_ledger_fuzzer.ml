@@ -120,13 +120,15 @@ module CreateDiffArgs = struct
   end]
 end
 
-module CreateDiffReturn = struct
+module CreateDiffResult = struct
   [%%versioned
   module Stable = struct
     module V2 = struct
       type t =
-        Staged_ledger_diff.Stable.V2.t
-        * (User_command.Stable.V2.t * string) list
+        ( Staged_ledger_diff.Stable.V2.t
+        * (User_command.Stable.V2.t * string) list )
+        option
+        * string option
       [@@ocaml.warning "-34"]
 
       let to_latest = Fn.id
@@ -180,17 +182,19 @@ let create_diff args_serialized =
         ~get_completed_work:stmt_to_work_random_prover
         ~supercharge_coinbase:false
     in
-    match diff_result with
-    | Ok (diff, invalid_txns) ->
-        let invalid_cmds =
-          List.map invalid_txns ~f:(fun (tx, e) ->
-              (User_command.forget_check tx, Error.to_string_hum e) )
-        in
-        let diff = Staged_ledger_diff.forget diff in
-        Bin_prot.Writer.to_bytes [%bin_writer: CreateDiffReturn.Stable.Latest.t]
-          (diff, invalid_cmds)
-    | Error e ->
-        Error.raise (Real_staged_ledger.Pre_diff_info.Error.to_error e)
+    let res =
+      match diff_result with
+      | Ok (diff, invalid_txns) ->
+          let invalid_cmds =
+            List.map invalid_txns ~f:(fun (tx, e) ->
+                (User_command.forget_check tx, Error.to_string_hum e) )
+          in
+          let diff = Staged_ledger_diff.forget diff in
+          (Some (diff, invalid_cmds), None)
+      | Error e ->
+          (None, Some (Real_staged_ledger.Pre_diff_info.Error.to_string e))
+    in
+    Bin_prot.Writer.to_bytes [%bin_writer: CreateDiffResult.Stable.Latest.t] res
   with e ->
     let bt = Printexc.get_backtrace () in
     let msg = Exn.to_string e in
@@ -205,7 +209,7 @@ module ApplyDiffArgs = struct
         { diff : Staged_ledger_diff.Stable.V2.t
         ; global_slot : Mina_numbers.Global_slot.Stable.V1.t
         ; coinbase_receiver : Public_key.Compressed.Stable.V1.t
-        ; current_state : Mina_state.Protocol_state.Body.Value.Stable.V2.t
+        ; current_state : Mina_state.Protocol_state.Value.Stable.V2.t
         ; state_hashes : Fp.Stable.V1.t * Fp.Stable.V1.t
         }
 
@@ -215,49 +219,61 @@ module ApplyDiffArgs = struct
 end
 
 let apply_diff args_serialized =
-  let ApplyDiffArgs.
-        { diff; global_slot; coinbase_receiver; current_state; state_hashes } =
-    Bin_prot.Reader.of_bytes [%bin_reader: ApplyDiffArgs.Stable.Latest.t]
-      args_serialized
-  in
-  let logger = Logger.null () in
-  let current_state_view = Mina_state.Protocol_state.Body.view current_state in
-  let verifier =
-    match !verifier with
-    | Some verifier ->
-        verifier
-    | None ->
-        failwith "Verifier not set"
-  in
-  let staged_ledger =
-    match !staged_ledger with
-    | Some ledger ->
-        ledger
-    | None ->
-        failwith "staged ledger not initialized"
-  in
-  let open Deferred.Let_syntax in
-  let result =
-    Real_staged_ledger.apply ?skip_verification:None
-      ~constraint_constants:!constraint_constants ~global_slot staged_ledger
-      diff ~logger ~verifier ~current_state_view
-      ~state_and_body_hash:state_hashes ~coinbase_receiver
-      ~supercharge_coinbase:false
-  in
-  let ( `Hash_after_applying staged_ledger_hash
-      , `Ledger_proof _
-      , `Staged_ledger _
-      , `Pending_coinbase_update _ ) =
-    Thread_safe.block_on_async_exn (fun () ->
-        let%map unwrapped_result = result in
-        match unwrapped_result with
-        | Ok value ->
-            value
-        | Error _ ->
-            failwith "Error unwrapping result" )
-  in
-  Bin_prot.Writer.to_bytes [%bin_writer: Staged_ledger_hash.Stable.Latest.t]
-    staged_ledger_hash
+  try
+    let ApplyDiffArgs.
+          { diff; global_slot; coinbase_receiver; current_state; state_hashes }
+        =
+      Bin_prot.Reader.of_bytes [%bin_reader: ApplyDiffArgs.Stable.Latest.t]
+        args_serialized
+    in
+    let logger = Logger.null () in
+    let current_state_view =
+      Mina_state.Protocol_state.Body.view current_state.body
+    in
+    let verifier =
+      match !verifier with
+      | Some verifier ->
+          verifier
+      | None ->
+          failwith "Verifier not set"
+    in
+    let staged_ledger =
+      match !staged_ledger with
+      | Some ledger ->
+          ledger
+      | None ->
+          failwith "staged ledger not initialized"
+    in
+    let open Deferred.Let_syntax in
+    let result =
+      Real_staged_ledger.apply ?skip_verification:None
+        ~constraint_constants:!constraint_constants ~global_slot staged_ledger
+        diff ~logger ~verifier ~current_state_view
+        ~state_and_body_hash:state_hashes ~coinbase_receiver
+        ~supercharge_coinbase:false
+    in
+    let res =
+      Thread_safe.block_on_async_exn (fun () ->
+          let%map unwrapped_result = result in
+          match unwrapped_result with
+          | Ok value ->
+              let ( `Hash_after_applying staged_ledger_hash
+                  , `Ledger_proof _
+                  , `Staged_ledger _
+                  , `Pending_coinbase_update _ ) =
+                value
+              in
+              Some staged_ledger_hash
+          | Error _ ->
+              None )
+    in
+    Bin_prot.Writer.to_bytes
+      [%bin_writer: Staged_ledger_hash.Stable.Latest.t option] res
+  with e ->
+    let bt = Printexc.get_backtrace () in
+    let msg = Exn.to_string e in
+    Core_kernel.printf !"except: %s\n%s\n%!" msg bt ;
+    raise e
 
 let get_coverage _ =
   List.map (Bisect.Runtime.get_coverage_flattened ())
