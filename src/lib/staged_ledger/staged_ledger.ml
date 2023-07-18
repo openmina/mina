@@ -4366,6 +4366,75 @@ let%test_module "staged ledger tests" =
 
       ()
 
+    let%test_unit "Print verifier index" =
+      let proof_level = Genesis_constants.Proof_level.compiled in
+      let constraint_constants =
+        Genesis_constants.Constraint_constants.compiled
+      in
+      Core.Printf.eprintf "Compiling transaction snark module...\n%!" ;
+      let before_time = Unix.gettimeofday () in
+      let module T = Transaction_snark.Make (struct
+        let constraint_constants = constraint_constants
+
+        let proof_level = proof_level
+      end) in
+      let vk = T.verification_key in
+      let json = Pickles.Verification_key.to_yojson (Lazy.force vk) in
+      Core.Printf.eprintf "transaction verifier index=%s\n%!" (Yojson.Safe.to_string json);
+
+      (* let dummy = Proof.transaction_dummy in *)
+      (* (\* val create : fee:Currency.Fee.t -> prover:Public_key.Compressed.t -> t *\) *)
+
+      (* let prover_pk = *)
+      (* Quickcheck.random_value ~seed:(`Deterministic "snark worker") *)
+      (*   Public_key.Compressed.gen in *)
+
+      (* let sok_message = Sok_message.create ~fee:(Fee.of_mina_int_exn 10) ~prover:prover_pk in *)
+      (* (\* let sok_digest = Sok_ *\) *)
+      (* let sok_digest = Sok_message.Digest.default in *)
+
+      (* let statement = Quickcheck.random_value ~seed:(`Deterministic "snark worker") Mina_state.Snarked_ledger_state.gen in *)
+
+      (* let ledger_proof = Ledger_proof.create ~statement ~sok_digest ~proof:dummy in *)
+      (* let res = Scheduler.go (T.verify [(ledger_proof, sok_message)]) |> Or_error.ok_exn in *)
+      (* let res = T.verify [(ledger_proof, sok_message)] |> Or_error.ok_exn in *)
+      let read_file_into_string filename = Stdio.In_channel.read_all filename in
+
+      let ledger_proof_file =
+        read_file_into_string "/home/sebastien/travaux/ledger/ledger_proof.bin"
+      in
+      let sok_msg_file =
+        read_file_into_string "/home/sebastien/travaux/ledger/sok_msg.bin"
+      in
+
+      Core.Printf.eprintf "START READING FILE\n%!" ;
+
+      let ledger_proof =
+        Ledger_proof.Stable.V2.bin_read_t
+          (Bigstring.of_string ledger_proof_file)
+          ~pos_ref:(ref 0)
+      in
+
+      let sok_message =
+        Sok_message.Stable.V1.bin_read_t
+          (Bigstring.of_string sok_msg_file)
+          ~pos_ref:(ref 0)
+      in
+
+      (* let stmt = Ledger_proof.statement_with_sok ledger_proof in *)
+      (* let fields = Mina_state.Snarked_ledger_state.With_sok.to_field_elements stmt in *)
+      (* Core.Printf.eprintf !"STMT=%{sexp: Mina_state.Snarked_ledger_state.With_sok.t}\n%!" stmt; *)
+      (* Core.Printf.eprintf !"FIELDS=%{sexp: Frozen_ledger_hash.t list}\n%!" (Array.to_list fields); *)
+      Core.Printf.eprintf "START\n%!" ;
+      let res =
+        Async.Thread_safe.block_on_async_exn (fun () ->
+            T.verify [ (ledger_proof, sok_message) ] )
+        |> Or_error.ok_exn
+      in
+
+      Core.Printf.eprintf "OK\n%!" ;
+      ()
+
     let%test_unit "Mismatched verification keys in zkApp accounts and \
                    transactions" =
       let open Transaction_snark.For_tests in
