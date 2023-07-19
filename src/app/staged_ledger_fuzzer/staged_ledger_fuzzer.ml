@@ -237,7 +237,7 @@ let apply_diff args_serialized =
       | None ->
           failwith "Verifier not set"
     in
-    let staged_ledger =
+    let _staged_ledger =
       match !staged_ledger with
       | Some ledger ->
           ledger
@@ -247,7 +247,7 @@ let apply_diff args_serialized =
     let open Deferred.Let_syntax in
     let result =
       Real_staged_ledger.apply ?skip_verification:None
-        ~constraint_constants:!constraint_constants ~global_slot staged_ledger
+        ~constraint_constants:!constraint_constants ~global_slot _staged_ledger
         diff ~logger ~verifier ~current_state_view
         ~state_and_body_hash:state_hashes ~coinbase_receiver
         ~supercharge_coinbase:false
@@ -259,10 +259,11 @@ let apply_diff args_serialized =
           | Ok value ->
               let ( `Hash_after_applying staged_ledger_hash
                   , `Ledger_proof _
-                  , `Staged_ledger _
+                  , `Staged_ledger ledger
                   , `Pending_coinbase_update _ ) =
                 value
               in
+              staged_ledger := Some ledger;
               Some staged_ledger_hash
           | Error _ ->
               None )
