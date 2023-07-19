@@ -6,7 +6,7 @@ open Zkapp_basic
 
 module Event = struct
   (* Arbitrary hash input, encoding determined by the zkApp's developer. *)
-  type t = Field.t array [@@deriving equal]
+  type t = Field.t array [@@deriving equal, sexp]
 
   let hash (x : t) = Random_oracle.hash ~init:Hash_prefix_states.zkapp_event x
 
@@ -28,7 +28,7 @@ module Make_events (Inputs : sig
   val deriver_name : string
 end) =
 struct
-  type t = Event.t list [@@deriving equal]
+  type t = Event.t list [@@deriving equal, sexp]
 
   let empty_hash = Random_oracle.(salt Inputs.salt_phrase |> digest)
 

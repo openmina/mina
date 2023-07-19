@@ -1235,7 +1235,7 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Bool = struct
-      type t = bool
+      type t = bool [@@deriving sexp]
 
       module Assert = struct
         let is_true ~pos b =
@@ -1267,7 +1267,7 @@ module Make (L : Ledger_intf.S) :
 
       type failure_status = Transaction_status.Failure.t option
 
-      type failure_status_tbl = Transaction_status.Failure.Collection.t
+      type failure_status_tbl = Transaction_status.Failure.Collection.t [@@deriving sexp]
 
       let is_empty t = List.join t |> List.is_empty
 
@@ -1299,6 +1299,9 @@ module Make (L : Ledger_intf.S) :
     module Ledger = struct
       type t = L.t
 
+      let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+      let t_of_sexp _ = failwith "t_of_sexp: not implemented"
+
       let if_ = value_if
 
       let empty = L.empty
@@ -1325,7 +1328,7 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Transaction_commitment = struct
-      type t = Field.t
+      type t = Field.t [@@deriving sexp]
 
       let empty = Zkapp_command.Transaction_commitment.empty
 
@@ -1348,7 +1351,7 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Index = struct
-      type t = Mina_numbers.Index.t
+      type t = Mina_numbers.Index.t [@@deriving sexp]
 
       let zero, succ = Mina_numbers.Index.(zero, succ)
 
@@ -1356,13 +1359,13 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Public_key = struct
-      type t = Public_key.Compressed.t
+      type t = Public_key.Compressed.t [@@deriving sexp]
 
       let if_ = value_if
     end
 
     module Controller = struct
-      type t = Permissions.Auth_required.t
+      type t = Permissions.Auth_required.t [@@deriving sexp]
 
       let if_ = value_if
 
@@ -1378,13 +1381,13 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Global_slot = struct
-      include Mina_numbers.Global_slot
+      include Mina_numbers.Global_slot [@@deriving sexp]
 
       let if_ = value_if
     end
 
     module Nonce = struct
-      type t = Account.Nonce.t
+      type t = Account.Nonce.t [@@deriving sexp]
 
       let if_ = value_if
 
@@ -1392,7 +1395,7 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Receipt_chain_hash = struct
-      type t = Receipt.Chain_hash.t
+      type t = Receipt.Chain_hash.t [@@deriving sexp]
 
       module Elt = struct
         type t = Receipt.Zkapp_command_elt.t
@@ -1414,7 +1417,7 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Timing = struct
-      type t = Account_update.Update.Timing_info.t option
+      type t = Account_update.Update.Timing_info.t option [@@deriving sexp]
 
       let if_ = value_if
 
@@ -1433,19 +1436,19 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Verification_key = struct
-      type t = (Side_loaded_verification_key.t, Field.t) With_hash.t option
+      type t = (Side_loaded_verification_key.t, Field.t) With_hash.t option [@@deriving sexp]
 
       let if_ = value_if
     end
 
     module Verification_key_hash = struct
-      type t = Field.t option
+      type t = Field.t option [@@deriving sexp]
 
       let equal vk1 vk2 = Option.equal Field.equal vk1 vk2
     end
 
     module Actions = struct
-      type t = Zkapp_account.Actions.t
+      type t = Zkapp_account.Actions.t [@@deriving sexp]
 
       let is_empty = List.is_empty
 
@@ -1453,13 +1456,13 @@ module Make (L : Ledger_intf.S) :
     end
 
     module Zkapp_uri = struct
-      type t = string
+      type t = string [@@deriving sexp]
 
       let if_ = value_if
     end
 
     module Token_symbol = struct
-      type t = Account.Token_symbol.t
+      type t = Account.Token_symbol.t [@@deriving sexp]
 
       let if_ = value_if
     end
@@ -1502,7 +1505,7 @@ module Make (L : Ledger_intf.S) :
 
         let set_timing : t -> Controller.t = fun a -> a.permissions.set_timing
 
-        type t = Permissions.t
+        type t = Permissions.t [@@deriving sexp]
 
         let if_ = value_if
       end
@@ -1642,9 +1645,9 @@ module Make (L : Ledger_intf.S) :
     module Amount = struct
       open Currency.Amount
 
-      type unsigned = t
+      type unsigned = t [@@deriving sexp]
 
-      type t = unsigned
+      type t = unsigned [@@deriving sexp]
 
       let if_ = value_if
 
@@ -1822,6 +1825,9 @@ module Make (L : Ledger_intf.S) :
     struct
       type t = Elt.t list
 
+      let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+      let t_of_sexp _ = failwith "t_of_sexp: not implemented"
+
       let if_ = value_if
 
       let empty () = []
@@ -1849,6 +1855,9 @@ module Make (L : Ledger_intf.S) :
       include Stack_frame
 
       type t = value
+
+      let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+      let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
       let if_ = Zkapp_command.value_if
 

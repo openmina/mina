@@ -1,3 +1,5 @@
+[@@@ocaml.warning "-32"]
+
 open Core
 open Signature_lib
 open Mina_base
@@ -682,6 +684,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Transaction_commitment = struct
           type t = Field.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ = Field.if_
 
@@ -700,6 +704,9 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Bool = struct
           type t = Boolean.var
+
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           [%%define_locally
           Boolean.(( ||| ), ( &&& ), if_, true_, false_, equal, not, all)]
@@ -725,7 +732,7 @@ module Make_str (A : Wire_types.Concrete) = struct
 
           type failure_status = unit
 
-          type failure_status_tbl = unit
+          type failure_status_tbl = unit [@@deriving sexp]
 
           let assert_with_failure_status_tbl ~pos b _failure_status_tbl =
             Assert.is_true ~pos b
@@ -733,6 +740,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Index = struct
           open Mina_numbers.Index.Checked
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           type t = var
 
@@ -745,6 +754,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Account_id = struct
           type t = Account_id.var
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_ ~else_ =
             run_checked (Account_id.Checked.if_ b ~then_ ~else_)
@@ -766,6 +777,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Global_slot = struct
           include Global_slot.Checked
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let ( > ) x y = run_checked (x > y)
 
@@ -776,6 +789,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Nonce = struct
           type t = Account.Nonce.Checked.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_ ~else_ =
             run_checked (Account.Nonce.Checked.if_ b ~then_ ~else_)
@@ -785,12 +800,16 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module State_hash = struct
           type t = State_hash.var
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_ ~else_ = run_checked (State_hash.if_ b ~then_ ~else_)
         end
 
         module Timing = struct
           type t = Account_timing.var
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_ ~else_ =
             run_checked (Account_timing.if_ b ~then_ ~else_)
@@ -800,6 +819,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Balance = struct
           include Balance.Checked
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_ ~else_ = run_checked (if_ b ~then_ ~else_)
 
@@ -811,6 +832,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Receipt_chain_hash = struct
           open Receipt.Chain_hash.Checked
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           type nonrec t = t
 
@@ -835,6 +858,8 @@ module Make_str (A : Wire_types.Concrete) = struct
               With_hash.t
               Data_as_hash.t )
             Zkapp_basic.Flagged_option.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~(then_ : t) ~(else_ : t) : t =
             Zkapp_basic.Flagged_option.if_ ~if_:Data_as_hash.if_ b ~then_ ~else_
@@ -842,12 +867,16 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Verification_key_hash = struct
           type t = Field.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let equal = Field.equal
         end
 
         module Actions = struct
           type t = Zkapp_account.Actions.var
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let is_empty x = run_checked (Account_update.Actions.is_empty_var x)
 
@@ -856,18 +885,24 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Zkapp_uri = struct
           type t = string Data_as_hash.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ = Data_as_hash.if_
         end
 
         module Token_symbol = struct
           type t = Account.Token_symbol.var
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ = Account.Token_symbol.if_
         end
 
         module Account = struct
           type t = (Account.Checked.Unhashed.t, Field.t Lazy.t) With_hash.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           module Permissions = struct
             type controller = Permissions.Auth_required.Checked.t
@@ -909,6 +944,8 @@ module Make_str (A : Wire_types.Concrete) = struct
              fun a -> a.data.permissions.set_timing
 
             type t = Permissions.Checked.t
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
             let if_ b ~then_ ~else_ = Permissions.Checked.if_ b ~then_ ~else_
           end
@@ -1062,12 +1099,20 @@ module Make_str (A : Wire_types.Concrete) = struct
             Flagged_option.data x
         end
 
-        module Call_forest = Zkapp_call_forest.Checked
+        module Call_forest = struct
+          include Zkapp_call_forest.Checked
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
+        end
+
+        (* module Call_forest = Zkapp_call_forest.Checked *)
 
         module Stack_frame = struct
           type frame = (Token_id.Checked.t, Call_forest.t) Stack_frame.t
 
           type t = (frame, Stack_frame.Digest.Checked.t Lazy.t) With_hash.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_:(t1 : t) ~else_:(t2 : t) : t =
             { With_hash.hash =
@@ -1176,6 +1221,8 @@ module Make_str (A : Wire_types.Concrete) = struct
             ( (Elt.t, Call_stack_digest.t) With_stack_hash.t list V.t
             , Call_stack_digest.Checked.t )
             With_hash.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_:(t : t) ~else_:(e : t) : t =
             { hash = Call_stack_digest.Checked.if_ b ~then_:t.hash ~else_:e.hash
@@ -1286,11 +1333,15 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Amount = struct
           type t = Amount.Checked.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           type unsigned = t
 
           module Signed = struct
             type t = Amount.Signed.Checked.t
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
             let equal t t' = run_checked (Amount.Signed.Checked.equal t t')
 
@@ -1330,6 +1381,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Token_id = struct
           type t = Token_id.Checked.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ = Token_id.Checked.if_
 
@@ -1340,6 +1393,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Public_key = struct
           type t = Public_key.Compressed.var
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
           let if_ b ~then_ ~else_ =
             run_checked (Public_key.Compressed.Checked.if_ b ~then_ ~else_)
@@ -1347,13 +1402,23 @@ module Make_str (A : Wire_types.Concrete) = struct
 
         module Protocol_state_precondition = struct
           type t = Zkapp_precondition.Protocol_state.Checked.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
         end
 
         module Valid_while_precondition = struct
           type t = Zkapp_precondition.Valid_while.Checked.t
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
         end
 
-        module Field = Impl.Field
+        module Field = struct
+          include Impl.Field
+          let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+          let t_of_sexp _ = failwith "t_of_sexp: not implemented"
+        end
+
+        (* module Field = Impl.Field *)
 
         module Local_state = struct
           type t =
@@ -1405,6 +1470,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
           module Account = struct
             include Account
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
             let register_verification_key ({ data = a; _ } : t) =
               match spec.auth_type with
@@ -1428,6 +1495,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
           module Controller = struct
             type t = Permissions.Auth_required.Checked.t
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
             let if_ = Permissions.Auth_required.Checked.if_
 
@@ -1444,6 +1513,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
           module Ledger = struct
             type t = Ledger_hash.var * Sparse_ledger.t V.t
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
             type inclusion_proof = (Boolean.var * Field.t) list
 
@@ -1533,6 +1604,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
           module Account_update = struct
             type t = account_update
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
             type call_forest = Call_forest.t
 
@@ -1625,6 +1698,8 @@ module Make_str (A : Wire_types.Concrete) = struct
 
             module Update = struct
               open Zkapp_basic
+              let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+              let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
               type 'a set_or_keep = 'a Set_or_keep.Checked.t
 
@@ -1667,10 +1742,14 @@ module Make_str (A : Wire_types.Concrete) = struct
 
           module Set_or_keep = struct
             include Zkapp_basic.Set_or_keep.Checked
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
           end
 
           module Global_state = struct
             include Global_state
+            let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+            let t_of_sexp _ = failwith "t_of_sexp: not implemented"
 
             let fee_excess { fee_excess; _ } = fee_excess
 

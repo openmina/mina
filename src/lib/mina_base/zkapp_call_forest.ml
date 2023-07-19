@@ -7,6 +7,9 @@ type t =
   , Zkapp_command.Digest.Forest.t )
   Zkapp_command.Call_forest.t
 
+let sexp_of_t _ = failwith "sexp_of_t: not implemented"
+let t_of_sexp _ = failwith "t_of_sexp: not implemented"
+
 type account_update =
   (Account_update.t, Zkapp_command.Digest.Account_update.t) With_hash.t
 
