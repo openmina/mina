@@ -6,7 +6,7 @@ open Mina_base
 module type Iffable = sig
   type bool
 
-  type t
+  type t  [@@deriving sexp]
 
   val if_ : bool -> then_:t -> else_:t -> t
 end
@@ -42,7 +42,7 @@ module type Bool_intf = sig
 
   type failure_status
 
-  type failure_status_tbl
+  type failure_status_tbl [@@deriving sexp]
 
   (* [pos] is file,line,col,endcol from __POS__ *)
   val assert_with_failure_status_tbl :
