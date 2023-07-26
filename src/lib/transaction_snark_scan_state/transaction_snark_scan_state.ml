@@ -328,7 +328,7 @@ end) =
 struct
   module Fold = Parallel_scan.State.Make_foldable (Deferred)
 
-  let logger = lazy (Logger.create ())
+  (* let logger = lazy (Logger.create ()) *)
 
   module Timer = struct
     module Info = struct
@@ -371,13 +371,14 @@ struct
             Info.update acc elapsed ) ;
       x
 
-    let log label (t : t) =
-      let logger = Lazy.force logger in
-      [%log debug]
-        ~metadata:
-          (List.map (Hashtbl.to_alist t) ~f:(fun (k, info) ->
-               (k, Info.to_yojson info) ) )
-        "%s timing" label
+    let log _label (_t : t) =
+      ()
+      (* let logger = Lazy.force logger in
+       * [%log debug]
+       *   ~metadata:
+       *     (List.map (Hashtbl.to_alist t) ~f:(fun (k, info) ->
+       *          (k, Info.to_yojson info) ) )
+       *   "%s timing" label *)
   end
 
   (*TODO: fold over the pending_coinbase tree and validate the statements?*)

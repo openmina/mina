@@ -248,7 +248,7 @@ module Evals : sig
     ; generic_selector : 'a
     ; poseidon_selector : 'a
     ; lookup : 'a Lookup.t option
-    }
+    } [@@deriving sexp]
 
   (** {4 Iterators} *)
 

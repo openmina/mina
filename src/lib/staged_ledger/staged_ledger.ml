@@ -328,6 +328,11 @@ module T = struct
     in
     return t
 
+  let my_new
+      ~(constraint_constants : Genesis_constants.Constraint_constants.t)
+      ~ledger ~scan_state ~pending_coinbase_collection : t =
+    { ledger; scan_state; constraint_constants; pending_coinbase_collection }
+
   let of_scan_state_and_ledger_unchecked
       ~(constraint_constants : Genesis_constants.Constraint_constants.t)
       ~last_proof_statement ~ledger ~scan_state ~pending_coinbase_collection

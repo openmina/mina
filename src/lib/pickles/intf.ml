@@ -239,6 +239,8 @@ module type Inputs_base = sig
 
     val to_bits : t -> bool list
 
+    val to_string : t -> string
+
     val of_bits : bool list -> t
 
     val is_square : t -> bool

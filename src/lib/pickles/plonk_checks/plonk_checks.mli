@@ -35,6 +35,8 @@ module type Field_intf = sig
 
   val of_int : int -> t
 
+  val to_string : t -> string
+
   val ( * ) : t -> t -> t
 
   val ( / ) : t -> t -> t

@@ -7,6 +7,9 @@
    integers
    core_kernel
    async_kernel
+   async
+   async_unix
+   child_processes
    bin_prot.shape
    base.caml
    sexplib0
@@ -23,6 +26,7 @@
    ledger_proof
    logger
    blockchain_snark
+   transaction_snark
    unix_timestamp
    allocation_functor
    verifier
@@ -36,6 +40,7 @@
    mina_transaction
    truth
    transition_chain_verifier
+   stdio
    staged_ledger
    data_hash_lib
    block_time

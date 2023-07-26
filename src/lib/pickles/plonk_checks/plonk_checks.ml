@@ -1,3 +1,6 @@
+
+[@@@ocaml.warning "-27"]
+
 open Core_kernel
 open Pickles_types
 open Pickles_base
@@ -39,6 +42,8 @@ module type Field_intf = sig
   val one : t
 
   val of_int : int -> t
+
+  val to_string : t -> string
 
   val ( * ) : t -> t -> t
 

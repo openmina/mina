@@ -267,6 +267,17 @@ val of_scan_state_pending_coinbases_and_snarked_ledger :
   -> get_state:(State_hash.t -> Mina_state.Protocol_state.value Or_error.t)
   -> t Or_error.t Deferred.t
 
+val my_new :
+     constraint_constants:Genesis_constants.Constraint_constants.t
+  -> ledger:Ledger.t
+  -> scan_state:Scan_state.t
+  (* -> snarked_local_state:Mina_state.Local_state.t
+   * -> expected_merkle_root:Ledger_hash.t *)
+  -> pending_coinbase_collection:Pending_coinbase.t
+  -> t
+  (* -> get_state:(State_hash.t -> Mina_state.Protocol_state.value Or_error.t)
+   * -> t Or_error.t Deferred.t *)
+
 val of_scan_state_pending_coinbases_and_snarked_ledger_unchecked :
      constraint_constants:Genesis_constants.Constraint_constants.t
   -> scan_state:Scan_state.t

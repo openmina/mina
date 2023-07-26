@@ -2,6 +2,10 @@ open Core_kernel
 open Async_kernel
 open Mina_base
 
+(* open Mina_base *)
+(* open Mina_state
+ * open Blockchain_snark *)
+
 type t =
   { proof_level : Genesis_constants.Proof_level.t
   ; constraint_constants : Genesis_constants.Constraint_constants.t
@@ -15,46 +19,98 @@ type ledger_proof = Ledger_proof.t
 
 let create ~logger:_ ?enable_internal_tracing:_ ?internal_trace_filename:_
     ~proof_level ~constraint_constants ~pids:_ ~conf_dir:_ () =
-  match proof_level with
-  | Genesis_constants.Proof_level.Full ->
-      failwith "Unable to handle proof-level=Full"
-  | Check | None ->
-      Deferred.return { proof_level; constraint_constants }
+  (* match proof_level with *)
+  (* | Genesis_constants.Proof_level.Full ->
+   *     failwith "Unable to handle proof-level=Full"
+   * | Check | None -> *)
+  Pickles.Side_loaded.srs_precomputation () ;
+    Deferred.return { proof_level; constraint_constants }
 
 let verify_blockchain_snarks _ _ = Deferred.Or_error.return (Ok ())
 
 (* N.B.: Valid_assuming is never returned, in fact; we assert a return type
    containing Valid_assuming to match the expected type
 *)
-let verify_commands _ (cs : User_command.Verifiable.t With_status.t list) :
-    [ `Valid of Mina_base.User_command.Valid.t
-    | `Valid_assuming of
-      ( Pickles.Side_loaded.Verification_key.t
-      * Mina_base.Zkapp_statement.t
-      * Pickles.Side_loaded.Proof.t )
-      list
-    | Common.invalid ]
-    list
-    Deferred.Or_error.t =
-  List.map cs ~f:(fun c ->
-      match Common.check c with
-      | `Valid c ->
-          `Valid c
-      | `Valid_assuming (c, _) ->
-          `Valid c
-      | `Invalid_keys keys ->
-          `Invalid_keys keys
-      | `Invalid_signature keys ->
-          `Invalid_signature keys
-      | `Invalid_proof err ->
-          `Invalid_proof err
-      | `Missing_verification_key keys ->
-          `Missing_verification_key keys
-      | `Unexpected_verification_key keys ->
-          `Unexpected_verification_key keys
-      | `Mismatched_authorization_kind keys ->
-          `Mismatched_authorization_kind keys )
-  |> Deferred.Or_error.return
+
+(* let verify_commands
+ *       _
+ *       (cs : User_command.Verifiable.t With_status.t list) :
+ *       _ list Deferred.t =
+ *   let cs = List.map cs ~f:Common.check in
+ *   let to_verify =
+ *     List.concat_map cs ~f:(function
+ *         | `Valid _ ->
+ *            []
+ *         | `Valid_assuming (_, xs) ->
+ *            xs
+ *         | `Invalid_keys _
+ *           | `Invalid_signature _
+ *           | `Invalid_proof _
+ *           | `Missing_verification_key _
+ *           | `Unexpected_verification_key _
+ *           | `Mismatched_authorization_kind _ ->
+ *            [] )
+ *   in
+ *   let%map all_verified =
+ *     Pickles.Side_loaded.verify ~typ:Zkapp_statement.typ to_verify
+ *   in
+ *   List.map cs ~f:(function
+ *       | `Valid c ->
+ *          `Valid c
+ *       | `Valid_assuming (c, xs) ->
+ *          if Or_error.is_ok all_verified then `Valid c
+ *          else `Valid_assuming xs
+ *       | `Invalid_keys keys ->
+ *          `Invalid_keys keys
+ *       | `Invalid_signature keys ->
+ *          `Invalid_signature keys
+ *       | `Invalid_proof err ->
+ *          `Invalid_proof err
+ *       | `Missing_verification_key keys ->
+ *          `Missing_verification_key keys
+ *       | `Unexpected_verification_key keys ->
+ *          `Unexpected_verification_key keys
+ *       | `Mismatched_authorization_kind keys ->
+ *          `Mismatched_authorization_kind keys ) *)
+
+let verify_commands _t (cs : User_command.Verifiable.t With_status.t list) :
+    _ list Deferred.Or_error.t =
+  let cs = List.map cs ~f:Common.check in
+  let to_verify =
+    List.concat_map cs ~f:(function
+      | `Valid _ ->
+          []
+      | `Valid_assuming (_, xs) ->
+          xs
+      | `Invalid_keys _
+      | `Invalid_signature _
+      | `Invalid_proof _
+      | `Missing_verification_key _
+      | `Unexpected_verification_key _
+      | `Mismatched_authorization_kind _ ->
+          [] )
+  in
+  let%map all_verified =
+    Pickles.Side_loaded.verify ~typ:Zkapp_statement.typ to_verify
+  in
+  Or_error.return
+  @@ List.map cs ~f:(function
+       | `Valid c ->
+           `Valid c
+       | `Valid_assuming (c, xs) ->
+           if Or_error.is_ok all_verified then `Valid c else `Valid_assuming xs
+       | `Invalid_keys keys ->
+           `Invalid_keys keys
+       | `Invalid_signature keys ->
+           `Invalid_signature keys
+       | `Invalid_proof err ->
+           `Invalid_proof err
+       | `Missing_verification_key keys ->
+           `Missing_verification_key keys
+       | `Unexpected_verification_key keys ->
+           `Unexpected_verification_key keys
+       | `Mismatched_authorization_kind keys ->
+           `Mismatched_authorization_kind keys )
 
 let verify_transaction_snarks _ ts =
   (* Don't check if the proof has default sok, becasue they were probably not
