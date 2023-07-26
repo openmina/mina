@@ -1,0 +1,26 @@
+diff --git a/src/lib/snarky/src/base/snark0.ml b/src/lib/snarky/src/base/snark0.ml
+index 04a296cf4..d02514a4a 100644
+--- a/src/lib/snarky/src/base/snark0.ml
++++ b/src/lib/snarky/src/base/snark0.ml
+@@ -903,6 +903,8 @@ module Run = struct
+
+       let size = size
+
++      let to_string _ = ""
++
+       module Constant = struct
+         type t = Snark.Field.t [@@deriving bin_io, sexp, hash, compare, eq]
+
+diff --git a/src/lib/snarky/src/base/snark_intf.ml b/src/lib/snarky/src/base/snark_intf.ml
+index 7db66f7fb..6dfabc155 100644
+--- a/src/lib/snarky/src/base/snark_intf.ml
++++ b/src/lib/snarky/src/base/snark_intf.ml
+@@ -1210,6 +1210,8 @@ module type Run_basic = sig
+
+     val of_int : int -> t
+
++    val to_string : t -> string
++
+     val one : t
+
+     val zero : t
