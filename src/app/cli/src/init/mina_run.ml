@@ -496,6 +496,25 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
             [%log trace]
               ~metadata:[ ("work_spec", Snark_worker.Work.Spec.to_yojson r) ]
               "responding to a Get_work request with some new work" ;
+            let response_yojson =
+              [%to_yojson:
+                Snark_worker.Work.Spec.t * Signature_lib.Public_key.Compressed.t]
+                (r, key)
+            in
+            let response_binprot =
+              Bin_prot.Writer.to_string
+                Snark_worker.Rpcs_versioned.Get_work.Latest.bin_writer_response
+                (Some (r, key))
+            in
+            let response_binprot = Base64.encode_exn response_binprot in
+            [%log info]
+              ~metadata:[ ("response_json", response_yojson) ]
+              "responding to a Get_work request with some new work: \
+               $response_json" ;
+            [%log info]
+              ~metadata:[ ("response_binprot", `String response_binprot) ]
+              "responding to a Get_work request with some new work: \
+               $response_binprot" ;
             Mina_metrics.(Counter.inc_one Snark_work.snark_work_assigned_rpc) ;
             (r, key)) )
     ; implement Snark_worker.Rpcs_versioned.Submit_work.Latest.rpc
