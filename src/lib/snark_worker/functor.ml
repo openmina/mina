@@ -388,6 +388,58 @@ module Make (Inputs : Intf.Inputs_intf) :
           ~logger ~proof_level daemon_port
           (Option.value ~default:true shutdown_on_disconnect))
 
+  let command_from_stdio
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    let open Command.Let_syntax in
+    Command.async ~summary:"Run snark worker directly"
+      (let%map_open proof_level =
+         flag "--proof-level" ~doc:""
+           (optional_with_default Genesis_constants.Proof_level.Full
+              (Command.Arg_type.of_alist_exn
+                 [ ("Full", Genesis_constants.Proof_level.Full)
+                 ; ("Check", Check)
+                 ; ("None", None)
+                 ] ) )
+       in
+       fun () ->
+         let logger =
+           Logger.create () ~metadata:[ ("process", `String "Snark Worker") ]
+         in
+         let open Async in
+         let%bind worker_state =
+           Worker_state.create
+             ~constraint_constants:
+               Genesis_constants.Constraint_constants.compiled ~proof_level ()
+         in
+         let read buf ~pos ~len =
+           Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos ~len buf
+         in
+         let input =
+           Bin_prot.Utils.bin_read_stream ~read
+             Rpcs_versioned.Get_work.Latest.bin_reader_response
+         in
+         match input with
+         | None ->
+             exit 1
+         | Some (work, public_key) -> (
+             [%log info]
+               !"SNARK work $work_ids received from stdin. Starting proof \
+                 generation"
+               ~metadata:
+                 [ ( "work_ids"
+                   , Transaction_snark_work.Statement.compact_json
+                       (One_or_two.map (Work.Spec.instances work)
+                          ~f:Work.Single.Spec.statement ) )
+                 ] ;
+             let%bind result = perform worker_state public_key work in
+             match result with
+             | Error _ ->
+                 printf "Error generating proof\n" ;
+                 exit 1
+             | Ok _ ->
+                 printf "hurray!\n" ; exit 0 ) )
+
   let arguments ~proof_level ~daemon_address ~shutdown_on_disconnect =
     [ "-daemon-address"
     ; Host_and_port.to_string daemon_address
