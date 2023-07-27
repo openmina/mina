@@ -1632,6 +1632,7 @@ let snark_hashes =
 
 let internal_commands logger =
   [ (Snark_worker.Intf.command_name, Snark_worker.command)
+  ; (Snark_worker.Intf.command_stdio_name, Snark_worker.command_stdio)
   ; ("snark-hashes", snark_hashes)
   ; ( "run-prover"
     , Command.async

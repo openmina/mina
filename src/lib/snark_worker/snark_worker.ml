@@ -114,6 +114,7 @@ module Worker = struct
   end
 
   let command = command_from_rpcs (module Rpcs_versioned)
+  let command_stdio = command_from_stdio (module Rpcs_versioned)
 end
 
 include Worker

@@ -21,6 +21,9 @@
    result
    async_unix
    bin_prot.shape
+   core_unix.bigstring_unix
+   core_unix
+   stdio
    ;; local libraries
    one_or_two
    mina_metrics
