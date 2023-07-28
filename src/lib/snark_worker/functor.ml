@@ -388,6 +388,50 @@ module Make (Inputs : Intf.Inputs_intf) :
           ~logger ~proof_level daemon_port
           (Option.value ~default:true shutdown_on_disconnect))
 
+  let rec go_stdio
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) worker_state
+      logger fd =
+    let read buf ~pos ~len =
+      Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos ~len buf
+    in
+    let input =
+      Bin_prot.Utils.bin_read_stream ~read
+        Rpcs_versioned.Get_work.Latest.bin_reader_response
+    in
+    match input with
+    | None ->
+        exit 0
+    | Some (work, public_key) ->
+        let work_ids =
+          Transaction_snark_work.Statement.compact_json
+            (One_or_two.map (Work.Spec.instances work)
+               ~f:Work.Single.Spec.statement )
+        in
+        [%log info]
+          !"SNARK work $work_ids received from stdin. Starting proof generation"
+          ~metadata:[ ("work_ids", work_ids) ] ;
+        let%bind result = perform worker_state public_key work in
+        ( match result with
+        | Error _ ->
+            [%log error] !"Error generating proof"
+              ~metadata:[ ("work_ids", work_ids) ]
+        | Ok result -> (
+            [%log info]
+              !"Proof generated successfully"
+              ~metadata:[ ("work_ids", work_ids) ] ;
+            match fd with
+            | Some fd -> (
+                let dump =
+                  Bin_prot.Utils.bin_dump ~header:true
+                    Rpcs_versioned.Submit_work.Latest.bin_writer_query result
+                in
+                try Core_unix_bigstring_unix.really_write fd dump
+                with _ -> printf "closed file descriptor\n" )
+            | None ->
+                () ) ) ;
+        go_stdio (module Rpcs_versioned) worker_state logger fd
+
   let command_from_stdio
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
@@ -406,39 +450,16 @@ module Make (Inputs : Intf.Inputs_intf) :
          let logger =
            Logger.create () ~metadata:[ ("process", `String "Snark Worker") ]
          in
+         [%log info] !"Starting standalone snark worker..." ;
          let open Async in
          let%bind worker_state =
            Worker_state.create
              ~constraint_constants:
                Genesis_constants.Constraint_constants.compiled ~proof_level ()
          in
-         let read buf ~pos ~len =
-           Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos ~len buf
-         in
-         let input =
-           Bin_prot.Utils.bin_read_stream ~read
-             Rpcs_versioned.Get_work.Latest.bin_reader_response
-         in
-         match input with
-         | None ->
-             exit 1
-         | Some (work, public_key) -> (
-             [%log info]
-               !"SNARK work $work_ids received from stdin. Starting proof \
-                 generation"
-               ~metadata:
-                 [ ( "work_ids"
-                   , Transaction_snark_work.Statement.compact_json
-                       (One_or_two.map (Work.Spec.instances work)
-                          ~f:Work.Single.Spec.statement ) )
-                 ] ;
-             let%bind result = perform worker_state public_key work in
-             match result with
-             | Error _ ->
-                 printf "Error generating proof\n" ;
-                 exit 1
-             | Ok _ ->
-                 printf "hurray!\n" ; exit 0 ) )
+         [%log info] !"Snark worker state is initialized" ;
+         let fd = Some Core_unix.stderr in
+         go_stdio (module Rpcs_versioned) worker_state logger fd )
 
   let arguments ~proof_level ~daemon_address ~shutdown_on_disconnect =
     [ "-daemon-address"
