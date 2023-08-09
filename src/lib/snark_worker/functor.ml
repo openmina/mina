@@ -32,6 +32,9 @@ module Interrupt_handler = struct
         print_endline
           "[WARN] setting up a new pid with an older process still running"
 
+  (** Setups the interrupt handler so that the worker fork is killed when
+      the parent receives SIGINT. Returns a Deferred that will be resolved
+      once the fork process exits. *)
   let setup pid =
     maybe_setup_handler !state ;
     state := Child_running pid ;
@@ -99,12 +102,24 @@ module Make (Inputs : Intf.Inputs_intf) :
   open Inputs
   module Rpcs = Rpcs.Make (Inputs)
 
-  let response_writer
+  let outer_response_writer
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
     Result.bin_writer_t
       (Option.bin_writer_t Rpcs_versioned.Submit_work.Latest.bin_writer_query)
       String.bin_writer_t
+
+  let inner_response_writer
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    Result.bin_writer_t Rpcs_versioned.Submit_work.Latest.bin_writer_query
+      String.bin_writer_t
+
+  let inner_response_reader
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    Result.bin_reader_t Rpcs_versioned.Submit_work.Latest.bin_reader_query
+      String.bin_reader_t
 
   module Work = struct
     open Snark_work_lib
@@ -446,7 +461,10 @@ module Make (Inputs : Intf.Inputs_intf) :
           exit 0
       | `Ok None ->
           [%log error] "Received empty job, this should not happen." ;
-          (* TODO: write error response to [writer] *)
+          Writer.write_bin_prot writer
+            (inner_response_writer (module Rpcs_versioned))
+            (Error "Received an empty job") ;
+          let%bind () = Writer.flushed writer in
           loop ()
       | `Ok (Some (work, public_key)) -> (
           let work_ids =
@@ -464,24 +482,32 @@ module Make (Inputs : Intf.Inputs_intf) :
                   [ ("work_ids", work_ids)
                   ; ("error", `String (Error.to_string_hum error))
                   ] ;
-              (* TODO: write error response to [writer] *)
+              Writer.write_bin_prot writer
+                (inner_response_writer (module Rpcs_versioned))
+                (Error ("Error generating proof: " ^ Error.to_string_hum error)) ;
+              let%bind () = Writer.flushed writer in
               loop ()
           | Ok result ->
               [%log info] "Proof generated successfully"
                 ~metadata:[ ("work_ids", work_ids) ] ;
               Writer.write_bin_prot writer
-                Rpcs_versioned.Submit_work.V2.bin_writer_query result ;
+                (inner_response_writer (module Rpcs_versioned))
+                (Ok result) ;
               let%bind () = Writer.flushed writer in
               loop () )
     in
     loop ()
 
+  (** Run the loop that handles a fork instance and reading jobs from the parent process *)
   let handle_jobs
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~wait_for_fork
       ~writer ~reader ~logger () =
     let rec loop () =
       let read buf ~pos ~len =
+        (* Use `really_read` instead of the Async versions to
+           avoid creating new threads or registering new file descriptors
+           with epoll *)
         Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos ~len buf
       in
       let input =
@@ -501,69 +527,70 @@ module Make (Inputs : Intf.Inputs_intf) :
           [ choice wait_for_fork (fun s -> `Child_exit s)
           ; choice
               (Reader.read_bin_prot reader
-                 Rpcs_versioned.Submit_work.Latest.bin_reader_query )
+                 (inner_response_reader (module Rpcs_versioned)) )
               (fun data -> `Response data)
           ]
+      in
+      let write_result result =
+        let dump =
+          Bin_prot.Utils.bin_dump ~header:true
+            (outer_response_writer (module Rpcs_versioned))
+            result
+        in
+        (* Use `really_write` instead of the Async versions to
+           avoid creating new threads or registering new file descriptors
+           with epoll *)
+        Core_unix_bigstring_unix.really_write Core.Unix.stderr dump
       in
       match result with
       | `Child_exit exit_status ->
           [%log info] "Child exited (choose), status: %s"
             (Core_unix.Exit_or_signal.to_string_hum exit_status) ;
           (* TODO: make sure that the exit was clean and not because of another error *)
-          let dump =
-            Bin_prot.Utils.bin_dump ~header:true
-              (response_writer (module Rpcs_versioned))
-              (Ok None)
-          in
-          Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
+          write_result (Ok None) ;
           Deferred.unit
       | `Response rr -> (
           match rr with
           | `Eof ->
               [%log info] "EOF when reading from children" ;
-              let dump =
-                Bin_prot.Utils.bin_dump ~header:true
-                  (response_writer (module Rpcs_versioned))
-                  (Error "EOF when reading from children")
-              in
-              Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
+              write_result (Error "EOF when reading from children") ;
               Deferred.unit
           | `Ok result ->
-              let dump =
-                Bin_prot.Utils.bin_dump ~header:true
-                  (response_writer (module Rpcs_versioned))
-                  (Ok (Some result))
-              in
-              Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
+              write_result (Result.map ~f:Option.some result) ;
               loop () )
     in
     loop ()
 
+  let wrap_raw_fd ~name raw_fd =
+    Fd.create ~avoid_nonblock_if_possible:true Fd.Kind.Fifo raw_fd
+      (Info.of_string name)
+
+  (** Run the loop that handles creating new forks when required.
+      Each time the worker fork is created, [handle_jobs] is called to handle it. *)
   let fork_and_work
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~worker_state
       ~logger () =
     let rec loop () =
-      (* Cannot create Unix pipes with Async because that will create new threads
-         to handle the pipes in a non-blocking manner.
-         So first we create raw file descriptor pipes and then wrap them in Reader/Writer
-         when necessary, and not before. *)
+      (* Cannot create Unix pipes with Async because that will create new
+         threads to handle the pipes in a non-blocking manner.
+         So first we create raw file descriptor pipes and then
+         wrap them in Reader/Writer when necessary, and not before. *)
       let from_parent, to_fork = Core.Unix.pipe () in
       let from_fork, to_parent = Core.Unix.pipe () in
-      (* epoll fails for some reason with these pipes in Async, so [avoid_nonblock_if_possible] is used
-         here to bypass epoll and have a thread handle these pipes *)
-      let wrap_fd ~name raw_fd =
-        Fd.create ~avoid_nonblock_if_possible:true Fd.Kind.Fifo raw_fd
-          (Info.of_string name)
-      in
+      (* epoll fails for some reason with these pipes in Async, so
+         [avoid_nonblock_if_possible] is used here to bypass epoll and have
+         a thread handle these pipes *)
       match Core.Unix.fork () with
       | `In_the_child ->
           Core.Unix.close to_fork ;
           Core.Unix.close from_fork ;
           let from_parent =
-            Reader.create (wrap_fd ~name:"from_parent" from_parent)
+            Reader.create (wrap_raw_fd ~name:"from_parent" from_parent)
           in
-          let to_parent = Writer.create (wrap_fd ~name:"to_parent" to_parent) in
+          let to_parent =
+            Writer.create (wrap_raw_fd ~name:"to_parent" to_parent)
+          in
           go_stdio
             (module Rpcs_versioned)
             ~logger ~writer:to_parent ~reader:from_parent worker_state
@@ -572,16 +599,18 @@ module Make (Inputs : Intf.Inputs_intf) :
             ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
           Core.Unix.close from_parent ;
           Core.Unix.close to_parent ;
-          let from_fork = Reader.create (wrap_fd ~name:"from_fork" from_fork) in
-          let to_fork = Writer.create (wrap_fd ~name:"to_fork" to_fork) in
+          let from_fork =
+            Reader.create (wrap_raw_fd ~name:"from_fork" from_fork)
+          in
+          let to_fork = Writer.create (wrap_raw_fd ~name:"to_fork" to_fork) in
           let wait_for_fork = Interrupt_handler.setup child_pid in
           let%bind () =
             handle_jobs
               (module Rpcs_versioned)
               ~wait_for_fork ~writer:to_fork ~reader:from_fork ~logger ()
           in
-          (* Make sure these are closed before forking again to avoid leaking these descriptors
-             to the children *)
+          (* Make sure these are closed before forking again to avoid leaking
+             these descriptors to the children *)
           let%bind () = Reader.close from_fork in
           let%bind () = Writer.close to_fork in
           loop ()
