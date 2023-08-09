@@ -99,6 +99,13 @@ module Make (Inputs : Intf.Inputs_intf) :
   open Inputs
   module Rpcs = Rpcs.Make (Inputs)
 
+  let response_writer
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
+    Result.bin_writer_t
+      (Option.bin_writer_t Rpcs_versioned.Submit_work.Latest.bin_writer_query)
+      String.bin_writer_t
+
   module Work = struct
     open Snark_work_lib
 
@@ -566,17 +573,31 @@ module Make (Inputs : Intf.Inputs_intf) :
                  | `Child_exit exit_status ->
                      [%log info] "Child exited (choose), status: %s"
                        (Core_unix.Exit_or_signal.to_string_hum exit_status) ;
+                     (* TODO: make sure that the exit was clean and not because of another error *)
+                     let dump =
+                       Bin_prot.Utils.bin_dump ~header:true
+                         (response_writer (module Rpcs_versioned))
+                         (Ok None)
+                     in
+                     Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
                      Deferred.unit
                  | `Response rr -> (
                      match rr with
                      | `Eof ->
                          [%log info] "Child reached EOF" ;
+                         let dump =
+                           Bin_prot.Utils.bin_dump ~header:true
+                             (response_writer (module Rpcs_versioned))
+                             (Error "Child reached EOF")
+                         in
+                         Core_unix_bigstring_unix.really_write Core.Unix.stderr
+                           dump ;
                          Deferred.unit
                      | `Ok result ->
                          let dump =
                            Bin_prot.Utils.bin_dump ~header:true
-                             Rpcs_versioned.Submit_work.Latest.bin_writer_query
-                             result
+                             (response_writer (module Rpcs_versioned))
+                             (Ok (Some result))
                          in
                          Core_unix_bigstring_unix.really_write Core.Unix.stderr
                            dump ;
