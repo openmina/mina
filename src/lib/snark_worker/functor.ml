@@ -482,6 +482,109 @@ module Make (Inputs : Intf.Inputs_intf) :
           (module Rpcs_versioned)
           ~logger ~output_fd ~input_fd worker_state
 
+  let handle_jobs
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~wait_for_child
+      ~writer ~reader ~logger () =
+    let rec loop () =
+      let read buf ~pos ~len =
+        Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos ~len buf
+      in
+      let input =
+        try
+          Bin_prot.Utils.bin_read_stream ~read
+            Rpcs_versioned.Get_work.Latest.bin_reader_response
+        with exn ->
+          [%log info] "EOF or error when reading from stdin, quitting"
+            ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;
+          Core.exit 0
+      in
+      Writer.write_bin_prot writer
+        Rpcs_versioned.Get_work.V2.bin_writer_response input ;
+      let%bind result =
+        choose
+          [ choice wait_for_child (fun s -> `Child_exit s)
+          ; choice
+              (Reader.read_bin_prot reader
+                 Rpcs_versioned.Submit_work.Latest.bin_reader_query )
+              (fun data -> `Response data)
+          ]
+      in
+      match result with
+      | `Child_exit exit_status ->
+          [%log info] "Child exited (choose), status: %s"
+            (Core_unix.Exit_or_signal.to_string_hum exit_status) ;
+          (* TODO: make sure that the exit was clean and not because of another error *)
+          let dump =
+            Bin_prot.Utils.bin_dump ~header:true
+              (response_writer (module Rpcs_versioned))
+              (Ok None)
+          in
+          Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
+          Deferred.unit
+      | `Response rr -> (
+          match rr with
+          | `Eof ->
+              [%log info] "Child reached EOF" ;
+              let dump =
+                Bin_prot.Utils.bin_dump ~header:true
+                  (response_writer (module Rpcs_versioned))
+                  (Error "Child reached EOF")
+              in
+              Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
+              Deferred.unit
+          | `Ok result ->
+              let dump =
+                Bin_prot.Utils.bin_dump ~header:true
+                  (response_writer (module Rpcs_versioned))
+                  (Ok (Some result))
+              in
+              Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
+              loop () )
+    in
+    loop ()
+
+  let fork_and_work
+      (module Rpcs_versioned : Intf.Rpcs_versioned_S
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~worker_state
+      ~logger () =
+    let rec loop () =
+      (* Cannot create with Async because that will create new threads to handle the pipes.
+         So we first create raw file descriptor pipes and then wrap them in Reader/Writer
+         when necessary, and not before. *)
+      let m2w_r, m2w_w = Core.Unix.pipe ~close_on_exec:false () in
+      let w2m_r, w2m_w = Core.Unix.pipe ~close_on_exec:false () in
+      match Core.Unix.fork () with
+      | `In_the_child ->
+          Core.Unix.close m2w_w ;
+          Core.Unix.close w2m_r ;
+          [%log info] "calling go_stdio" ;
+          go_stdio
+            (module Rpcs_versioned)
+            ~logger ~output_fd:w2m_w ~input_fd:m2w_r worker_state
+      | `In_the_parent child_pid ->
+          [%log info] "Forked, child PID: $pid"
+            ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
+          Core.Unix.close m2w_r ;
+          Core.Unix.close w2m_w ;
+          let w2m_r =
+            Reader.create
+              (Fd.create Fd.Kind.Fifo w2m_r (Info.of_string "w2m_r"))
+          in
+          let m2w_w =
+            Writer.create
+              (Fd.create Fd.Kind.Fifo m2w_w (Info.of_string "m2w_w"))
+          in
+          let wait_for_child = Interrupt_handler.setup child_pid in
+          let%bind () =
+            handle_jobs
+              (module Rpcs_versioned)
+              ~wait_for_child ~writer:m2w_w ~reader:w2m_r ~logger ()
+          in
+          loop ()
+    in
+    loop ()
+
   let command_from_stdio
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) =
@@ -515,98 +618,7 @@ module Make (Inputs : Intf.Inputs_intf) :
          [%log info] "Snark worker state is initialized" ;
          (* Lets run a full GC cycle before forking *)
          Gc.compact () ;
-         let rec fork_and_work_loop () =
-           (* Cannot create with Async because that will create new threads to handle the pipes.
-              So we first create raw file descriptor pipes and then wrap them in Reader/Writer
-              when necessary, and not before. *)
-           let m2w_r, m2w_w = Core.Unix.pipe ~close_on_exec:false () in
-           let w2m_r, w2m_w = Core.Unix.pipe ~close_on_exec:false () in
-           match Core.Unix.fork () with
-           | `In_the_child ->
-               Core.Unix.close m2w_w ;
-               Core.Unix.close w2m_r ;
-               [%log info] "calling go_stdio" ;
-               go_stdio
-                 (module Rpcs_versioned)
-                 ~logger ~output_fd:w2m_w ~input_fd:m2w_r worker_state
-           | `In_the_parent child_pid ->
-               [%log info] "Forked, child PID: $pid"
-                 ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
-               Core.Unix.close m2w_r ;
-               Core.Unix.close w2m_w ;
-               let w2m_r =
-                 Reader.create
-                   (Fd.create Fd.Kind.Fifo w2m_r (Info.of_string "w2m_r"))
-               in
-               let m2w_w =
-                 Writer.create
-                   (Fd.create Fd.Kind.Fifo m2w_w (Info.of_string "m2w_w"))
-               in
-               let wait_for_child = Interrupt_handler.setup child_pid in
-               let rec handle_jobs_loop () =
-                 let read buf ~pos ~len =
-                   Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos
-                     ~len buf
-                 in
-                 let input =
-                   try
-                     Bin_prot.Utils.bin_read_stream ~read
-                       Rpcs_versioned.Get_work.Latest.bin_reader_response
-                   with exn ->
-                     [%log info]
-                       "EOF or error when reading from stdin, quitting"
-                       ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;
-                     Core.exit 0
-                 in
-                 Writer.write_bin_prot m2w_w
-                   Rpcs_versioned.Get_work.V2.bin_writer_response input ;
-                 let%bind result =
-                   choose
-                     [ choice wait_for_child (fun s -> `Child_exit s)
-                     ; choice
-                         (Reader.read_bin_prot w2m_r
-                            Rpcs_versioned.Submit_work.Latest.bin_reader_query )
-                         (fun data -> `Response data)
-                     ]
-                 in
-                 match result with
-                 | `Child_exit exit_status ->
-                     [%log info] "Child exited (choose), status: %s"
-                       (Core_unix.Exit_or_signal.to_string_hum exit_status) ;
-                     (* TODO: make sure that the exit was clean and not because of another error *)
-                     let dump =
-                       Bin_prot.Utils.bin_dump ~header:true
-                         (response_writer (module Rpcs_versioned))
-                         (Ok None)
-                     in
-                     Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
-                     Deferred.unit
-                 | `Response rr -> (
-                     match rr with
-                     | `Eof ->
-                         [%log info] "Child reached EOF" ;
-                         let dump =
-                           Bin_prot.Utils.bin_dump ~header:true
-                             (response_writer (module Rpcs_versioned))
-                             (Error "Child reached EOF")
-                         in
-                         Core_unix_bigstring_unix.really_write Core.Unix.stderr
-                           dump ;
-                         Deferred.unit
-                     | `Ok result ->
-                         let dump =
-                           Bin_prot.Utils.bin_dump ~header:true
-                             (response_writer (module Rpcs_versioned))
-                             (Ok (Some result))
-                         in
-                         Core_unix_bigstring_unix.really_write Core.Unix.stderr
-                           dump ;
-                         handle_jobs_loop () )
-               in
-               let%bind () = handle_jobs_loop () in
-               fork_and_work_loop ()
-         in
-         fork_and_work_loop () )
+         fork_and_work (module Rpcs_versioned) ~worker_state ~logger () )
 
   let arguments ~proof_level ~daemon_address ~shutdown_on_disconnect =
     [ "-daemon-address"
