@@ -9,6 +9,8 @@
 
 extern crate libc;
 
+pub mod rayon;
+
 /// Caml helpers
 #[macro_use]
 pub mod caml;
