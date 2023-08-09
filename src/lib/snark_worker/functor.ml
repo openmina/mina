@@ -432,59 +432,53 @@ module Make (Inputs : Intf.Inputs_intf) :
           ~logger ~proof_level daemon_port
           (Option.value ~default:true shutdown_on_disconnect))
 
-  let rec go_stdio
+  let go_stdio
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
-        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~logger ~output_fd
-      ~input_fd worker_state =
-    let read buf ~pos ~len =
-      Core_unix_bigstring_unix.really_read input_fd ~pos ~len buf
-    in
-    let input =
-      try
-        Bin_prot.Utils.bin_read_stream ~read
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~logger ~writer
+      ~reader worker_state =
+    let rec loop () =
+      let%bind input =
+        Reader.read_bin_prot reader
           Rpcs_versioned.Get_work.Latest.bin_reader_response
-      with exn ->
-        [%log error] "Error when reading from input fd"
-          ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;
-        None
+      in
+      match input with
+      | `Eof ->
+          exit 0
+      | `Ok None ->
+          [%log error] "Received empty job, this should not happen." ;
+          (* TODO: write error response to [writer] *)
+          loop ()
+      | `Ok (Some (work, public_key)) -> (
+          let work_ids =
+            Transaction_snark_work.Statement.compact_json
+              (One_or_two.map (Work.Spec.instances work)
+                 ~f:Work.Single.Spec.statement )
+          in
+          [%log info] "SNARK work $work_ids received. Starting proof generation"
+            ~metadata:[ ("work_ids", work_ids) ] ;
+          let%bind result = perform worker_state public_key work in
+          match result with
+          | Error error ->
+              [%log info] "Error generating proof"
+                ~metadata:
+                  [ ("work_ids", work_ids)
+                  ; ("error", `String (Error.to_string_hum error))
+                  ] ;
+              (* TODO: write error response to [writer] *)
+              loop ()
+          | Ok result ->
+              [%log info] "Proof generated successfully"
+                ~metadata:[ ("work_ids", work_ids) ] ;
+              Writer.write_bin_prot writer
+                Rpcs_versioned.Submit_work.V2.bin_writer_query result ;
+              let%bind () = Writer.flushed writer in
+              loop () )
     in
-    match input with
-    | None ->
-        [%log info] "EOF reached in worker, exiting" ;
-        exit 0
-    | Some (work, public_key) ->
-        let work_ids =
-          Transaction_snark_work.Statement.compact_json
-            (One_or_two.map (Work.Spec.instances work)
-               ~f:Work.Single.Spec.statement )
-        in
-        [%log info]
-          "SNARK work $work_ids received from stdin. Starting proof generation"
-          ~metadata:[ ("work_ids", work_ids) ] ;
-        let%bind result = perform worker_state public_key work in
-        ( match result with
-        | Error error ->
-            [%log error] "Error generating proof"
-              ~metadata:
-                [ ("work_ids", work_ids)
-                ; ("error", `String (Error.to_string_hum error))
-                ]
-        | Ok result -> (
-            [%log info] "Proof generated successfully"
-              ~metadata:[ ("work_ids", work_ids) ] ;
-            let dump =
-              Bin_prot.Utils.bin_dump ~header:true
-                Rpcs_versioned.Submit_work.Latest.bin_writer_query result
-            in
-            try Core_unix_bigstring_unix.really_write output_fd dump
-            with _ -> printf "closed file descriptor\n" ) ) ;
-        go_stdio
-          (module Rpcs_versioned)
-          ~logger ~output_fd ~input_fd worker_state
+    loop ()
 
   let handle_jobs
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
-        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~wait_for_child
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~wait_for_fork
       ~writer ~reader ~logger () =
     let rec loop () =
       let read buf ~pos ~len =
@@ -501,9 +495,10 @@ module Make (Inputs : Intf.Inputs_intf) :
       in
       Writer.write_bin_prot writer
         Rpcs_versioned.Get_work.V2.bin_writer_response input ;
+      let%bind () = Writer.flushed writer in
       let%bind result =
         choose
-          [ choice wait_for_child (fun s -> `Child_exit s)
+          [ choice wait_for_fork (fun s -> `Child_exit s)
           ; choice
               (Reader.read_bin_prot reader
                  Rpcs_versioned.Submit_work.Latest.bin_reader_query )
@@ -525,11 +520,11 @@ module Make (Inputs : Intf.Inputs_intf) :
       | `Response rr -> (
           match rr with
           | `Eof ->
-              [%log info] "Child reached EOF" ;
+              [%log info] "EOF when reading from children" ;
               let dump =
                 Bin_prot.Utils.bin_dump ~header:true
                   (response_writer (module Rpcs_versioned))
-                  (Error "Child reached EOF")
+                  (Error "EOF when reading from children")
               in
               Core_unix_bigstring_unix.really_write Core.Unix.stderr dump ;
               Deferred.unit
@@ -549,38 +544,46 @@ module Make (Inputs : Intf.Inputs_intf) :
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~worker_state
       ~logger () =
     let rec loop () =
-      (* Cannot create with Async because that will create new threads to handle the pipes.
-         So we first create raw file descriptor pipes and then wrap them in Reader/Writer
+      (* Cannot create Unix pipes with Async because that will create new threads
+         to handle the pipes in a non-blocking manner.
+         So first we create raw file descriptor pipes and then wrap them in Reader/Writer
          when necessary, and not before. *)
-      let m2w_r, m2w_w = Core.Unix.pipe ~close_on_exec:false () in
-      let w2m_r, w2m_w = Core.Unix.pipe ~close_on_exec:false () in
+      let from_parent, to_fork = Core.Unix.pipe () in
+      let from_fork, to_parent = Core.Unix.pipe () in
+      (* epoll fails for some reason with these pipes in Async, so [avoid_nonblock_if_possible] is used
+         here to bypass epoll and have a thread handle these pipes *)
+      let wrap_fd ~name raw_fd =
+        Fd.create ~avoid_nonblock_if_possible:true Fd.Kind.Fifo raw_fd
+          (Info.of_string name)
+      in
       match Core.Unix.fork () with
       | `In_the_child ->
-          Core.Unix.close m2w_w ;
-          Core.Unix.close w2m_r ;
-          [%log info] "calling go_stdio" ;
+          Core.Unix.close to_fork ;
+          Core.Unix.close from_fork ;
+          let from_parent =
+            Reader.create (wrap_fd ~name:"from_parent" from_parent)
+          in
+          let to_parent = Writer.create (wrap_fd ~name:"to_parent" to_parent) in
           go_stdio
             (module Rpcs_versioned)
-            ~logger ~output_fd:w2m_w ~input_fd:m2w_r worker_state
+            ~logger ~writer:to_parent ~reader:from_parent worker_state
       | `In_the_parent child_pid ->
           [%log info] "Forked, child PID: $pid"
             ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
-          Core.Unix.close m2w_r ;
-          Core.Unix.close w2m_w ;
-          let w2m_r =
-            Reader.create
-              (Fd.create Fd.Kind.Fifo w2m_r (Info.of_string "w2m_r"))
-          in
-          let m2w_w =
-            Writer.create
-              (Fd.create Fd.Kind.Fifo m2w_w (Info.of_string "m2w_w"))
-          in
-          let wait_for_child = Interrupt_handler.setup child_pid in
+          Core.Unix.close from_parent ;
+          Core.Unix.close to_parent ;
+          let from_fork = Reader.create (wrap_fd ~name:"from_fork" from_fork) in
+          let to_fork = Writer.create (wrap_fd ~name:"to_fork" to_fork) in
+          let wait_for_fork = Interrupt_handler.setup child_pid in
           let%bind () =
             handle_jobs
               (module Rpcs_versioned)
-              ~wait_for_child ~writer:m2w_w ~reader:w2m_r ~logger ()
+              ~wait_for_fork ~writer:to_fork ~reader:from_fork ~logger ()
           in
+          (* Make sure these are closed before forking again to avoid leaking these descriptors
+             to the children *)
+          let%bind () = Reader.close from_fork in
+          let%bind () = Writer.close to_fork in
           loop ()
     in
     loop ()
