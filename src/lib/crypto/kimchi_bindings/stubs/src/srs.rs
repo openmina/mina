@@ -82,13 +82,12 @@ macro_rules! impl_srs {
                         .err()
                         .unwrap()
                 })?;
-
-                {
+                crate::rayon::maybe_run_in_local_pool(|| {
                     // We're single-threaded, so it's safe to grab this pointer as mutable.
                     // Do not try this at home.
                     let srs = unsafe { &mut *((&**srs as *const SRS<$G>) as *mut SRS<$G>) as &mut SRS<$G> };
                     srs.add_lagrange_basis(x_domain);
-                }
+                });
 
                 Ok(srs.lagrange_bases[&x_domain.size()][i as usize].clone().into())
             }
@@ -130,11 +129,13 @@ macro_rules! impl_srs {
                 srs: $name,
                 chals: Vec<$CamlF>,
             ) -> Result<CamlPolyComm<$CamlG>, ocaml::Error> {
+               let result = crate::rayon::maybe_run_in_local_pool(|| {
                 let chals: Vec<$F> = chals.into_iter().map(Into::into).collect();
                 let coeffs = b_poly_coefficients(&chals);
                 let p = DensePolynomial::<$F>::from_coefficients_vec(coeffs);
-
-                Ok(srs.commit_non_hiding(&p, None).into())
+                srs.commit_non_hiding(&p, None)
+               });
+               Ok(result.into())
             }
 
             #[ocaml_gen::func]
@@ -144,9 +145,11 @@ macro_rules! impl_srs {
                 comms: Vec<$CamlG>,
                 chals: Vec<$CamlF>,
             ) -> bool {
+              crate::rayon::maybe_run_in_local_pool(|| {
                 let comms: Vec<_> = comms.into_iter().map(Into::into).collect();
                 let chals: Vec<_> = chals.into_iter().map(Into::into).collect();
                 crate::urs_utils::batch_dlog_accumulator_check(&srs, &comms, &chals)
+              })
             }
 
             #[ocaml_gen::func]
@@ -156,11 +159,13 @@ macro_rules! impl_srs {
                 comms: ocaml::Int,
                 chals: Vec<$CamlF>,
             ) -> Vec<$CamlG> {
+              crate::rayon::maybe_run_in_local_pool(|| {
                 crate::urs_utils::batch_dlog_accumulator_generate::<$G>(
                     &srs,
                     comms as usize,
                     &chals.into_iter().map(From::from).collect(),
                 ).into_iter().map(Into::into).collect()
+              })
             }
 
             #[ocaml_gen::func]

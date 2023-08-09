@@ -48,6 +48,7 @@
    mina_state
    transaction_protocol_state
    ppx_version_runtime
+   kimchi_bindings
  )
  (preprocess
   (pps
