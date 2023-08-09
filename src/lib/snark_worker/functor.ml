@@ -1,6 +1,43 @@
 open Core
 open Async
 
+module Interrupt_handler = struct
+  type t = Pending_handler_setup | Idle | Child_running of Pid.t
+
+  let state = ref Pending_handler_setup
+
+  let interrupt state =
+    match state with
+    | Pending_handler_setup ->
+        (* NOTE: this cannot happen, it is the handler itself that calls this function *)
+        print_endline "[WARN] calling interrupt before setting up the handler" ;
+        state
+    | Idle ->
+        print_endline "[WARN] calling interrupt but there is no child running" ;
+        state
+    | Child_running pid ->
+        ( match Signal.send Signal.kill (`Pid pid) with
+        | `Ok ->
+            print_endline "Kill signal sent to child"
+        | `No_such_process ->
+            print_endline "Could not send kill signal, pid doesn't exist" ) ;
+        Idle
+
+  let maybe_setup_handler = function
+    | Pending_handler_setup ->
+        Signal.handle [ Signal.int ] ~f:(fun _ -> state := interrupt !state)
+    | Idle ->
+        ()
+    | Child_running _ ->
+        print_endline
+          "[WARN] setting up a new pid with an older process still running"
+
+  let setup pid =
+    maybe_setup_handler !state ;
+    state := Child_running pid ;
+    Unix.waitpid pid
+end
+
 module Time_span_with_json = struct
   type t = Time.Span.t
 
@@ -390,17 +427,23 @@ module Make (Inputs : Intf.Inputs_intf) :
 
   let rec go_stdio
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
-        with type Work.ledger_proof = Inputs.Ledger_proof.t ) worker_state
-      logger fd =
+        with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~logger ~output_fd
+      ~input_fd worker_state =
     let read buf ~pos ~len =
-      Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos ~len buf
+      Core_unix_bigstring_unix.really_read input_fd ~pos ~len buf
     in
     let input =
-      Bin_prot.Utils.bin_read_stream ~read
-        Rpcs_versioned.Get_work.Latest.bin_reader_response
+      try
+        Bin_prot.Utils.bin_read_stream ~read
+          Rpcs_versioned.Get_work.Latest.bin_reader_response
+      with exn ->
+        [%log error] "Error when reading from input fd"
+          ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;
+        None
     in
     match input with
     | None ->
+        [%log info] "EOF reached in worker, exiting" ;
         exit 0
     | Some (work, public_key) ->
         let work_ids =
@@ -409,28 +452,28 @@ module Make (Inputs : Intf.Inputs_intf) :
                ~f:Work.Single.Spec.statement )
         in
         [%log info]
-          !"SNARK work $work_ids received from stdin. Starting proof generation"
+          "SNARK work $work_ids received from stdin. Starting proof generation"
           ~metadata:[ ("work_ids", work_ids) ] ;
         let%bind result = perform worker_state public_key work in
         ( match result with
-        | Error _ ->
-            [%log error] !"Error generating proof"
-              ~metadata:[ ("work_ids", work_ids) ]
+        | Error error ->
+            [%log error] "Error generating proof"
+              ~metadata:
+                [ ("work_ids", work_ids)
+                ; ("error", `String (Error.to_string_hum error))
+                ]
         | Ok result -> (
-            [%log info]
-              !"Proof generated successfully"
+            [%log info] "Proof generated successfully"
               ~metadata:[ ("work_ids", work_ids) ] ;
-            match fd with
-            | Some fd -> (
-                let dump =
-                  Bin_prot.Utils.bin_dump ~header:true
-                    Rpcs_versioned.Submit_work.Latest.bin_writer_query result
-                in
-                try Core_unix_bigstring_unix.really_write fd dump
-                with _ -> printf "closed file descriptor\n" )
-            | None ->
-                () ) ) ;
-        go_stdio (module Rpcs_versioned) worker_state logger fd
+            let dump =
+              Bin_prot.Utils.bin_dump ~header:true
+                Rpcs_versioned.Submit_work.Latest.bin_writer_query result
+            in
+            try Core_unix_bigstring_unix.really_write output_fd dump
+            with _ -> printf "closed file descriptor\n" ) ) ;
+        go_stdio
+          (module Rpcs_versioned)
+          ~logger ~output_fd ~input_fd worker_state
 
   let command_from_stdio
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
@@ -450,16 +493,99 @@ module Make (Inputs : Intf.Inputs_intf) :
          let logger =
            Logger.create () ~metadata:[ ("process", `String "Snark Worker") ]
          in
-         [%log info] !"Starting standalone snark worker..." ;
+         [%log info] "Starting standalone snark worker..." ;
          let open Async in
+         (* We toggle this flag so that rayon doesn't use the global thread pool. In doing
+            so we ensure that the forked child process is in charge of creating the
+            global pool so that no state is lost during the fork. *)
+         Kimchi_bindings.Rayon.toggle_thread_pool true ;
          let%bind worker_state =
            Worker_state.create
              ~constraint_constants:
                Genesis_constants.Constraint_constants.compiled ~proof_level ()
          in
-         [%log info] !"Snark worker state is initialized" ;
-         let fd = Some Core_unix.stderr in
-         go_stdio (module Rpcs_versioned) worker_state logger fd )
+         Kimchi_bindings.Rayon.toggle_thread_pool false ;
+         [%log info] "Snark worker state is initialized" ;
+         (* Lets run a full GC cycle before forking *)
+         Gc.compact () ;
+         let rec fork_and_work_loop () =
+           (* Cannot create with Async because that will create new threads to handle the pipes.
+              So we first create raw file descriptor pipes and then wrap them in Reader/Writer
+              when necessary, and not before. *)
+           let m2w_r, m2w_w = Core.Unix.pipe ~close_on_exec:false () in
+           let w2m_r, w2m_w = Core.Unix.pipe ~close_on_exec:false () in
+           match Core.Unix.fork () with
+           | `In_the_child ->
+               Core.Unix.close m2w_w ;
+               Core.Unix.close w2m_r ;
+               [%log info] "calling go_stdio" ;
+               go_stdio
+                 (module Rpcs_versioned)
+                 ~logger ~output_fd:w2m_w ~input_fd:m2w_r worker_state
+           | `In_the_parent child_pid ->
+               [%log info] "Forked, child PID: $pid"
+                 ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
+               Core.Unix.close m2w_r ;
+               Core.Unix.close w2m_w ;
+               let w2m_r =
+                 Reader.create
+                   (Fd.create Fd.Kind.Fifo w2m_r (Info.of_string "w2m_r"))
+               in
+               let m2w_w =
+                 Writer.create
+                   (Fd.create Fd.Kind.Fifo m2w_w (Info.of_string "m2w_w"))
+               in
+               let wait_for_child = Interrupt_handler.setup child_pid in
+               let rec handle_jobs_loop () =
+                 let read buf ~pos ~len =
+                   Core_unix_bigstring_unix.really_read Core_unix.stdin ~pos
+                     ~len buf
+                 in
+                 let input =
+                   try
+                     Bin_prot.Utils.bin_read_stream ~read
+                       Rpcs_versioned.Get_work.Latest.bin_reader_response
+                   with exn ->
+                     [%log info]
+                       "EOF or error when reading from stdin, quitting"
+                       ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;
+                     Core.exit 0
+                 in
+                 Writer.write_bin_prot m2w_w
+                   Rpcs_versioned.Get_work.V2.bin_writer_response input ;
+                 let%bind result =
+                   choose
+                     [ choice wait_for_child (fun s -> `Child_exit s)
+                     ; choice
+                         (Reader.read_bin_prot w2m_r
+                            Rpcs_versioned.Submit_work.Latest.bin_reader_query )
+                         (fun data -> `Response data)
+                     ]
+                 in
+                 match result with
+                 | `Child_exit exit_status ->
+                     [%log info] "Child exited (choose), status: %s"
+                       (Core_unix.Exit_or_signal.to_string_hum exit_status) ;
+                     Deferred.unit
+                 | `Response rr -> (
+                     match rr with
+                     | `Eof ->
+                         [%log info] "Child reached EOF" ;
+                         Deferred.unit
+                     | `Ok result ->
+                         let dump =
+                           Bin_prot.Utils.bin_dump ~header:true
+                             Rpcs_versioned.Submit_work.Latest.bin_writer_query
+                             result
+                         in
+                         Core_unix_bigstring_unix.really_write Core.Unix.stderr
+                           dump ;
+                         handle_jobs_loop () )
+               in
+               let%bind () = handle_jobs_loop () in
+               fork_and_work_loop ()
+         in
+         fork_and_work_loop () )
 
   let arguments ~proof_level ~daemon_address ~shutdown_on_disconnect =
     [ "-daemon-address"
