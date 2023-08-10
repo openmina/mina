@@ -1,6 +1,11 @@
 open Core
 open Async
 
+module Request = struct
+  type 'job_request t = Await_readiness | Perform_job of 'job_request
+  [@@deriving bin_io_unversioned]
+end
+
 module Interrupt_handler = struct
   type t = Pending_handler_setup | Idle | Child_running of Pid.t
 
@@ -11,7 +16,7 @@ module Interrupt_handler = struct
   let kill_subprocess pid =
     match Signal.send Signal.kill (`Pid pid) with
     | `Ok ->
-        [%log' info !logger] "Kill signal sent to child"
+        [%log' info !logger] "Kill signal sent to child: $pid"
           ~metadata:[ ("pid", `Int (Pid.to_int pid)) ]
     | `No_such_process ->
         [%log' warn !logger] "Could not send kill signal, pid doesn't exist"
@@ -509,7 +514,7 @@ module Make (Inputs : Intf.Inputs_intf) :
           let%bind result = perform worker_state public_key work in
           match result with
           | Error error ->
-              [%log info] "Error generating proof"
+              [%log info] "Error generating proof: $error"
                 ~metadata:
                   [ ("work_ids", work_ids)
                   ; ("error", `String (Error.to_string_hum error))
@@ -534,46 +539,56 @@ module Make (Inputs : Intf.Inputs_intf) :
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~wait_for_fork
       ~writer ~reader ~logger () =
     let rec loop () =
+      let handle_job job =
+        Writer.write_bin_prot writer
+          Rpcs_versioned.Get_work.V2.bin_writer_response job ;
+        let%bind () = Writer.flushed writer in
+        let%bind result =
+          choose
+            [ choice wait_for_fork (fun s -> `Child_exit s)
+            ; choice
+                (Reader.read_bin_prot reader
+                   (inner_response_reader (module Rpcs_versioned)) )
+                (fun data -> `Response data)
+            ]
+        in
+        let write_result =
+          Raw_io.write_bin_prot Core.Unix.stderr
+            (outer_response_writer (module Rpcs_versioned))
+        in
+        match result with
+        | `Child_exit _exit_status ->
+            (* TODO: make sure that the exit was clean and not because of another error *)
+            write_result (Ok None) ; Deferred.unit
+        | `Response rr -> (
+            match rr with
+            | `Eof ->
+                [%log info] "EOF when reading from children" ;
+                write_result (Error "EOF when reading from children") ;
+                Deferred.unit
+            | `Ok result ->
+                write_result (Result.map ~f:Option.some result) ;
+                loop () )
+      in
       let%bind input =
         try
           return
             (Raw_io.read_bin_prot Core_unix.stdin
-               Rpcs_versioned.Get_work.Latest.bin_reader_response )
+               (Request.bin_reader_t
+                  Rpcs_versioned.Get_work.Latest.bin_reader_response ) )
         with exn ->
-          [%log info] "EOF or error when reading from stdin, quitting"
+          [%log info] "EOF or error when reading from stdin, quitting: $error"
             ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;
           Interrupt_handler.cleanup () ;
           Core.exit 0
       in
-      Writer.write_bin_prot writer
-        Rpcs_versioned.Get_work.V2.bin_writer_response input ;
-      let%bind () = Writer.flushed writer in
-      let%bind result =
-        choose
-          [ choice wait_for_fork (fun s -> `Child_exit s)
-          ; choice
-              (Reader.read_bin_prot reader
-                 (inner_response_reader (module Rpcs_versioned)) )
-              (fun data -> `Response data)
-          ]
-      in
-      let write_result =
-        Raw_io.write_bin_prot Core.Unix.stderr
-          (outer_response_writer (module Rpcs_versioned))
-      in
-      match result with
-      | `Child_exit _exit_status ->
-          (* TODO: make sure that the exit was clean and not because of another error *)
-          write_result (Ok None) ; Deferred.unit
-      | `Response rr -> (
-          match rr with
-          | `Eof ->
-              [%log info] "EOF when reading from children" ;
-              write_result (Error "EOF when reading from children") ;
-              Deferred.unit
-          | `Ok result ->
-              write_result (Result.map ~f:Option.some result) ;
-              loop () )
+      match input with
+      | Request.Await_readiness ->
+          [%log info] "Answering to readiness request" ;
+          Raw_io.write_bin_prot Core_unix.stderr Bool.bin_writer_t true ;
+          loop ()
+      | Request.Perform_job job ->
+          handle_job job
     in
     loop ()
 
@@ -610,7 +625,7 @@ module Make (Inputs : Intf.Inputs_intf) :
             ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
           let wait_for_fork = Interrupt_handler.setup ~logger child_pid in
           upon wait_for_fork (fun exit_status ->
-              [%log info] "Child exited"
+              [%log info] "Child exited ($pid): $status"
                 ~metadata:
                   [ ("pid", `Int (Pid.to_int child_pid))
                   ; ( "status"
