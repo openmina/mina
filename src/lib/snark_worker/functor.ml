@@ -6,24 +6,26 @@ module Interrupt_handler = struct
 
   let state = ref Pending_handler_setup
 
+  let logger = ref (Logger.null ())
+
   let kill_subprocess pid =
     match Signal.send Signal.kill (`Pid pid) with
     | `Ok ->
-        Core.print_endline
-          ("++++ Kill signal sent to child: " ^ Pid.to_string pid)
+        [%log' info !logger] "Kill signal sent to child"
+          ~metadata:[ ("pid", `Int (Pid.to_int pid)) ]
     | `No_such_process ->
-        Core.print_endline "++++ Could not send kill signal, pid doesn't exist"
+        [%log' warn !logger] "Could not send kill signal, pid doesn't exist"
 
   let interrupt current_state =
     match current_state with
     | Pending_handler_setup ->
         (* NOTE: this cannot happen, it is the handler itself that calls this function *)
-        Core.print_endline
-          "[WARN] calling interrupt before setting up the handler" ;
+        [%log' warn !logger]
+          "Warning, calling interrupt before setting up the handler" ;
         current_state
     | Idle ->
-        Core.print_endline
-          "[WARN] calling interrupt but there is no child running" ;
+        [%log' warn !logger]
+          "Warning, calling interrupt but there is no child running" ;
         current_state
     | Child_running pid ->
         kill_subprocess pid ; Idle
@@ -34,13 +36,14 @@ module Interrupt_handler = struct
     | Idle ->
         ()
     | Child_running _ ->
-        Core.print_endline
-          "[WARN] setting up a new pid with an older process still running"
+        [%log' warn !logger]
+          "Warning, setting up a new pid with an older process still running"
 
   (** Setups the interrupt handler so that the worker fork is killed when
       the parent receives SIGINT. Returns a Deferred that will be resolved
       once the fork process exits. *)
-  let setup pid =
+  let setup ~logger:logger_ pid =
+    logger := logger_ ;
     maybe_setup_handler !state ;
     state := Child_running pid ;
     Unix.waitpid pid
@@ -559,12 +562,9 @@ module Make (Inputs : Intf.Inputs_intf) :
           (outer_response_writer (module Rpcs_versioned))
       in
       match result with
-      | `Child_exit exit_status ->
-          [%log info] "Child exited (choose), status: %s"
-            (Core_unix.Exit_or_signal.to_string_hum exit_status) ;
+      | `Child_exit _exit_status ->
           (* TODO: make sure that the exit was clean and not because of another error *)
-          write_result (Ok None) ;
-          Deferred.unit
+          write_result (Ok None) ; Deferred.unit
       | `Response rr -> (
           match rr with
           | `Eof ->
@@ -608,7 +608,15 @@ module Make (Inputs : Intf.Inputs_intf) :
       | `In_the_parent child_pid ->
           [%log info] "Forked, child PID: $pid"
             ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
-          let wait_for_fork = Interrupt_handler.setup child_pid in
+          let wait_for_fork = Interrupt_handler.setup ~logger child_pid in
+          upon wait_for_fork (fun exit_status ->
+              [%log info] "Child exited"
+                ~metadata:
+                  [ ("pid", `Int (Pid.to_int child_pid))
+                  ; ( "status"
+                    , `String
+                        (Core_unix.Exit_or_signal.to_string_hum exit_status) )
+                  ] ) ;
           Core.Unix.close from_parent ;
           Core.Unix.close to_parent ;
           let from_fork =
