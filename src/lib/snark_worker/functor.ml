@@ -564,7 +564,7 @@ module Make (Inputs : Intf.Inputs_intf) :
             match rr with
             | `Eof ->
                 [%log info] "EOF when reading from children" ;
-                write_result (Error "EOF when reading from children") ;
+                write_result (Ok None) ;
                 Deferred.unit
             | `Ok result ->
                 write_result (Result.map ~f:Option.some result) ;
