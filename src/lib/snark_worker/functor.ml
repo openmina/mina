@@ -7,7 +7,11 @@ module Request = struct
 end
 
 module Interrupt_handler = struct
-  type t = Pending_handler_setup | Idle | Child_running of Pid.t
+  type t =
+    | Pending_handler_setup
+    | Idle
+    | Child_running of Pid.t
+    | Child_cancelled of Pid.t
 
   let state = ref Pending_handler_setup
 
@@ -32,15 +36,20 @@ module Interrupt_handler = struct
         [%log' warn !logger]
           "Warning, calling interrupt but there is no child running" ;
         current_state
+    | Child_cancelled pid ->
+        [%log' warn !logger]
+          "Warning, calling interrupt but cancellation is already ongoing: $pid"
+          ~metadata:[ ("pid", `Int (Pid.to_int pid)) ] ;
+        current_state
     | Child_running pid ->
-        kill_subprocess pid ; Idle
+        kill_subprocess pid ; Child_cancelled pid
 
   let maybe_setup_handler = function
     | Pending_handler_setup ->
         Signal.handle [ Signal.int ] ~f:(fun _ -> state := interrupt !state)
     | Idle ->
         ()
-    | Child_running _ ->
+    | Child_running _ | Child_cancelled _ ->
         [%log' warn !logger]
           "Warning, setting up a new pid with an older process still running"
 
@@ -53,10 +62,28 @@ module Interrupt_handler = struct
     state := Child_running pid ;
     Unix.waitpid pid
 
+  (** Called when the child has exit to check the cancellation status and update the state *)
+  let child_has_exit ~on_cancelled ~on_error =
+    match !state with
+    | Pending_handler_setup ->
+        [%log' warn !logger]
+          "Warning, got children exit without having even setup the interrupt \
+           handler (should not be possible)" ;
+        on_error ()
+    | Idle ->
+        on_error () (* TODO: warning, this should not happen *)
+    | Child_running _pid ->
+        state := Idle ;
+        (* This is an error *)
+        on_error ()
+    | Child_cancelled _pid ->
+        state := Idle ;
+        on_cancelled ()
+
   (** Call before exiting the program, will kill any pending subprocess *)
   let cleanup () =
     match !state with
-    | Idle | Pending_handler_setup ->
+    | Idle | Pending_handler_setup | Child_cancelled _ ->
         ()
     | Child_running pid ->
         kill_subprocess pid
@@ -557,14 +584,36 @@ module Make (Inputs : Intf.Inputs_intf) :
             (outer_response_writer (module Rpcs_versioned))
         in
         match result with
-        | `Child_exit _exit_status ->
-            (* TODO: make sure that the exit was clean and not because of another error *)
-            write_result (Ok None) ; Deferred.unit
+        | `Child_exit exit_status ->
+            Interrupt_handler.child_has_exit
+              ~on_error:(fun () ->
+                [%log warn] "Unexpected stop from subworker process: $status"
+                  ~metadata:
+                    [ ( "status"
+                      , `String
+                          (Core_unix.Exit_or_signal.to_string_hum exit_status)
+                      )
+                    ] ;
+                write_result
+                  (Error
+                     ( "Worker subprocess stopped unexpectedly: "
+                     ^ Core_unix.Exit_or_signal.to_string_hum exit_status ) ) )
+              ~on_cancelled:(fun () ->
+                [%log info] "Worker subprocess has quit after cancel request" ;
+                write_result (Ok None) ) ;
+            Deferred.unit
         | `Response rr -> (
             match rr with
             | `Eof ->
-                [%log info] "EOF when reading from children" ;
-                write_result (Ok None) ;
+                Interrupt_handler.child_has_exit
+                  ~on_error:(fun () ->
+                    [%log warn] "Unexpected EOF from worker subprocess" ;
+                    write_result
+                      (Error "EOF when reading from worker subprocess") )
+                  ~on_cancelled:(fun () ->
+                    [%log info]
+                      "EOF from worker subprocess after cancel request" ;
+                    write_result (Ok None) ) ;
                 Deferred.unit
             | `Ok result ->
                 write_result (Result.map ~f:Option.some result) ;
