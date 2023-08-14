@@ -114,4 +114,5 @@ COPY --from=builder /home/opam/app/mina /usr/local/bin/
 # --- Container workdir, ports, entrypoint, etc.
 WORKDIR /rosetta
 
-ENTRYPOINT ["mina", "internal", "snark-worker-stdio"]
+ENTRYPOINT []
+CMD ["mina", "internal", "snark-worker-stdio"]
