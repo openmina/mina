@@ -10,7 +10,7 @@ set +x
 CLEAR='\033[0m'
 RED='\033[0;31m'
 # Array of valid service names
-VALID_SERVICES=('mina-archive', 'mina-daemon' 'mina-rosetta' 'mina-test-executive' 'mina-zkapp-test-transaction' 'mina-toolchain' 'bot' 'leaderboard' 'delegation-backend' 'delegation-backend-toolchain')
+VALID_SERVICES=('snark-worker-prover', 'mina-archive', 'mina-daemon' 'mina-rosetta' 'mina-test-executive' 'mina-zkapp-test-transaction' 'mina-toolchain' 'bot' 'leaderboard' 'delegation-backend' 'delegation-backend-toolchain')
 
 function usage() {
   if [[ -n "$1" ]]; then
@@ -92,6 +92,9 @@ mina-test-executive)
 mina-rosetta)
   DOCKERFILE_PATH="dockerfiles/stages/1-build-deps dockerfiles/stages/2-opam-deps dockerfiles/stages/3-builder dockerfiles/stages/4-production"
   ;;
+snark-worker-prover)
+  DOCKERFILE_PATH="dockerfiles/stages/1-build-deps dockerfiles/stages/2-opam-deps dockerfiles/stages/3-builder dockerfiles/stages/4-snark-worker-prover"
+  ;;
 mina-zkapp-test-transaction)
   DOCKERFILE_PATH="dockerfiles/Dockerfile-zkapp-test-transaction"
   ;;
@@ -115,7 +118,7 @@ if [[ -z "${BUILDKITE_PULL_REQUEST_REPO}" ]]; then
   REPO="--build-arg MINA_REPO=https://github.com/MinaProtocol/mina"
 fi
 
-DOCKER_REGISTRY="gcr.io/o1labs-192920"
+DOCKER_REGISTRY="openmina"
 TAG="${DOCKER_REGISTRY}/${SERVICE}:${VERSION}"
 # friendly, predictable tag
 GITHASH=$(git rev-parse --short=7 HEAD)
@@ -129,24 +132,24 @@ else
   docker build $CACHE $NETWORK $IMAGE $DEB_CODENAME $DEB_RELEASE $DEB_VERSION $BRANCH $REPO $extra_build_args $DOCKER_CONTEXT -t "$TAG" -f $DOCKERFILE_PATH
 fi
 
-if [[ -z "$NOUPLOAD" ]] || [[ "$NOUPLOAD" -eq 0 ]]; then
-  
-  # push to GCR
-  docker push "${TAG}"
-
-  # retag and push again to GCR
-  docker tag "${TAG}" "${HASHTAG}"
-  docker push "${HASHTAG}"
-
-  echo "Release Env Var: ${DEB_RELEASE}"
-  echo "Release: ${DEB_RELEASE##*=}"
-
-  if [[ "${DEB_RELEASE##*=}" = "unstable" ]]; then
-    echo "Release is unstable: not pushing to docker hub"
-  else
-    echo "Release is public (alpha, beta, berkeley, or stable): pushing image to docker hub"
-    # tag and push to dockerhub
-    docker tag "${TAG}" "minaprotocol/${SERVICE}:${VERSION}"
-    docker push "minaprotocol/${SERVICE}:${VERSION}"
-  fi
-fi
+#if [[ -z "$NOUPLOAD" ]] || [[ "$NOUPLOAD" -eq 0 ]]; then
+#
+#  # push to GCR
+#  docker push "${TAG}"
+#
+#  # retag and push again to GCR
+#  docker tag "${TAG}" "${HASHTAG}"
+#  docker push "${HASHTAG}"
+#
+#  echo "Release Env Var: ${DEB_RELEASE}"
+#  echo "Release: ${DEB_RELEASE##*=}"
+#
+#  if [[ "${DEB_RELEASE##*=}" = "unstable" ]]; then
+#    echo "Release is unstable: not pushing to docker hub"
+#  else
+#    echo "Release is public (alpha, beta, berkeley, or stable): pushing image to docker hub"
+#    # tag and push to dockerhub
+#    docker tag "${TAG}" "minaprotocol/${SERVICE}:${VERSION}"
+#    docker push "minaprotocol/${SERVICE}:${VERSION}"
+#  fi
+#fi
