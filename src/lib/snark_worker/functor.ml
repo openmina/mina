@@ -580,7 +580,7 @@ module Make (Inputs : Intf.Inputs_intf) :
             ]
         in
         let write_result =
-          Raw_io.write_bin_prot Core.Unix.stderr
+          Raw_io.write_bin_prot Core.Unix.stdout
             (outer_response_writer (module Rpcs_versioned))
         in
         match result with
@@ -634,7 +634,7 @@ module Make (Inputs : Intf.Inputs_intf) :
       match input with
       | Request.Await_readiness ->
           [%log info] "Answering to readiness request" ;
-          Raw_io.write_bin_prot Core_unix.stderr Bool.bin_writer_t true ;
+          Raw_io.write_bin_prot Core_unix.stdout Bool.bin_writer_t true ;
           loop ()
       | Request.Perform_job job ->
           handle_job job
