@@ -102,7 +102,7 @@ RUN test "$deb_codename" = "focal" \
 #  && chmod go-rwx ${MINA_CONFIG_DIR}/wallets/store/${PK}
 
 # --- Copy artifacts from the 3-builder stage
-COPY --from=builder /home/opam/app/mina /usr/local/bin/
+COPY --from=builder /home/opam/app/mina-dev /usr/local/bin/mina
 #COPY --from=builder /home/opam/mina/src/app/rosetta/*.sh /rosetta/
 #COPY --from=builder /home/opam/mina/src/app/rosetta/*.conf /rosetta/
 #COPY --from=builder /home/opam/mina/src/app/rosetta/README.md /rosetta/
