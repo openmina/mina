@@ -1,6 +1,6 @@
 testnetName: testnet
 mina:
-  image: tizoc/mina-daemon:openmina-berkeley-preitn1-a2f5b77cc8
+  image: gcr.io/o1labs-192920/mina-daemon:2.0.0rampup2-georgeee-testing-itn-ae92e93-bullseye-berkeley-3
   snarkCoordinatorImage: binier/mina-snark-worker-rs:latest
   privkeyPass:
   exposeGraphql: true
@@ -61,24 +61,24 @@ blockProducerConfigs:
     keypairName: prod3-privkey-secret
     isolated: false
   - name: prod4
-    # see resources/key-200
+    # see resources/key-04
     keypairName: prod4-privkey-secret
     isolated: false
   - name: prod5
-    # see resources/key-199
+    # see resources/key-05
     keypairName: prod5-privkey-secret
     isolated: false
 
 httpCoordinatedSnarkersConfig:
   # the number of snark workers
-  count: 0
+  count: 20
   namePrefix: snarker
 
-minaSnarkCoordinatorsConfig:
-- name: snarker001
-  publicKey: B62qoGg77bjwPm3kncsjnBChAbeipbotqUCpcGe8FGPbLAJegj6K7od
-  workSelectionAlgorithm: seq
-  workers: 20
+# minaSnarkCoordinatorsConfig:
+# - name: snarker001
+#   publicKey: B62qoGg77bjwPm3kncsjnBChAbeipbotqUCpcGe8FGPbLAJegj6K7od
+#   workSelectionAlgorithm: seq
+#   workers: 20
 # - name: snarker002
 #   publicKey: B62qos2NxSras7juEwPVnkoV23YTFvWawyko8pgcf8S5nccTFCzVpdy
 #   workSelectionAlgorithm: rand
