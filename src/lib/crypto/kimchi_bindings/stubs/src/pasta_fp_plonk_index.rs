@@ -53,38 +53,47 @@ pub fn caml_pasta_fp_plonk_index_create(
         })
         .collect();
 
-    // create constraint system
-    let cs = match ConstraintSystem::<Fp>::create(gates)
-        .public(public as usize)
-        .prev_challenges(prev_challenges as usize)
-        .build()
-    {
-        Err(_) => {
-            return Err(ocaml::Error::failwith(
-                "caml_pasta_fp_plonk_index_create: could not create constraint system",
-            )
-            .err()
-            .unwrap())
+    let result = crate::rayon::maybe_run_in_local_pool(|| {
+        // create constraint system
+        let cs = match ConstraintSystem::<Fp>::create(gates)
+            .public(public as usize)
+            .prev_challenges(prev_challenges as usize)
+            .build()
+        {
+            Err(_) => {
+                //return Err(ocaml::Error::failwith(
+                //    "caml_pasta_fp_plonk_index_create: could not create constraint system",
+                //)
+                //.err()
+                //.unwrap())
+                return Err(
+                    "caml_pasta_fp_plonk_index_create: could not create constraint system",
+                );
+            }
+            Ok(cs) => cs,
+        };
+
+        // endo
+        let (endo_q, _endo_r) = poly_commitment::srs::endos::<Pallas>();
+
+        // Unsafe if we are in a multi-core ocaml
+        {
+            let ptr: &mut poly_commitment::srs::SRS<Vesta> =
+                unsafe { &mut *(std::sync::Arc::as_ptr(&srs.0) as *mut _) };
+            ptr.add_lagrange_basis(cs.domain.d1);
         }
-        Ok(cs) => cs,
-    };
 
-    // endo
-    let (endo_q, _endo_r) = poly_commitment::srs::endos::<Pallas>();
+        // create index
+        let mut index = ProverIndex::<Vesta>::create(cs, endo_q, srs.clone());
+        // Compute and cache the verifier index digest
+        index.compute_verifier_index_digest::<DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>>();
+        Ok(index)
+    });
 
-    // Unsafe if we are in a multi-core ocaml
-    {
-        let ptr: &mut poly_commitment::srs::SRS<Vesta> =
-            unsafe { &mut *(std::sync::Arc::as_ptr(&srs.0) as *mut _) };
-        ptr.add_lagrange_basis(cs.domain.d1);
+    match result {
+        Ok(index) => Ok(CamlPastaFpPlonkIndex(Box::new(index))),
+        Err(error) => Err(ocaml::Error::failwith(error).err().unwrap()),
     }
-
-    // create index
-    let mut index = ProverIndex::<Vesta>::create(cs, endo_q, srs.clone());
-    // Compute and cache the verifier index digest
-    index.compute_verifier_index_digest::<DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>>();
-
-    Ok(CamlPastaFpPlonkIndex(Box::new(index)))
 }
 
 #[ocaml_gen::func]
