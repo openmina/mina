@@ -113,6 +113,7 @@ module CreateDiffArgs = struct
         ; prover : Public_key.Compressed.Stable.V1.t
         ; coinbase_receiver : Public_key.Compressed.Stable.V1.t
         ; current_state : Mina_state.Protocol_state.Value.Stable.V2.t
+        ; snark_worker_fees : Currency.Fee.Stable.V1.t list
         }
 
       let to_latest = Fn.id
@@ -139,7 +140,7 @@ end
 let create_diff args_serialized =
   try
     let CreateDiffArgs.
-          { txns; global_slot; prover; coinbase_receiver; current_state } =
+          { txns; global_slot; prover; coinbase_receiver; current_state; snark_worker_fees } =
       Bin_prot.Reader.of_bytes [%bin_reader: CreateDiffArgs.Stable.Latest.t]
         args_serialized
     in
@@ -154,11 +155,14 @@ let create_diff args_serialized =
              | `If_this_is_used_it_should_have_a_comment_justifying_it tx ->
                  tx ) )
     in
-    let Genesis_constants.Constraint_constants.{ account_creation_fee = fee; _ }
-        =
-      !constraint_constants
-    in
+    (* let Genesis_constants.Constraint_constants.{ account_creation_fee = fee; _ }
+     *     =
+     *   !constraint_constants
+     * in *)
+    let snark_worker_fees = ref snark_worker_fees in
     let stmt_to_work_random_prover stmt =
+      let fee = List.hd_exn !snark_worker_fees in
+      snark_worker_fees := List.tl_exn !snark_worker_fees;
       let proofs =
         One_or_two.map stmt ~f:(fun statement ->
             Ledger_proof.create ~statement
@@ -259,11 +263,17 @@ let apply_diff args_serialized =
           | Ok value ->
               let ( `Hash_after_applying staged_ledger_hash
                   , `Ledger_proof _
-                  , `Staged_ledger ledger
+                  , `Staged_ledger new_staged_ledger
                   , `Pending_coinbase_update _ ) =
                 value
               in
-              staged_ledger := Some ledger;
+
+              let mask = Real_staged_ledger.ledger new_staged_ledger in
+              Mina_ledger.Ledger.commit mask;
+              let new_staged_ledger = Real_staged_ledger.replace_ledger_exn new_staged_ledger !ledger in
+
+              staged_ledger := Some new_staged_ledger;
+
               Some staged_ledger_hash
           | Error _ ->
               None )

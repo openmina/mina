@@ -56,7 +56,7 @@ module Make_str (A : Wire_types.Concrete) = struct
       receiver t
       :: List.map ~f:Fee_transfer.receiver (Option.to_list t.fee_transfer)
     in
-    List.map account_ids ~f:(fun acct_id -> (acct_id, access_status))
+    List.map account_ids ~f:(fun acct_id -> (acct_id, access_status)) |> List.rev
 
   let accounts_referenced t =
     List.map (account_access_statuses t Transaction_status.Applied)
