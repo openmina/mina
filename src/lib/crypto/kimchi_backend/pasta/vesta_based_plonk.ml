@@ -108,6 +108,7 @@ module Proof = Plonk_dlog_proof.Make (struct
       create pk.index witness_cols prev_chals prev_comms
 
     let create_async (pk : Keypair.t) primary auxiliary prev_chals prev_comms =
+      Printf.eprintf "vesta create_async\n%!" ;
       create_aux pk primary auxiliary prev_chals prev_comms
         ~f:(fun pk auxiliary_input prev_challenges prev_sgs ->
           Promise.run_in_thread (fun () ->

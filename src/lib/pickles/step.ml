@@ -84,6 +84,7 @@ struct
       * auxiliary_value
       * (int, prevs_length) Vector.t )
       Promise.t =
+    Printf.eprintf "step.ml f\n%!" ;
     let logger = Internal_tracing_context_logger.get () in
     [%log internal] "Pickles_step_proof" ;
     let _, prev_vars_length = branch_data.proofs_verified in
@@ -811,6 +812,7 @@ struct
       ksprintf Common.time "step-prover %d (%d)" branch_data.index
         (Domain.size h)
         (fun () ->
+          Printf.eprintf "step.ml\n%!" ;
           let promise_or_error =
             (* Use a try_with to give an informative backtrace.
                If we don't do this, the backtrace will be obfuscated by the
@@ -826,6 +828,10 @@ struct
                           ; public_inputs
                           } next_statement_hashed ->
                     [%log internal] "Backend_tick_proof_create_async" ;
+                    Printf.eprintf "public_input=%d\n%!"
+                      (Kimchi_bindings.FieldVectors.Fp.length public_inputs) ;
+                    Printf.eprintf "auxiliary_inputs=%d\n%!"
+                      (Kimchi_bindings.FieldVectors.Fp.length auxiliary_inputs) ;
                     let%map.Promise proof =
                       Backend.Tick.Proof.create_async ~primary:public_inputs
                         ~auxiliary:auxiliary_inputs

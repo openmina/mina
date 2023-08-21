@@ -104,6 +104,7 @@ module Inputs = struct
                   process (fun () ->
                       match w.transaction with
                       | Command (Zkapp_command zkapp_command) -> (
+                          Core.Printf.eprintf "zkapp\n%!" ;
                           let%bind witnesses_specs_stmts =
                             Or_error.try_with (fun () ->
                                 Transaction_snark.zkapp_command_witnesses_exn
@@ -239,6 +240,7 @@ module Inputs = struct
                                      "Zkapp_command transaction final \
                                       statement mismatch" ) ) )
                       | _ ->
+                          Core.Printf.eprintf "regular cmd\n%!" ;
                           let%bind t =
                             Deferred.return
                             @@
