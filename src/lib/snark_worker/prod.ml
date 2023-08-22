@@ -90,10 +90,12 @@ module Inputs = struct
                     ] ;
                 Error e
             | Ok res ->
-                Cache.add cache ~statement ~proof:res ;
+                (* NOTE: cache disabled *)
+                (* Cache.add cache ~statement ~proof:res ; *)
                 let total = Time.abs_diff (Time.now ()) start in
                 Ok (res, total)
           in
+          (* NOTE: cache disabled above *)
           match Cache.find cache statement with
           | Some proof ->
               Deferred.Or_error.return (proof, Time.Span.zero)

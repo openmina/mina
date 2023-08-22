@@ -512,8 +512,9 @@ module Make (Inputs : Intf.Inputs_intf) :
   let children_loop
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~logger ~writer
-      ~reader worker_state =
+      ~reader ~one_shot worker_state =
     let rec loop () =
+      let continue () = if one_shot then exit 0 else loop () in
       let input =
         try
           `Ok
@@ -529,7 +530,7 @@ module Make (Inputs : Intf.Inputs_intf) :
           Raw_io.write_bin_prot writer
             (inner_response_writer (module Rpcs_versioned))
             (Error "Received an empty job") ;
-          loop ()
+          continue ()
       | `Ok (Some (work, public_key)) -> (
           let work_ids =
             Transaction_snark_work.Statement.compact_json
@@ -549,14 +550,14 @@ module Make (Inputs : Intf.Inputs_intf) :
               Raw_io.write_bin_prot writer
                 (inner_response_writer (module Rpcs_versioned))
                 (Error ("Error generating proof: " ^ Error.to_string_hum error)) ;
-              loop ()
+              continue ()
           | Ok result ->
               [%log info] "Proof generated successfully"
                 ~metadata:[ ("work_ids", work_ids) ] ;
               Raw_io.write_bin_prot writer
                 (inner_response_writer (module Rpcs_versioned))
                 (Ok result) ;
-              loop () )
+              continue () )
     in
     loop ()
 
@@ -564,8 +565,21 @@ module Make (Inputs : Intf.Inputs_intf) :
   let handle_jobs
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~wait_for_fork
-      ~writer ~reader ~logger () =
+      ~one_shot ~writer ~reader ~logger () =
     let rec loop () =
+      let continue () =
+        if one_shot then (
+          let%bind exit_status = wait_for_fork in
+          Interrupt_handler.state := Idle ;
+          [%log debug] "Stop from subworker process (expected): $status"
+            ~metadata:
+              [ ( "status"
+                , `String (Core_unix.Exit_or_signal.to_string_hum exit_status)
+                )
+              ] ;
+          Deferred.unit )
+        else loop ()
+      in
       let handle_job job =
         Writer.write_bin_prot writer
           Rpcs_versioned.Get_work.V2.bin_writer_response job ;
@@ -617,7 +631,7 @@ module Make (Inputs : Intf.Inputs_intf) :
                 Deferred.unit
             | `Ok result ->
                 write_result (Result.map ~f:Option.some result) ;
-                loop () )
+                continue () )
       in
       let%bind input =
         try
@@ -650,7 +664,7 @@ module Make (Inputs : Intf.Inputs_intf) :
   let fork_and_work
       (module Rpcs_versioned : Intf.Rpcs_versioned_S
         with type Work.ledger_proof = Inputs.Ledger_proof.t ) ~worker_state
-      ~logger () =
+      ~always_fork ~logger () =
     let rec loop () =
       (* Cannot create Unix pipes with Async because that will create new
          threads to handle the pipes in a non-blocking manner.
@@ -668,7 +682,8 @@ module Make (Inputs : Intf.Inputs_intf) :
           Core.Unix.close from_fork ;
           children_loop
             (module Rpcs_versioned)
-            ~logger ~writer:to_parent ~reader:from_parent worker_state
+            ~one_shot:always_fork ~logger ~writer:to_parent ~reader:from_parent
+            worker_state
       | `In_the_parent child_pid ->
           [%log info] "Forked, child PID: $pid"
             ~metadata:[ ("pid", `Int (Pid.to_int child_pid)) ] ;
@@ -690,7 +705,8 @@ module Make (Inputs : Intf.Inputs_intf) :
           let%bind () =
             handle_jobs
               (module Rpcs_versioned)
-              ~wait_for_fork ~writer:to_fork ~reader:from_fork ~logger ()
+              ~one_shot:always_fork ~wait_for_fork ~writer:to_fork
+              ~reader:from_fork ~logger ()
           in
           (* Make sure these are closed before forking again to avoid leaking
              these descriptors to the children *)
@@ -718,7 +734,11 @@ module Make (Inputs : Intf.Inputs_intf) :
                  ; ("Check", Check)
                  ; ("None", None)
                  ] ) )
+       and always_fork =
+         flag "--always-fork" ~aliases:[ "always-fork" ] (optional bool)
+           ~doc:"true|false Fork for every job (default:true)"
        in
+       let always_fork = Option.value ~default:true always_fork in
        fun () ->
          let logger =
            Logger.create () ~metadata:[ ("process", `String "Snark Worker") ]
@@ -738,7 +758,9 @@ module Make (Inputs : Intf.Inputs_intf) :
          [%log info] "Snark worker state is initialized" ;
          (* Lets run a full GC cycle before forking *)
          Gc.compact () ;
-         fork_and_work (module Rpcs_versioned) ~worker_state ~logger () )
+         fork_and_work
+           (module Rpcs_versioned)
+           ~worker_state ~always_fork ~logger () )
 
   let arguments ~proof_level ~daemon_address ~shutdown_on_disconnect =
     [ "-daemon-address"
