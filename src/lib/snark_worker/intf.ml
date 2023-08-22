@@ -2,6 +2,7 @@ open Core
 open Async
 
 let command_name = "snark-worker"
+
 let command_stdio_name = "snark-worker-stdio"
 
 module type Inputs_intf = sig
@@ -154,6 +155,7 @@ module type S0 = sig
   val command_from_rpcs :
        (module Rpcs_versioned_S with type Work.ledger_proof = ledger_proof)
     -> Command.t
+
   val command_from_stdio :
        (module Rpcs_versioned_S with type Work.ledger_proof = ledger_proof)
     -> Command.t
@@ -173,5 +175,6 @@ module type S = sig
     Rpcs_versioned_S with type Work.ledger_proof = ledger_proof
 
   val command : Command.t
+
   val command_stdio : Command.t
 end
