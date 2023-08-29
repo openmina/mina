@@ -54,7 +54,7 @@ module Inputs = struct
     ( Transaction_witness.Stable.Latest.t
     , Transaction_snark.Stable.Latest.t )
     Snark_work_lib.Work.Single.Spec.Stable.Latest.t
-  [@@deriving bin_io_unversioned, sexp]
+  [@@deriving bin_io_unversioned, sexp, to_yojson]
 
   type zkapp_command_inputs =
     ( Transaction_witness.Zkapp_command_segment_witness.t
@@ -62,6 +62,8 @@ module Inputs = struct
     * Transaction_snark.Statement.With_sok.t )
     list
   [@@deriving sexp, to_yojson]
+
+  let proof_count = ref 0
 
   let perform_single ({ m; cache; proof_level } : Worker_state.t) ~message =
     let open Deferred.Or_error.Let_syntax in
@@ -73,6 +75,7 @@ module Inputs = struct
       | Genesis_constants.Proof_level.Full -> (
           let (module M) = Option.value_exn m in
           let statement = Work.Single.Spec.statement single in
+          Snarky.Witness_tracing.setup () ;
           let process k =
             let start = Time.now () in
             match%map.Async.Deferred
@@ -90,6 +93,13 @@ module Inputs = struct
                     ] ;
                 Error e
             | Ok res ->
+                let work_id = Transaction_snark.Statement.hash statement in
+                let filename = sprintf "proof-%d-%d.log" !proof_count work_id in
+                let job_str =
+                  Yojson.Safe.pretty_to_string @@ single_spec_to_yojson single
+                in
+                Snarky.Witness_tracing.dump_current job_str filename ;
+                incr proof_count ;
                 (* NOTE: cache disabled *)
                 (* Cache.add cache ~statement ~proof:res ; *)
                 let total = Time.abs_diff (Time.now ()) start in

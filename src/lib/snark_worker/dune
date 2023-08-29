@@ -24,6 +24,8 @@
    core_unix.bigstring_unix
    core_unix
    stdio
+   snarky
+   snarky.backendless
    ;; local libraries
    one_or_two
    mina_metrics

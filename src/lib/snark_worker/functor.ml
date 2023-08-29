@@ -633,12 +633,19 @@ module Make (Inputs : Intf.Inputs_intf) :
                 write_result (Result.map ~f:Option.some result) ;
                 continue () )
       in
+      let read_input () =
+        match Sys.getenv "RAW_JOB" with
+        | None ->
+            Raw_io.read_bin_prot Core_unix.stdin
+              (Request.bin_reader_t
+                 Rpcs_versioned.Get_work.Latest.bin_reader_response )
+        | _ ->
+            Perform_job
+              (Raw_io.read_bin_prot Core_unix.stdin
+                 Rpcs_versioned.Get_work.Latest.bin_reader_response )
+      in
       let%bind input =
-        try
-          return
-            (Raw_io.read_bin_prot Core_unix.stdin
-               (Request.bin_reader_t
-                  Rpcs_versioned.Get_work.Latest.bin_reader_response ) )
+        try return (read_input ())
         with exn ->
           [%log info] "EOF or error when reading from stdin, quitting: $error"
             ~metadata:[ ("error", `String (Exn.to_string exn)) ] ;

@@ -3027,23 +3027,27 @@ module Make_str (A : Wire_types.Concrete) = struct
     *)
     let%snarkydef_ main ~constraint_constants
         (statement : Statement.With_sok.Checked.t) =
-      let%bind () = dummy_constraints () in
+      let%bind () = [%with_label_ "dummy constraints"] dummy_constraints in
       let%bind (module Shifted) = Tick.Inner_curve.Checked.Shifted.create () in
       let%bind t =
         with_label __LOC__ (fun () ->
             exists Transaction_union.typ ~request:(As_prover.return Transaction) )
       in
       let%bind pending_coinbase_init =
-        exists Pending_coinbase.Stack.typ ~request:(As_prover.return Init_stack)
+        [%with_label_ "pending_coinbase_init"] (fun () ->
+            exists Pending_coinbase.Stack.typ
+              ~request:(As_prover.return Init_stack) )
       in
       let%bind state_body =
-        exists
-          (Mina_state.Protocol_state.Body.typ ~constraint_constants)
-          ~request:(As_prover.return State_body)
+        [%with_label_ "state_body"] (fun () ->
+            exists
+              (Mina_state.Protocol_state.Body.typ ~constraint_constants)
+              ~request:(As_prover.return State_body) )
       in
       let%bind global_slot =
-        exists Mina_numbers.Global_slot_since_genesis.typ
-          ~request:(As_prover.return Global_slot)
+        [%with_label_ "global_slot"] (fun () ->
+            exists Mina_numbers.Global_slot_since_genesis.typ
+              ~request:(As_prover.return Global_slot) )
       in
       let%bind fee_payment_root_after, fee_excess, supply_increase =
         apply_tagged_transaction ~constraint_constants
@@ -3174,9 +3178,10 @@ module Make_str (A : Wire_types.Concrete) = struct
     *)
     let%snarkydef_ main (s : Statement.With_sok.Checked.t) =
       let%bind s1, s2 =
-        exists
-          Typ.(Statement.With_sok.typ * Statement.With_sok.typ)
-          ~request:(As_prover.return Statements_to_merge)
+        [%with_label_ "get statements to merge"] (fun () ->
+            exists
+              Typ.(Statement.With_sok.typ * Statement.With_sok.typ)
+              ~request:(As_prover.return Statements_to_merge) )
       in
       let%bind fee_excess =
         Fee_excess.combine_checked s1.Statement.Poly.fee_excess
