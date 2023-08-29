@@ -1,0 +1,20 @@
+Mina ITN Runbook started
+{{- if .Values.startNetwork.enabled }}
+- ITN network is restarted
+{{- end }}
+- Random node restart CronJob is started.
+- Zkapp gerenation with period {{ .Values.runZkapp.period }}s and duration {{ .Values.runZkapp.duration }}s is started.
+
+{{- if .Values.startNetwork.enabled }}
+To see network deployment process, execute
+```
+$ kubectl --namespace=.Release.Namespace logs job/{{ include "itn-runbook.startNetworkName" . }} --follow
+```
+{{- end }}
+
+CronJobs and schedules:
+{{- range (lookup "batch/v1" "CronJob" "" "").items }}
+{{- if (and (hasKey .metadata.annotations "meta.helm.sh/release-name") (eq (get .metadata.annotations "meta.helm.sh/release-name") $.Release.Name)) }}
+- {{ .metadata.name }} with schedule {{ .spec.schedule | quote }}
+{{- end }}
+{{- end }}

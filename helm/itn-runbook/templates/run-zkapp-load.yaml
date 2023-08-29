@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "itn-runbook.runZkappName" . }}
+spec:
+  schedule: {{ include "itn-runbook.runZkappSchedule" . }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          runtimeClassName: kata-clh
+          containers:
+          - name: main
+            image: {{ $.Values.runZkapp.repository }}:{{ $.Values.runZkapp.tag | default "latest" }}
+            imagePullPolicy: {{ $.Values.runZkapp.pullPolicy }}
+            command:
+            - node
+            - --inspect
+            - build/src/main.js
+            args: [ "-v", "-v", "run", "{{ .Values.runZkapp.loadKind }}",
+             {{- range .Values.runZkapp.receivers }}"{{ . }}",{{- end}}
+             "--nodes", {{- range .Values.runZkapp.nodes }}"{{ . }}",{{- end}}
+             "--keys={{ .Values.runZkapp.sender }}",
+             "--duration={{ .Values.runZkapp.duration }}",
+             "--period={{ .Values.runZkapp.period }}",
+             "--no-wait",
+            ]
+            ports:
+            - name: inspect
+              containerPort: 9229
+            resources:
+              requests:
+                {{ if $.Values.runZkapp.cpu }}
+                cpu: {{ $.Values.runZkapp.cpu }}
+                {{ end }}
+                {{ if $.Values.runZkapp.mem }}
+                memory: {{ $.Values.runZkapp.mem }}
+                {{ end }}
+              limits:
+                {{ if $.Values.runZkapp.cpu }}
+                cpu: {{ $.Values.runZkapp.cpu }}
+                {{ end }}
+                {{ if $.Values.runZkapp.mem }}
+                memory: {{ $.Values.runZkapp.mem }}
+                {{ end }}

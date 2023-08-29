@@ -1,0 +1,48 @@
+{{- if .Values.startNetwork.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "itn-runbook.startNetworkName" . }}
+spec:
+  template:
+    spec:
+      serviceAccountName: itn-manager
+      containers:
+      - name: main
+        image: alpine/k8s:1.28.0
+        command: ["sh", "-xe", "-c"]
+        args:
+        - |
+          # remove previous Mina network artefacts
+          for RELEASE in seeds producers snark-workers nodes; do helm delete --wait $RELEASE || true; done
+
+          # TODO update genesis timestamp in daemon.json
+
+          # start new Mina network artefact
+          helm install seeds /charts/seed-node* --values=/values/common.yaml --values=/values/seed.yaml
+          sleep 60
+          helm install producers /charts/block-producer* --values=/values/common.yaml --values=/values/producer.yaml
+          helm install snark-workers /charts/snark-worker* --values=/values/common.yaml --values=/values/snark-worker.yaml
+          helm install nodes /charts/plain-node* --values=/values/common.yaml --values=/values/node.yaml
+        volumeMounts:
+        - name: values
+          mountPath: /values
+        - name: helm-charts
+          mountPath: /charts
+      volumes:
+      - name: values
+        configMap:
+          name: {{ include "itn-runbook.startNetworkName" . }}
+      - name: helm-charts
+        configMap:
+          name: itn-helm-charts
+      restartPolicy: Never
+  backoffLimit: 0
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "itn-runbook.startNetworkName" . }}
+data:
+{{ (.Files.Glob "values/*").AsConfig | indent 2 }}
+{{- end }}

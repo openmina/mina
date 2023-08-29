@@ -1,0 +1,219 @@
+testnetName: testnet
+mina:
+  image: tizoc/mina-daemon:openmina-tracing-fix-test
+  snarkCoordinatorImage: binier/mina-snark-worker-rs:latest
+  privkeyPass:
+  exposeGraphql: true
+  usePodIp: true
+  seedPeers:
+    # see resources/seed1.peerid
+    - /dns4/seed1/tcp/10001/p2p/12D3KooWBT8pyJAfWJhdeGYAtKvcaUmm78ExyZ6uo6BEimYNVat1
+    # see resources/seed2.peerid
+    - /dns4/seed2/tcp/10001/p2p/12D3KooWQ2gQb1uoDGymuxtoA8jPdb6SykyP94tEP6FVyXHcM9Ye
+  # memRequest: 4Gi
+  # cpuRequest: 4
+  # optimized: false
+  useCustomEntrypoint: true
+  customEntrypoint: /scripts/unset-k8s-env.sh
+  downloadConfig: true
+
+healthcheck:
+  enabled: false
+  failureThreshold: 60
+  periodSeconds: 10
+  initialDelaySeconds: 60
+
+plainNodesConfig:
+  # the number of plain nodes
+  count: 170
+  namePrefix: node
+  itnGraphqlPort: 30300
+
+httpCoordinatedSnarkersConfig:
+  # the number of snark workers
+  count: 0
+  namePrefix: snarker
+
+minaSnarkCoordinatorsConfig:
+  - name: snarker001
+    publicKey: B62qn7A38x3UM8x1tQKsHZs5cGtuApEMY1ecyNhWGjgkkjLFgZcobzP
+    workSelectionAlgorithm: seq
+    workers: 1
+    itnGraphqlPort: 30200
+  - name: snarker002
+    publicKey: B62qn7A38x3UM8x1tQKsHZs5cGtuApEMY1ecyNhWGjgkkjLFgZcobzP
+    workSelectionAlgorithm: rand
+    workers: 1
+    itnGraphqlPort: 30201
+
+seedConfigs:
+  - name: seed1
+    # see resources/seed1
+    libp2pSecret: seed1-libp2p-secret
+    itnGraphqlPort: 31502
+  - name: seed2
+    # see resources/seed2
+    libp2pSecret: seed2-libp2p-secret
+    itnGraphqlPort: 31503
+
+blockProducerConfigs:
+  - name: prod1
+    # see resources/key-01
+    keypairName: prod1-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30000
+  - name: prod2
+    keypairName: prod2-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30001
+  - name: prod3
+    keypairName: prod3-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30002
+  - name: prod4
+    keypairName: prod4-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30003
+  - name: prod5
+    keypairName: prod5-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30004
+  - name: prod6
+    keypairName: prod6-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30005
+  - name: prod7
+    keypairName: prod7-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30006
+  - name: prod8
+    keypairName: prod8-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30007
+  - name: prod9
+    keypairName: prod9-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30008
+  - name: prod10
+    keypairName: prod10-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30009
+  - name: prod11
+    keypairName: prod11-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30010
+  - name: prod12
+    keypairName: prod12-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30011
+  - name: prod13
+    keypairName: prod13-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30012
+  - name: prod14
+    keypairName: prod14-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30013
+  - name: prod15
+    keypairName: prod15-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30014
+  - name: prod16
+    keypairName: prod16-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30015
+  - name: prod17
+    keypairName: prod17-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30016
+  - name: prod18
+    keypairName: prod18-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30017
+  - name: prod19
+    keypairName: prod19-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30018
+  - name: prod20
+    keypairName: prod20-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30019
+  - name: prod21
+    keypairName: prod21-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30020
+  - name: prod22
+    keypairName: prod22-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30021
+  - name: prod23
+    keypairName: prod23-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30022
+  - name: prod24
+    keypairName: prod24-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30023
+  - name: prod25
+    keypairName: prod25-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30024
+  - name: prod26
+    keypairName: prod26-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30025
+  - name: prod27
+    keypairName: prod27-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30026
+  - name: prod28
+    keypairName: prod28-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30027
+  - name: prod29
+    keypairName: prod29-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30028
+  - name: prod30
+    keypairName: prod30-privkey-secret
+    isolated: false
+    itnGraphqlPort: 30029
+
+resources:
+  enable: false
+  image: adrnagy/mina-node-monitoring:17c9127
+  args: [--executable-name=mina]
+  cpu: 100m
+  memory: 100Mi
+
+bpfDebugger:
+  enable: false
+  image: openmina/mina-network-debugger:079d34d6
+  cpu: 1500m
+  memory: 4Gi
+  restartMina: false
+  runtime: kata-clh
+
+logs:
+  enable: true
+  image: openmina/mina-logs-service:b5d32468
+
+internalTrace:
+  enable: true
+  image: openmina/mina-internal-trace-consumer:c889bfe
+
+aggregator:
+  image: openmina/mina-aggregator:60795c47
+  ciRepo: openmina/mina-daily-testnet
+
+ciFrontend:
+  image: directcuteo/mina-ci-frontend:reports35
+  nodePort: 31356
+
+itn:
+  enable: true
+  keys: j1JO0mYKxC+1lRmnRAd020XmG0LeBtrD6+STxrIzKhw=
+  itnGraphqlPort: 9000
+
+nodeSelector:
+  preemptible: false

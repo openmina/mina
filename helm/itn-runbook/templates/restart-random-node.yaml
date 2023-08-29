@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "itn-runbook.restartNodeName" . }}
+spec:
+  schedule: {{ include "itn-runbook.restartNodeSchedule" . }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ include "itn-runbook.serviceAccountName" . }}
+          containers:
+          - name: main
+            image: alpine/k8s:1.28.0
+            command: [ sh, -e, -c ]
+            args:
+            - |
+              PODS=$(kubectl get pods -o name | grep -E "/(seed|prod|node|snarker)")
+              TOTAL=$(echo $PODS | wc -w)
+              NUM=$(awk "BEGIN { print int(rand() * $TOTAL)}")
+              I=0
+              for POD in $PODS; do
+                if [ $I -eq $NUM ]; then
+                  echo "Restarting mina in $POD"
+                  kubectl exec $POD -c mina -- mina client stop-daemon
+                  break
+                fi
+                I=$((I+1))
+              done
+          restartPolicy: OnFailure
