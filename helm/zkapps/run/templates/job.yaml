@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "job-name" . }}
+spec:
+  schedule: "10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          runtimeClassName: kata-clh
+          containers:
+          - name: worker
+            image: {{ $.Values.repository }}:{{ $.Values.tag | default "latest" }}
+            imagePullPolicy: {{ $.Values.pullPolicy }}
+            command:
+            - node
+            - --inspect
+            - build/src/main.js
+            args: [ "-v", "-v", "run", "{{ .Values.loadKind }}",
+             {{- range .Values.receivers }}"{{ . }}",{{- end}}
+             "--nodes", {{- range .Values.nodes }}"{{ . }}",{{- end}}
+             "--keys={{ .Values.sender }}",
+             "--duration={{ .Values.duration }}",
+             "--period={{ .Values.period }}",
+             "--no-wait",
+            ]
+            ports:
+            - name: inspect
+              containerPort: 9229
+            resources:
+              requests:
+                {{ if $.Values.cpu }}
+                cpu: {{ $.Values.cpu }}
+                {{ end }}
+                {{ if $.Values.mem }}
+                memory: {{ $.Values.mem }}
+                {{ end }}
+              limits:
+                {{ if $.Values.cpu }}
+                cpu: {{ $.Values.cpu }}
+                {{ end }}
+                {{ if $.Values.mem }}
+                memory: {{ $.Values.mem }}
+                {{ end }}
