@@ -19,7 +19,71 @@ startNetwork:
 runZkapp:
   cpu: 16
   mem: "8G"
-  sender: EKELTjSKs7s442ZREdhgm4V2f2LSToTwpwAHggQzuQoi6RY4vhGc
+  senders:
+  - EKEwS9PRDZZBrsRqVNcVx85zpQyig8KLdH8C4q17ou1iYqmQbWjd
+  - EKFatsBks2HGeP9QAzRufUu8RnMoQc7Am464EQMLvCH3SEriAB6M
+  - EKECrWbvpVNQQvFBYAXep41mmJ1NzSPeZ5ggizS35eDXYyMaQtV3
+  - EKEN7FjZ66LMBgTfwa2StcrnYZ8jq6nuGzKMPTDPeMSFoBcy8sij
+  - EKFFp3jD1eP8bqs1ydFP6qD9VUyS7izWbcAhffo2Hm3W4eekgFCN
+  - EKELP2y5WqnAY8Pb76ELEVZdh354wbh8ku4fRW9hTqfN3f7sguD6
+  - EKFFEopVDFXoa5sZmt36acWbYFLw37QUyAXBr91avjgANkmkoEBJ
+  - EKELEPMg1SSMhUXwJ7DXDdHaKJfSKjvTDXguh6wayZX73dCy8b2t
+  - EKELo8qCyyLQYHNuhG4scxuDNDedFMDbVxEwA3Q4LfEdWKWg8PSG
+  - EKFSscWp2sofYNbUPbBiRmLoLN6hKtKDAcN4EsMDGiwZ3go3HqPE
+  - EKFBQdjQup1soTrLgCxkToJNN9yMXB8LYPPV54Vg698FEu4bctDA
+  - EKEzGKqeYEZy9RChQntdnh6wwcjBJjjD4PLV1awirRb4yeg2YUxK
+  - EKELTjSKs7s442ZREdhgm4V2f2LSToTwpwAHggQzuQoi6RY4vhGc
+  - EKEpSw7Ym32qd1tsXYEJa9SJTgPn7YLhtMoy69Vt9tSQvsMzi5TH
+  - EKFDjij8wFDUHVkpW79sUBnF8xVLWwnqLrjiLRxsP5wJeYyJCtif
+  - EKDhzHrjsSj2YccEQMtSqve9EfkBxSUyzyg7xntmhxoFtzTAUmGJ
+  - EKFErwhhuR9QgSx1RLBmn4XmEDT5X3kQtn64uxXFn6LJHBr1ji77
+  - EKF5nsp7puLDNBtWyLnUNqctkbDhxdW8VCniUPv6tRM1a2yejRhE
+  - EKECyGZdjNnqPAPLzBBMmjGbbs916hzRSp1G7Pk3PBK3jGqvbWFc
+  - EKE66Pjqc9rvU7A349DtoDYCSKwMfXNxU6Y48vuV3M2VZiksPcMt
+  - EKEh4hqNbKsKuZ7f35jtweUemksbihRCtfKQRVXXctgbG6tAbtMa
+  - EKEVFyBQaQuvqL6VXHpgqpYYojKZ9xbMTpT6mm4JpCwMnmC8Ew3o
+  - EKF8q38rnCYzDU2HnkYKkk1ia26mBG7Wr8VcgCKomFwdvVnKJwV5
+  - EKDpKhN4N8muP8b7GzY4GSCJxQSBCkL5uohDKfysxs6z95MMBTUK
+  - EKDvSEk4JVXkoQQJbFUwt857KDaawrJke4NbCdfujccbRyKw9iWM
+  - EKEG5D2UwDGVT5BsaEWpPSq6HR5FKAAbsrBMEU1EkW6CBAtL4Ae3
+  - EKDrgz6STA3BJo7SXpaT2hga2zJ1BET8eExzpvgsSj985eM128Ce
+  - EKERkQKS6iKA9rQJz1hZ7X7iYbgoMVwVzvAqaDjiBwzQjML7x9Nt
+  - EKEGSPyNNJ4ZKMNb12DPp9P9qR1ZyZogePb63MTMMsu4F8U8vYZn
+  - EKEaMwu3zXRpvzUL4hSEfRGXyWgQik7AYcc2EMBo2ASWs8oQE6dr
+  - EKE6wHYM2iEX9dWebeAGxxGTRRny3WuSWUr5gHiG37Noh1458Nrt
+  - EKFTwAf53yNvQdZfvoVA8XgAwU5pMSfoRaN9mSwnWPGBkkvUkHKR
+  - EKEjkCD8WT6vFa74VaLheKRt9FPRbTRXeZoK3w7MgdBBBYkMz4AN
+  - EKF6NRbmqf2t16rCsDMmQKDnatFX7Du2Bsbpeoxqe6322qz3KmFp
+  - EKEqKiBEEGcjXi9NJni3RbRe27zcyEHBFSrzkeFwdXJ4gSm59wkV
+  - EKDxnaMSH5n5hBk9Q6Z4PTtGgG9ansEZ6vtXy38Prquvs89YZBVn
+  - EKET51LaPRz3q37bAGkxdXVUJ5DgFGCAtYMy3V7vQXBzd6ME1Rbh
+  - EKEPkzBdp4NMtCWRXBz4MDoSUHtAiSwtNwq6uwgHSWUDjcgsFTf5
+  - EKEdJQRC8Tqwwv6jMQk1oVv2ja9sfcZzJ4srAVpqxmUBSSiqwgxi
+  - EKDw2AnPZeA1K4ABYQAhyoshN5wUXY7Ktd1UHtEZxzsaoddEvGRg
+  - EKEBmWdmCY9sktnaQFYDdbbLsAqncAmwBmqgYJnVE87xwr2tBhZC
+  - EKExw9K5N4o3KRMUycXd43PFoeCpZ6Ue5UGYZj7mwYXoPyT8rDpm
+  - EKFFhHaz5b5CyLUtH4Bheyz7S14AXHRe1W6kTFv3rBJ5uxW5npsb
+  - EKFR88DCtfhd3tjTBkJQ17ggsdKL2ZQFQ5RweNu4GmaeuzKmZYbu
+  - EKF3r9svVJFHhHhxvKN2wbJaP29iG2SYvstSBtA6u7qoiMxMowZ1
+  - EKEKEnwkDMt3esFkGpbsH1QQFtn6Lvf8JAPwmy2zHhSpNxrgYmf5
+  - EKFbGSDTeudmGkiCotSbEWsmoCxevxscKDUYdpfcVE6Na7CjiLJe
+  - EKDvsFDT1KxfL5tqptuVYxBuxgggkJkr6mAymotQJnVTgooQUaHd
+  - EKEKbhBnobmL1jq1aatFsgFqeANhooYvR2ms21wZGxBfGcco218y
+  - EKEwwg3NwWk5Bca5kHStd2dW8xc5JcsStE1yTAASdq6TaF4gzm52
+  - EKFGFb4XH2K88hryZd3ae17jGE37VdBPtzjd87m8ZcyVeMwAi8xJ
+  - EKFBikj1UyBLRYWZikAGa1kNJoTzLo2QC2ZmhmmPu47iahAbzTsQ
+  - EKEp2X7b65fmcy3AZLnu3QbwuzFZAt1JxJyfMY3Z9uSoXXqLQBEK
+  - EKDp6roJoMCJ9grv8nk9gnS3JU7zqPBkZRdY4gN4ZzChUBkF9Men
+  - EKEKTo7F5P5HttWNKYugSNWdKReUzZHNfyTC1Y7g3mNvHdYjAqwV
+  - EKENPeeexNEHEt9JzUGYCjrDvpLEnU91z5YppwQHoRWfKg6YRPBu
+  - EKER8rGd6TrUAmiGPS7KHe454Nr8Yc1LanpjGgAt6MXoTTLAURuV
+  - EKFZjnsNukDqzdsQpo5LaHRDAJ3HrDaGRRUsgs4tFmVxD6CH871P
+  - EKFUQz87ZfwtsdQFa4K1kZp8se2Vw7Q6Nj9iFrF6VXWHGtV3jWBu
+  - EKDtmGUruZSY8oYf96HUmPmUv72ZKNhAJoboTDeuJeQG52ob9eR8
+  - EKEFK59yzBgkMDLf12TUzfXaxg6hnzjhStJFEcsUjd3CVqYDcAK3
+  - EKFVLzFbR3gR1RTAPZ3vpqxPygqzmyMqvcVr5mV3azNVebWDBFBS
+  - EKE559XvP2YHVyaRvTghsZkqv721TW2PBR254s456Ax3SUufvY2n
+  - EKFcRChZNdw5No7HdcwkbkxkVxrR2pUimqKGcHDn28AK9XiN7wnq
   receivers:
   - B62qjvdft1PFusH6pSjM5ibW2QL1p7rZsjZPASm4G1dtrDvJm3fWUgW
   - B62qmAHvhSn1FWZh5z1Q4CunoewzrKmrtPC1cpw9n2i7i5j2kQPSGkz
@@ -33,10 +97,30 @@ runZkapp:
   - http://node1-graphql/graphql
   - http://node2-graphql/graphql
   - http://node3-graphql/graphql
+  - http://node4-graphql/graphql
+  - http://node5-graphql/graphql
+  - http://node6-graphql/graphql
+  - http://node7-graphql/graphql
+  - http://node8-graphql/graphql
+  - http://node9-graphql/graphql
+  - http://node10-graphql/graphql
+  - http://node11-graphql/graphql
+  - http://node12-graphql/graphql
+  - http://node13-graphql/graphql
+  - http://node14-graphql/graphql
+  - http://node15-graphql/graphql
+  - http://node16-graphql/graphql
+  - http://node17-graphql/graphql
+  - http://node18-graphql/graphql
+  - http://node19-graphql/graphql
+  - http://node20-graphql/graphql
+  - http://node21-graphql/graphql
+  - http://node22-graphql/graphql
+  - http://node23-graphql/graphql
+  - http://node24-graphql/graphql
   loadKind: sign-proof-x3
-  period: 10
-  duration: 14400
-  #duration: 1800
+  period: 10s
+  duration: 4h
   repository: akoptelov/mina-load-generator
 
 restartNode:
