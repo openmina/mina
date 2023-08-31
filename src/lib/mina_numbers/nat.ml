@@ -64,7 +64,7 @@ struct
   let typ : (var, N.t) Typ.t =
     let (Typ field_typ) = Field.typ in
     Typ.transport
-      (Typ { field_typ with check = range_check })
+      (Typ { field_typ with check_greppable_name = range_check })
       ~there:to_field ~back:of_field
 
   let () = assert (N.length_in_bits * 2 < Field.size_in_bits + 1)

@@ -164,7 +164,7 @@ module Make_weierstrass_checked
         Typ.(tuple2 F.typ F.typ)
         ~there:Curve.to_affine_exn ~back:Curve.of_affine
     in
-    Typ { unchecked with check = assert_on_curve }
+    Typ { unchecked with check_greppable_name = assert_on_curve }
 
   let negate ((x, y) : t) : t = (x, F.negate y)
 

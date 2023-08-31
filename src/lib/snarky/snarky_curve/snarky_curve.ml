@@ -225,7 +225,8 @@ module Make_checked (Inputs : Inputs_intf) = struct
     let (Typ typ_unchecked) = typ_unchecked in
     Typ
       { typ_unchecked with
-        check = (fun t -> Impl.make_checked (fun () -> assert_on_curve t))
+        check_greppable_name =
+          (fun t -> Impl.make_checked (fun () -> assert_on_curve t))
       }
 
   let if_ c ~then_:(tx, ty) ~else_:(ex, ey) =

@@ -11,7 +11,7 @@ module Make_ref_typ (Checked : Monad_let.S2) = struct
       ; value_of_fields = (fun (_, x) -> Option.value_exn x)
       ; size_in_field_elements = 0
       ; constraint_system_auxiliary = (fun () -> None)
-      ; check = (fun _ -> Checked.return ())
+      ; check_greppable_name = (fun _ -> Checked.return ())
       }
 end
 

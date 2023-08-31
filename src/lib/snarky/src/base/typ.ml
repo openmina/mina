@@ -129,7 +129,7 @@ module Make (Checked : Checked_monad) = struct
         ; value_of_fields = (fun _ -> ())
         ; size_in_field_elements = 0
         ; constraint_system_auxiliary = (fun () -> ())
-        ; check = (fun () -> Checked.return ())
+        ; check_greppable_name = (fun () -> Checked.return ())
         }
 
     let field () : ('field Cvar.t, 'field, 'field) t =
@@ -140,7 +140,7 @@ module Make (Checked : Checked_monad) = struct
         ; value_of_fields = (fun (fields, _) -> fields.(0))
         ; size_in_field_elements = 1
         ; constraint_system_auxiliary = (fun () -> ())
-        ; check = (fun _ -> Checked.return ())
+        ; check_greppable_name = (fun _ -> Checked.return ())
         }
 
     module Internal = struct
@@ -155,7 +155,7 @@ module Make (Checked : Checked_monad) = struct
           ; value_of_fields = (fun _ -> value)
           ; size_in_field_elements = 0
           ; constraint_system_auxiliary = (fun () -> ())
-          ; check = (fun _ -> Checked.return ())
+          ; check_greppable_name = (fun _ -> Checked.return ())
           }
 
       module Ref_typ = As_prover_ref.Make_ref_typ (Checked)
@@ -171,7 +171,7 @@ module Make (Checked : Checked_monad) = struct
            ; value_of_fields
            ; size_in_field_elements
            ; constraint_system_auxiliary
-           ; check
+           ; check_greppable_name
            } :
           (var, value1, field) t ) ~(there : value2 -> value1)
         ~(back : value1 -> value2) : (var, value2, field) t =
@@ -182,7 +182,7 @@ module Make (Checked : Checked_monad) = struct
         ; value_of_fields = (fun x -> back (value_of_fields x))
         ; size_in_field_elements
         ; constraint_system_auxiliary
-        ; check
+        ; check_greppable_name
         }
 
     let transport_var (type var1 var2 value field)
@@ -193,7 +193,7 @@ module Make (Checked : Checked_monad) = struct
            ; value_of_fields
            ; size_in_field_elements
            ; constraint_system_auxiliary
-           ; check
+           ; check_greppable_name
            } :
           (var1, value, field) t ) ~(there : var2 -> var1) ~(back : var1 -> var2)
         : (var2, value, field) t =
@@ -204,7 +204,7 @@ module Make (Checked : Checked_monad) = struct
         ; value_of_fields
         ; size_in_field_elements
         ; constraint_system_auxiliary
-        ; check = (fun x -> check (there x))
+        ; check_greppable_name = (fun x -> check_greppable_name (there x))
         }
 
     let list ~length
@@ -215,7 +215,7 @@ module Make (Checked : Checked_monad) = struct
            ; value_of_fields
            ; size_in_field_elements
            ; constraint_system_auxiliary
-           ; check
+           ; check_greppable_name
            } :
           ('elt_var, 'elt_value, 'field) t ) :
         ('elt_var list, 'elt_value list, 'field) t =
@@ -289,7 +289,8 @@ module Make (Checked : Checked_monad) = struct
             (fun () ->
               List.init length ~f:(fun _ ->
                   (constraint_system_auxiliary (), size_in_field_elements) ) )
-        ; check = (fun ts -> Checked.all_unit (List.map ts ~f:check))
+        ; check_greppable_name =
+            (fun ts -> Checked.all_unit (List.map ts ~f:check_greppable_name))
         }
 
     let array ~length typ =
@@ -315,7 +316,7 @@ module Make (Checked : Checked_monad) = struct
               ; value_of_fields = (fun _ -> [])
               ; size_in_field_elements = 0
               ; constraint_system_auxiliary = (fun () -> ())
-              ; check = (fun [] -> Checked.return ())
+              ; check_greppable_name = (fun [] -> Checked.return ())
               }
         | Typ
             { var_to_fields
@@ -324,7 +325,7 @@ module Make (Checked : Checked_monad) = struct
             ; value_of_fields
             ; size_in_field_elements
             ; constraint_system_auxiliary
-            ; check
+            ; check_greppable_name
             }
           :: spec0 ->
             let (Typ typ) = go spec0 in
@@ -375,9 +376,10 @@ module Make (Checked : Checked_monad) = struct
                     let hd = constraint_system_auxiliary () in
                     let auxes = typ.constraint_system_auxiliary () in
                     (hd, size_in_field_elements, auxes) )
-              ; check =
+              ; check_greppable_name =
                   (fun (x :: tl) ->
-                    Checked.bind (check x) ~f:(fun () -> typ.check tl) )
+                    Checked.bind (check_greppable_name x) ~f:(fun () ->
+                        typ.check_greppable_name tl ) )
               }
       in
       go spec0

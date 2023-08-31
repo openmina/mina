@@ -113,15 +113,15 @@ module Opt = struct
       ~(dummy_var : a_var) =
     let (Typ bool_typ) = bool_typ in
     let bool_typ : _ Typ.t =
-      let check =
+      let check_greppable_name =
         (* No need to boolean constrain in the No or Yes case *)
         match flag with
         | No | Yes ->
             fun _ -> Checked_runner.Simple.return ()
         | Maybe ->
-            bool_typ.check
+            bool_typ.check_greppable_name
       in
-      Typ { bool_typ with check }
+      Typ { bool_typ with check_greppable_name }
     in
     Typ.transport
       (Typ.tuple2 bool_typ a_typ)

@@ -31,9 +31,10 @@ module Make (Impl : Snarky_backendless.Snark_intf.Run) = struct
     let typ : _ Typ.t =
       Typ
         { typ with
-          check =
+          check_greppable_name =
             (fun x ->
-              Impl.Internal_Basic.Checked.bind (typ.check x) ~f:(fun () ->
+              Impl.Internal_Basic.Checked.bind (typ.check_greppable_name x)
+                ~f:(fun () ->
                   make_checked (fun () ->
                       Boolean.Assert.exactly_one (Vector.to_list x) ) ) )
         }

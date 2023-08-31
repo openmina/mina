@@ -217,7 +217,7 @@ struct
 
       (* create constraints to validate the input (using the input [Typ]'s [check]) *)
       let circuit =
-        let%bind () = input_typ.check var in
+        let%bind () = input_typ.check_greppable_name var in
         Checked.return (fun () -> k () var)
       in
       (retval, circuit)

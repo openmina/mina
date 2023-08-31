@@ -102,7 +102,7 @@ module Step = struct
           let high = Field.Constant.unpack high in
           Tock.Field.of_bits (low :: high) )
 
-    let check t =
+    let check_greppable_name t =
       let open Internal_Basic in
       let open Let_syntax in
       let equal (x1, b1) (x2, b2) =
@@ -111,13 +111,13 @@ module Step = struct
         Boolean.( && ) x_eq b_eq
       in
       let (Typ typ_unchecked) = typ_unchecked in
-      let%bind () = typ_unchecked.check t in
+      let%bind () = typ_unchecked.check_greppable_name t in
       Checked.List.map forbidden_shifted_values ~f:(equal t)
       >>= Boolean.any >>| Boolean.not >>= Boolean.Assert.is_true
 
     let typ : _ Snarky_backendless.Typ.t =
       let (Typ typ_unchecked) = typ_unchecked in
-      Typ { typ_unchecked with check }
+      Typ { typ_unchecked with check_greppable_name }
 
     let to_bits (x, b) = Field.unpack x ~length:(Field.size_in_bits - 1) @ [ b ]
   end
@@ -155,7 +155,7 @@ module Step = struct
         (T
            ( Shifted_value.Type2.typ Other_field.typ_unchecked
            , (fun (Shifted_value.Type2.Shifted_value x as t) ->
-               Impl.run_checked (Other_field.check x) ;
+               Impl.run_checked (Other_field.check_greppable_name x) ;
                t )
            , Fn.id ) )
         spec
@@ -227,7 +227,7 @@ module Wrap = struct
       in
       assert ([%equal: string list] str_list expected_list)
 
-    let typ_unchecked, check =
+    let typ_unchecked, check_greppable_name =
       (* Tick -> Tock *)
       let (Typ t0 as typ_unchecked) =
         Typ.transport Field.typ
@@ -238,7 +238,7 @@ module Wrap = struct
         let open Internal_Basic in
         let open Let_syntax in
         let equal x1 x2 = Field.Checked.equal x1 (Field.Var.constant x2) in
-        let%bind () = t0.check t in
+        let%bind () = t0.check_greppable_name t in
         Checked.List.map forbidden_shifted_values ~f:(equal t)
         >>= Boolean.any >>| Boolean.not >>= Boolean.Assert.is_true
       in
@@ -246,7 +246,7 @@ module Wrap = struct
 
     let typ : _ Snarky_backendless.Typ.t =
       let (Typ typ_unchecked) = typ_unchecked in
-      Typ { typ_unchecked with check }
+      Typ { typ_unchecked with check_greppable_name }
 
     let to_bits x = Field.unpack x ~length:Field.size_in_bits
   end
@@ -277,7 +277,7 @@ module Wrap = struct
         (T
            ( Shifted_value.Type1.typ fp
            , (fun (Shifted_value x as t) ->
-               Impl.run_checked (Other_field.check x) ;
+               Impl.run_checked (Other_field.check_greppable_name x) ;
                t )
            , Fn.id ) )
         (* Wrap circuit: no features needed. *)

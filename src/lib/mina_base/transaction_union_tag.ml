@@ -178,7 +178,7 @@ module Unpacked = struct
     let (Typ base_typ) = Poly.typ Boolean.typ in
     Typ
       { base_typ with
-        check =
+        check_greppable_name =
           (fun ( { is_payment
                  ; is_stake_delegation
                  ; is_fee_transfer
@@ -186,7 +186,7 @@ module Unpacked = struct
                  ; is_user_command
                  } as t ) ->
             let open Checked.Let_syntax in
-            let%bind () = base_typ.check t in
+            let%bind () = base_typ.check_greppable_name t in
             let%bind () =
               [%with_label_ "Only one tag is set"] (fun () ->
                   Boolean.Assert.exactly_one

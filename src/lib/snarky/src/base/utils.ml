@@ -275,7 +275,7 @@ struct
       in
       Typ
         { typ with
-          check =
+          check_greppable_name =
             (fun v ->
               Checked.assert_
                 (Constraint.boolean ~label:"boolean-alloc" (v :> Cvar.t)) )
@@ -283,7 +283,7 @@ struct
 
     let typ_unchecked : (var, value) Typ.t =
       let (Typ typ) = typ in
-      Typ { typ with check = (fun _ -> Checked.return ()) }
+      Typ { typ with check_greppable_name = (fun _ -> Checked.return ()) }
 
     let%test_unit "all" =
       let gen =

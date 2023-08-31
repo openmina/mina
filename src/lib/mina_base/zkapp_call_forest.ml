@@ -69,12 +69,12 @@ module Checked = struct
     in
     Typ
       { typ with
-        check =
+        check_greppable_name =
           (fun ( { account_update = { hash; data = account_update }
                  ; control = _
                  } as x ) ->
             Impl.make_checked (fun () ->
-                Impl.run_checked (typ.check x) ;
+                Impl.run_checked (typ.check_greppable_name x) ;
                 Field.Assert.equal
                   (hash :> Field.t)
                   ( Zkapp_command.Call_forest.Digest.Account_update.Checked

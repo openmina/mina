@@ -325,7 +325,7 @@ let rec etyp :
         T
           ( Typ
               { typ with
-                check =
+                check_greppable_name =
                   (fun _ -> Snarky_backendless.Checked_runner.Simple.return ())
               }
           , (fun _ -> f constant_var)

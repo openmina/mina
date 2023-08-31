@@ -245,7 +245,7 @@ struct
          { Types.Typ.var_of_fields
          ; value_to_fields
          ; size_in_field_elements
-         ; check
+         ; check_greppable_name
          ; constraint_system_auxiliary
          ; _
          } :
@@ -274,7 +274,7 @@ struct
             var_of_fields (field_vars, aux)
           in
           (* TODO: Push a label onto the stack here *)
-          let s, () = Simple.eval (check var) s in
+          let s, () = Simple.eval (check_greppable_name var) s in
           (s, { Handle.var; value = Some value }) )
         else
           let var =
@@ -284,7 +284,7 @@ struct
               , constraint_system_auxiliary () )
           in
           (* TODO: Push a label onto the stack here *)
-          let s, () = Simple.eval (check var) s in
+          let s, () = Simple.eval (check_greppable_name var) s in
           (s, { Handle.var; value = None }) )
 
   let next_auxiliary () : _ Simple.t =

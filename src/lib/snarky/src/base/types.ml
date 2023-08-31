@@ -50,7 +50,7 @@ module Typ = struct
       ; value_of_fields : 'field array * 'aux -> 'value
       ; size_in_field_elements : int
       ; constraint_system_auxiliary : unit -> 'aux
-      ; check : 'var -> 'checked
+      ; check_greppable_name : 'var -> 'checked
       }
 
     type ('var, 'value, 'field, 'checked) typ =

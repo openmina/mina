@@ -425,10 +425,10 @@ module May_use_token = struct
       in
       Typ
         { typ with
-          check =
+          check_greppable_name =
             (fun ({ parents_own_token; inherit_from_parent } as x) ->
               let open Checked in
-              let%bind () = typ.check x in
+              let%bind () = typ.check_greppable_name x in
               let sum =
                 Field.Var.(
                   add (parents_own_token :> t) (inherit_from_parent :> t))
