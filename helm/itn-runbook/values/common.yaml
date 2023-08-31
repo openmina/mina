@@ -38,12 +38,12 @@ minaSnarkCoordinatorsConfig:
   - name: snarker001
     publicKey: B62qn7A38x3UM8x1tQKsHZs5cGtuApEMY1ecyNhWGjgkkjLFgZcobzP
     workSelectionAlgorithm: seq
-    workers: 1
+    workers: 8
     itnGraphqlPort: 30200
   - name: snarker002
     publicKey: B62qn7A38x3UM8x1tQKsHZs5cGtuApEMY1ecyNhWGjgkkjLFgZcobzP
     workSelectionAlgorithm: rand
-    workers: 1
+    workers: 8
     itnGraphqlPort: 30201
 
 seedConfigs:
