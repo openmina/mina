@@ -38,6 +38,7 @@ spec:
           name: itn-helm-charts
       restartPolicy: Never
   backoffLimit: 0
+---
 
 apiVersion: v1
 kind: ConfigMap

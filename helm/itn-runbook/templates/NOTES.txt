@@ -8,7 +8,7 @@ Mina ITN Runbook started
 {{- if .Values.startNetwork.enabled }}
 To see network deployment process, execute
 ```
-$ kubectl --namespace=.Release.Namespace logs job/{{ include "itn-runbook.startNetworkName" . }} --follow
+$ kubectl --namespace={{ .Release.Namespace }} logs job/{{ include "itn-runbook.startNetworkName" . }} --follow
 ```
 {{- end }}
 
