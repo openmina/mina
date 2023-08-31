@@ -4,6 +4,8 @@ metadata:
   name: {{ include "itn-runbook.restartNodeName" . }}
 spec:
   schedule: {{ include "itn-runbook.restartNodeSchedule" . }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:

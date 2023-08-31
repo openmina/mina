@@ -4,6 +4,8 @@ metadata:
   name: {{ include "itn-runbook.runZkappName" . }}
 spec:
   schedule: {{ include "itn-runbook.runZkappSchedule" . }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:
@@ -19,12 +21,11 @@ spec:
             - --inspect
             - build/src/main.js
             args: [ "-v", "-v", "run", "{{ .Values.runZkapp.loadKind }}",
-             {{- range .Values.runZkapp.receivers }}"{{ . }}",{{- end}}
-             "--nodes", {{- range .Values.runZkapp.nodes }}"{{ . }}",{{- end}}
-             "--keys={{ .Values.runZkapp.sender }}",
+             {{- range .Values.runZkapp.receivers }}"{{ . }}",{{- end }}
+             "--nodes", {{- range .Values.runZkapp.nodes }}"{{ . }}",{{- end }}
+             "--keys", {{- range .Values.runZkapp.senders }}"{{ . }}",{{- end }}
              "--duration={{ .Values.runZkapp.duration }}",
              "--period={{ .Values.runZkapp.period }}",
-             "--no-wait",
             ]
             ports:
             - name: inspect
