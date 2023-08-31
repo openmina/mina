@@ -1,6 +1,6 @@
 testnetName: testnet
 mina:
-  image: tizoc/mina-daemon:openmina-tracing-fix-test
+  image: minaprotocol/mina-daemon:2.0.0rampup3-bfd1009-buster-berkeley
   snarkCoordinatorImage: binier/mina-snark-worker-rs:latest
   privkeyPass:
   exposeGraphql: true
