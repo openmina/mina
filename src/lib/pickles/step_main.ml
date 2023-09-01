@@ -283,7 +283,10 @@ let step_main :
                                          )
         in
         let T = Max_proofs_verified.eq in
-        let app_state = exists input_typ ~request:(fun () -> Req.App_state) in
+        let app_state =
+          with_label "step_main@request=App_state" (fun () ->
+              exists input_typ ~request:(fun () -> Req.App_state) )
+        in
         let { Inductive_rule.previous_proof_statements
             ; public_output = ret_var
             ; auxiliary_output = auxiliary_var
@@ -347,27 +350,32 @@ let step_main :
             in
             Req.Compute_prev_proof_parts previous_proof_statements ) ;
         let dlog_plonk_index =
-          exists
-            ~request:(fun () -> Req.Wrap_index)
-            (Plonk_verification_key_evals.typ Inner_curve.typ)
+          with_label "step_main@request=Wrap_index" (fun () ->
+              exists
+                ~request:(fun () -> Req.Wrap_index)
+                (Plonk_verification_key_evals.typ Inner_curve.typ) )
         and prevs =
           exists (Prev_typ.f prev_proof_typs) ~request:(fun () ->
               Req.Proof_with_datas )
         and unfinalized_proofs_unextended =
-          exists
-            (Vector.typ'
-               (Vector.map
-                  ~f:(fun _feature_flags ->
-                    Unfinalized.typ ~wrap_rounds:Backend.Tock.Rounds.n )
-                  feature_flags ) )
-            ~request:(fun () -> Req.Unfinalized_proofs)
+          with_label "step_main@request=Unfinalized_proofs" (fun () ->
+              exists
+                (Vector.typ'
+                   (Vector.map
+                      ~f:(fun _feature_flags ->
+                        Unfinalized.typ ~wrap_rounds:Backend.Tock.Rounds.n )
+                      feature_flags ) )
+                ~request:(fun () -> Req.Unfinalized_proofs) )
         and messages_for_next_wrap_proof =
-          exists (Vector.typ Digest.typ Max_proofs_verified.n)
-            ~request:(fun () -> Req.Messages_for_next_wrap_proof)
+          with_label "step_main@request=Messages_for_next_wrap_proof" (fun () ->
+              exists (Vector.typ Digest.typ Max_proofs_verified.n)
+                ~request:(fun () -> Req.Messages_for_next_wrap_proof) )
         and actual_wrap_domains =
-          exists
-            (Vector.typ (Typ.Internal.ref ()) (Length.to_nat proofs_verified))
-            ~request:(fun () -> Req.Wrap_domain_indices)
+          with_label "step_main@request=Wrap_domain_indices" (fun () ->
+              exists
+                (Vector.typ (Typ.Internal.ref ())
+                   (Length.to_nat proofs_verified) )
+                ~request:(fun () -> Req.Wrap_domain_indices) )
         in
         let prevs =
           (* Inject the app-state values into the per-proof witnesses. *)

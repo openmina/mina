@@ -228,7 +228,7 @@ struct
     let bits_per_row = 4 in
     let rows = num_bits / bits_per_row in
     let acc =
-      with_label __LOC__ (fun () ->
+      with_label ("endo@acc: " ^ __LOC__) (fun () ->
           let p = G.( + ) t (seal (Field.scale xt Endo.base), yt) in
           ref G.(p + p) )
     in

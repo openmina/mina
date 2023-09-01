@@ -466,83 +466,106 @@ module Make_str (A : Wire_types.Concrete) = struct
                 (txn, fee_payer, source, receiver))
         in
         let%bind fee_payer_idx =
-          exists (Typ.Internal.ref ())
-            ~request:
-              As_prover.(
-                let%map _txn, fee_payer, _source, _receiver =
-                  read (Typ.Internal.ref ()) data
-                in
-                Ledger_hash.Find_index fee_payer)
+          [%with_label_
+            "compute_as_prover@fee_payer_idx@request=Ledger_hash.Find_index"]
+            (fun () ->
+              exists (Typ.Internal.ref ())
+                ~request:
+                  As_prover.(
+                    let%map _txn, fee_payer, _source, _receiver =
+                      read (Typ.Internal.ref ()) data
+                    in
+                    Ledger_hash.Find_index fee_payer) )
         in
         let%bind fee_payer_account =
-          exists (Typ.Internal.ref ())
-            ~request:
-              As_prover.(
-                let%map fee_payer_idx =
-                  read (Typ.Internal.ref ()) fee_payer_idx
-                in
-                Ledger_hash.Get_element fee_payer_idx)
+          [%with_label_
+            "compute_as_prover@fee_payer_account@request=Ledger_hash.Get_element"]
+            (fun () ->
+              exists (Typ.Internal.ref ())
+                ~request:
+                  As_prover.(
+                    let%map fee_payer_idx =
+                      read (Typ.Internal.ref ()) fee_payer_idx
+                    in
+                    Ledger_hash.Get_element fee_payer_idx) )
         in
         let%bind source_idx =
-          exists (Typ.Internal.ref ())
-            ~request:
-              As_prover.(
-                let%map _txn, _fee_payer, source, _receiver =
-                  read (Typ.Internal.ref ()) data
-                in
-                Ledger_hash.Find_index source)
+          [%with_label_
+            "compute_as_prover@source_idx@request=Ledger_hash.Find_index"]
+            (fun () ->
+              exists (Typ.Internal.ref ())
+                ~request:
+                  As_prover.(
+                    let%map _txn, _fee_payer, source, _receiver =
+                      read (Typ.Internal.ref ()) data
+                    in
+                    Ledger_hash.Find_index source) )
         in
         let%bind source_account =
-          exists (Typ.Internal.ref ())
-            ~request:
-              As_prover.(
-                let%map source_idx = read (Typ.Internal.ref ()) source_idx in
-                Ledger_hash.Get_element source_idx)
+          [%with_label_
+            "compute_as_prover@source_account@request=Ledger_hash.Get_element"]
+            (fun () ->
+              exists (Typ.Internal.ref ())
+                ~request:
+                  As_prover.(
+                    let%map source_idx =
+                      read (Typ.Internal.ref ()) source_idx
+                    in
+                    Ledger_hash.Get_element source_idx) )
         in
         let%bind receiver_idx =
-          exists (Typ.Internal.ref ())
-            ~request:
-              As_prover.(
-                let%map _txn, _fee_payer, _source, receiver =
-                  read (Typ.Internal.ref ()) data
-                in
-                Ledger_hash.Find_index receiver)
+          [%with_label_
+            "compute_as_prover@receiver_idx@request=Ledger_hash.Find_index"]
+            (fun () ->
+              exists (Typ.Internal.ref ())
+                ~request:
+                  As_prover.(
+                    let%map _txn, _fee_payer, _source, receiver =
+                      read (Typ.Internal.ref ()) data
+                    in
+                    Ledger_hash.Find_index receiver) )
         in
         let%bind receiver_account =
-          exists (Typ.Internal.ref ())
-            ~request:
-              As_prover.(
-                let%map receiver_idx =
-                  read (Typ.Internal.ref ()) receiver_idx
-                in
-                Ledger_hash.Get_element receiver_idx)
+          [%with_label_
+            "compute_as_prover@receiver_account@request=Ledger_hash.Get_element"]
+            (fun () ->
+              exists (Typ.Internal.ref ())
+                ~request:
+                  As_prover.(
+                    let%map receiver_idx =
+                      read (Typ.Internal.ref ()) receiver_idx
+                    in
+                    Ledger_hash.Get_element receiver_idx) )
         in
-        exists typ
-          ~compute:
-            As_prover.(
-              let%bind txn, _fee_payer, _source, _receiver =
-                read (Typ.Internal.ref ()) data
-              in
-              let%bind fee_payer_account, _path =
-                read (Typ.Internal.ref ()) fee_payer_account
-              in
-              let%bind source_account, _path =
-                read (Typ.Internal.ref ()) source_account
-              in
-              let%bind receiver_account, _path =
-                read (Typ.Internal.ref ()) receiver_account
-              in
-              let%map txn_global_slot =
-                read Mina_numbers.Global_slot_since_genesis.typ txn_global_slot
-              in
-              compute_unchecked ~constraint_constants ~txn_global_slot
-                ~fee_payer_account ~source_account ~receiver_account txn)
+        [%with_label_ "compute_as_prover@compute"] (fun () ->
+            exists typ
+              ~compute:
+                As_prover.(
+                  let%bind txn, _fee_payer, _source, _receiver =
+                    read (Typ.Internal.ref ()) data
+                  in
+                  let%bind fee_payer_account, _path =
+                    read (Typ.Internal.ref ()) fee_payer_account
+                  in
+                  let%bind source_account, _path =
+                    read (Typ.Internal.ref ()) source_account
+                  in
+                  let%bind receiver_account, _path =
+                    read (Typ.Internal.ref ()) receiver_account
+                  in
+                  let%map txn_global_slot =
+                    read Mina_numbers.Global_slot_since_genesis.typ
+                      txn_global_slot
+                  in
+                  compute_unchecked ~constraint_constants ~txn_global_slot
+                    ~fee_payer_account ~source_account ~receiver_account txn) )
     end
 
     let%snarkydef_ check_signature shifted ~payload ~is_user_command ~signer
         ~signature =
       let%bind input =
-        Transaction_union_payload.Checked.to_input_legacy payload
+        with_label "Transaction_union_payload.Checked.to_input_legacy"
+          (fun () -> Transaction_union_payload.Checked.to_input_legacy payload)
       in
       let%bind verifies =
         Schnorr.Legacy.Checked.verifies shifted signature signer input
@@ -2172,7 +2195,10 @@ module Make_str (A : Wire_types.Concrete) = struct
         [%with_label_ "Check transaction signature"] (fun () ->
             check_signature shifted ~payload ~is_user_command ~signer ~signature )
       in
-      let%bind signer_pk = Public_key.compress_var signer in
+      let%bind signer_pk =
+        [%with_label_ "Compress signer key"] (fun () ->
+            Public_key.compress_var signer )
+      in
       let%bind () =
         [%with_label_ "Fee-payer must sign the transaction"] (fun () ->
             (* TODO: Enable multi-sig. *)
@@ -2190,13 +2216,15 @@ module Make_str (A : Wire_types.Concrete) = struct
       let is_coinbase = Transaction_union.Tag.Unpacked.is_coinbase tag in
       let fee_token = payload.common.fee_token in
       let%bind fee_token_default =
-        make_checked (fun () ->
-            Token_id.(Checked.equal fee_token (Checked.constant default)) )
+        [%with_label_ "fee_token_default"] (fun () ->
+            make_checked (fun () ->
+                Token_id.(Checked.equal fee_token (Checked.constant default)) ) )
       in
       let token = payload.body.token_id in
       let%bind token_default =
-        make_checked (fun () ->
-            Token_id.(Checked.equal token (Checked.constant default)) )
+        [%with_label_ "token_default"] (fun () ->
+            make_checked (fun () ->
+                Token_id.(Checked.equal token (Checked.constant default)) ) )
       in
       let%bind () = Boolean.Assert.is_true token_default in
       let%bind () =
@@ -2234,7 +2262,8 @@ module Make_str (A : Wire_types.Concrete) = struct
           ~txn_global_slot:current_global_slot txn
       in
       let%bind user_command_fails =
-        User_command_failure.any user_command_failure
+        [%with_label_ "user_command_fails"]
+        @@ fun () -> User_command_failure.any user_command_failure
       in
       let fee = payload.common.fee in
       let receiver = Account_id.Checked.create payload.body.receiver_pk token in
@@ -2287,16 +2316,24 @@ module Make_str (A : Wire_types.Concrete) = struct
       let%bind () =
         [%with_label_ "Compute coinbase stack"] (fun () ->
             let%bind state_body_hash =
+              with_label "state_body_hash"
+              @@ fun () ->
               Mina_state.Protocol_state.Body.hash_checked state_body
             in
             let%bind pending_coinbase_stack_with_state =
+              with_label "pending_coinbase_stack_with_state"
+              @@ fun () ->
               Pending_coinbase.Stack.Checked.push_state state_body_hash
                 current_global_slot pending_coinbase_stack_init
             in
             let%bind computed_pending_coinbase_stack_after =
+              with_label "computed_pending_coinbase_stack_after"
+              @@ fun () ->
               let coinbase =
                 (Account_id.Checked.public_key receiver, payload.body.amount)
               in
+              with_label "stack'"
+              @@ fun () ->
               let%bind stack' =
                 Pending_coinbase.Stack.Checked.push_coinbase coinbase
                   pending_coinbase_stack_with_state
@@ -3028,24 +3065,27 @@ module Make_str (A : Wire_types.Concrete) = struct
     let%snarkydef_ main ~constraint_constants
         (statement : Statement.With_sok.Checked.t) =
       let%bind () = [%with_label_ "dummy constraints"] dummy_constraints in
-      let%bind (module Shifted) = Tick.Inner_curve.Checked.Shifted.create () in
+      let%bind (module Shifted) =
+        [%with_label_ "Tick.Inner_curve.Checked.Shifted.create"]
+          Tick.Inner_curve.Checked.Shifted.create
+      in
       let%bind t =
-        with_label __LOC__ (fun () ->
+        [%with_label_ "main@request=Transaction"] (fun () ->
             exists Transaction_union.typ ~request:(As_prover.return Transaction) )
       in
       let%bind pending_coinbase_init =
-        [%with_label_ "pending_coinbase_init"] (fun () ->
+        [%with_label_ "main@request=Init_stack"] (fun () ->
             exists Pending_coinbase.Stack.typ
               ~request:(As_prover.return Init_stack) )
       in
       let%bind state_body =
-        [%with_label_ "state_body"] (fun () ->
+        [%with_label_ "main@request=State_body"] (fun () ->
             exists
               (Mina_state.Protocol_state.Body.typ ~constraint_constants)
               ~request:(As_prover.return State_body) )
       in
       let%bind global_slot =
-        [%with_label_ "global_slot"] (fun () ->
+        [%with_label_ "main@request=Global_slot"] (fun () ->
             exists Mina_numbers.Global_slot_since_genesis.typ
               ~request:(As_prover.return Global_slot) )
       in
@@ -3178,7 +3218,7 @@ module Make_str (A : Wire_types.Concrete) = struct
     *)
     let%snarkydef_ main (s : Statement.With_sok.Checked.t) =
       let%bind s1, s2 =
-        [%with_label_ "get statements to merge"] (fun () ->
+        [%with_label_ "main@request=Statements_to_merge"] (fun () ->
             exists
               Typ.(Statement.With_sok.typ * Statement.With_sok.typ)
               ~request:(As_prover.return Statements_to_merge) )

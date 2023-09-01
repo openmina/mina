@@ -44,7 +44,7 @@ struct
   module Field = Field
 
   let block_cipher (params : _ Sponge.Params.t) init =
-    Impl.with_label __LOC__ (fun () ->
+    Impl.with_label ("block_cipher: " ^ __LOC__) (fun () ->
         let t =
           exists
             (Typ.array

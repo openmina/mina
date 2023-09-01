@@ -160,12 +160,13 @@ let wrap_main
         , Field.t )
         Types.Wrap.Statement.In_circuit.t ) =
     let logger = Internal_tracing_context_logger.get () in
-    with_label __LOC__ (fun () ->
+    with_label ("wrap_main: " ^ __LOC__) (fun () ->
         let which_branch' =
-          exists
-            (Typ.transport Field.typ ~there:Field.Constant.of_int
-               ~back:(fun _ -> failwith "unimplemented") )
-            ~request:(fun () -> Req.Which_branch)
+          with_label "wrap_main@request=Which_branch" (fun () ->
+              exists
+                (Typ.transport Field.typ ~there:Field.Constant.of_int
+                   ~back:(fun _ -> failwith "unimplemented") )
+                ~request:(fun () -> Req.Which_branch) )
         in
         let which_branch =
           Wrap_verifier.One_hot_vector.of_index which_branch' ~length:branches
@@ -199,7 +200,7 @@ let wrap_main
               |> Field.Assert.equal branch_data )
         in
         let prev_proof_state =
-          with_label __LOC__ (fun () ->
+          with_label ("wrap_main@prev_proof_state: " ^ __LOC__) (fun () ->
               let open Types.Step.Proof_state in
               let typ =
                 typ
@@ -210,21 +211,22 @@ let wrap_main
                        Plonk_types.Features.none ) )
                   (Shifted_value.Type2.typ Field.typ)
               in
-              exists typ ~request:(fun () -> Req.Proof_state) )
+              with_label "wrap_main@prev_proof_state@request=Proof_state"
+                (fun () -> exists typ ~request:(fun () -> Req.Proof_state)) )
         in
         let step_plonk_index =
-          with_label __LOC__ (fun () ->
+          with_label ("wrap_main@step_plonk_index: " ^ __LOC__) (fun () ->
               Wrap_verifier.choose_key which_branch
                 (Vector.map (Lazy.force step_keys)
                    ~f:(Plonk_verification_key_evals.map ~f:Inner_curve.constant) ) )
         in
         let prev_step_accs =
-          with_label __LOC__ (fun () ->
+          with_label "wrap_main@request=Step_accs" (fun () ->
               exists (Vector.typ Inner_curve.typ Max_proofs_verified.n)
                 ~request:(fun () -> Req.Step_accs) )
         in
         let old_bp_chals =
-          with_label __LOC__ (fun () ->
+          with_label ("wrap_main@old_bp_chals: " ^ __LOC__) (fun () ->
               let typ =
                 let module T =
                   H1.Typ (Impls.Wrap) (Nat) (Challenges_vector)
@@ -251,12 +253,16 @@ let wrap_main
               in
               let module V = H1.To_vector (Old_bulletproof_chals) in
               Z.f Max_widths_by_slot.maxes
-                (exists typ ~request:(fun () -> Req.Old_bulletproof_challenges))
+                (with_label "wrap_main@request=Old_bulletproof_challenges"
+                   (fun () ->
+                     exists typ ~request:(fun () ->
+                         Req.Old_bulletproof_challenges ) ) )
               |> M.f
               |> V.f Max_widths_by_slot.length )
         in
         let new_bulletproof_challenges =
-          with_label __LOC__ (fun () ->
+          with_label ("wrap_main@new_bulletproof_challenges: " ^ __LOC__)
+            (fun () ->
               let evals =
                 let ty =
                   let ty =
@@ -264,7 +270,8 @@ let wrap_main
                   in
                   Vector.typ ty Max_proofs_verified.n
                 in
-                exists ty ~request:(fun () -> Req.Evals)
+                with_label "wrap_main@new_bulletproof_challenges@request=Evals"
+                  (fun () -> exists ty ~request:(fun () -> Req.Evals))
               in
               let chals =
                 let wrap_domains =
@@ -272,8 +279,11 @@ let wrap_main
                     Wrap_verifier.all_possible_domains ()
                   in
                   let wrap_domain_indices =
-                    exists (Vector.typ Field.typ Max_proofs_verified.n)
-                      ~request:(fun () -> Req.Wrap_domain_indices)
+                    with_label
+                      "wrap_main@new_bulletproof_challenges@request=Wrap_domain_indices"
+                      (fun () ->
+                        exists (Vector.typ Field.typ Max_proofs_verified.n)
+                          ~request:(fun () -> Req.Wrap_domain_indices) )
                   in
                   Vector.map wrap_domain_indices ~f:(fun index ->
                       let which_branch =
@@ -325,7 +335,7 @@ let wrap_main
                         old_bulletproof_challenges
                     in
                     let finalized, chals =
-                      with_label __LOC__ (fun () ->
+                      with_label ("wrap_main@chals: " ^ __LOC__) (fun () ->
                           Wrap_verifier.finalize_other_proof
                             (module Wrap_hack.Padded_length)
                             ~domain:(wrap_domain :> _ Plonk_checks.plonk_domain)
@@ -354,35 +364,36 @@ let wrap_main
         in
         let openings_proof =
           let shift = Shifts.tick1 in
-          exists
-            (Plonk_types.Openings.Bulletproof.typ
-               ( Typ.transport Wrap_verifier.Other_field.Packed.typ
-                   ~there:(fun x ->
-                     (* When storing, make it a shifted value *)
-                     match
-                       Shifted_value.Type1.of_field
-                         (module Backend.Tick.Field)
-                         ~shift x
-                     with
-                     | Shifted_value x ->
-                         x )
-                   ~back:(fun x ->
-                     Shifted_value.Type1.to_field
-                       (module Backend.Tick.Field)
-                       ~shift (Shifted_value x) )
-               (* When reading, unshift *)
-               |> Typ.transport_var
-                  (* For the var, we just wrap the now shifted underlying value. *)
-                    ~there:(fun (Shifted_value.Type1.Shifted_value x) -> x)
-                    ~back:(fun x -> Shifted_value x) )
-               Inner_curve.typ
-               ~length:(Nat.to_int Backend.Tick.Rounds.n) )
-            ~request:(fun () -> Req.Openings_proof)
+          with_label "wrap_main@request=Openings_proof" (fun () ->
+              exists
+                (Plonk_types.Openings.Bulletproof.typ
+                   ( Typ.transport Wrap_verifier.Other_field.Packed.typ
+                       ~there:(fun x ->
+                         (* When storing, make it a shifted value *)
+                         match
+                           Shifted_value.Type1.of_field
+                             (module Backend.Tick.Field)
+                             ~shift x
+                         with
+                         | Shifted_value x ->
+                             x )
+                       ~back:(fun x ->
+                         Shifted_value.Type1.to_field
+                           (module Backend.Tick.Field)
+                           ~shift (Shifted_value x) )
+                   (* When reading, unshift *)
+                   |> Typ.transport_var
+                      (* For the var, we just wrap the now shifted underlying value. *)
+                        ~there:(fun (Shifted_value.Type1.Shifted_value x) -> x)
+                        ~back:(fun x -> Shifted_value x) )
+                   Inner_curve.typ
+                   ~length:(Nat.to_int Backend.Tick.Rounds.n) )
+                ~request:(fun () -> Req.Openings_proof) )
         in
         let ( sponge_digest_before_evaluations_actual
             , (`Success bulletproof_success, bulletproof_challenges_actual) ) =
           let messages =
-            with_label __LOC__ (fun () ->
+            with_label "wrap_main@request=Messages" (fun () ->
                 exists
                   (Plonk_types.Messages.typ
                      (module Impl)
@@ -393,7 +404,8 @@ let wrap_main
                   ~request:(fun () -> Req.Messages) )
           in
           let sponge = Wrap_verifier.Opt.create sponge_params in
-          with_label __LOC__ (fun () ->
+          with_label ("wrap_main@incrementally_verify_proof: " ^ __LOC__)
+            (fun () ->
               [%log internal] "Wrap_verifier_incrementally_verify_proof" ;
               let res =
                 Wrap_verifier.incrementally_verify_proof max_proofs_verified
@@ -416,7 +428,9 @@ let wrap_main
         in
         with_label __LOC__ (fun () ->
             Boolean.Assert.is_true bulletproof_success ) ;
-        with_label __LOC__ (fun () ->
+        with_label
+          ("wrap_main@check_messages_for_next_wrap_proof_digest: " ^ __LOC__)
+          (fun () ->
             Field.Assert.equal messages_for_next_wrap_proof_digest
               (Wrap_hack.Checked.hash_messages_for_next_wrap_proof
                  Max_proofs_verified.n

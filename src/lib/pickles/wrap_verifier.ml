@@ -248,7 +248,7 @@ struct
       ~domain:
         ( (which_branch : n One_hot_vector.t)
         , (domains : (Domains.t, n) Vector.t) ) srs i : Inner_curve.t Double.t =
-    with_label __LOC__ (fun () ->
+    with_label ("lagrange_with_correction: " ^ __LOC__) (fun () ->
         let actual_shift =
           (* TODO: num_bits should maybe be input_length - 1. *)
           Ops.bits_per_chunk * Ops.chunks_needed ~num_bits:input_length
@@ -391,7 +391,7 @@ struct
           ( Inner_curve.t
           , Other_field.Packed.t Shifted_value.Type1.t )
           Openings.Bulletproof.t ) =
-    with_label __LOC__ (fun () ->
+    with_label ("check_bulletproof: " ^ __LOC__) (fun () ->
         Other_field.Packed.absorb_shifted sponge advice.combined_inner_product ;
         (* combined_inner_product should be equal to
            sum_i < t, r^i pows(beta_i) >
@@ -513,7 +513,7 @@ struct
           Vector.map2 actual_proofs_verified_mask sg_old ~f:(fun keep sg ->
               [| (keep, sg) |] ) )
     in
-    with_label __LOC__ (fun () ->
+    with_label ("incrementally_verify_proof: " ^ __LOC__) (fun () ->
         let sample () = Opt.challenge sponge in
         let sample_scalar () : Scalar_challenge.t =
           Opt.scalar_challenge sponge
@@ -566,7 +566,8 @@ struct
                 | `Field x ->
                     Second (i, x) )
           in
-          with_label __LOC__ (fun () ->
+          with_label ("incrementally_verify_proof@inner_curve: " ^ __LOC__)
+            (fun () ->
               let terms =
                 List.map non_constant_part ~f:(fun (i, x) ->
                     match x with
@@ -581,7 +582,8 @@ struct
                               i ) )
               in
               let correction =
-                with_label __LOC__ (fun () ->
+                with_label ("incrementally_verify_proof@correction: " ^ __LOC__)
+                  (fun () ->
                     List.reduce_exn
                       (List.filter_map terms ~f:(function
                         | `Cond_add _ ->
@@ -590,7 +592,9 @@ struct
                             Some corr ) )
                       ~f:Ops.add_fast )
               in
-              with_label __LOC__ (fun () ->
+              with_label
+                ("incrementally_verify_proof@inner_curve_finish: " ^ __LOC__)
+                (fun () ->
                   let init =
                     List.fold
                       (List.filter_map ~f:Fn.id constant_part)
@@ -599,7 +603,9 @@ struct
                   List.foldi terms ~init ~f:(fun i acc term ->
                       match term with
                       | `Cond_add (b, g) ->
-                          with_label __LOC__ (fun () ->
+                          with_label
+                            ("incrementally_verify_proof@Cond_add: " ^ __LOC__)
+                            (fun () ->
                               Inner_curve.if_ b ~then_:(Ops.add_fast g acc)
                                 ~else_:acc )
                       | `Add_with_correction ((x, num_bits), (g, _)) ->
@@ -659,7 +665,8 @@ struct
           scale_fast ~num_bits:Other_field.Packed.Constant.size_in_bits
         in
         let ft_comm =
-          with_label __LOC__ (fun () ->
+          with_label ("incrementally_verify_proof@ft_comm: " ^ __LOC__)
+            (fun () ->
               Common.ft_comm ~add:Ops.add_fast ~scale:scale_fast
                 ~negate:Inner_curve.negate ~endoscale:Scalar_challenge.endo
                 ~verification_key:m ~plonk ~alpha ~t_comm )
@@ -745,14 +752,14 @@ struct
     Field.(G.challenge_polynomial ~add ~mul ~one chals)
 
   let pow2pow (pt : Field.t) (n : int) : Field.t =
-    with_label __LOC__ (fun () ->
+    with_label ("pow2pow: " ^ __LOC__) (fun () ->
         let rec go acc i =
           if i = 0 then acc else go (Field.square acc) (i - 1)
         in
         go pt n )
 
   let actual_evaluation (e : Field.t array) ~(pt_to_n : Field.t) : Field.t =
-    with_label __LOC__ (fun () ->
+    with_label ("actual_evaluation: " ^ __LOC__) (fun () ->
         match List.rev (Array.to_list e) with
         | e :: es ->
             List.fold ~init:e es ~f:(fun acc y ->
@@ -895,7 +902,7 @@ struct
     let xi_actual = squeeze_scalar sponge in
     let r_actual = squeeze_challenge sponge in
     let xi_correct =
-      with_label __LOC__ (fun () ->
+      with_label ("finalize_other_proof@xi_correct: " ^ __LOC__) (fun () ->
           let { Import.Scalar_challenge.inner = xi_actual } = xi_actual in
           let { Import.Scalar_challenge.inner = xi } = xi in
           (* Sample new sg challenge point here *)
@@ -952,9 +959,11 @@ struct
       let evals1, evals2 =
         All_evals.With_public_input.In_circuit.factor evals
       in
-      with_label __LOC__ (fun () ->
+      with_label
+        ("finalize_other_proof@combined_inner_product_correct: " ^ __LOC__)
+        (fun () ->
           let ft_eval0 : Field.t =
-            with_label __LOC__ (fun () ->
+            with_label ("finalize_other_proof@ft_eval0: " ^ __LOC__) (fun () ->
                 Plonk_checks.ft_eval0
                   (module Field)
                   ~env ~domain plonk_minimal combined_evals evals1.public_input )
@@ -1001,7 +1010,7 @@ struct
               * combine ~ft:ft_eval1 ~sg_evals:sg_evals2 evals2.public_input
                   evals2.evals
           in
-          with_label __LOC__ (fun () ->
+          with_label ("finalize_other_proof@end: " ^ __LOC__) (fun () ->
               equal
                 (Shifted_value.Type2.to_field
                    (module Field)
@@ -1009,11 +1018,12 @@ struct
                 actual_combined_inner_product ) )
     in
     let bulletproof_challenges =
-      with_label __LOC__ (fun () ->
+      with_label ("finalize_other_proof@bulletproof_challenges: " ^ __LOC__)
+        (fun () ->
           compute_challenges ~scalar:scalar_to_field bulletproof_challenges )
     in
     let b_correct =
-      with_label __LOC__ (fun () ->
+      with_label ("finalize_other_proof@b_correct: " ^ __LOC__) (fun () ->
           let challenge_poly =
             unstage
               (challenge_polynomial (Vector.to_array bulletproof_challenges))
@@ -1026,7 +1036,8 @@ struct
             b_actual )
     in
     let plonk_checks_passed =
-      with_label __LOC__ (fun () ->
+      with_label ("finalize_other_proof@plonk_checks_passed: " ^ __LOC__)
+        (fun () ->
           (* This proof is a wrap proof; no need to consider features. *)
           Plonk_checks.checked
             (module Impl)

@@ -289,17 +289,24 @@ module Make
       let%bind e = Message.hash_checked m ~public_key ~r in
       (* s * g - e * public_key *)
       let%bind e_pk =
+        with_label "e_pk=Curve.Checked.scale"
+        @@ fun () ->
         Curve.Checked.scale shifted
           (Curve.Checked.negate public_key)
           (Curve.Scalar.Checked.to_bits e)
           ~init:Shifted.zero
       in
       let%bind s_g_e_pk =
+        with_label "s_g_e_pk=Curve.Checked.scale_known"
+        @@ fun () ->
         Curve.Checked.scale_known shifted Curve.one
           (Curve.Scalar.Checked.to_bits s)
           ~init:e_pk
       in
-      let%bind rx, ry = Shifted.unshift_nonzero s_g_e_pk in
+      let%bind rx, ry =
+        with_label "Shifted.unshift_nonzero"
+        @@ fun () -> Shifted.unshift_nonzero s_g_e_pk
+      in
       let%bind y_even = is_even ry in
       let%bind r_correct = equal r rx in
       final_check r_correct y_even
