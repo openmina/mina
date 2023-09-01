@@ -263,14 +263,14 @@ struct
         for i = s_div_2_bits to Array.length bits_lsb - 1 do
           Field.Assert.equal Field.zero (bits_lsb.(i) :> Field.t)
         done ) ;
-    with_label __LOC__ (fun () ->
+    with_label ("scale_fast2: " ^ __LOC__) (fun () ->
         G.if_ s_odd ~then_:h ~else_:(add_fast h (G.negate g)) )
 
   let scale_fast2' (type scalar_field)
       (module Scalar_field : Scalar_field_intf
         with type Constant.t = scalar_field ) g (s : Scalar_field.t) ~num_bits =
     let ((s_div_2, s_odd) as s_parts) =
-      with_label __LOC__ (fun () ->
+      with_label ("scale_fast2': " ^ __LOC__) (fun () ->
           exists
             Typ.(Scalar_field.typ * Boolean.typ)
             ~compute:

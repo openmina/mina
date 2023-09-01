@@ -270,7 +270,7 @@ let combined_evaluation (type f)
     | Maybe (b, fx) ->
         Field.if_ b ~then_:(fx + (xi * acc)) ~else_:acc
   in
-  with_label __LOC__ (fun () ->
+  with_label ("combined_evaluation: " ^ __LOC__) (fun () ->
       Pcs_batch.combine_split_evaluations ~mul_and_add
         ~init:(function
           | Some x ->

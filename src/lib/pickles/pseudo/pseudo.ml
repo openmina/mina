@@ -20,7 +20,7 @@ module Make (Impl : Snarky_backendless.Snark_intf.Run) = struct
         Field.Assert.equal x y ; y
 
   let mask (type n) (bits : n One_hot_vector.T(Impl).t) xs =
-    with_label __LOC__ (fun () ->
+    with_label ("mask: " ^ __LOC__) (fun () ->
         Vector.map
           (Vector.zip (bits :> (Boolean.var, n) Vector.t) xs)
           ~f:(fun (b, x) -> Field.((b :> t) * x))

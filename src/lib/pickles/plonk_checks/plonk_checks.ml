@@ -481,7 +481,7 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
       let w0 = Vector.map e.w ~f:fst in
       let perm =
         let w0 = Vector.to_array w0 in
-        with_label __LOC__ (fun () ->
+        with_label ("derive_plonk@perm: " ^ __LOC__) (fun () ->
             Vector.foldi e.s
               ~init:(e1 z * beta * alpha_pow perm_alpha0 * zkp)
               ~f:(fun i acc (s, _) -> acc * (gamma + (beta * s) + w0.(i)))
@@ -536,8 +536,8 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
     in
     let open Impl in
     let open In_circuit in
-    with_label __LOC__ (fun () ->
-        with_label __LOC__ (fun () ->
+    with_label ("checked@end: " ^ __LOC__) (fun () ->
+        with_label ("checked@end@loop: " ^ __LOC__) (fun () ->
             List.map
               ~f:(fun f -> Shifted_value.equal Field.equal (f plonk) (f actual))
               [ perm ] )
