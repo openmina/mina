@@ -564,7 +564,8 @@ module Make_str (A : Wire_types.Concrete) = struct
     let%snarkydef_ check_signature shifted ~payload ~is_user_command ~signer
         ~signature =
       let%bind input =
-        Transaction_union_payload.Checked.to_input_legacy payload
+        with_label "Transaction_union_payload.Checked.to_input_legacy"
+          (fun () -> Transaction_union_payload.Checked.to_input_legacy payload)
       in
       let%bind verifies =
         Schnorr.Legacy.Checked.verifies shifted signature signer input
@@ -2194,7 +2195,10 @@ module Make_str (A : Wire_types.Concrete) = struct
         [%with_label_ "Check transaction signature"] (fun () ->
             check_signature shifted ~payload ~is_user_command ~signer ~signature )
       in
-      let%bind signer_pk = Public_key.compress_var signer in
+      let%bind signer_pk =
+        [%with_label_ "Compress signer key"] (fun () ->
+            Public_key.compress_var signer )
+      in
       let%bind () =
         [%with_label_ "Fee-payer must sign the transaction"] (fun () ->
             (* TODO: Enable multi-sig. *)
@@ -2212,13 +2216,15 @@ module Make_str (A : Wire_types.Concrete) = struct
       let is_coinbase = Transaction_union.Tag.Unpacked.is_coinbase tag in
       let fee_token = payload.common.fee_token in
       let%bind fee_token_default =
-        make_checked (fun () ->
-            Token_id.(Checked.equal fee_token (Checked.constant default)) )
+        [%with_label_ "fee_token_default"] (fun () ->
+            make_checked (fun () ->
+                Token_id.(Checked.equal fee_token (Checked.constant default)) ) )
       in
       let token = payload.body.token_id in
       let%bind token_default =
-        make_checked (fun () ->
-            Token_id.(Checked.equal token (Checked.constant default)) )
+        [%with_label_ "token_default"] (fun () ->
+            make_checked (fun () ->
+                Token_id.(Checked.equal token (Checked.constant default)) ) )
       in
       let%bind () = Boolean.Assert.is_true token_default in
       let%bind () =
@@ -2256,7 +2262,8 @@ module Make_str (A : Wire_types.Concrete) = struct
           ~txn_global_slot:current_global_slot txn
       in
       let%bind user_command_fails =
-        User_command_failure.any user_command_failure
+        [%with_label_ "user_command_fails"]
+        @@ fun () -> User_command_failure.any user_command_failure
       in
       let fee = payload.common.fee in
       let receiver = Account_id.Checked.create payload.body.receiver_pk token in
@@ -2309,16 +2316,24 @@ module Make_str (A : Wire_types.Concrete) = struct
       let%bind () =
         [%with_label_ "Compute coinbase stack"] (fun () ->
             let%bind state_body_hash =
+              with_label "state_body_hash"
+              @@ fun () ->
               Mina_state.Protocol_state.Body.hash_checked state_body
             in
             let%bind pending_coinbase_stack_with_state =
+              with_label "pending_coinbase_stack_with_state"
+              @@ fun () ->
               Pending_coinbase.Stack.Checked.push_state state_body_hash
                 current_global_slot pending_coinbase_stack_init
             in
             let%bind computed_pending_coinbase_stack_after =
+              with_label "computed_pending_coinbase_stack_after"
+              @@ fun () ->
               let coinbase =
                 (Account_id.Checked.public_key receiver, payload.body.amount)
               in
+              with_label "stack'"
+              @@ fun () ->
               let%bind stack' =
                 Pending_coinbase.Stack.Checked.push_coinbase coinbase
                   pending_coinbase_stack_with_state
