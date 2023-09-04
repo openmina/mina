@@ -250,9 +250,12 @@ struct
          ; _
          } :
         (_, _, _, _ Simple.t) Types.Typ.typ ) p : _ Simple.t =
+    let stacktrace = Stacktrace.Rust.rust_maybe_save_stacktrace 1 in
     Function
       (fun s ->
         if Run_state.has_witness s then (
+          if Option.is_some stacktrace then
+            Printf.eprintf "stacktrace=\n%s\n" (Option.value_exn stacktrace) ;
           let old = Run_state.as_prover s in
           Run_state.set_as_prover s true ;
           let value =

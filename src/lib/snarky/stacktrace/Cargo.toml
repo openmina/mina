@@ -1,0 +1,13 @@
+[package]
+name = "stacktrace"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[dependencies]
+backtrace = "0.3"
+ocaml-interop = { git = "https://github.com/sebastiencs/ocaml-interop.git", branch = "closure-values" }

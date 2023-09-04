@@ -1,0 +1,23 @@
+(dirs :standard \ target)
+(rule
+ (targets libstacktrace.a libstacktrace.so)
+ (deps (source_tree .))
+ (action
+  (no-infer
+   (progn
+      (run sh -c "cargo build --release")
+    (run sh -c
+      "cp target/release/libstacktrace.so ./libstacktrace.so 2> /dev/null || \
+       cp target/release/libstacktrace.dylib ./libstacktrace.so")
+    (run cp target/release/libstacktrace.a ./libstacktrace.a)
+   ))))
+
+(library
+ (name stacktrace)
+ (libraries
+    core_kernel
+    core
+ )
+ (public_name stacktrace)
+ (c_library_flags -lpthread -lc -lm)
+ (foreign_archives stacktrace))
