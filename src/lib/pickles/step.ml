@@ -84,6 +84,7 @@ struct
       * auxiliary_value
       * (int, prevs_length) Vector.t )
       Promise.t =
+    Snarky_backendless.Witness_tracing.capture_begin "step" ;
     let logger = Internal_tracing_context_logger.get () in
     [%log internal] "Pickles_step_proof" ;
     let _, prev_vars_length = branch_data.proofs_verified in
@@ -877,6 +878,7 @@ struct
       ; messages_for_next_wrap_proof
       }
     in
+    Snarky_backendless.Witness_tracing.capture_end () ;
     [%log internal] "Pickles_step_proof_done" ;
     ( { P.Base.Step.proof = next_proof
       ; statement = next_statement
