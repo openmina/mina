@@ -650,6 +650,7 @@ let wrap
         , max_proofs_verified )
         Vector.t )
       P.Base.Step.t ) =
+  Snarky_backendless.Witness_tracing.capture_begin "wrap" ;
   let logger = Internal_tracing_context_logger.get () in
   [%log internal] "Pickles_wrap_proof" ;
   let messages_for_next_wrap_proof =
@@ -895,6 +896,7 @@ let wrap
               }
           } )
   in
+  Snarky_backendless.Witness_tracing.capture_end () ;
   [%log internal] "Pickles_wrap_proof_done" ;
   ( { proof = Wrap_wire_proof.of_kimchi_proof next_proof
     ; statement =

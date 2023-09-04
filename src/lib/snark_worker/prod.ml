@@ -94,11 +94,13 @@ module Inputs = struct
                 Error e
             | Ok res ->
                 let work_id = Transaction_snark.Statement.hash statement in
-                let filename = sprintf "proof-%d-%d.log" !proof_count work_id in
+                let base_path =
+                  sprintf "prover-witness-trace/%d-%d" !proof_count work_id
+                in
                 let job_str =
                   Yojson.Safe.pretty_to_string @@ single_spec_to_yojson single
                 in
-                Snarky.Witness_tracing.dump_current job_str filename ;
+                Snarky.Witness_tracing.dump_current job_str base_path ;
                 incr proof_count ;
                 (* NOTE: cache disabled *)
                 (* Cache.add cache ~statement ~proof:res ; *)
