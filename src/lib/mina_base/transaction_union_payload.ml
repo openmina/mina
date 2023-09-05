@@ -263,9 +263,14 @@ let payload_typ = typ
 module Checked = struct
   let to_input_legacy ({ common; body } : var) =
     let%map common =
+      with_label "Signed_command_payload.Common.Checked.to_input_legacy"
+      @@ fun () ->
       Signed_command_payload.Common.Checked.to_input_legacy
         (Payload_common.to_signed_command_payload_common common)
-    and body = Body.Checked.to_input_legacy body in
+    and body =
+      with_label "Body.Checked.to_input_legacy"
+      @@ fun () -> Body.Checked.to_input_legacy body
+    in
     Random_oracle.Input.Legacy.append common body
 
   let constant ({ common; body } : t) : var =

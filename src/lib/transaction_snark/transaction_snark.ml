@@ -3065,7 +3065,10 @@ module Make_str (A : Wire_types.Concrete) = struct
     let%snarkydef_ main ~constraint_constants
         (statement : Statement.With_sok.Checked.t) =
       let%bind () = [%with_label_ "dummy constraints"] dummy_constraints in
-      let%bind (module Shifted) = Tick.Inner_curve.Checked.Shifted.create () in
+      let%bind (module Shifted) =
+        [%with_label_ "Tick.Inner_curve.Checked.Shifted.create"]
+          Tick.Inner_curve.Checked.Shifted.create
+      in
       let%bind t =
         [%with_label_ "main@request=Transaction"] (fun () ->
             exists Transaction_union.typ ~request:(As_prover.return Transaction) )

@@ -163,10 +163,17 @@ module Common = struct
 
     let to_input_legacy ({ fee; fee_payer_pk; nonce; valid_until; memo } : var)
         =
-      let%map nonce = Account_nonce.Checked.to_input_legacy nonce
+      let%map nonce =
+        with_label "Account_nonce.Checked.to_input_legacy"
+        @@ fun () -> Account_nonce.Checked.to_input_legacy nonce
       and valid_until =
+        with_label "Global_slot_since_genesis.Checked.to_input_legacy"
+        @@ fun () ->
         Global_slot_since_genesis.Checked.to_input_legacy valid_until
-      and fee = Currency.Fee.var_to_input_legacy fee in
+      and fee =
+        with_label "Currency.Fee.var_to_input_legacy"
+        @@ fun () -> Currency.Fee.var_to_input_legacy fee
+      in
       let fee_token = Legacy_token_id.default_checked in
       Array.reduce_exn ~f:Random_oracle.Input.Legacy.append
         [| fee
