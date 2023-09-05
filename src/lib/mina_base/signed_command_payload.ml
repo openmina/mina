@@ -175,10 +175,29 @@ module Common = struct
         @@ fun () -> Currency.Fee.var_to_input_legacy fee
       in
       let fee_token = Legacy_token_id.default_checked in
+      let fee_payer_pk_input =
+        Public_key.Compressed.Checked.to_input_legacy fee_payer_pk
+      in
+      let fee_payer_pk_input_sexp =
+        Random_oracle.Input.Legacy.sexp_of_t
+          (fun f ->
+            Snarky_backendless.Cvar.sexp_of_cvar Field.sexp_of_t
+              Obj.(magic @@ repr f) )
+          (fun f ->
+            Snarky_backendless.Cvar.sexp_of_cvar Field.sexp_of_t
+              Obj.(magic @@ repr f) )
+          fee_payer_pk_input
+      in
+      eprintf
+        "Signed_command_payload.Common.Checked.to_input_legacy \
+         fee_payer_pk_input: \n\
+         %s\n\
+         %!"
+        (Sexp.to_string_hum fee_payer_pk_input_sexp) ;
       Array.reduce_exn ~f:Random_oracle.Input.Legacy.append
         [| fee
          ; fee_token
-         ; Public_key.Compressed.Checked.to_input_legacy fee_payer_pk
+         ; fee_payer_pk_input
          ; nonce
          ; valid_until
          ; Random_oracle.Input.Legacy.bitstring
