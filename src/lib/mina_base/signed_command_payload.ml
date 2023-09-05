@@ -180,12 +180,9 @@ module Common = struct
       in
       let fee_payer_pk_input_sexp =
         Random_oracle.Input.Legacy.sexp_of_t
-          (fun f ->
-            Snarky_backendless.Cvar.sexp_of_cvar Field.sexp_of_t
-              Obj.(magic @@ repr f) )
-          (fun f ->
-            Snarky_backendless.Cvar.sexp_of_cvar Field.sexp_of_t
-              Obj.(magic @@ repr f) )
+          (Snarky_backendless.Cvar.sexp_of_cvar Field.sexp_of_t)
+          (Snarky_backendless.Boolean.sexp_of_t
+             (Snarky_backendless.Cvar.sexp_of_cvar Field.sexp_of_t) )
           fee_payer_pk_input
       in
       eprintf
