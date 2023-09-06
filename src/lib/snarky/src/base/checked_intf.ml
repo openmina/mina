@@ -19,6 +19,8 @@ module type Basic = sig
   val with_handler :
     Request.Handler.single -> (unit -> ('a, 'f field) t) -> ('a, 'f field) t
 
+  val my_deref_var : int -> string option
+
   val exists :
        ('var, 'value, 'f field) Types.Typ.t
     -> ('value, 'f field) Types.Provider.t
@@ -59,6 +61,8 @@ module type S = sig
     -> ('var, 'value, 'f field) Types.Typ.t
     -> 'value Request.t
     -> ('var, 'f field) t
+
+  val my_deref_var : int -> string option
 
   val exists_handle :
        ?request:('value Request.t, 'f field) As_prover0.t

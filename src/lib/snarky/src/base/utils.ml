@@ -179,7 +179,7 @@ struct
   module Boolean = struct
     open Boolean.Unsafe
 
-    type var = Cvar.t Boolean.t
+    type var = Cvar.t Boolean.t [@@deriving sexp_of]
 
     type value = bool
 
@@ -260,6 +260,8 @@ struct
 
     let to_constant (b : var) =
       Option.map (Cvar.to_constant (b :> Cvar.t)) ~f:Field.(equal one)
+
+    let my_to_cvar (b : var) = (b :> Cvar.t)
 
     let var_of_value b = if b then true_ else false_
 

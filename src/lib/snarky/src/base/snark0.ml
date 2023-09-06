@@ -833,6 +833,10 @@ module Run = struct
 
       let var_of_value = var_of_value
 
+      let to_constant = to_constant
+
+      let my_to_cvar = my_to_cvar
+
       let typ = typ
 
       let typ_unchecked = typ_unchecked
@@ -1213,6 +1217,8 @@ module Run = struct
       | Some such_that ->
           let x = request_witness typ (fun () -> r) in
           such_that x ; x
+
+    let my_deref_var _index = failwith "TODO: Unused"
 
     let exists ?request ?compute typ =
       let request = Option.map request ~f:As_prover.run_prover in

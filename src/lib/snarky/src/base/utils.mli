@@ -132,6 +132,8 @@ module Make : functor
 
     val to_constant : var -> bool option
 
+    val my_to_cvar : var -> Checked.field Cvar0.t
+
     val var_of_value : bool -> var
 
     val typ : (var, value) Typ2.t

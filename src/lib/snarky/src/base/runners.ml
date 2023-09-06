@@ -1,3 +1,7 @@
+[@@@ocaml.warning "-27"]
+
+[@@@ocaml.warning "-26"]
+
 open Core_kernel
 module Types0 = Types
 

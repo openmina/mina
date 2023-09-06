@@ -93,6 +93,11 @@ module Legacy = struct
 
   let bitstrings x = { field_elements = [||]; bitstrings = x }
 
+  let my_map t ~f ~b =
+    { field_elements = Array.map ~f t.field_elements
+    ; bitstrings = Array.map t.bitstrings ~f:(fun list -> List.map ~f:b list)
+    }
+
   let pack_bits ~max_size ~pack { field_elements = _; bitstrings } =
     let rec pack_full_fields rev_fields bits length =
       if length >= max_size then

@@ -168,15 +168,47 @@ module Common = struct
         Global_slot_since_genesis.Checked.to_input_legacy valid_until
       and fee = Currency.Fee.var_to_input_legacy fee in
       let fee_token = Legacy_token_id.default_checked in
-      Array.reduce_exn ~f:Random_oracle.Input.Legacy.append
-        [| fee
-         ; fee_token
-         ; Public_key.Compressed.Checked.to_input_legacy fee_payer_pk
-         ; nonce
-         ; valid_until
-         ; Random_oracle.Input.Legacy.bitstring
-             (Array.to_list (memo :> Boolean.var array))
-        |]
+
+      let cvar_to_string (cvar : Field.t Snarky_backendless.Cvar.t) =
+        let cvar_string =
+          match cvar with Var index -> my_deref_var index | _ -> None
+        in
+        match cvar_string with
+        | Some s ->
+            "[Deref] " ^ s
+        | None ->
+            Sexp.to_string_hum
+              (Snarky_backendless.Cvar.sexp_of_cvar Field.sexp_of_t cvar)
+      in
+
+      let boolvar_to_string (b : Boolean.var) =
+        Boolean.my_to_cvar b |> cvar_to_string
+      in
+
+      let res =
+        Array.reduce_exn ~f:Random_oracle.Input.Legacy.append
+          [| fee
+           ; fee_token
+           ; Public_key.Compressed.Checked.to_input_legacy fee_payer_pk
+           ; nonce
+           ; valid_until
+           ; Random_oracle.Input.Legacy.bitstring
+               (Array.to_list (memo :> Boolean.var array))
+          |]
+      in
+
+      let new_input =
+        Random_oracle_input.Legacy.my_map res ~f:cvar_to_string
+          ~b:boolvar_to_string
+      in
+
+      Printf.eprintf
+        !"[signed.Common] input=%{sexp: (string, string) \
+          Random_oracle_input.Legacy.t}\n\
+          %!"
+        new_input ;
+
+      res
   end
 
   [%%endif]

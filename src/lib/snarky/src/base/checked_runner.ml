@@ -240,6 +240,18 @@ struct
         in
         (Run_state.set_handler s' handler, y) )
 
+  let last_state : Field.t Run_state.t option ref = ref None
+
+  let my_deref_var (index : int) =
+    let s = !last_state in
+    if Option.is_some s then
+      let s = Option.value_exn s in
+      if Run_state.has_witness s then
+        let value = Run_state.get_variable_value s index in
+        Some (Field.to_string value)
+      else None
+    else None
+
   let exists
       (Types.Typ.Typ
          { Types.Typ.var_of_fields
@@ -254,6 +266,7 @@ struct
     Function
       (fun s ->
         if Run_state.has_witness s then (
+          last_state := Some s ;
           if Option.is_some stacktrace then
             Printf.eprintf "stacktrace=\n%s\n" (Option.value_exn stacktrace) ;
           let old = Run_state.as_prover s in

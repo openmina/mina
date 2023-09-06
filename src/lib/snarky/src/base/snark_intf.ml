@@ -59,6 +59,10 @@ module type Boolean_intf = sig
         value. *)
   val var_of_value : value -> var
 
+  val to_constant : var -> value option
+
+  val my_to_cvar : var -> field_var
+
   (** The relationship between {!val:var} and {!val:value}, with a check that
         the value is valid (ie. {!val:Field.zero} or {!val:Field.one}). *)
   val typ : (var, value) typ
@@ -911,6 +915,8 @@ let multiply3 (x : Field.Var.t) (y : Field.Var.t) (z : Field.Var.t)
     -> ('var, 'value) Typ.t
     -> 'var Checked.t
 
+  val my_deref_var : int -> string option
+
   (** Like {!val:exists}, but returns a {!type:Handle.t}.
 
       This persists the OCaml value of the result, which is stored unchanged in
@@ -1337,6 +1343,8 @@ module type Run_basic = sig
     -> ('var, 'value) Typ.t
     -> 'value Request.t
     -> 'var
+
+  val my_deref_var : int -> string option
 
   val exists :
        ?request:(unit -> 'value Request.t) As_prover.t

@@ -1,3 +1,5 @@
+[@@@warning "-32"]
+
 open Core_kernel
 
 module Make (Field : sig
@@ -39,6 +41,8 @@ end)
           Types.Provider.Both (request, c)
     in
     exists typ provider
+
+  let my_deref_var (index : int) = my_deref_var index
 
   let exists ?request ?compute typ =
     let%map h = exists_handle ?request ?compute typ in
