@@ -242,15 +242,28 @@ struct
 
   let last_state : Field.t Run_state.t option ref = ref None
 
-  let my_deref_var (index : int) =
+  let get_last_state () =
     let s = !last_state in
     if Option.is_some s then
       let s = Option.value_exn s in
-      if Run_state.has_witness s then
+      if Run_state.has_witness s then Some s else None
+    else None
+
+  let my_deref_var (index : int) =
+    match get_last_state () with
+    | Some s ->
         let value = Run_state.get_variable_value s index in
         Some (Field.to_string value)
-      else None
-    else None
+    | None ->
+        None
+
+  let my_eval_cvar (cvar : Backend.Cvar.t) =
+    match get_last_state () with
+    | Some s ->
+        let value = get_value s cvar in
+        Some (Field.to_string value)
+    | None ->
+        None
 
   let exists
       (Types.Typ.Typ

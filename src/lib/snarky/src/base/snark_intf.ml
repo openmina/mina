@@ -917,6 +917,8 @@ let multiply3 (x : Field.Var.t) (y : Field.Var.t) (z : Field.Var.t)
 
   val my_deref_var : int -> string option
 
+  val my_eval_cvar : field Cvar.t -> string option
+
   (** Like {!val:exists}, but returns a {!type:Handle.t}.
 
       This persists the OCaml value of the result, which is stored unchanged in
@@ -1345,6 +1347,8 @@ module type Run_basic = sig
     -> 'var
 
   val my_deref_var : int -> string option
+
+  val my_eval_cvar : Field.t Cvar.t -> string option
 
   val exists :
        ?request:(unit -> 'value Request.t) As_prover.t

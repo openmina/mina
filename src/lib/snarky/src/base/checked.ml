@@ -44,6 +44,8 @@ end)
 
   let my_deref_var (index : int) = my_deref_var index
 
+  let my_eval_cvar (cvar : Field.t Cvar.t) = my_eval_cvar cvar
+
   let exists ?request ?compute typ =
     let%map h = exists_handle ?request ?compute typ in
     Handle.var h

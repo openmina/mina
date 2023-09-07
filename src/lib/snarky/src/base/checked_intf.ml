@@ -21,6 +21,8 @@ module type Basic = sig
 
   val my_deref_var : int -> string option
 
+  val my_eval_cvar : 'f field Cvar.t -> string option
+
   val exists :
        ('var, 'value, 'f field) Types.Typ.t
     -> ('value, 'f field) Types.Provider.t
@@ -63,6 +65,8 @@ module type S = sig
     -> ('var, 'f field) t
 
   val my_deref_var : int -> string option
+
+  val my_eval_cvar : 'f field Cvar.t -> string option
 
   val exists_handle :
        ?request:('value Request.t, 'f field) As_prover0.t

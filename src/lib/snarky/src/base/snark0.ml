@@ -1220,6 +1220,8 @@ module Run = struct
 
     let my_deref_var _index = failwith "TODO: Unused"
 
+    let my_eval_cvar _cvar = failwith "TODO: Unused"
+
     let exists ?request ?compute typ =
       let request = Option.map request ~f:As_prover.run_prover in
       let compute = Option.map compute ~f:As_prover.run_prover in
