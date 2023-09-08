@@ -1197,6 +1197,7 @@ dependencies = [
  "ark-poly",
  "ark-serialize",
  "array-init",
+ "byteorder",
  "groupmap",
  "kimchi",
  "libc",

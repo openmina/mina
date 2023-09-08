@@ -6,7 +6,7 @@ use crate::{
     srs::fp::CamlFpSrs,
 };
 use ark_ec::AffineCurve;
-use ark_ff::One;
+use ark_ff::{One, PrimeField};
 use array_init::array_init;
 use groupmap::GroupMap;
 use kimchi::prover_index::ProverIndex;
@@ -71,6 +71,8 @@ pub fn caml_pasta_fp_plonk_proof_create(
         .try_into()
         .map_err(|_| ocaml::Error::Message("the witness should be a column of 15 vectors"))?;
     let index: &ProverIndex<Vesta> = &index.as_ref().0;
+
+    write_witness_to_file(&witness, "/tmp/fp-witness.bin").unwrap();
 
     // public input
     let public_input = witness[0][0..index.cs.public].to_vec();
@@ -958,4 +960,28 @@ pub fn caml_pasta_fp_plonk_proof_deep_copy(
     x: CamlProverProof<CamlGVesta, CamlFp>,
 ) -> CamlProverProof<CamlGVesta, CamlFp> {
     x
+}
+
+// Witness serialization
+
+use byteorder::{LittleEndian, WriteBytesExt};
+use std::fs::File;
+use std::io::BufWriter;
+
+fn write_witness_to_file(
+    witness: &[Vec<ark_ff::Fp256<mina_curves::pasta::fields::FpParameters>>; 15],
+    path: &str,
+) -> std::io::Result<()> {
+    let file = File::create(path)?;
+    let mut writer = BufWriter::new(file);
+
+    for vec in witness {
+        for x in vec {
+            for value in x.clone().into_repr().as_ref() {
+                writer.write_u64::<LittleEndian>(*value)?;
+            }
+        }
+    }
+
+    Ok(())
 }
