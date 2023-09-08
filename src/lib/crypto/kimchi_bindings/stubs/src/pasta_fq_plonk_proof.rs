@@ -68,6 +68,8 @@ pub fn caml_pasta_fq_plonk_proof_create(
         .expect("the witness should be a column of 15 vectors");
     let index: &ProverIndex<Pallas> = &index.as_ref().0;
 
+    write_witness_to_file(&witness, "/tmp/fq-witness.bin").unwrap();
+
     // public input
     let public_input = witness[0][0..index.cs.public].to_vec();
 
@@ -229,4 +231,29 @@ pub fn caml_pasta_fq_plonk_proof_deep_copy(
     x: CamlProverProof<CamlGPallas, CamlFq>,
 ) -> CamlProverProof<CamlGPallas, CamlFq> {
     x
+}
+
+// Witness serialization
+
+use ark_ff::PrimeField;
+use byteorder::{LittleEndian, WriteBytesExt};
+use std::fs::File;
+use std::io::BufWriter;
+
+fn write_witness_to_file(
+    witness: &[Vec<ark_ff::Fp256<mina_curves::pasta::fields::FqParameters>>; 15],
+    path: &str,
+) -> std::io::Result<()> {
+    let file = File::create(path)?;
+    let mut writer = BufWriter::new(file);
+
+    for vec in witness {
+        for x in vec {
+            for value in x.clone().into_repr().as_ref() {
+                writer.write_u64::<LittleEndian>(*value)?;
+            }
+        }
+    }
+
+    Ok(())
 }
