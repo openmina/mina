@@ -85,7 +85,7 @@ module Answer = struct
   [@@@warning "-39"]
 
   (* TODO: generate this in ppx_version: issue #12111 *)
-  type t = (Ledger_hash.t, Account.t) Syncable_ledger.Answer.t
+  type t = (Ledger_hash.t, Account.t, Path.t) Syncable_ledger.Answer.t
     constraint t = Stable.Latest.t
   [@@deriving sexp, to_yojson]
 end
@@ -110,7 +110,7 @@ module Query = struct
   [@@@warning "-39"]
 
   (* TODO: generate this in ppx_version: issue #12111 *)
-  type t = Ledger.Location.Addr.t Syncable_ledger.Query.t
+  type t = (Ledger.Location.Addr.t, Account_id.t) Syncable_ledger.Query.t
     constraint t = Stable.Latest.t
   [@@deriving sexp, to_yojson, hash, compare]
 end

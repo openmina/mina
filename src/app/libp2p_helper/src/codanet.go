@@ -818,6 +818,23 @@ func MakeHelper(ctx context.Context, listenOn []ma.Multiaddr, externalAddr ma.Mu
 		webrtc.Configuration{
 			Certificates: []webrtc.Certificate{},
 			// Certificates: []webrtc.Certificate{*cert},
+			ICEServers: []webrtc.ICEServer{
+				{
+					URLs:           []string{"stun:65.109.110.75:3478"},
+					Username:       "openmina",
+					Credential:     "webrtc",
+					CredentialType: 0,
+				},
+				{
+					URLs: []string{
+						"stun:stun.l.google.com:19302",
+						"stun:stun1.l.google.com:19302",
+						"stun:stun2.l.google.com:19302",
+						"stun:stun3.l.google.com:19302",
+						"stun:stun4.l.google.com:19302",
+					},
+				},
+			},
 		},
 		muxer,
 		pk,
