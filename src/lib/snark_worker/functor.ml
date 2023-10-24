@@ -356,7 +356,9 @@ module Make (Inputs : Intf.Inputs_intf) :
           | None ->
               let key =
                 Option.value snarker_name
-                  ~default:(Public_key.Compressed.to_base58_check public_key)
+                  ~default:
+                    (Signature_lib.Public_key.Compressed.to_base58_check
+                       public_key )
               in
               let content =
                 Yojson.Safe.to_string
@@ -389,18 +391,6 @@ module Make (Inputs : Intf.Inputs_intf) :
               let _ =
                 notify_work_create_error (now ()) job_ids
                   (Error.to_string_hum e)
-              in
-              let%bind () =
-                match%map
-                  dispatch Rpcs_versioned.Failed_to_generate_snark.Latest.rpc
-                    shutdown_on_disconnect (e, work, public_key) daemon_address
-                with
-                | Error e ->
-                    [%log error]
-                      "Couldn't inform the daemon about the snark work failure"
-                      ~metadata:[ ("error", Error_json.error_to_yojson e) ]
-                | Ok () ->
-                    ()
               in
               log_and_retry "performing work" e (retry_pause 10.) go
           | Ok result ->

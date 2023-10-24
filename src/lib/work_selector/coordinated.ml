@@ -25,19 +25,14 @@ struct
   let spec_hashes spec =
     let statement = Snark_work_lib.Work.Single.Spec.statement spec in
     let source =
-      Mina_base.Frozen_ledger_hash.to_base58_check statement.source.ledger
+      Mina_base.Frozen_ledger_hash.to_base58_check statement.source
     in
     let target =
-      Mina_base.Frozen_ledger_hash.to_base58_check statement.target.ledger
+      Mina_base.Frozen_ledger_hash.to_base58_check statement.target
     in
     source ^ ":" ^ target
 
-  let work_identifier
-      (work :
-        ( Inputs.Transaction_witness.t
-        , Inputs.Ledger_proof.t )
-        Snark_work_lib.Work.Single.Spec.t
-        One_or_two.t ) =
+  let work_identifier work =
     match One_or_two.to_list work with
     | [ single ] ->
         spec_hashes single

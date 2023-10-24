@@ -8,6 +8,8 @@ module Worker = struct
     open Core_kernel
     open Mina_base
     open Signature_lib
+    open Base
+    (* workaround for core and bin_prot deriver conflicting usage of ref and `!` *)
 
     module Work = struct
       type ledger_proof = Inputs.Ledger_proof.t

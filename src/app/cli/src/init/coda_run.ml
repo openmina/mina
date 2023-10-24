@@ -454,7 +454,7 @@ let setup_local_server ?(client_trustlist = []) ?rest_server_port
                   Perf_histograms.add_span ~name:"snark_worker_transition_time"
                     total ) ;
           let add_work_start_time = Unix.gettimeofday () in
-          Mina_lib.add_work mina work ;
+          Mina_lib.add_work coda work ;
           let add_work_end_time = Unix.gettimeofday () in
           Deferred.return (received_time, add_work_start_time, add_work_end_time) )
     ]
