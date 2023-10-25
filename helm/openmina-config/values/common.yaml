@@ -79,9 +79,10 @@ blockProducerConfigs:
 
 httpCoordinatedSnarkersConfig:
   # the number of snark workers
-  count: 70
+  count: 20
   namePrefix: snarker
   workSelectionAlgorithm: coordinated
+  workers: 5
 
 # minaSnarkCoordinatorsConfig:
 # - name: snarker001

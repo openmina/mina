@@ -81,7 +81,11 @@ spec:
           {{- end }}
           "-external-port", "$(DAEMON_EXTERNAL_PORT)",
           "-metrics-port", "$(DAEMON_METRICS_PORT)",
+          {{ if $.Values.httpCoordinatedSnarkersConfig.workers }}
+          "-run-snark-coordinator", "$(CODA_SNARK_KEY)",
+          {{ else }}
           "-run-snark-worker", "$(CODA_SNARK_KEY)",
+          {{ end }}
           "-snark-worker-fee", "$(CODA_SNARK_FEE)",
           "-work-selection", "$(WORK_SELECTION)",
           "-enable-peer-exchange", "true",
@@ -105,7 +109,7 @@ spec:
         ]
         env:
         - name: "RAYON_NUM_THREADS"
-          value: "4"
+          value: "8"
         - name: DAEMON_REST_PORT
           value: {{ $.Values.mina.ports.graphql | quote }}
         - name: DAEMON_CLIENT_PORT
@@ -186,6 +190,74 @@ spec:
             path: "unset-k8s-env.sh"
 {{- include "nodeSelector.preemptible" $.Values | indent 6 }}
 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-worker
+  labels:
+    app: {{ $name }}-worker
+spec:
+  replicas: {{ $.Values.httpCoordinatedSnarkersConfig.workers | default 5 }}
+  selector:
+    matchLabels:
+      app: {{ $name }}-worker
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}-worker
+        testnet: {{ $.Values.testnetName }}
+        role: snark-worker
+        version: {{ trunc 6 (split ":" $.Values.mina.image)._1 | trimSuffix "-" }}
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '10000'
+        prometheus.io/path: '/metrics'
+    spec:
+      containers:
+      - name: worker
+        resources:
+          limits:
+            memory: {{$.Values.workerMemRequest}}
+            cpu: {{$.Values.workerCpuRequest}}
+          requests:
+            memory: {{$.Values.workerMemRequest}}
+            cpu: {{$.Values.workerCpuRequest}}
+        image: {{ $.Values.mina.image }}
+        # {{ if $.Values.mina.useCustomEntrypoint -}}
+        # command: [{{ $.Values.mina.customEntrypoint }}]
+        # {{- end }}
+        command: [ mina ]
+        args: [
+          "internal",
+          "snark-worker",
+          "-proof-level","full",
+          "-shutdown-on-disconnect", "false", "-daemon-address",
+          "{{ $name }}:{{ $.Values.mina.ports.client }}"
+        ]
+        env:
+          - name: "RAYON_NUM_THREADS"
+            value: "8"
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app: {{ $name }}
+spec:
+  type: ClusterIP
+  # We want all pods to have their addresses published for the sake of the
+  # other testnet pods even before they're ready, since they
+  # have to be able to talk to each other in order to become ready.
+  publishNotReadyAddresses: true
+  selector:
+    app: {{ $name }}
+  ports:
+  - name: client-port
+    port: {{ $.Values.mina.ports.client }}
+    targetPort: client-port
 ---
 {{ include "sideCar.resources.service" (dict "name" $name "resources" $.Values.resources) }}
 {{ include "sideCar.bpfDebugger.service" (dict "name" $name "bpfDebugger" $.Values.bpfDebugger) }}
