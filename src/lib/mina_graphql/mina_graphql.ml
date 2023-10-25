@@ -4136,7 +4136,8 @@ module Queries = struct
         |> Network_pool.Snark_pool.Resource_pool.all_completed_work )
 
   let pending_snark_work =
-    field "pendingSnarkWork" ~doc:"List of snark works that are yet to be done"
+    io_field "pendingSnarkWork"
+      ~doc:"List of snark works that are yet to be done"
       ~args:Arg.[]
       ~typ:(non_null @@ list @@ non_null Types.pending_work)
       ~resolve:(fun { ctx = coda; _ } () ->
@@ -4147,7 +4148,10 @@ module Queries = struct
             Option.map (snark_worker_key coda) ~f:(fun _ -> snark_work_fee coda))
         in
         let (module S) = Mina_lib.work_selection_method coda in
-        S.pending_work_statements ~snark_pool ~fee_opt snark_job_state )
+        let%map result =
+          S.pending_work_statements ~snark_pool ~fee_opt snark_job_state
+        in
+        Ok result )
 
   let genesis_constants =
     field "genesisConstants"
