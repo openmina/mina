@@ -1,6 +1,6 @@
 testnetName: testnet
 mina:
-  image: openmina/mina:custom-tooling-snark-http-coordinator-rampup5-22
+  image: openmina/mina:custom-tooling-snark-http-coordinator-rampup6-24
   snarkCoordinatorImage: binier/mina-snark-worker-rs:latest
   privkeyPass:
   exposeGraphql: true
