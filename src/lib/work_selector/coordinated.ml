@@ -40,20 +40,55 @@ struct
 
   let rec get_next_coordinated_job = function
     | [] ->
-        return None
+        return (None, [])
     | work :: rest ->
         let%bind locked = query_coordinator (work_identifier work) in
-        if locked then return (Some work) else get_next_coordinated_job rest
+        if locked then return (Some work, rest)
+        else get_next_coordinated_job rest
 
-  let work ~snark_pool ~fee ~logger (state : Lib.State.t) =
+  let work_uncached ~snark_pool ~fee ~logger (state : Lib.State.t) =
     Lib.State.remove_old_assignments state ~logger ;
     let unseen_jobs = Lib.State.all_unseen_works state in
     match%bind.Deferred Lib.get_expensive_work ~snark_pool ~fee unseen_jobs with
     | [] ->
-        return None
+        return (None, [])
     | expensive_work ->
-        let%map result = get_next_coordinated_job expensive_work in
-        Option.map result ~f:(fun x -> Lib.State.set state x ; x)
+        let%map result, remaining = get_next_coordinated_job expensive_work in
+        result
+        |> Option.map ~f:(fun x -> Lib.State.set state x ; (Some x, remaining))
+        |> Option.value ~default:(None, remaining)
+
+  let work_cached ~expensive_work ~logger (state : Lib.State.t) =
+    Lib.State.remove_old_assignments state ~logger ;
+    match expensive_work with
+    | [] ->
+        return (None, [])
+    | expensive_work ->
+        let%map result, remaining = get_next_coordinated_job expensive_work in
+        result
+        |> Option.map ~f:(fun x -> Lib.State.set state x ; (Some x, remaining))
+        |> Option.value ~default:(None, remaining)
+
+  let work =
+    let result_cache = ref [] in
+    let cached_at = ref 0.0 in
+    fun ~snark_pool ~fee ~logger (state : Lib.State.t) ->
+      let now = Core.Unix.gettimeofday () in
+      (* only recompute list every few seconds to avoid stalling the scheduler *)
+      if Float.(now - !cached_at > 6.0) then (
+        cached_at := now ;
+        let%map work_opt, remaining_expensive_work =
+          work_uncached ~snark_pool ~fee ~logger state
+        in
+        result_cache := remaining_expensive_work ;
+        work_opt )
+      else
+        let expensive_work = !result_cache in
+        let%map work_opt, remaining_expensive_work =
+          work_cached ~expensive_work ~logger state
+        in
+        result_cache := remaining_expensive_work ;
+        work_opt
 
   let remove = Lib.State.remove
 
