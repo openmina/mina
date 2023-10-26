@@ -1437,6 +1437,10 @@ let daemon logger =
          Block_time.Controller.disable_setting_offset () ;
          let%bind coda = setup_daemon () in
          let%bind () = Mina_lib.start coda in
+         Option.iter (Sys.getenv "MINA_MAIN_MEMTRACE") ~f:(fun name ->
+             Unix.putenv ~key:"MEMTRACE"
+               ~data:(sprintf "%s-%d" name (Unix.getpid () |> Pid.to_int)) ) ;
+         Memtrace.trace_if_requested ~context:"mina-daemon" () ;
          [%log info] "Daemon ready. Clients can now connect" ;
          Async.never () ) )
 

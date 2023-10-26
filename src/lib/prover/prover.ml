@@ -343,6 +343,10 @@ module Worker = struct
         if enable_internal_tracing then
           don't_wait_for @@ Internal_tracing.toggle ~logger `Enabled ;
         [%log info] "Prover started" ;
+        Option.iter (Sys.getenv "MINA_PROVER_MEMTRACE") ~f:(fun name ->
+            Unix.putenv ~key:"MEMTRACE"
+              ~data:(sprintf "%s-%d" name (Unix.getpid () |> Pid.to_int)) ) ;
+        Memtrace.trace_if_requested ~context:"mina-daemon" () ;
         Worker_state.create
           { conf_dir
           ; enable_internal_tracing
