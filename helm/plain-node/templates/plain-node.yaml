@@ -47,6 +47,22 @@ spec:
             memory: {{ $.Values.mina.memRequest }}
             cpu: {{ $.Values.mina.cpuRequest }}
         image: {{ $.Values.mina.image }}
+      {{ if $.Values.memtrace.enable }}
+      - name: init-memtrace-dir
+        image: busybox
+        command:
+        - sh
+        - -c
+        - mkdir /memtrace/$(POD_NAME)
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: memtrace-host-mounted
+          mountPath: /memtrace
+      {{- end }}
       containers:
       {{ include "sideCar.resources.containerSpec" (dict "resources" $.Values.resources) | nindent 6 }}
       {{ include "sideCar.bpfDebugger.containerSpec" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
@@ -117,6 +133,16 @@ spec:
           value: {{ $.Values.mina.privkeyPass | quote }}
         - name: MINA_CLIENT_TRUSTLIST
           value: "10.0.0.0/8"
+        {{ if $.Values.memtrace.enable }}
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MINA_MAIN_MEMTRACE
+          value: /memtrace/$(POD_NAME)/mina-main.ctf
+        - name: MINA_PROVER_MEMTRACE
+          value: /memtrace/$(POD_NAME)/mina-prover.ctf
+        {{- end }}
         - name: GCLOUD_KEYFILE
           value: "/gcloud/keyfile.json"
         - name: NETWORK_NAME
@@ -168,6 +194,10 @@ spec:
         - name: {{ template "sideCar.logs.minaLogsVolumeName" }}
           mountPath: "/root/.mina-config"
         {{- end }}
+        {{ if $.Values.memtrace.enable }}
+        - name: memtrace-host-mounted
+          mountPath: /memtrace
+        {{- end }}
         - name: scripts
           mountPath: "/scripts"
       volumes:
@@ -189,6 +219,11 @@ spec:
         emptyDir: {}
       {{ include "sideCar.bpfDebugger.volume" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       {{ include "sideCar.logs.minaLogsVolume" (dict "logs" $.Values.logs) | nindent 6 }}
+      {{ if $.Values.memtrace.enable }}
+      - name: memtrace-host-mounted
+        hostPath:
+          path: /home/k8/memtrace
+      {{- end }}
       - name: scripts
         configMap:
           defaultMode: 0755

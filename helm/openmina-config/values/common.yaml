@@ -1,6 +1,6 @@
 testnetName: testnet
 mina:
-  image: openmina/mina:custom-tooling-snark-http-coordinator-rampup6-24
+  image: openmina/mina:custom-tooling-snark-http-coordinator-rampup6-50
   snarkCoordinatorImage: binier/mina-snark-worker-rs:latest
   privkeyPass:
   exposeGraphql: true
@@ -113,6 +113,9 @@ httpCoordinatedSnarkersConfig:
 #   publicKey: B62qoGg77bjwPm3kncsjnBChAbeipbotqUCpcGe8FGPbLAJegj6K7od
 #   workSelectionAlgorithm: rand
 #   workers: 10
+
+memtrace:
+  enable: true
 
 resources:
   enable: true
