@@ -32,22 +32,10 @@ spec:
       {{ if $.Values.itn.enable }}
       - name: download-config
         image: curlimages/curl
-        command: ['sh', '-c', 'curl -o /itn-daemon-config/daemon.json http://65.21.195.80:3333/daemon.json']
+        command: ['sh', '-c', 'curl -o /itn-daemon-config/daemon.json {{ $.Values.itn.daemonJsonUrl }}']
         volumeMounts:
           - name: itn-daemon-config
             mountPath: /itn-daemon-config
-      - name: fix-uptime-key-perms
-        image: busybox
-        command:
-        - sh
-        - -c
-        - /bin/cp /umptime-keys/key /root/uptime-keys/key && /bin/chmod 0700 /root/uptime-keys/
-        volumeMounts:
-        - name: uptime-keys
-          mountPath: /umptime-keys/
-          readOnly: true
-        - name: actual-uptime-keys
-          mountPath: /root/uptime-keys/
       {{- end }}
       - name: libp2p-perms
         image: {{ $.Values.mina.image | quote }}
@@ -97,12 +85,12 @@ spec:
           "-internal-tracing",
           {{- end -}}
           {{- if $.Values.itn.enable }}
-          "-itn-keys", {{ $.Values.itn.keys }},
-          "-itn-graphql-port", "$(MINA_ITN_GRAPHQL_PORT)",
-          "-uptime-submitter-key", "/root/uptime-keys/key",
-          "-uptime-url", "http://65.21.195.80:6000/v1/submit",
-          "-node-status-url", "https://node-stats-viable-systems.minaprotocol.tools/submit",
-          "-node-error-url", "https://node-error-viable-systems.minaprotocol.tools/submit",
+          # "-itn-keys", {{ $.Values.itn.keys }},
+          # "-itn-graphql-port", "$(MINA_ITN_GRAPHQL_PORT)",
+          # "-uptime-submitter-key", "/root/uptime-keys/key",
+          # "-uptime-url", "http://65.21.195.80:6000/v1/submit",
+          # "-node-status-url", "https://node-stats-viable-systems.minaprotocol.tools/submit",
+          # "-node-error-url", "https://node-error-viable-systems.minaprotocol.tools/submit",
           "-config-file", "/itn-daemon-config/daemon.json",
           {{- end }}
           {{- if $.Values.mina.exposeGraphql }}
@@ -130,6 +118,9 @@ spec:
           {{- range $.Values.mina.seedPeers }}
           "-peer", {{ . | quote }},
           {{- end }}
+          {{- if $.Values.mina.seedPeersURL }}
+          "-peer-list-url", {{ $.Values.mina.seedPeersURL | quote }},
+          {{- end -}}
           "-generate-genesis-proof", {{ $.Values.mina.generateGenesisProof | quote }},
           {{- if $.Values.mina.uploadBlocksToGCloud }}
           "-upload-blocks-to-gcloud", "true",
@@ -206,8 +197,6 @@ spec:
         - name: scripts
           mountPath: "/scripts"
         {{- if $.Values.itn.enable }}
-        - name: actual-uptime-keys
-          mountPath: /root/uptime-keys/
         - name: itn-daemon-config
           mountPath: /itn-daemon-config
         {{- end }}
@@ -240,17 +229,6 @@ spec:
       {{- if $.Values.itn.enable }}
       - name: itn-daemon-config
         emptyDir: {}
-      - name: uptime-keys
-        secret:
-          secretName: {{ $name }}-uptime-key-secret
-          defaultMode: 256
-          items:
-          - key: key
-            path: key
-          - key: pub
-            path: key.pub
-      - name: actual-uptime-keys
-        emptyDir: {}
       {{- end}}
 {{- include "nodeSelector.preemptible" $.Values | indent 6 }}
 ---
@@ -271,23 +249,6 @@ spec:
     targetPort: {{ $.Values.mina.ports.graphql }}
 {{- end }}
 ---
-{{- if $.Values.itn.enable }}
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ $name }}-itn-graphql
-spec:
-  type: NodePort
-  publishNotReadyAddresses: true
-  selector:
-    app: {{ $name }}
-  ports:
-  - name: http-graphql
-    protocol: TCP
-    port: {{ $itn_port }}
-    nodePort: {{ $itn_port }}
-    targetPort: {{ $itn_port }}
-{{- end }}
 {{ include "sideCar.resources.service" (dict "name" $name "resources" $.Values.resources) }}
 {{ include "sideCar.bpfDebugger.service" (dict "name" $name "bpfDebugger" $.Values.bpfDebugger) }}
 {{ include "sideCar.logs.service" (dict "name" $name "logs" $.Values.logs) }}

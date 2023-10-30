@@ -40,16 +40,6 @@ http {
         location /{{ $node.name }}/graphql {
            proxy_pass http://{{ $node.name }}-graphql.{{ $node.namespace }}.svc.cluster.local/graphql;
         }
-        location /{{ $node.name }}/internal-trace/graphql {
-           proxy_pass http://{{ $node.name }}-internal-trace-graphql.{{ $node.namespace }}.svc.cluster.local/graphql;
-        }
-        location /{{ $node.name }}/resources {
-           proxy_pass http://{{ $node.name }}-resources.{{ $node.namespace }}.svc.cluster.local/resources;
-        }
-        location /{{ $node.name }}/bpf-debugger {
-           rewrite ^/{{ $node.name }}/bpf-debugger/(.*) /$1 break;
-           proxy_pass http://{{ $node.name }}-bpf-debugger.{{ $node.namespace }}.svc.cluster.local;
-        }
         location /{{ $node.name }}/logs {
            rewrite_log on;
            rewrite ^/{{ $node.name }}/logs/(.*) /$1 break;
