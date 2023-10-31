@@ -98,6 +98,14 @@ get_mina_deployments() {
         jq -r '.items[] | select( .spec.template.spec.containers | any( .name == "mina") ) | .metadata.name'
 }
 
+has_http_snark_coordinator() {
+    if $KUBECTL get deploy/snarker-http-coordinator >/dev/null 2>&1; then
+        echo 'true'
+    else
+        echo 'false'
+    fi
+}
+
 gen_values_yaml() {
     IMAGE=$1
     NODE_PORT=$2
@@ -106,6 +114,7 @@ gen_values_yaml() {
 frontend:
   ${IMAGE:+image: $IMAGE}
   nodePort: $NODE_PORT
+  httpSnarkWorkCoordinator: $(has_http_snark_coordinator)
   nodes:
 EOF
     for NS in "$NAMESPACE" $OTHER_NAMESPACES; do

@@ -29,22 +29,10 @@ spec:
       {{ if $.Values.itn.enable }}
       - name: download-config
         image: curlimages/curl
-        command: ['sh', '-c', 'curl -o /itn-daemon-config/daemon.json http://65.21.195.80:3333/daemon.json']
+        command: ['sh', '-c', 'curl -o /itn-daemon-config/daemon.json {{ $.Values.itn.daemonJsonUrl }}']
         volumeMounts:
           - name: itn-daemon-config
             mountPath: /itn-daemon-config
-      - name: fix-uptime-key-perms
-        image: busybox
-        command:
-        - sh
-        - -c
-        - /bin/cp /umptime-keys/key /root/uptime-keys/key && /bin/chmod 0700 /root/uptime-keys/
-        volumeMounts:
-        - name: uptime-keys
-          mountPath: /umptime-keys/
-          readOnly: true
-        - name: actual-uptime-keys
-          mountPath: /root/uptime-keys/
       {{- end }}
       - name: libp2p-perms
         image: {{ $.Values.mina.image | quote }}
@@ -100,17 +88,15 @@ spec:
           "-external-ip", "$(DAEMON_POD_IP)",
           {{- end }}
           {{- if $.Values.itn.enable }}
-          "-itn-keys", {{ $.Values.itn.keys }},
-          "-itn-graphql-port", "$(MINA_ITN_GRAPHQL_PORT)",
-          "-uptime-submitter-key", "/root/uptime-keys/key",
-          "-uptime-url", "http://65.21.195.80:6000/v1/submit",
-          "-node-status-url", "https://node-stats-viable-systems.minaprotocol.tools/submit",
-          "-node-error-url", "https://node-error-viable-systems.minaprotocol.tools/submit",
           "-config-file", "/itn-daemon-config/daemon.json",
           {{- end }}
           "-external-port", "$(DAEMON_EXTERNAL_PORT)",
           "-metrics-port", "$(DAEMON_METRICS_PORT)",
+          {{ if $.Values.httpCoordinatedSnarkersConfig.workers }}
+          "-run-snark-coordinator", "$(CODA_SNARK_KEY)",
+          {{ else }}
           "-run-snark-worker", "$(CODA_SNARK_KEY)",
+          {{ end }}
           "-snark-worker-fee", "$(CODA_SNARK_FEE)",
           "-work-selection", "$(WORK_SELECTION)",
           "-enable-peer-exchange", "true",
@@ -134,7 +120,7 @@ spec:
         ]
         env:
         - name: "RAYON_NUM_THREADS"
-          value: "4"
+          value: "8"
         - name: DAEMON_REST_PORT
           value: {{ $.Values.mina.ports.graphql | quote }}
         - name: DAEMON_CLIENT_PORT
@@ -144,9 +130,9 @@ spec:
         - name: MINA_CLIENT_TRUSTLIST
           value: "10.0.0.0/8"
         - name: CODA_SNARK_KEY
-          value: {{ $.Values.publicKey | trim | quote }}
+          value: {{ $.Values.httpCoordinatedSnarkersConfig.publicKey | trim | quote }}
         - name: CODA_SNARK_FEE
-          value: {{ $.Values.snarkFee | quote }}
+          value: {{ $.Values.httpCoordinatedSnarkersConfig.fee | quote }}
         - name: DAEMON_POD_IP
           valueFrom:
             fieldRef:
@@ -154,7 +140,7 @@ spec:
         - name: DAEMON_EXTERNAL_PORT
           value: {{ $.Values.mina.ports.p2p | quote }}
         - name: WORK_SELECTION
-          value: {{$.Values.workSelectionAlgorithm | quote }}
+          value: {{$.Values.httpCoordinatedSnarkersConfig.workSelectionAlgorithm | quote }}
         - name: MINA_LIBP2P_PASS
           value: {{ $.Values.mina.privkeyPass | quote }}
         {{ if $.Values.mina.optimized }}
@@ -201,8 +187,6 @@ spec:
           mountPath: "/root/.mina-config"
         {{- end }}
         {{- if $.Values.itn.enable }}
-        - name: actual-uptime-keys
-          mountPath: /root/uptime-keys/
         - name: itn-daemon-config
           mountPath: /itn-daemon-config
         {{- end }}
@@ -226,19 +210,76 @@ spec:
       {{- if $.Values.itn.enable }}
       - name: itn-daemon-config
         emptyDir: {}
-      - name: uptime-keys
-        secret:
-          secretName: {{ $name }}-uptime-key-secret
-          defaultMode: 256
-          items:
-          - key: key
-            path: key
-          - key: pub
-            path: key.pub
-      - name: actual-uptime-keys
-        emptyDir: {}
       {{- end}}
 {{- include "nodeSelector.preemptible" $.Values | indent 6 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-worker
+  labels:
+    app: {{ $name }}-worker
+spec:
+  replicas: {{ $.Values.httpCoordinatedSnarkersConfig.workers | default 5 }}
+  selector:
+    matchLabels:
+      app: {{ $name }}-worker
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}-worker
+        testnet: {{ $.Values.testnetName }}
+        role: snark-worker
+        version: {{ trunc 6 (split ":" $.Values.mina.image)._1 | trimSuffix "-" }}
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '10000'
+        prometheus.io/path: '/metrics'
+    spec:
+      containers:
+      - name: worker
+        resources:
+          limits:
+            memory: {{$.Values.workerMemRequest}}
+            cpu: {{$.Values.workerCpuRequest}}
+          requests:
+            memory: {{$.Values.workerMemRequest}}
+            cpu: {{$.Values.workerCpuRequest}}
+        image: {{ $.Values.mina.image }}
+        # {{ if $.Values.mina.useCustomEntrypoint -}}
+        # command: [{{ $.Values.mina.customEntrypoint }}]
+        # {{- end }}
+        command: [ mina ]
+        args: [
+          "internal",
+          "snark-worker",
+          "-proof-level","full",
+          "-shutdown-on-disconnect", "false", "-daemon-address",
+          "{{ $name }}:{{ $.Values.mina.ports.client }}"
+        ]
+        env:
+          - name: "RAYON_NUM_THREADS"
+            value: "8"
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app: {{ $name }}
+spec:
+  type: ClusterIP
+  # We want all pods to have their addresses published for the sake of the
+  # other testnet pods even before they're ready, since they
+  # have to be able to talk to each other in order to become ready.
+  publishNotReadyAddresses: true
+  selector:
+    app: {{ $name }}
+  ports:
+  - name: client-port
+    port: {{ $.Values.mina.ports.client }}
+    targetPort: client-port
 
 ---
 {{ include "sideCar.resources.service" (dict "name" $name "resources" $.Values.resources) }}
