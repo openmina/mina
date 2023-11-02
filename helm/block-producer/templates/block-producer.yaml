@@ -112,22 +112,6 @@ spec:
             memory: {{ $.Values.mina.memRequest }}
             cpu: {{ $.Values.mina.cpuRequest }}
       {{- end }}
-      {{ if $.Values.memtrace.enable }}
-      - name: init-memtrace-dir
-        image: busybox
-        command:
-        - sh
-        - -c
-        - mkdir /memtrace/$(POD_NAME)
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        volumeMounts:
-        - name: memtrace-host-mounted
-          mountPath: /memtrace
-      {{- end }}
       containers:
       {{ include "sideCar.resources.containerSpec" (dict "resources" $.Values.resources) | nindent 6 }}
       {{ include "sideCar.bpfDebugger.containerSpec" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
@@ -223,6 +207,29 @@ spec:
 {{- include "healthcheck.bots.allChecks" $.Values | indent 8 }}
         imagePullPolicy: Always
       {{- end }}
+      {{- if $.Values.memtrace.enable }}
+      - name: memtrace-server
+        image: python:3.9.18-alpine3.18
+        command: [
+          "python",
+          "-m", "http.server",
+          "--directory", "/memtrace",
+          "82"
+        ]
+        volumeMounts:
+          - name: memtrace
+            mountPath: /memtrace
+        ports:
+          - name: memtrace
+            containerPort: 82
+        resources:
+          requests:
+            memory: 0.5G
+            cpu: 500m
+          limits:
+            memory: 0.5G
+            cpu: 500m
+      {{- end }}
       - name: mina
         resources:
           limits:
@@ -317,14 +324,10 @@ spec:
         - name: MINA_CLIENT_TRUSTLIST
           value: "10.0.0.0/8"
         {{ if $.Values.memtrace.enable }}
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
         - name: MINA_MAIN_MEMTRACE
-          value: /memtrace/$(POD_NAME)/mina-main.ctf
+          value: /memtrace/mina-main.ctf
         - name: MINA_PROVER_MEMTRACE
-          value: /memtrace/$(POD_NAME)/mina-prover.ctf
+          value: /memtrace/mina-prover.ctf
         {{- end }}
         {{ if $.Values.mina.optimized }}
         - name: MINA_SKIP_REDUNDANT_SNARK_VERIFICATIONS
@@ -370,7 +373,7 @@ spec:
           mountPath: "/config/"
         {{- end }}
         {{ if $.Values.memtrace.enable }}
-        - name: memtrace-host-mounted
+        - name: memtrace
           mountPath: /memtrace
         {{- end }}
         - name: scripts
@@ -438,9 +441,9 @@ spec:
             path: keyfile.json
       {{- end }}
       {{ if $.Values.memtrace.enable }}
-      - name: memtrace-host-mounted
+      - name: memtrace
         hostPath:
-          path: /home/k8/memtrace
+          path: /home/k8/memtrace-{{ randAlpha 5 }}
       {{- end }}
       {{ include "sideCar.bpfDebugger.volume" (dict "bpfDebugger" $.Values.bpfDebugger) | nindent 6 }}
       - name: scripts
@@ -488,5 +491,21 @@ spec:
 {{ include "sideCar.bpfDebugger.service" (dict "name" $config.name "bpfDebugger" $.Values.bpfDebugger) }}
 {{ include "sideCar.logs.service" (dict "name" $config.name "logs" $.Values.logs) }}
 {{ include "sideCar.internalTrace.service" (dict "name" $config.name "internalTrace" $.Values.internalTrace) }}
+---
+{{- if $.Values.memtrace.enable }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $config.name }}-memtrace
+spec:
+  type: ClusterIP
+  publishNotReadyAddresses: true
+  selector:
+    app: {{ $config.name }}
+  ports:
+  - name: memtrace
+    port: 80
+    targetPort: memtrace
+{{- end }}
 ---
 {{ end }}

@@ -23,8 +23,10 @@ events {
     worker_connections  1024;
 }
 
+
 http {
     server {
+        resolver 169.254.25.10;
         listen 80;
         location / {
            root /usr/share/nginx/html;
@@ -39,6 +41,7 @@ http {
         }
         {{ end }}
         {{ range $node := .nodes }}
+        set ${{ $node.name }}_memtrace {{ $node.name }}-memtrace.{{ $node.namespace }}.svc.cluster.local;
         location /{{ $node.name }}/graphql {
            sub_filter_types *;
            sub_filter '"http://"' '(window.location.protocol == "https:" ? "https://" : "http://")';
@@ -54,10 +57,20 @@ http {
         location /{{ $node.name }}/resources {
            proxy_pass http://{{ $node.name }}-resources.{{ $node.namespace }}.svc.cluster.local/resources;
         }
+        location /{{ $node.name }}/bpf-debugger {
+           rewrite_log on;
+           rewrite ^/{{ $node.name }}/bpf-debugger($|/.*) $1 break;
+           proxy_pass http://{{ $node.name }}-bpf-debugger.{{ $node.namespace }}.svc.cluster.local;
+        }
         location /{{ $node.name }}/logs {
            rewrite_log on;
            rewrite ^/{{ $node.name }}/logs/(.*) /$1 break;
            proxy_pass http://{{ $node.name }}-logs.{{ $node.namespace }}.svc.cluster.local;
+        }
+        location /{{ $node.name }}/memtrace {
+           rewrite_log on;
+           rewrite ^/{{ $node.name }}/memtrace(:?/(.*))? /$1 break;
+           proxy_pass http://${{ $node.name }}_memtrace/;
         }
         {{ end }}
     }

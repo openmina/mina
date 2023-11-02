@@ -24,7 +24,7 @@ healthcheck:
 
 plainNodesConfig:
   # the number of plain nodes
-  count: 0
+  count: 10
   namePrefix: node
 
 seedConfigs:
@@ -48,41 +48,43 @@ blockProducerConfigs:
     # see resources/key-03
     keypairName: prod3-privkey-secret
     isolated: false
-  - name: prod4
-    # see resources/key-04
-    keypairName: prod4-privkey-secret
-    isolated: false
-  - name: prod5
-    # see resources/key-05
-    keypairName: prod5-privkey-secret
-    isolated: false
-  - name: prod6
-    # see resources/key-6
-    keypairName: prod6-privkey-secret
-    isolated: false
-  - name: prod7
-    # see resources/key-07
-    keypairName: prod7-privkey-secret
-    isolated: false
-  - name: prod8
-    # see resources/key-08
-    keypairName: prod8-privkey-secret
-    isolated: false
-  - name: prod9
-    # see resources/key-09
-    keypairName: prod9-privkey-secret
-    isolated: false
-  - name: prod10
-    # see resources/key-10
-    keypairName: prod10-privkey-secret
-    isolated: false
+  # - name: prod4
+  #   # see resources/key-04
+  #   keypairName: prod4-privkey-secret
+  #   isolated: false
+  # - name: prod5
+  #   # see resources/key-05
+  #   keypairName: prod5-privkey-secret
+  #   isolated: false
+  # - name: prod6
+  #   # see resources/key-6
+  #   keypairName: prod6-privkey-secret
+  #   isolated: false
+  # - name: prod7
+  #   # see resources/key-07
+  #   keypairName: prod7-privkey-secret
+  #   isolated: false
+  # - name: prod8
+  #   # see resources/key-08
+  #   keypairName: prod8-privkey-secret
+  #   isolated: false
+  # - name: prod9
+  #   # see resources/key-09
+  #   keypairName: prod9-privkey-secret
+  #   isolated: false
+  # - name: prod10
+  #   # see resources/key-10
+  #   keypairName: prod10-privkey-secret
+  #   isolated: false
 
 httpCoordinatedSnarkersConfig:
   # the number of snark workers
-  count: 20
+  count: 40
   namePrefix: snarker
   workSelectionAlgorithm: coordinated
   workers: 5
+  fee: 0.001
+  publicKey: B62qpPita1s7Dbnr7MVb3UK8fdssZixL1a4536aeMYxbTJEtRGGyS8U
 
 # minaSnarkCoordinatorsConfig:
 # - name: snarker001
@@ -125,8 +127,8 @@ resources:
   memory: "100Mi"
 
 bpfDebugger:
-  enable: false
-  image: openmina/mina-network-debugger:0aa55313
+  enable: true
+  image: openmina/mina-network-debugger:latest
   cpu: "1500m"
   memory: "4Gi"
   restartMina: false
