@@ -929,7 +929,64 @@ module State = struct
     ; acc = Option.map t.acc ~f:(fun (m, bs) -> (f1 m, List.map bs ~f:f2))
     }
 
-  let hash t f_merge f_base =
+  let fast_hash t f_merge f_base =
+    let { trees; acc; max_base_jobs; curr_job_seq_no; delay; _ } =
+      with_leaner_trees t
+    in
+    let h = ref (Digestif.SHA256.init ()) in
+    let add_string s = h := Digestif.SHA256.feed_string !h s in
+    let () =
+      let tree_hash tree f_merge f_base =
+        List.iter (Tree.to_hashable_jobs tree) ~f:(fun job ->
+            match job with Job.Merge a -> f_merge a | Base d -> f_base d )
+      in
+      Mina_stdlib.Nonempty_list.iter trees ~f:(fun tree ->
+          let add_weight_to_hash { Weight.base = b; merge = m } =
+            add_string @@ Int.to_string b ;
+            add_string @@ Int.to_string m
+          in
+          let add_weight_pair_to_hash (w1, w2) =
+            add_weight_to_hash w1 ; add_weight_to_hash w2
+          in
+          let f_merge = function
+            | w, Merge.Job.Empty ->
+                add_weight_pair_to_hash w ; add_string "Empty"
+            | w, Merge.Job.Full { left; right; status; seq_no } ->
+                add_weight_pair_to_hash w ;
+                add_string "Full" ;
+                add_string @@ Int.to_string seq_no ;
+                add_string @@ Job_status.to_string status ;
+                add_string (f_merge left) ;
+                add_string (f_merge right)
+            | w, Merge.Job.Part j ->
+                add_weight_pair_to_hash w ;
+                add_string "Part" ;
+                add_string (f_merge j)
+          in
+          let f_base = function
+            | w, Base.Job.Empty ->
+                add_weight_to_hash w ; add_string "Empty"
+            | w, Base.Job.Full { job; status; seq_no } ->
+                add_weight_to_hash w ;
+                add_string "Full" ;
+                add_string @@ Int.to_string seq_no ;
+                add_string @@ Job_status.to_string status ;
+                add_string (f_base job)
+          in
+          tree_hash tree f_merge f_base )
+    in
+    ( match acc with
+    | Some (a, d_lst) ->
+        add_string (f_merge a) ;
+        List.iter d_lst ~f:(fun d -> add_string (f_base d))
+    | None ->
+        add_string "None" ) ;
+    add_string (Int.to_string curr_job_seq_no) ;
+    add_string (Int.to_string max_base_jobs) ;
+    add_string (Int.to_string delay) ;
+    Digestif.SHA256.get !h
+
+  let slow_hash t f_merge f_base =
     let { trees; acc; max_base_jobs; curr_job_seq_no; delay; _ } =
       with_leaner_trees t
     in
@@ -978,6 +1035,11 @@ module State = struct
     add_string (Int.to_string max_base_jobs) ;
     add_string (Int.to_string delay) ;
     Digestif.SHA256.get !h
+
+  let use_fast_hash =
+    Sys.getenv_opt "MINA_FAST_SCAN_STATE_HASH" |> Option.is_some
+
+  let hash = if use_fast_hash then fast_hash else slow_hash
 
   module Make_foldable (M : Monad.S) = struct
     module Tree_foldable = Tree.Make_foldable (M)
