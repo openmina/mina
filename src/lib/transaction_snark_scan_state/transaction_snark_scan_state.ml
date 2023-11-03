@@ -170,7 +170,32 @@ module Stable = struct
 
     let to_latest = Fn.id
 
-    let hash (t : t) =
+    let fast_hash (t : t) =
+      let state_hash =
+        Parallel_scan.State.hash t.scan_state
+          (Binable.to_string (module Ledger_proof_with_sok_message.Stable.V2))
+          (Binable.to_string (module Transaction_with_witness.Stable.V2))
+      in
+      let ( previous_incomplete_zkapp_updates
+          , `Border_block_continued_in_the_next_tree continue_in_next_tree ) =
+        t.previous_incomplete_zkapp_updates
+      in
+      let incomplete_updates =
+        List.fold ~init:(Digestif.SHA256.init ())
+          previous_incomplete_zkapp_updates ~f:(fun h t ->
+            Digestif.SHA256.feed_string h
+            @@ Binable.to_string (module Transaction_with_witness.Stable.V2) t )
+        |> Digestif.SHA256.get
+      in
+      let continue_in_next_tree =
+        Digestif.SHA256.digest_string (Bool.to_string continue_in_next_tree)
+      in
+      [ state_hash; incomplete_updates; continue_in_next_tree ]
+      |> List.fold ~init:(Digestif.SHA256.init ()) ~f:(fun h t ->
+             Digestif.SHA256.feed_string h (Digestif.SHA256.to_raw_string t) )
+      |> Digestif.SHA256.get |> Staged_ledger_hash.Aux_hash.of_sha256
+
+    let slow_hash (t : t) =
       let state_hash =
         Parallel_scan.State.hash t.scan_state
           (Binable.to_string (module Ledger_proof_with_sok_message.Stable.V2))
@@ -195,6 +220,10 @@ module Stable = struct
             ( to_raw_string state_hash
             ^ to_raw_string incomplete_updates
             ^ to_raw_string continue_in_next_tree ))
+
+    let use_fast_hash = Sys.getenv "MINA_FAST_SCAN_STATE_HASH" |> Option.is_some
+
+    let hash = if use_fast_hash then fast_hash else slow_hash
   end
 end]
 
