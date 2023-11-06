@@ -470,6 +470,28 @@ let dump_extend_blockchain_input input =
     ~data ;
   incr counter
 
+let prove_from_input_binprot { connection; logger; _ } =
+  let%bind input =
+    Reader.read_bin_prot (Lazy.force Reader.stdin)
+      Extend_blockchain_input.Stable.V2.bin_reader_t
+  in
+  match input with
+  | `Eof ->
+      eprintf "EOF" ; exit 1
+  | `Ok input -> (
+      match%map
+        Worker.Connection.run connection ~f:Worker.functions.extend_blockchain
+          ~arg:input
+        >>| Or_error.join
+      with
+      | Ok _ ->
+          [%log info] "prover succeeded :)" ;
+          true
+      | Error e ->
+          [%log error] "prover errored :("
+            ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
+          false )
+
 let extend_blockchain { connection; logger; _ } chain next_state block
     ledger_proof prover_state pending_coinbase =
   let input =
