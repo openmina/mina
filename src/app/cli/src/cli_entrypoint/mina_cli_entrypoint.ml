@@ -1773,6 +1773,22 @@ let internal_commands logger =
                  Prover.prove_from_input_sexp prover sexp >>| ignore
              | `Eof ->
                  failwith "early EOF while reading sexp" ) ) )
+  ; ( "run-prover-binprot"
+    , Command.async
+        ~summary:"Run prover on a binprot provided on a single line of stdin"
+        (Command.Param.return (fun () ->
+             let logger = Logger.create () in
+             Parallel.init_master () ;
+             let%bind conf_dir = Unix.mkdtemp "/tmp/mina-prover" in
+             [%log info] "Prover state being logged to %s" conf_dir ;
+             let%bind prover =
+               Prover.create ~logger
+                 ~proof_level:Genesis_constants.Proof_level.compiled
+                 ~constraint_constants:
+                   Genesis_constants.Constraint_constants.compiled
+                 ~pids:(Pid.Table.create ()) ~conf_dir ()
+             in
+             Prover.prove_from_input_binprot prover >>| ignore ) ) )
   ; ( "run-verifier"
     , Command.async
         ~summary:"Run verifier on a proof provided on a single line of stdin"
