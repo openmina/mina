@@ -24,6 +24,7 @@
    base.caml
    bignum.bigint
    core_kernel
+   core_kernel.weak_hashtbl
    base64
    digestif
    ppx_inline_test.config

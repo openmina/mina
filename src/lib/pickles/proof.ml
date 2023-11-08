@@ -4,6 +4,30 @@ open Import
 open Common
 open Backend
 
+module Cached_reader = struct
+  (* HACK: [Obj.t] is used here because [t] is polymorphic, so that prevents
+     us for setting up a global cache that will survive [bin_reader_t] and is
+     fully type-safe. *)
+  let create_cache () : (string, Obj.t) Weak_hashtbl.t =
+    Weak_hashtbl.Using_hashable.create ~size:2560 String.hashable
+
+  (* Function to wrap any reader function with caching logic *)
+  let read_with_cache ~cache ~read buf ~pos_ref =
+    let position_before = !pos_ref in
+    let value = read buf ~pos_ref in
+    let position_after = !pos_ref in
+    let len = position_after - position_before in
+    let raw_data = Bigstring.to_string buf ~pos:position_before ~len in
+    let digest = Digestif.BLAKE2B.(to_raw_string (digest_string raw_data)) in
+    match Weak_hashtbl.find cache digest with
+    | Some cached_value ->
+        Obj.obj (Heap_block.value cached_value)
+    | None ->
+        let data = Heap_block.create_exn (Obj.repr value) in
+        Weak_hashtbl.replace cache ~key:digest ~data ;
+        value
+end
+
 let hash_fold_array = Pickles_types.Plonk_types.hash_fold_array
 
 module Base = struct
@@ -73,6 +97,28 @@ module Base = struct
           ; proof : Wrap_wire_proof.Stable.V1.t
           }
         [@@deriving compare, sexp, yojson, hash, equal]
+
+        let cache = Cached_reader.create_cache ()
+
+        let bin_read_t bin_read_messages_for_next_wrap_proof
+            bin_read_messages_for_next_step_proof =
+          let original_bin_read_t =
+            bin_read_t bin_read_messages_for_next_wrap_proof
+              bin_read_messages_for_next_step_proof
+          in
+          Cached_reader.read_with_cache ~cache ~read:original_bin_read_t
+
+        let bin_reader_t bin_reader_messages_for_next_wrap_proof
+            bin_reader_messages_for_next_step_proof =
+          let original_bin_reader_t =
+            bin_reader_t bin_reader_messages_for_next_wrap_proof
+              bin_reader_messages_for_next_step_proof
+          in
+          { original_bin_reader_t with
+            read =
+              Cached_reader.read_with_cache ~cache
+                ~read:original_bin_reader_t.read
+          }
       end
     end]
 
