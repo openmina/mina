@@ -17,8 +17,11 @@ module Cached_reader = struct
     let value = read buf ~pos_ref in
     let position_after = !pos_ref in
     let len = position_after - position_before in
-    let raw_data = Bigstring.to_string buf ~pos:position_before ~len in
-    let digest = Digestif.BLAKE2B.(to_raw_string (digest_string raw_data)) in
+    let digest =
+      Digestif.BLAKE2B.(
+        to_raw_string
+          (digest_bigstring ~off:position_before ~len (Obj.obj (Obj.repr buf))))
+    in
     match Weak_hashtbl.find cache digest with
     | Some cached_value ->
         Obj.obj (Heap_block.value cached_value)
