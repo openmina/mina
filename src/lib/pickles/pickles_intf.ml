@@ -77,6 +77,8 @@ module type S = sig
   module Proof : sig
     type ('max_width, 'mlmb) t
 
+    val cache_counts : unit -> [ `Added of int ] * [ `Found of int ]
+
     val dummy : 'w Nat.t -> 'm Nat.t -> _ Nat.t -> domain_log2:int -> ('w, 'm) t
 
     module Make (W : Nat.Intf) (MLMB : Nat.Intf) : sig

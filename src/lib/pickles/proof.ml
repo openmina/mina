@@ -4,6 +4,12 @@ open Import
 open Common
 open Backend
 
+let cache_added_count = ref 0
+
+let cache_found_count = ref 0
+
+let cache_counts () = (`Added !cache_added_count, `Found !cache_found_count)
+
 module Cached_reader = struct
   (* HACK: [Obj.t] is used here because [t] is polymorphic, so that prevents
      us for setting up a global cache that will survive [bin_reader_t] and is
@@ -24,8 +30,10 @@ module Cached_reader = struct
     in
     match Weak_hashtbl.find cache digest with
     | Some cached_value ->
+        incr cache_found_count ;
         Obj.obj (Heap_block.value cached_value)
     | None ->
+        incr cache_added_count ;
         let data = Heap_block.create_exn (Obj.repr value) in
         Weak_hashtbl.replace cache ~key:digest ~data ;
         value

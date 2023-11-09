@@ -488,6 +488,16 @@ let add_breadcrumb_exn t breadcrumb =
     Extensions.notify t.extensions ~logger ~frontier:t.full_frontier
       ~diffs_with_mutants
   in
+  let `Added proofs_added, `Found proofs_found =
+    Pickles.Proof.cache_counts ()
+  in
+  [%log info]
+    "Breadcrumb added, proofs added to cache: $proofs_added, proofs found in \
+     cache: $proofs_found"
+    ~metadata:
+      [ ("proofs_added", `Int proofs_added)
+      ; ("proofs_found", `Int proofs_found)
+      ] ;
   [%log internal] "Notify_frontier_extensions_done" ;
   [%log internal] "Add_breadcrumb_to_frontier_done"
 

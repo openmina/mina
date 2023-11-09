@@ -1,3 +1,5 @@
+val cache_counts : unit -> [ `Added of int ] * [ `Found of int ]
+
 module Base : sig
   module Messages_for_next_proof_over_same_field =
     Reduced_messages_for_next_proof_over_same_field
