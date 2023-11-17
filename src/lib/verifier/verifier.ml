@@ -3,7 +3,7 @@ module Prod = Prod
 module Dummy = Dummy
 
 let m =
-  if Base__Import.am_testing then
+  if true || Base__Import.am_testing then
     (* Spawning a process using [Rpc_parallel] calls the current binary with a
        particular set of arguments. Unfortunately, unit tests use the inline
        test binary -- which doesn't support these arguments -- and so we're not

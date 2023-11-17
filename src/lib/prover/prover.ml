@@ -83,6 +83,8 @@ module Worker_state = struct
         , Proof.transaction_dummy )
 
   let create { logger; proof_level; constraint_constants; _ } : t Deferred.t =
+    ignore proof_level ;
+    let proof_level = Genesis_constants.Proof_level.None in
     Deferred.return
       (let m =
          match proof_level with

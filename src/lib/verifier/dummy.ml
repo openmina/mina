@@ -21,7 +21,8 @@ let invalid_to_error = Common.invalid_to_error
 type ledger_proof = Ledger_proof.t
 
 let create ~logger:_ ?enable_internal_tracing:_ ?internal_trace_filename:_
-    ~proof_level ~constraint_constants ~pids:_ ~conf_dir:_ () =
+    ~proof_level:_ ~constraint_constants ~pids:_ ~conf_dir:_ () =
+  let proof_level = Genesis_constants.Proof_level.None in
   let module T = Transaction_snark.Make (struct
     let constraint_constants = constraint_constants
 
