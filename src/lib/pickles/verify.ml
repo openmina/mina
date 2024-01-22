@@ -153,17 +153,17 @@ let verify_heterogenous (ts : Instance.t list) =
               ~feature_flags:proof_state.deferred_values.plonk.feature_flags
               evals.evals.evals ) ;
         Timer.start __LOC__ ;
-        let sexp_of_statement =
-          let open Debug in
-          Types.Wrap.Statement.sexp_of_t sexp_of_plonk
-            sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
-            sexp_of_reduced_messages_for_next_wrap
-            Types.Digest.Constant.sexp_of_t
-            (sexp_of_messages_for_next_step_proof A_value.sexp_of_t)
-            sexp_of_bulletproof_challenges Branch_data.sexp_of_t
-        in
-        let sexp = sexp_of_statement statement in
-        Debug.value "statement" ~sexp ~loc:__LOC__ ;
+        (* let sexp_of_statement =
+         *   let open Debug in
+         *   Types.Wrap.Statement.sexp_of_t sexp_of_plonk
+         *     sexp_of_constant_scallar_challenge sexp_of_shifted_tick_field
+         *     sexp_of_reduced_messages_for_next_wrap
+         *     Types.Digest.Constant.sexp_of_t
+         *     (sexp_of_messages_for_next_step_proof A_value.sexp_of_t)
+         *     sexp_of_bulletproof_challenges Branch_data.sexp_of_t
+         * in
+         * let sexp = sexp_of_statement statement in *)
+        (* Debug.value "statement" ~sexp ~loc:__LOC__ ; *)
         let open Types.Wrap.Proof_state in
         let step_domain =
           Branch_data.domain proof_state.deferred_values.branch_data
@@ -217,7 +217,13 @@ let verify_heterogenous (ts : Instance.t list) =
   let open Promise.Let_syntax in
   [%log internal] "Accumulator_check" ;
   let%bind accumulator_check =
-    Ipa.Step.accumulator_check accumulator_check_inputs
+    Ipa.Step.accumulator_check
+      (List.map ts ~f:(fun (T (_, _, _, _, T t)) ->
+           ( t.statement.proof_state.messages_for_next_wrap_proof
+               .challenge_polynomial_commitment
+           , Ipa.Step.compute_challenges
+               t.statement.proof_state.deferred_values.bulletproof_challenges ) )
+      )
   in
   [%log internal] "Accumulator_check_done" ;
   Common.time "batch_step_dlog_check" (fun () ->
@@ -266,6 +272,9 @@ let verify_heterogenous (ts : Instance.t list) =
         let input =
           tock_unpadded_public_input_of_statement prepared_statement
         in
+
+        Printf.eprintf !"public_input=%{sexp: string list}\n%!" (List.map input ~f:Pasta_bindings.Fq.to_string);
+
         let message =
           Wrap_hack.pad_accumulator
             (Vector.map2

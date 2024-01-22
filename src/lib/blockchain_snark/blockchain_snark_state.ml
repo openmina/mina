@@ -483,7 +483,7 @@ end) : S = struct
     Pickles.compile () ~cache:Cache_dir.cache ~public_input:(Input typ)
       ~override_wrap_domain:Pickles_base.Proofs_verified.N1
       ~auxiliary_typ:Typ.unit
-      ~sexp_of_app_state:Statement.sexp_of_t ~auxiliary_typ:Typ.unit
+      ~sexp_of_app_state:Statement.sexp_of_t
       ~branches:(module Nat.N1)
       ~max_proofs_verified:(module Nat.N2)
       ~name:"blockchain-snark"

@@ -16,7 +16,7 @@
    bin_prot
    bin_prot.shape
    init
-   tests
+   ;;tests
    async
    core.daemon
    base.caml

@@ -22,8 +22,8 @@ libp2p_ipc.capnp.go: libp2p_ipc.capnp build/capnpc-go
 libp2p_ipc_capnp.ml libp2p_ipc_capnp.mli: libp2p_ipc.capnp
 	mkdir -p _codegen
 	capnp compile -oocaml:_codegen -I${GO_CAPNP_STD} $<
-	for ext in ml mli; do mv _codegen/libp2p_ipc.$$ext libp2p_ipc_capnp.$$ext; done
-	rm -rf _codegen
+	for ext in ml mli; do cp _codegen/libp2p_ipc.$$ext libp2p_ipc_capnp.$$ext; done
+	# rm -rf _codegen
 
 clean:
 	rm -Rf libp2p_ipc.ml libp2p_ipc.mli libp2p_ipc.capnp.go build
