@@ -450,6 +450,26 @@ let prove_from_input_sexp { connection; logger; _ } sexp =
         ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
       false
 
+let counter = ref 0
+
+let pid = Unix.getpid () |> Pid.to_int
+
+let dump_extend_blockchain_input input =
+  let data =
+    Binable.to_string (module Extend_blockchain_input.Stable.Latest) input
+  in
+  eprintf
+    "++++ Dumping block proof input data to /tmp/block_input-%d-%d.bin|sexp\n%!"
+    pid !counter ;
+  Out_channel.write_all
+    (sprintf "/tmp/block_input-%d-%d.bin" pid !counter)
+    ~data ;
+  let data = Sexp.to_string_hum (Extend_blockchain_input.sexp_of_t input) in
+  Out_channel.write_all
+    (sprintf "/tmp/block_input-%d-%d.sexp" pid !counter)
+    ~data ;
+  incr counter
+
 let extend_blockchain { connection; logger; _ } chain next_state block
     ledger_proof prover_state pending_coinbase =
   let input =
@@ -461,6 +481,7 @@ let extend_blockchain { connection; logger; _ } chain next_state block
     ; pending_coinbase
     }
   in
+  dump_extend_blockchain_input input ;
   match%map
     Worker.Connection.run connection ~f:Worker.functions.extend_blockchain
       ~arg:input
