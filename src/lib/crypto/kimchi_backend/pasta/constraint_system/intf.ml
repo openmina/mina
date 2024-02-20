@@ -41,6 +41,8 @@ module type Full = sig
     -> (fp Snarky_backendless.Cvar.t, fp) Snarky_backendless.Constraint.basic
     -> unit
 
+  val dump_extra_circuit_data : t -> string -> unit
+
   val compute_witness :
     t -> (int -> fp) -> fp array array * fp Kimchi_types.runtime_table array
 

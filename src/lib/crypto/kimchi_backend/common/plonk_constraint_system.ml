@@ -679,7 +679,7 @@ module V = struct
           (** An internal variable is generated to hold an intermediate value
               (e.g., in reducing linear combinations to single PLONK positions).
           *)
-    [@@deriving compare, hash, sexp]
+    [@@deriving compare, hash, sexp, bin_io]
   end
 
   include T
@@ -862,6 +862,8 @@ module Make
        , Fp.t )
        Snarky_backendless.Constraint.basic
     -> unit
+
+  val dump_extra_circuit_data : t -> string -> unit
 
   val compute_witness :
        t
@@ -1260,6 +1262,38 @@ end = struct
     let gates, _, _ = finalize_and_get_gates sys in
     let public_input_size = Set_once.get_exn sys.public_input_size [%here] in
     Gates.to_json public_input_size gates
+
+  (* ((Fp.t * V.t) list * Fp.t option) *)
+  type concrete_table = ((Fp.t * V.t) list * Fp.t option) Internal_var.Table.t
+  [@@deriving bin_io]
+
+  (* V.t option array list *)
+  type concrete_rows_rev = V.t option array list [@@deriving bin_io]
+
+  let dump_extra_circuit_data (sys : t) base_path =
+    let rows_rev_name = base_path ^ "_rows_rev.bin" in
+    let internal_vars_name = base_path ^ "_internal_vars.bin" in
+    let gates_json_name = base_path ^ "_gates.json" in
+    if Sys.file_exists rows_rev_name then Sys.remove rows_rev_name ;
+    if Sys.file_exists internal_vars_name then Sys.remove internal_vars_name ;
+    if Sys.file_exists gates_json_name then Sys.remove gates_json_name ;
+
+    let table : concrete_rows_rev = sys.rows_rev in
+    let size = bin_size_concrete_rows_rev table in
+    let buf = Bigstring.create size in
+    ignore (bin_write_concrete_rows_rev buf ~pos:0 table : int) ;
+    Core_kernel.Out_channel.write_all rows_rev_name
+      ~data:(Bigstring.to_string buf) ;
+
+    let table : concrete_table = sys.internal_vars in
+    let size = bin_size_concrete_table table in
+    let buf = Bigstring.create size in
+    ignore (bin_write_concrete_table buf ~pos:0 table : int) ;
+    Core_kernel.Out_channel.write_all internal_vars_name
+      ~data:(Bigstring.to_string buf) ;
+
+    let gates_json = to_json sys in
+    Core_kernel.Out_channel.write_all gates_json_name ~data:gates_json
 
   (* Returns a hash of the circuit. *)
   let rec digest (sys : t) =

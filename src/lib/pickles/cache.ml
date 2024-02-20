@@ -54,7 +54,9 @@ module Step = struct
             [%test_eq: string] header.constraint_system_hash
               header_read.constraint_system_hash ;
             { Backend.Tick.Keypair.index; cs } ) )
-      (fun (_, header, _, _) t path ->
+      (fun (_, header, _, cs) t path ->
+        Kimchi_pasta_constraint_system.Vesta_constraint_system
+        .dump_extra_circuit_data cs path ;
         Or_error.try_with (fun () ->
             Snark_keys_header.write_with_header
               ~expected_max_size_log2:33 (* 8 GB should be enough *)
@@ -187,7 +189,9 @@ module Wrap = struct
             [%test_eq: string] header.constraint_system_hash
               header_read.constraint_system_hash ;
             { Backend.Tock.Keypair.index; cs } ) )
-      (fun (_, header, _) t path ->
+      (fun (_, header, cs) t path ->
+        Kimchi_pasta_constraint_system.Pallas_constraint_system
+        .dump_extra_circuit_data cs path ;
         Or_error.try_with (fun () ->
             Snark_keys_header.write_with_header
               ~expected_max_size_log2:33 (* 8 GB should be enough *)
