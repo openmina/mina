@@ -9,6 +9,43 @@ open Mina_state
 open Pipe_lib.Strict_pipe
 open Network_peer
 
+let dump_work i
+    (work_pair :
+      ( Transaction_witness.t
+      , Ledger_proof.t )
+      Snark_work_lib.Work.Single.Spec.Stable.V2.t
+      One_or_two.t ) =
+  let bin_prot_writer =
+    Snark_work_lib__Work.Single.Spec.Stable.V2.bin_writer_t
+      Transaction_witness.Stable.V2.bin_writer_t
+      Ledger_proof.Stable.V2.bin_writer_t
+  in
+  work_pair |> One_or_two.to_numbered_list
+  |> List.iter ~f:(fun (j, work) ->
+         let kind =
+           match work with
+           | Snark_work_lib__Work.Single.Spec.Stable.V2.Transition (_, w) -> (
+               match w.transaction with
+               | Mina_transaction.Transaction.Poly.Stable.V2.Command _ ->
+                   "command"
+               | Mina_transaction.Transaction.Poly.Stable.V2.Fee_transfer _ ->
+                   "fee-transfer"
+               | Mina_transaction.Transaction.Poly.Stable.V2.Coinbase _ ->
+                   "coinbase" )
+           | Snark_work_lib__Work.Single.Spec.Stable.V2.Merge (_, _, _) ->
+               "merge"
+         in
+         let filename = sprintf "/tmp/mina-works-dump/%s-%d-%d.bin" kind i j in
+         let data = Bin_prot.Writer.to_string bin_prot_writer work in
+         eprintf "++++ Dumping %s to %s\n%!" kind filename ;
+         Out_channel.write_all filename ~data )
+
+let dump_scan_state ~get_state sl =
+  eprintf "++++ Dumping scan state work pairs to /tmp/mina-works-dump\n%!" ;
+  Core.Unix.mkdir_p "/tmp/mina-works-dump" ;
+  Staged_ledger.all_work_pairs ~get_state sl
+  |> Result.iter ~f:(fun works -> List.iteri works ~f:dump_work)
+
 module type CONTEXT = sig
   val logger : Logger.t
 
@@ -461,6 +498,7 @@ let run ~context:(module Context : CONTEXT) ~trust_system ~verifier ~network
                           ( Ledger.Maskable.unregister_mask_exn ~loc:__LOC__
                               temp_mask
                             : Ledger.unattached_mask ) ;
+                        Result.iter result ~f:(dump_scan_state ~get_state) ;
                         Result.map result
                           ~f:
                             (const
