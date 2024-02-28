@@ -1,3 +1,9 @@
+[@@@warning "-10"]
+
+[@@@warning "-32"]
+
+[@@@warning "-27"]
+
 open Core
 open Async
 open Mina_base
@@ -359,12 +365,134 @@ module Worker = struct
   include Rpc_parallel.Make (T)
 end
 
+module type S2 = sig
+  val extend_blockchain :
+       Blockchain.t
+    -> Protocol_state.Value.t
+    -> Snark_transition.value
+    -> Ledger_proof.t option
+    -> Consensus.Data.Prover_state.t
+    -> Pending_coinbase_witness.t
+    -> Blockchain.t Async.Deferred.Or_error.t
+
+  val verify : Protocol_state.Value.t -> Proof.t -> unit Or_error.t Deferred.t
+
+  val toggle_internal_tracing : bool -> unit
+
+  val set_itn_logger_data : daemon_port:int -> unit
+end
+
 type t =
   { connection : Worker.Connection.t; process : Process.t; logger : Logger.t }
 
 let create ~logger ?(enable_internal_tracing = false) ?internal_trace_filename
     ~pids ~conf_dir ~proof_level ~constraint_constants () =
   [%log info] "Starting a new prover process" ;
+
+  let ledger_proof_opt next_state = function
+    | Some t ->
+        Ledger_proof.(statement_with_sok t, underlying_proof t)
+    | None ->
+        ( { (Blockchain_state.ledger_proof_statement
+               (Protocol_state.blockchain_state next_state) )
+            with
+            sok_digest = Sok_message.Digest.default
+          }
+        , Proof.transaction_dummy )
+  in
+
+  let s =
+    ( module struct
+      module T = Transaction_snark.Make (struct
+        let constraint_constants = constraint_constants
+
+        let proof_level = proof_level
+      end)
+
+      module B = Blockchain_snark.Blockchain_snark_state.Make (struct
+        let tag = T.tag
+
+        let constraint_constants = constraint_constants
+
+        let proof_level = proof_level
+      end)
+
+      let (_ : Pickles.Dirty.t) =
+        Pickles.Cache_handle.generate_or_load B.cache_handle
+
+      let extend_blockchain (chain : Blockchain.t)
+          (next_state : Protocol_state.Value.t) (block : Snark_transition.value)
+          (t : Ledger_proof.t option) state_for_handler pending_coinbase =
+        Internal_tracing.Context_call.with_call_id
+        @@ fun () ->
+        [%log internal] "Prover_extend_blockchain" ;
+        let%map.Async.Deferred res =
+          Deferred.Or_error.try_with ~here:[%here] (fun () ->
+              let txn_snark_statement, txn_snark_proof =
+                ledger_proof_opt next_state t
+              in
+              Internal_tracing.Context_logger.with_logger (Some logger)
+              @@ fun () ->
+              let%map.Async.Deferred (), (), proof =
+                B.step
+                  ~handler:
+                    (Consensus.Data.Prover_state.handler ~constraint_constants
+                       state_for_handler ~pending_coinbase )
+                  { transition = block
+                  ; prev_state = Blockchain_snark.Blockchain.state chain
+                  ; prev_state_proof = Blockchain_snark.Blockchain.proof chain
+                  ; txn_snark = txn_snark_statement
+                  ; txn_snark_proof
+                  }
+                  next_state
+              in
+              Blockchain_snark.Blockchain.create ~state:next_state ~proof )
+        in
+        [%log internal] "Prover_extend_blockchain_done" ;
+        Or_error.iter_error res ~f:(fun e ->
+            [%log error]
+              ~metadata:[ ("error", Error_json.error_to_yojson e) ]
+              "Prover threw an error while extending block: $error" ) ;
+        res
+
+      let verify state proof =
+        Internal_tracing.Context_call.with_call_id
+        @@ fun () ->
+        [%log internal] "Prover_verify" ;
+        let%map result = B.Proof.verify [ (state, proof) ] in
+        [%log internal] "Prover_verify_done" ;
+        result
+
+      let toggle_internal_tracing enabled =
+        don't_wait_for
+        @@ Internal_tracing.toggle ~logger
+             (if enabled then `Enabled else `Disabled)
+
+      let set_itn_logger_data ~daemon_port =
+        Itn_logger.set_data ~process_kind:"prover" ~daemon_port
+    end : S2 )
+  in
+
+  let%bind input =
+    Reader.read_bin_prot (Lazy.force Reader.stdin)
+      Extend_blockchain_input.Stable.V2.bin_reader_t
+  in
+
+  let (module W) = Worker_state.get s in
+
+  ( match input with
+  | `Eof ->
+      eprintf "EOF" ; exit 1
+  | `Ok input ->
+      let chain = input.chain in
+      let next_state = input.next_state in
+      let block = input.block in
+      let ledger_proof = input.ledger_proof in
+      let prover_state = input.prover_state in
+      let pending_coinbase = input.pending_coinbase in
+      W.extend_blockchain chain next_state block ledger_proof prover_state
+        pending_coinbase ) ;
+
   let on_failure err =
     [%log error] "Prover process failed with error $err"
       ~metadata:[ ("err", Error_json.error_to_yojson err) ] ;
@@ -448,6 +576,28 @@ let prove_from_input_sexp { connection; logger; _ } sexp =
       [%log error] "prover errored :("
         ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
       false
+
+let prove_from_input_binprot { connection; logger; _ } =
+  let%bind input =
+    Reader.read_bin_prot (Lazy.force Reader.stdin)
+      Extend_blockchain_input.Stable.V2.bin_reader_t
+  in
+  match input with
+  | `Eof ->
+      eprintf "EOF" ; exit 1
+  | `Ok input -> (
+      match%map
+        Worker.Connection.run connection ~f:Worker.functions.extend_blockchain
+          ~arg:input
+        >>| Or_error.join
+      with
+      | Ok _ ->
+          [%log info] "prover succeeded :)" ;
+          true
+      | Error e ->
+          [%log error] "prover errored :("
+            ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
+          false )
 
 let extend_blockchain { connection; logger; _ } chain next_state block
     ledger_proof prover_state pending_coinbase =

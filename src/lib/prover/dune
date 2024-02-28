@@ -13,6 +13,7 @@
    bin_prot.shape
    base.caml
    sexplib0
+   stdio
    ;; local libraries
    with_hash
    coda_genesis_ledger
