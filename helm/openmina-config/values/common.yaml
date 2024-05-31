@@ -82,11 +82,11 @@ blockProducerConfigs:
 
 httpCoordinatedSnarkersConfig:
   # the number of snark workers
-  count: 10
-  workers: 5
+  count: 2
+  workers: 2
   namePrefix: snarker
   workSelectionAlgorithm: coordinated
-  publicKey: B62qosqzHi58Czax2RXfqPhMDzLogBeDVzSpsRDTCN1xeYUfrVy2F8P
+  publicKey: B62qjN6rNHHrP389w5ANkDoSUZkZmdt9JZcg58GwfgmbUUZc8XRphjd
 
 # minaSnarkCoordinatorsConfig:
 # - name: snarker001
