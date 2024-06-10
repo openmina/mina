@@ -75,6 +75,13 @@ pub fn caml_pasta_fp_plonk_proof_create(
     // public input
     let public_input = witness[0][0..index.cs.public].to_vec();
 
+    eprintln!(" witness={:?}", witness.iter().map(|w| w.len()).collect::<Vec<_>>());
+    eprintln!(" public_input_len={:?}", public_input.len());
+    eprintln!(" ngates={:?}", index.cs.gates.len());
+    eprintln!(" index.npublic={:?}", index.cs.public);
+    eprintln!(" index.digest={:?}", index.verifier_index_digest);
+    eprintln!(" public_input={:#?}", public_input);
+
     // NB: This method is designed only to be used by tests. However, since creating a new reference will cause `drop` to be called on it once we are done with it. Since `drop` calls `caml_shutdown` internally, we *really, really* do not want to do this, but we have no other way to get at the active runtime.
     // TODO: There's actually a way to get a handle to the runtime as a function argument. Switch
     // to doing this instead.

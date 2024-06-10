@@ -60,8 +60,10 @@ macro_rules! impl_projective {
             #[ocaml_gen::func]
             #[ocaml::func]
             pub fn [<caml_ $name:snake _random>]() -> $GroupProjective {
-                let rng = &mut rand::rngs::OsRng;
-                let proj: $Projective = UniformRand::rand(rng);
+                let mut rng: StdRng = rand::SeedableRng::seed_from_u64(0);
+                let proj: $Projective = UniformRand::rand(&mut rng);
+                // let rng = &mut rand::rngs::OsRng;
+                // let proj: $Projective = UniformRand::rand(rng);
                 proj.into()
             }
 

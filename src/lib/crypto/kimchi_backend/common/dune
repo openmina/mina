@@ -27,6 +27,8 @@
   bignum.bigint
   zarith
   base.base_internalhash_types
+  core
+  stdio
   ;; local libraries
   tuple_lib
   snarky.backendless

@@ -53,9 +53,11 @@ pub fn caml_pasta_fp_plonk_index_create(
         })
         .collect();
 
+    let ngates = gates.len();
+
     let result = crate::rayon::maybe_run_in_local_pool(|| {
         // create constraint system
-        let cs = match ConstraintSystem::<Fp>::create(gates)
+        let cs = match ConstraintSystem::<Fp>::create(gates.clone())
             .public(public as usize)
             .prev_challenges(prev_challenges as usize)
             .build()
@@ -87,6 +89,18 @@ pub fn caml_pasta_fp_plonk_index_create(
         let mut index = ProverIndex::<Vesta>::create(cs, endo_q, srs.clone());
         // Compute and cache the verifier index digest
         index.compute_verifier_index_digest::<DefaultFqSponge<VestaParameters, PlonkSpongeConstantsKimchi>>();
+
+        eprintln!(
+            "[rust] caml_pasta_fp_plonk_index_create cs.gates.len={:?} ngates={:?} public={:?} prev_challenges={:?} digest={:?}",
+            index.cs.gates.len(),
+            ngates as usize,
+            public as usize,
+            prev_challenges as usize,
+            index.verifier_index_digest,
+        );
+
+        serde_json::to_writer(&std::fs::File::create(format!("/tmp/fp_{:?}.json", index.verifier_index_digest)).unwrap(), &gates).unwrap();
+
         Ok(index)
     });
 

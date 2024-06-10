@@ -41,3 +41,9 @@ kimchi = { path = "../../proof-systems/kimchi", features = ["ocaml_types"] }
 # ocaml-specific
 ocaml = { version = "0.22.2", features = ["no-caml-startup"] }
 ocaml-gen = "0.1.0"
+
+[patch.crates-io]
+ark-ff = { git = "https://github.com/openmina/algebra", branch = "openmina" }
+ark-ec = { git = "https://github.com/openmina/algebra", branch = "openmina" }
+ark-poly = { git = "https://github.com/openmina/algebra", branch = "openmina" }
+ark-serialize = { git = "https://github.com/openmina/algebra", branch = "openmina" }

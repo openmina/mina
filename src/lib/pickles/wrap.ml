@@ -873,23 +873,26 @@ let wrap
               match proof_cache with
               | None ->
                   create_proof ()
-              | Some proof_cache -> (
-                  match
-                    Proof_cache.get_wrap_proof proof_cache ~keypair:pk
-                      ~public_input:public_inputs
-                  with
-                  | None ->
-                      if
-                        Proof_cache.is_env_var_set_requesting_error_for_proofs
-                          ()
-                      then failwith "Regenerated proof" ;
-                      let%map.Promise proof = create_proof () in
-                      Proof_cache.set_wrap_proof proof_cache ~keypair:pk
-                        ~public_input:public_inputs proof ;
-                      proof
-                  | Some proof ->
-                      Promise.return proof )
+              | Some proof_cache ->
+                  create_proof ()
+              (* match *)
+              (*   Proof_cache.get_wrap_proof proof_cache ~keypair:pk *)
+              (*     ~public_input:public_inputs *)
+              (* with *)
+              (* | None -> *)
+              (*     if *)
+              (*       Proof_cache.is_env_var_set_requesting_error_for_proofs *)
+              (*         () *)
+              (*     then failwith "Regenerated proof" ; *)
+              (*     let%map.Promise proof = create_proof () in *)
+              (*     Proof_cache.set_wrap_proof proof_cache ~keypair:pk *)
+              (*       ~public_input:public_inputs proof ; *)
+              (*     proof *)
+              (* | Some proof -> *)
+              (*     Promise.return proof  *)
             in
+            Printf.eprintf "WRAP DONE\n%!" ;
+            exit 0 ;
             [%log internal] "Backend_tock_proof_create_async_done" ;
             proof )
           ~input_typ:input

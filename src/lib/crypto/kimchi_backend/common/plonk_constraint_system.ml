@@ -681,7 +681,7 @@ module V = struct
           (** An internal variable is generated to hold an intermediate value
               (e.g., in reducing linear combinations to single PLONK positions).
           *)
-    [@@deriving compare, hash, sexp]
+    [@@deriving compare, hash, sexp, bin_io]
   end
 
   include T
@@ -814,6 +814,13 @@ end = struct
 
   type nonrec t = (Fp.t, Gates.t) t
 
+  (* ((Fp.t * V.t) list * Fp.t option) *)
+  type concrete_table = ((Fp.t * V.t) list * Fp.t option) Internal_var.Table.t
+  [@@deriving bin_io]
+
+  (* V.t option array list *)
+  type concrete_rows_rev = V.t option array list [@@deriving bin_io]
+
   (** Converts the set of permutations (equivalence_classes) to
       a hash table that maps each position to the next one.
       For example, if one of the equivalence class is [pos1, pos3, pos7],
@@ -858,6 +865,9 @@ end = struct
     in
     let public_input_size = Set_once.get_exn sys.public_input_size [%here] in
     let num_rows = public_input_size + sys.next_row in
+    Printf.eprintf "[plonk_constraint_system] public_input_size=%d\n%!"
+      public_input_size ;
+    Printf.eprintf "[plonk_constraint_system] num_rows=%d\n%!" num_rows ;
     let res =
       Array.init Constants.columns ~f:(fun _ ->
           Array.create ~len:num_rows Fp.zero )
@@ -885,6 +895,39 @@ end = struct
           in
           Fp.(acc + (s * x)) )
     in
+
+    Printf.eprintf "[plonk_constraint_system] sys.rows_rev_len=%d\n%!"
+      (List.length sys.rows_rev) ;
+    Printf.eprintf "[plonk_constraint_system] sys.internal_vars_len=%d\n%!"
+      (Internal_var.Table.length sys.internal_vars) ;
+    (* Printf.eprintf *)
+    (* !"[plonk_constraint_system] sys.internal_vars=%{sexp: ((Fp.t * V.t) list \ *)
+       (*     * Fp.t option) Internal_var.Table.t}\n\ *)
+       (*     %!" *)
+    (*   sys.internal_vars ; *)
+    let s =
+      Printf.sprintf
+        !"[plonk_constraint_system] sys.internal_vars=%{sexp: ((Fp.t * V.t) \
+          list * Fp.t option) Internal_var.Table.t}\n\
+          %!"
+        sys.internal_vars
+    in
+    if Sys.file_exists "/tmp/rows_rev.bin" then Sys.remove "/tmp/rows_rev.bin" ;
+    if Sys.file_exists "/tmp/internal_vars.bin" then
+      Sys.remove "/tmp/internal_vars.bin" ;
+    let table : concrete_rows_rev = sys.rows_rev in
+    let size = bin_size_concrete_rows_rev table in
+    let buf = Bigstring.create size in
+    ignore (bin_write_concrete_rows_rev buf ~pos:0 table : int) ;
+    Core.Out_channel.write_all "/tmp/rows_rev.bin"
+      ~data:(Bigstring.to_string buf) ;
+    let table : concrete_table = sys.internal_vars in
+    let size = bin_size_concrete_table table in
+    let buf = Bigstring.create size in
+    ignore (bin_write_concrete_table buf ~pos:0 table : int) ;
+    Core.Out_channel.write_all "/tmp/internal_vars.bin"
+      ~data:(Bigstring.to_string buf) ;
+
     (* Update the witness table with the value of the variables from each row. *)
     List.iteri (List.rev sys.rows_rev) ~f:(fun i_after_input cols ->
         let row_idx = i_after_input + public_input_size in
@@ -2064,9 +2107,9 @@ end = struct
         //! |      5 |      `bound_limb2`  | `shifted_limb2`  |  `excess_limb2` |        `word_limb2`  |
         //! |      6 |      `bound_limb3`  | `shifted_limb3`  |  `excess_limb3` |        `word_limb3`  |
         //! |      7 |      `bound_crumb0` | `shifted_crumb0` | `excess_crumb0` |       `word_crumb0`  |
-        //! |      8 |      `bound_crumb1` | `shifted_crumb1` | `excess_crumb1` |       `word_crumb1`  | 
-        //! |      9 |      `bound_crumb2` | `shifted_crumb2` | `excess_crumb2` |       `word_crumb2`  | 
-        //! |     10 |      `bound_crumb3` | `shifted_crumb3` | `excess_crumb3` |       `word_crumb3`  | 
+        //! |      8 |      `bound_crumb1` | `shifted_crumb1` | `excess_crumb1` |       `word_crumb1`  |
+        //! |      9 |      `bound_crumb2` | `shifted_crumb2` | `excess_crumb2` |       `word_crumb2`  |
+        //! |     10 |      `bound_crumb3` | `shifted_crumb3` | `excess_crumb3` |       `word_crumb3`  |
         //! |     11 |      `bound_crumb4` | `shifted_crumb4` | `excess_crumb4` |       `word_crumb4`  |
         //! |     12 |      `bound_crumb5` | `shifted_crumb5` | `excess_crumb5` |       `word_crumb5`  |
         //! |     13 |      `bound_crumb6` | `shifted_crumb6` | `excess_crumb6` |       `word_crumb6`  |

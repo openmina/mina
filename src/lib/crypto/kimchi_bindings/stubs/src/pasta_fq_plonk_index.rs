@@ -53,8 +53,10 @@ pub fn caml_pasta_fq_plonk_index_create(
         })
         .collect();
 
+    let ngates = gates.len();
+
     // create constraint system
-    let cs = match ConstraintSystem::<Fq>::create(gates)
+    let cs = match ConstraintSystem::<Fq>::create(gates.clone())
         .public(public as usize)
         .prev_challenges(prev_challenges as usize)
         .build()
@@ -83,6 +85,17 @@ pub fn caml_pasta_fq_plonk_index_create(
     let mut index = ProverIndex::<Pallas>::create(cs, endo_q, srs.clone());
     // Compute and cache the verifier index digest
     index.compute_verifier_index_digest::<DefaultFqSponge<PallasParameters, PlonkSpongeConstantsKimchi>>();
+
+    eprintln!(
+        "[rust] caml_pasta_fq_plonk_index_create cs.gates.len={:?} ngates={:?} public={:?} prev_challenges={:?} digest={:?}",
+        index.cs.gates.len(),
+        ngates as usize,
+        public as usize,
+        prev_challenges as usize,
+        index.verifier_index_digest,
+    );
+
+    serde_json::to_writer(&std::fs::File::create(format!("/tmp/fq_{:?}.json", index.verifier_index_digest)).unwrap(), &gates).unwrap();
 
     Ok(CamlPastaFqPlonkIndex(Box::new(index)))
 }

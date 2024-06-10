@@ -832,29 +832,30 @@ struct
                           (Lazy.force prev_challenge_polynomial_commitments)
                         pk
                     in
-                    Printf.eprintf "STEP DONE\n%!" ;
-                    exit 0 ;
                     let%map.Promise proof =
                       match proof_cache with
                       | None ->
                           create_proof ()
-                      | Some proof_cache -> (
-                          match
-                            Proof_cache.get_step_proof proof_cache ~keypair:pk
-                              ~public_input:public_inputs
-                          with
-                          | None ->
-                              if
-                                Proof_cache
-                                .is_env_var_set_requesting_error_for_proofs ()
-                              then failwith "Regenerated proof" ;
-                              let%map.Promise proof = create_proof () in
-                              Proof_cache.set_step_proof proof_cache ~keypair:pk
-                                ~public_input:public_inputs proof ;
-                              proof
-                          | Some proof ->
-                              Promise.return proof )
+                      | Some _proof_cache ->
+                          create_proof ()
+                      (* match *)
+                      (*   Proof_cache.get_step_proof proof_cache ~keypair:pk *)
+                      (*     ~public_input:public_inputs *)
+                      (* with *)
+                      (* | None -> *)
+                      (*     if *)
+                      (*       Proof_cache *)
+                      (*       .is_env_var_set_requesting_error_for_proofs () *)
+                      (*     then failwith "Regenerated proof" ; *)
+                      (*     let%map.Promise proof = create_proof () in *)
+                      (*     Proof_cache.set_step_proof proof_cache ~keypair:pk *)
+                      (*       ~public_input:public_inputs proof ; *)
+                      (*     proof *)
+                      (* | Some proof -> *)
+                      (* Promise.return proof *)
                     in
+                    Printf.eprintf "STEP DONE\n%!" ;
+                    exit 0 ;
                     [%log internal] "Backend_tick_proof_create_async_done" ;
                     (proof, next_statement_hashed) )
                   ~input_typ:Impls.Step.Typ.unit ~return_typ:input
