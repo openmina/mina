@@ -9,6 +9,10 @@ open Mina_state
 open Pipe_lib.Strict_pipe
 open Network_peer
 
+let zkapp_has_proof (z : Zkapp_command.t) =
+  Zkapp_command.Call_forest.exists z.account_updates ~f:(fun au ->
+      match au.authorization with Proof _ -> true | _ -> false )
+
 let dump_work i
     (work_pair :
       ( Transaction_witness.t
@@ -26,8 +30,13 @@ let dump_work i
            match work with
            | Snark_work_lib__Work.Single.Spec.Stable.V2.Transition (_, w) -> (
                match w.transaction with
-               | Mina_transaction.Transaction.Poly.Stable.V2.Command _ ->
-                   "command"
+               | Mina_transaction.Transaction.Poly.Stable.V2.Command
+                   (User_command.Signed_command _) ->
+                   "signed-command"
+               | Mina_transaction.Transaction.Poly.Stable.V2.Command
+                   (User_command.Zkapp_command z) ->
+                   if zkapp_has_proof z then "zkapp-command-with-proof"
+                   else "zkapp-command"
                | Mina_transaction.Transaction.Poly.Stable.V2.Fee_transfer _ ->
                    "fee-transfer"
                | Mina_transaction.Transaction.Poly.Stable.V2.Coinbase _ ->
@@ -36,8 +45,10 @@ let dump_work i
                "merge"
          in
          let filename = sprintf "/tmp/mina-works-dump/%s-%d-%d.bin" kind i j in
-         let data = Bin_prot.Writer.to_string bin_prot_writer work in
          eprintf "++++ Dumping %s to %s\n%!" kind filename ;
+         let buf = Bin_prot.Utils.bin_dump ~header:true bin_prot_writer work in
+         let size = Bigstring.length buf in
+         let data = Bigstring.to_string ~pos:0 ~len:size buf in
          Out_channel.write_all filename ~data )
 
 let dump_scan_state ~get_state sl =

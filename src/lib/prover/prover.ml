@@ -454,15 +454,17 @@ let counter = ref 0
 let pid = Unix.getpid () |> Pid.to_int
 
 let dump_extend_blockchain_input input =
-  let data =
-    Binable.to_string (module Extend_blockchain_input.Stable.Latest) input
-  in
   eprintf
     "++++ Dumping block proof input data to /tmp/block_input-%d-%d.bin|sexp\n%!"
     pid !counter ;
-  Out_channel.write_all
-    (sprintf "/tmp/block_input-%d-%d.bin" pid !counter)
-    ~data ;
+  let output_filename = sprintf "/tmp/block_input-%d-%d.bin" pid !counter in
+  let buf =
+    Bin_prot.Utils.bin_dump ~header:true
+      Extend_blockchain_input.Stable.Latest.bin_writer_t input
+  in
+  let size = Bigstring.length buf in
+  let data = Bigstring.to_string ~pos:0 ~len:size buf in
+  Out_channel.write_all output_filename ~data ;
   let data = Sexp.to_string_hum (Extend_blockchain_input.sexp_of_t input) in
   Out_channel.write_all
     (sprintf "/tmp/block_input-%d-%d.sexp" pid !counter)
@@ -472,7 +474,7 @@ let dump_extend_blockchain_input input =
 let prove_from_input_binprot { connection; logger; _ } =
   let%bind input =
     Reader.read_bin_prot (Lazy.force Reader.stdin)
-      Extend_blockchain_input.Stable.V2.bin_reader_t
+      Extend_blockchain_input.Stable.Latest.bin_reader_t
   in
   match input with
   | `Eof ->
