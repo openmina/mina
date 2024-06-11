@@ -230,9 +230,11 @@ reset-genesis-ledger() {
   echo 'Resetting Genesis Ledger...'
   printf "\n"
 
-  jq "{genesis: {genesis_state_timestamp:\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}, ledger:.}" \
+  jq "{genesis: {genesis_state_timestamp:\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}, proof: {fork: {state_hash: \"3NKSvjaGSKiQuAt8BP1b1VCpLbJc9RcEFjYCaBYsJJFdrtd6tpaV\", blockchain_length:296371, global_slot_since_genesis: 445860}}, ledger:.}" \
     <${GENESIS_LEDGER_FOLDER}/genesis_ledger.json \
     >${DAEMON_CONFIG}
+
+  #cat ${DAEMON_CONFIG}
 }
 
 recreate-schema() {
