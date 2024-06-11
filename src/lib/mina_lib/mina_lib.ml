@@ -1497,6 +1497,10 @@ let create ?wallets (config : Config.t) =
                       ~metadata:[ ("exn", Error_json.error_to_yojson err) ] ) )
               (fun () ->
                 O1trace.thread "manage_prover_subprocess" (fun () ->
+                    printf "Constraint constants:\n%s\n"
+                      (Yojson.Safe.pretty_to_string
+                         (Genesis_constants.Constraint_constants.to_yojson
+                            constraint_constants ) ) ;
                     let%bind prover =
                       Prover.create ~logger:config.logger
                         ~enable_internal_tracing:
