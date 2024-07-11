@@ -1779,13 +1779,46 @@ let internal_commands logger =
              let logger = Logger.create () in
              Parallel.init_master () ;
              let%bind conf_dir = Unix.mkdtemp "/tmp/mina-prover" in
+
+             let fork_constants_json =
+               {|
+                {
+                "state_hash":
+                "0x117BCE961228AE0E6FD2049B9CA7929DF6C3B1EF2AB32B03B1194F9870809236",
+                "blockchain_length": "296371",
+                "global_slot_since_genesis": "445860"
+                }
+                |}
+             in
+             let fork_constants =
+               Result.ok_or_failwith
+               @@ Genesis_constants.Fork_constants.of_yojson
+                    (Yojson.Safe.from_string fork_constants_json)
+             in
+             let constraint_constants =
+               { Genesis_constants.Constraint_constants.compiled with
+                 fork = Some fork_constants
+               }
+             in
+             printf "Constraint constants:\n%s\n"
+               (Yojson.Safe.pretty_to_string
+                  (Genesis_constants.Constraint_constants.to_yojson
+                     constraint_constants ) ) ;
+
+             (* Core.Printf.eprintf "constraints=%s\n%!" *)
+             (*   (Sexp.to_string *)
+             (*      (Genesis_constants.Constraint_constants.sexp_of_t *)
+             (*         Genesis_constants.Constraint_constants.compiled ) ) ; *)
+             (* (Sexp.to_string Genesis_constants.Constraint_constants.compiled) ;  *)
+             (* Core.Printf.eprintf *)
+             (* !"constraints=%{sexp: Genesis_constants.Constraint_constants.t}\n\ *)
+                (*     %!" *)
+             (*   Genesis_constants.Constraint_constants.compiled ; *)
              [%log info] "Prover state being logged to %s" conf_dir ;
              let%bind prover =
                Prover.create ~logger
-                 ~proof_level:Genesis_constants.Proof_level.compiled
-                 ~constraint_constants:
-                   Genesis_constants.Constraint_constants.compiled
-                 ~pids:(Pid.Table.create ()) ~conf_dir ()
+                 ~proof_level:Genesis_constants.Proof_level.Full
+                 ~constraint_constants ~pids:(Pid.Table.create ()) ~conf_dir ()
              in
              Prover.prove_from_input_binprot prover >>| ignore ) ) )
   ; ( "run-prover"
