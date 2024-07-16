@@ -26,6 +26,12 @@
    sexplib0
    ;;local libraries
    verifier
+   pickles
+   pickles.backend
+   snark_params
+   kimchi_backend
+   kimchi_backend.pasta
+   kimchi_backend.pasta.basic
    ;;ledger_proof
    ;;snark_worker
    ;;mina_block
