@@ -1003,3 +1003,19 @@ let deriver obj =
        ~permissions:!.Permissions.deriver
        ~zkapp:!.(option ~js_type:Or_undefined (Zkapp_account.deriver @@ o ()))
        obj
+
+let%test_unit "test_account_hash" =
+  let account = [15; 72; 198; 91; 210; 95; 133; 243; 228; 234; 78; 254; 190; 183; 91; 121; 123; 215; 67; 96; 59; 224; 75; 78; 173; 132; 86; 152; 183; 107; 211; 49; 0; 1; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 252; 232; 203; 23; 168; 4; 0; 0; 0; 0; 6; 177; 151; 206; 109; 101; 243; 62; 251; 166; 192; 232; 25; 219; 121; 82; 3; 14; 52; 102; 143; 184; 167; 135; 89; 122; 73; 69; 6; 60; 20; 11; 1; 15; 72; 198; 91; 210; 95; 133; 243; 228; 234; 78; 254; 190; 183; 91; 121; 123; 215; 67; 96; 59; 224; 75; 78; 173; 132; 86; 152; 183; 107; 211; 49; 0; 253; 255; 255; 255; 56; 109; 120; 52; 173; 20; 25; 228; 11; 53; 44; 153; 255; 255; 255; 255; 255; 255; 255; 255; 255; 255; 255; 255; 255; 255; 255; 63; 0; 3; 0; 3; 0; 3; 3; 3; 2; 3; 3; 3; 3; 3; 3; 0] in
+
+  let account = List.map account ~f:Stdlib.Char.chr in
+  let account = Bytes.of_char_list account in
+  let account = Stable.V2.bin_read_t (Bigstring.of_bytes account) ~pos_ref:(ref 0) in
+
+  Printf.eprintf !"account=%{sexp: t}\n%!" account;
+
+  let hash = digest account in
+  Printf.eprintf "account_hash=%s\n%!" (Pasta_bindings.Fp.to_string hash);
+
+  let json = Stable.V2.to_yojson account in
+  let s = Yojson.Safe.pretty_to_string json in
+  Printf.eprintf "account_json=%s\n%!" s;
