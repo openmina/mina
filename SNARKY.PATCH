@@ -1,0 +1,217 @@
+diff --git a/dune-project b/dune-project
+index ae5efa961..c474bb2dc 100644
+--- a/dune-project
++++ b/dune-project
+@@ -1,2 +1,2 @@
+-(lang dune 2.0)
++(lang dune 2.6)
+ (using menhir 2.0)
+diff --git a/src/base/checked.ml b/src/base/checked.ml
+index 0e2fefdb1..32fc483e9 100644
+--- a/src/base/checked.ml
++++ b/src/base/checked.ml
+@@ -44,6 +44,8 @@ end)
+     let%map h = exists_handle ?request ?compute typ in
+     Handle.var h
+ 
++  let my_eval_cvar (cvar : Field.t Cvar.t) = my_eval_cvar cvar
++
+   type response = Request.response
+ 
+   let unhandled = Request.unhandled
+diff --git a/src/base/checked_intf.ml b/src/base/checked_intf.ml
+index 52a0a32a6..ad1cabda2 100644
+--- a/src/base/checked_intf.ml
++++ b/src/base/checked_intf.ml
+@@ -19,6 +19,8 @@ module type Basic = sig
+   val with_handler :
+     Request.Handler.single -> (unit -> ('a, 'f field) t) -> ('a, 'f field) t
+ 
++  val my_eval_cvar : 'f field Cvar.t -> string
++
+   val exists :
+        ('var, 'value, 'f field) Types.Typ.t
+     -> ('value, 'f field) Types.Provider.t
+@@ -60,6 +62,8 @@ module type S = sig
+     -> 'value Request.t
+     -> ('var, 'f field) t
+ 
++  val my_eval_cvar : 'f field Cvar.t -> string
++
+   val exists_handle :
+        ?request:('value Request.t, 'f field) As_prover0.t
+     -> ?compute:('value, 'f field) As_prover0.t
+diff --git a/src/base/checked_runner.ml b/src/base/checked_runner.ml
+index 559a51d0f..afdeb0413 100644
+--- a/src/base/checked_runner.ml
++++ b/src/base/checked_runner.ml
+@@ -240,6 +240,34 @@ struct
+         in
+         (Run_state.set_handler s' handler, y) )
+ 
++  let last_state : Field.t Run_state.t option ref = ref None
++
++  let get_last_state () =
++    let s = !last_state in
++    if Option.is_some s then
++      let s = Option.value_exn s in
++      if Run_state.has_witness s then Some s else None
++    else None
++
++  let my_eval_cvar (cvar : Backend.Cvar.t) =
++    match get_last_state () with
++    | Some s ->
++        let prefix =
++          match cvar with
++          | Constant _ ->
++              "Constant"
++          | Var _ ->
++              "Var"
++          | Add _ ->
++              "Add"
++          | Scale _ ->
++              "Scale"
++        in
++        let value = get_value s cvar in
++        (prefix ^ "(" ^ Field.to_string value ^ ")")
++    | None ->
++        "()"
++
+   let exists
+       (Types.Typ.Typ
+          { Types.Typ.var_of_fields
+@@ -250,9 +278,13 @@ struct
+          ; _
+          } :
+         (_, _, _, _ Simple.t) Types.Typ.typ ) p : _ Simple.t =
++    let stacktrace = Stacktrace.Rust.rust_maybe_save_stacktrace 1 in
+     Function
+       (fun s ->
+         if Run_state.has_witness s then (
++          last_state := Some s ;
++          if Option.is_some stacktrace then
++            Printf.eprintf "stacktrace=\n%s\n" (Option.value_exn stacktrace) ;
+           let old = Run_state.as_prover s in
+           Run_state.set_as_prover s true ;
+           let value =
+@@ -270,6 +302,26 @@ struct
+               else Run_state.store_field_elt s
+             in
+             let fields, aux = value_to_fields value in
++            let num_inputs = Run_state.num_inputs s in
++            Printf.eprintf
++              !"num=%d fields_len=%d %{sexp: Backend.Field.t array}\n%!"
++              num_inputs (Array.length fields) fields ;
++            let fields_strings =
++              String.concat ~sep:"\n"
++                (Array.to_list (Array.map fields ~f:Backend.Field.to_string))
++            in
++
++            let write_string_to_file filename str =
++              let oc = Out_channel.create ~append:true filename in
++              (* open the file for writing *)
++              Out_channel.output_string oc str ;
++              (* write the string to the file *)
++              Out_channel.close oc
++              (* close the file *)
++            in
++
++            write_string_to_file "/tmp/fps.txt" (fields_strings ^ "\n") ;
++
+             let field_vars = Array.map ~f:store_value fields in
+             var_of_fields (field_vars, aux)
+           in
+diff --git a/src/base/dune b/src/base/dune
+index 99cfab1fb..4e2c3643e 100644
+--- a/src/base/dune
++++ b/src/base/dune
+@@ -3,7 +3,7 @@
+  (public_name snarky.backendless)
+  (inline_tests)
+  (libraries bitstring_lib core_kernel h_list interval_union snarky_intf
+-   bignum.bigint)
++   bignum.bigint stacktrace)
+  (preprocess
+   (pps ppx_sexp_conv ppx_bin_prot ppx_let ppx_hash ppx_compare
+     ppx_deriving.enum ppx_assert ppx_deriving.eq ppx_snarky ppx_fields_conv
+diff --git a/src/base/run_state.ml b/src/base/run_state.ml
+index 6eec94417..3705f5f61 100644
+--- a/src/base/run_state.ml
++++ b/src/base/run_state.ml
+@@ -90,6 +90,8 @@ let alloc_var { next_auxiliary; _ } () =
+   let v = !next_auxiliary in
+   incr next_auxiliary ; Cvar.Unsafe.of_index v
+ 
++let num_inputs { next_auxiliary; _ } = !next_auxiliary
++
+ let has_witness { has_witness; _ } = has_witness
+ 
+ let as_prover { as_prover; _ } = !as_prover
+diff --git a/src/base/run_state.mli b/src/base/run_state.mli
+index 2f2b2f291..9199e2eb8 100644
+--- a/src/base/run_state.mli
++++ b/src/base/run_state.mli
+@@ -44,6 +44,8 @@ val store_field_elt : 'field t -> 'field -> 'field Cvar.t
+ 
+ val alloc_var : 'field t -> unit -> 'field Cvar.t
+ 
++val num_inputs : _ t -> int
++
+ val has_witness : _ t -> bool
+ 
+ val as_prover : _ t -> bool
+diff --git a/src/base/snark0.ml b/src/base/snark0.ml
+index 04a296cf4..c56765fb4 100644
+--- a/src/base/snark0.ml
++++ b/src/base/snark0.ml
+@@ -644,7 +644,7 @@ struct
+   end
+ end
+ 
+-(** The main functor for the monadic interface. 
++(** The main functor for the monadic interface.
+     See [Run.Make] for the same thing but for the imperative interface. *)
+ module Make (Backend : Backend_intf.S) = struct
+   module Backend_extended = Backend_extended.Make (Backend)
+@@ -1214,6 +1214,8 @@ module Run = struct
+           let x = request_witness typ (fun () -> r) in
+           such_that x ; x
+ 
++    let my_eval_cvar cvar = my_eval_cvar Obj.(magic @@ repr cvar)
++
+     let exists ?request ?compute typ =
+       let request = Option.map request ~f:As_prover.run_prover in
+       let compute = Option.map compute ~f:As_prover.run_prover in
+@@ -1270,8 +1272,8 @@ module Run = struct
+       let inject_wrapper ~f x = f x in
+       inject_wrapper ~f (x a)
+ 
+-    (** Caches the global [state] before running [f]. 
+-        It is expected that [f] will reset the global state for its own use only, 
++    (** Caches the global [state] before running [f].
++        It is expected that [f] will reset the global state for its own use only,
+         hence why we need to reset it after running [f].*)
+     let finalize_is_running f =
+       let cached_state = !state in
+diff --git a/src/base/snark_intf.ml b/src/base/snark_intf.ml
+index 7db66f7fb..d089278c2 100644
+--- a/src/base/snark_intf.ml
++++ b/src/base/snark_intf.ml
+@@ -911,6 +911,8 @@ let multiply3 (x : Field.Var.t) (y : Field.Var.t) (z : Field.Var.t)
+     -> ('var, 'value) Typ.t
+     -> 'var Checked.t
+ 
++  val my_eval_cvar : field Cvar.t -> string
++
+   (** Like {!val:exists}, but returns a {!type:Handle.t}.
+ 
+       This persists the OCaml value of the result, which is stored unchanged in
+@@ -1338,6 +1340,8 @@ module type Run_basic = sig
+     -> 'value Request.t
+     -> 'var
+ 
++  val my_eval_cvar : Field.t Cvar.t -> string
++
+   val exists :
+        ?request:(unit -> 'value Request.t) As_prover.t
+     -> ?compute:(unit -> 'value) As_prover.t
