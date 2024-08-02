@@ -528,6 +528,7 @@ struct
       let shifted_value =
         Shifted_value.Type2.of_field (module Tock.Field) ~shift:Shifts.tock2
       in
+      (* let aaa = plonk.lookup in *)
       ( `Sg challenge_polynomial_commitment
       , { Types.Step.Proof_state.Per_proof.deferred_values =
             { plonk =

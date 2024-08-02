@@ -127,7 +127,8 @@ module Tick : S = struct
        ; unnormalized_lagrange_basis
        ; if_feature
        } :
-        a Env.t ) =
+         a Env.t ) =
+    (* Printf.eprintf "" *)
     let x_0 = pow (cell (var (Witness 0, Curr)), 7) in
     let x_1 = pow (cell (var (Witness 1, Curr)), 7) in
     let x_2 = pow (cell (var (Witness 2, Curr)), 7) in

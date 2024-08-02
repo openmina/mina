@@ -273,6 +273,7 @@ module Evals : sig
     ; range_check_lookup_selector : 'a option
     ; foreign_field_mul_lookup_selector : 'a option
     }
+    [@@deriving sexp]
 
   (** {4 Generic helpers} *)
 

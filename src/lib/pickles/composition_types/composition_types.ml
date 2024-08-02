@@ -181,6 +181,7 @@ module Wrap = struct
               ~value_to_hlist:to_hlist ~value_of_hlist:of_hlist
         end
 
+
         let to_minimal (type challenge scalar_challenge fp fp_opt lookup_opt)
             (t :
               ( challenge

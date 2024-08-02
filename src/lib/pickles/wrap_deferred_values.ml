@@ -69,6 +69,12 @@ let expand_deferred (type n most_recent_width)
     ; feature_flags = plonk0.feature_flags
     }
   in
+  let jc = tick_plonk_minimal.joint_combiner in
+  Printf.eprintf "tick_plonk_minimal.joint_combiner=%s\n%!" ((Option.value_exn jc) |> Pasta_bindings.Fp.to_string);
+  Printf.eprintf "tick_plonk_minimal.zeta=%s\n%!" (tick_plonk_minimal.zeta |> Pasta_bindings.Fp.to_string);
+  Printf.eprintf "tick_plonk_minimal.alpha=%s\n%!" (tick_plonk_minimal.alpha |> Pasta_bindings.Fp.to_string);
+  Printf.eprintf "tick_plonk_minimal.beta=%s\n%!" (tick_plonk_minimal.beta |> Pasta_bindings.Fp.to_string);
+  Printf.eprintf "tick_plonk_minimal.gamma=%s\n%!" (tick_plonk_minimal.gamma |> Pasta_bindings.Fp.to_string);
   let tick_combined_evals =
     Plonk_checks.evals_of_split_evals
       (module Tick.Field)
@@ -112,6 +118,8 @@ let expand_deferred (type n most_recent_width)
         |> Kimchi_pasta.Pasta.Fp.of_bigint )
       ~domain:tick_domain tick_plonk_minimal tick_combined_evals
   in
+  let fff = tick_plonk_minimal.feature_flags in
+  Printf.eprintf !"tick_plonk_minimal.feature_flags=%{sexp: bool Plonk_types.Features.t}\n%!" fff;
   let plonk =
     let p =
       let module Field = struct
@@ -135,6 +143,10 @@ let expand_deferred (type n most_recent_width)
             } )
     }
   in
+  let aaa = plonk.feature_flags in
+  let aaa = plonk.lookup in
+  Printf.eprintf "plonk.lookup is_some=%b\n%!" (Option.is_some aaa);
+  let aaa = plonk.alpha in
   Timer.clock __LOC__ ;
   let absorb, squeeze =
     let open Tick_field_sponge.Bits in
@@ -175,6 +187,11 @@ let expand_deferred (type n most_recent_width)
   let xi = sc xi_chal in
   let r_chal = squeeze () in
   let r = sc r_chal in
+  Printf.eprintf "xi=%s\n%!" (Pasta_bindings.Fp.to_string xi);
+  Printf.eprintf "r=%s\n%!" (Pasta_bindings.Fp.to_string r);
+  Printf.eprintf "zetaw=%s\n%!" (Pasta_bindings.Fp.to_string zetaw);
+  Printf.eprintf "zeta=%s\n%!" (Pasta_bindings.Fp.to_string zeta);
+  Printf.eprintf "ft_eval1=%s\n%!" (Pasta_bindings.Fp.to_string evals.ft_eval1);
   Timer.clock __LOC__ ;
   (* TODO: The deferred values "bulletproof_challenges" should get routed
      into a "batch dlog Tick acc verifier" *)
@@ -201,6 +218,7 @@ let expand_deferred (type n most_recent_width)
   let to_shifted =
     Shifted_value.Type1.of_field (module Tick.Field) ~shift:Shifts.tick1
   in
+  let aaa = plonk.lookup in
   { xi = xi_chal
   ; plonk
   ; combined_inner_product = to_shifted combined_inner_product_actual

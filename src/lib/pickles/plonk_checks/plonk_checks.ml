@@ -456,6 +456,7 @@ module Make (Shifted_value : Shifted_value.S) (Sc : Scalars.S) = struct
     in
     let denominator = (zeta - env.omega_to_minus_3) * (zeta - one) in
     let ft_eval0 = ft_eval0 + (nominator / denominator) in
+    Printf.eprintf "FIRST ft_eval0=%s\n%!" (Pasta_bindings.Fp.to_string Obj.(magic @@ repr ft_eval0));
     let constant_term = Sc.constant_term env in
     ft_eval0 - constant_term
 

@@ -188,6 +188,8 @@ let verify_heterogenous (ts : Instance.t list) =
           Wrap_deferred_values.expand_deferred ~evals
             ~old_bulletproof_challenges ~proof_state
         in
+        let aaa = deferred_values.plonk.lookup in
+
         Timer.clock __LOC__ ;
         let deferred_values = { deferred_values with bulletproof_challenges } in
         let () =
@@ -269,6 +271,10 @@ let verify_heterogenous (ts : Instance.t list) =
               }
           }
         in
+
+        let aa = in prepared_statement.proof_state.deferred_values.plonk.feature_flags in
+        let aa = in prepared_statement.proof_state.deferred_values.plonk.lookup in
+
         let input =
           tock_unpadded_public_input_of_statement prepared_statement
         in

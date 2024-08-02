@@ -45,6 +45,14 @@ let combined_inner_product (type actual_proofs_verified) ~env ~domain ~ft_eval1
       (module Tick.Field)
       ~rounds:tick_rounds e.evals
   in
+  let fst_public = (fst e.public_input) in
+  let aaa = (Plonk_types.Evals.map combined_evals ~f:(fun (a, b) ->
+                 let a = Pasta_bindings.Fp.to_string a in
+                 let b = Pasta_bindings.Fp.to_string b in
+                 a ^ "_" ^ b
+            )) in
+  Printf.eprintf !"combined_evals=%{sexp: string Plonk_types.Evals.t}\n%!" aaa;
+  Printf.eprintf "fst_public=%s\n%!" (Pasta_bindings.Fp.to_string fst_public);
   let ft_eval0 : Tick.Field.t =
     Type1.ft_eval0
       (module Tick.Field)
@@ -52,6 +60,7 @@ let combined_inner_product (type actual_proofs_verified) ~env ~domain ~ft_eval1
       (Plonk_types.Evals.to_in_circuit combined_evals)
       (fst e.public_input)
   in
+  Printf.eprintf "ft_eval0=%s\n%!" (Pasta_bindings.Fp.to_string ft_eval0);
   let T = AB.eq in
   let challenge_polys =
     Vector.map
