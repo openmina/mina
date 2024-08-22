@@ -1,13 +1,13 @@
 {
   "genesis": {
-    "slots_per_epoch": 3000,
-    "genesis_state_timestamp": "2023-04-12T00:00:00+00:00"
+    "slots_per_epoch": 7140,
+    "genesis_state_timestamp": "2024-08-21T00:00:00+00:00"
   },
   "proof": {
-    "block_window_duration_ms": 60000
+    "block_window_duration_ms": 180000
   },
   "ledger": {
-    "name": "testnet",
+    "name": "daniel-testnet",
     "accounts": [
       {
         "pk": "B62qrztYfPinaKqpXaYGY6QJ3SSW2NNKs7SajBLF1iFNXW9BoALN2Aq",

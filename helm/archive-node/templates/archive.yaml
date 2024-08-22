@@ -52,7 +52,7 @@ spec:
         {{- end }}
         args: [ "daemon",
           "-log-level", {{ .Values.mina.logLevel }},
-          "-log-json",
+          # "-log-json",
           {{- if .Values.mina.logSnarkWorkGossip }}
           "-log-snark-work-gossip", "true",
           {{- end -}}

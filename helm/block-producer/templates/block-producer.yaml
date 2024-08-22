@@ -221,7 +221,7 @@ spec:
         {{- end }}
         args: [ "daemon",
           "-log-level", {{ $.Values.mina.logLevel }},
-          "-log-json",
+          # "-log-json",
           {{- if $.Values.mina.logSnarkWorkGossip }}
           "-log-snark-work-gossip", "true",
           {{- end -}}
@@ -240,7 +240,6 @@ spec:
           {{- if $config.enableGossipFlooding }}
           "-enable-flooding", "true",
           {{- end -}}
-          "-libp2p-keypair", "/root/libp2p-keys/key",
           {{- range $.Values.mina.seedPeers }}
           "-peer", {{ . | quote }},
           {{- end -}}
@@ -262,6 +261,7 @@ spec:
           "-external-port", "$(DAEMON_EXTERNAL_PORT)",
           "-metrics-port", "$(DAEMON_METRICS_PORT)",
           "-block-producer-key", "/root/wallet-keys/key",
+          "-libp2p-keypair", "/root/libp2p-keys/key",
           {{- if $.Values.mina.uploadBlocksToGCloud }}
           "-upload-blocks-to-gcloud", "true",
           {{- end }}

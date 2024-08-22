@@ -88,7 +88,7 @@ spec:
         {{- end }}
         args: [ "daemon",
           "-log-level", "Debug",
-          "-log-json",
+          # "-log-json",
           "-log-snark-work-gossip", "true",
           "-config-directory", "/root/.mina-config",
           "-client-port", "$(DAEMON_CLIENT_PORT)",
