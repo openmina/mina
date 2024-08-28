@@ -1760,6 +1760,176 @@ let snark_hashes =
         if json then print (Yojson.Safe.to_string (Hashes.to_yojson hashes))
         else List.iter hashes ~f:print]
 
+module Block_replay = struct
+  module Apply_context = struct
+    type t =
+      { accounts : Account.Stable.V2.t list
+      ; scan_state : Staged_ledger.Scan_state.Stable.V2.t
+      ; protocol_states : Mina_state.Protocol_state.Value.Stable.V2.t list
+      ; pending_coinbase : Pending_coinbase.Stable.V2.t
+            (*; staged_ledger_hash : Ledger_hash.Stable.V1.t *)
+      ; pred_block : Mina_block.Stable.V2.t
+      ; blocks_to_apply : Mina_block.Stable.V2.t list
+      }
+    [@@deriving bin_io_unversioned]
+  end
+
+  let apply_blocks failure_context_path =
+    Parallel.init_master () ;
+    let open Deferred.Let_syntax in
+    let logger = Logger.create () in
+    let constraint_constants =
+      Genesis_constants.Constraint_constants.compiled
+    in
+    let proof_level = Genesis_constants.Proof_level.None in
+    (* TODO: obtain from genesis config *)
+    let precomputed_values =
+      { (Lazy.force Precomputed_values.for_unit_tests) with proof_level }
+    in
+    let%bind verifier =
+      Verifier.create ~logger ~proof_level:None ~constraint_constants
+        ~conf_dir:None
+        ~pids:(Child_processes.Termination.create_pid_table ())
+        ()
+    in
+    Core.Printf.eprintf "++ Parsing\n%!" ;
+    let file =
+      In_channel.read_all failure_context_path |> Bigstring.of_string
+    in
+    let context = Apply_context.bin_read_t ~pos_ref:(ref 0) file in
+    Core.Printf.eprintf "++ Parsed\n%!" ;
+    let { Apply_context.accounts
+        ; scan_state
+        ; pending_coinbase
+        ; protocol_states (*; staged_ledger_hash*)
+        ; pred_block
+        ; blocks_to_apply
+        } =
+      context
+    in
+    let state_tbl = State_hash.Table.create () in
+    List.iter protocol_states ~f:(fun state ->
+        let state_hash = (Mina_state.Protocol_state.hashes state).state_hash in
+        State_hash.Table.add state_tbl ~key:state_hash ~data:state |> ignore ) ;
+    let get_state state_hash =
+      match State_hash.Table.find state_tbl state_hash with
+      | Some ps ->
+          Ok ps
+      | None ->
+          Error (Error.of_string "protocol state not found")
+    in
+    let ledger = Mina_ledger.Ledger.create ~depth:35 () in
+    Core.Printf.eprintf "++ Loading accounts\n%!" ;
+    List.iteri accounts ~f:(fun _index account ->
+        let id = Account.identifier account in
+        Mina_ledger.Ledger.create_new_account_exn ledger id account ) ;
+    Core.Printf.eprintf "++ Reconstructing staged ledger\n%!" ;
+    let expected_merkle_root =
+      Mina_block.header pred_block
+      |> Mina_block.Header.protocol_state
+      |> Mina_state.Protocol_state.blockchain_state
+      |> Mina_state.Blockchain_state.staged_ledger_hash
+      |> Staged_ledger_hash.ledger_hash
+    in
+    let%bind sl =
+      Staged_ledger.of_scan_state_pending_coinbases_and_snarked_ledger ~logger
+        ~snarked_local_state:(Mina_state.Local_state.empty ())
+        ~verifier ~constraint_constants ~scan_state ~snarked_ledger:ledger
+        ~expected_merkle_root ~pending_coinbases:pending_coinbase ~get_state
+      |> Deferred.Or_error.ok_exn
+    in
+    Core.Printf.eprintf "++ Done reconstructing staged ledger\n%!" ;
+    let get_completed_work _ = None in
+    let%bind () =
+      let parent_staged_ledger = ref sl in
+      let parent_protocol_state =
+        ref (Mina_block.Header.protocol_state (Mina_block.header pred_block))
+      in
+      Core.Printf.eprintf "++ %d blocks to apply\n%!"
+        (List.length blocks_to_apply) ;
+      Deferred.List.iter blocks_to_apply ~f:(fun block ->
+          let header = Mina_block.header block in
+          let protocol_state = Mina_block.Header.protocol_state header in
+          let blockchain_state =
+            Mina_state.Protocol_state.blockchain_state protocol_state
+          in
+          let expected_staged_ledger_hash =
+            Mina_state.Blockchain_state.staged_ledger_hash blockchain_state
+          in
+          let consensus_state =
+            Mina_state.Protocol_state.consensus_state protocol_state
+          in
+          let global_slot =
+            Consensus.Data.Consensus_state.global_slot_since_genesis
+              consensus_state
+          in
+          let state_hash_b58 =
+            protocol_state |> Mina_state.Protocol_state.hashes
+            |> State_hash.State_hashes.state_hash |> State_hash.to_base58_check
+          in
+          Core.Printf.eprintf "++ Applying block %s-%s\n%!"
+            (Mina_numbers.Global_slot_since_genesis.to_string global_slot)
+            state_hash_b58 ;
+          let body = Mina_block.body block in
+          let%bind ( `Hash_after_applying staged_ledger_hash
+                   , `Ledger_proof _proof_opt
+                   , `Staged_ledger transitioned_staged_ledger
+                   , `Pending_coinbase_update _ ) =
+            let%map result =
+              Staged_ledger.apply ~skip_verification:`All ~get_completed_work
+                ~constraint_constants ~global_slot ~logger ~verifier
+                !parent_staged_ledger
+                (Staged_ledger_diff.Body.staged_ledger_diff body)
+                ~current_state_view:
+                  Mina_state.Protocol_state.(
+                    Body.view @@ body !parent_protocol_state)
+                ~state_and_body_hash:
+                  (let body_hash =
+                     Mina_state.Protocol_state.(
+                       Body.hash @@ body !parent_protocol_state)
+                   in
+                   ( (Mina_state.Protocol_state.hashes_with_body
+                        !parent_protocol_state ~body_hash )
+                       .state_hash
+                   , body_hash ) )
+                ~coinbase_receiver:
+                  (Consensus.Data.Consensus_state.coinbase_receiver
+                     consensus_state )
+                ~supercharge_coinbase:
+                  (Consensus.Data.Consensus_state.supercharge_coinbase
+                     consensus_state )
+                ~zkapp_cmd_limit_hardcap:
+                  precomputed_values.Precomputed_values.genesis_constants
+                    .zkapp_cmd_limit_hardcap
+            in
+            match result with
+            | Ok result ->
+                result
+            | Error _err ->
+                failwith "Failed"
+          in
+          if
+            not
+              (Staged_ledger_hash.equal staged_ledger_hash
+                 expected_staged_ledger_hash )
+          then failwith "hash mismatch" ;
+          parent_staged_ledger := transitioned_staged_ledger ;
+          parent_protocol_state :=
+            Mina_block.Header.protocol_state (Mina_block.header block) ;
+          Deferred.return () )
+    in
+
+    Core.Printf.eprintf "All blocks applied successfully\n%!" ;
+    return ()
+
+  let run =
+    Command.async ~summary:"Block application failure replayer"
+      (let%map_open.Command failure_context_path =
+         anon ("failure_context_path" %: string)
+       in
+       fun () -> apply_blocks failure_context_path )
+end
+
 let internal_commands logger =
   [ (Snark_worker.Intf.command_name, Snark_worker.command)
   ; ("snark-hashes", snark_hashes)
@@ -2041,6 +2211,7 @@ let mina_commands logger =
   ; ("advanced", Client.advanced)
   ; ("ledger", Client.ledger)
   ; ("libp2p", Client.libp2p)
+  ; ("replay-apply-failure", Block_replay.run)
   ; ( "internal"
     , Command.group ~summary:"Internal commands" (internal_commands logger) )
   ; (Parallel.worker_command_name, Parallel.worker_command)
