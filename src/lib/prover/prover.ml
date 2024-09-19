@@ -365,6 +365,17 @@ module Worker = struct
   include Rpc_parallel.Make (T)
 end
 
+let decode_binprot_without_size () =
+  let%bind raw_input = Reader.contents (Lazy.force Reader.stdin) in
+  let input_string = Bigstring.of_string raw_input in
+  let input_len = Bigstring.length input_string in
+  Core.printf "input len = %d\n%!" input_len ;
+  let pos_ref = ref 0 in
+  (* Replace `Extend_blockchain_input.Stable.V2.bin_reader_t` with your type's bin_reader_t *)
+  return
+  @@ Extend_blockchain_input.Stable.V2.bin_reader_t.Bin_prot.Type_class.read
+       input_string ~pos_ref
+
 module type S2 = sig
   val extend_blockchain :
        Blockchain.t
@@ -473,14 +484,18 @@ let create ~logger ?(enable_internal_tracing = false) ?internal_trace_filename
     end : S2 )
   in
 
-  let%bind input =
-    Reader.read_bin_prot (Lazy.force Reader.stdin)
-      Extend_blockchain_input.Stable.V2.bin_reader_t
-  in
+  (*let%bind input =
+      Reader.read_bin_prot (Lazy.force Reader.stdin)
+        Extend_blockchain_input.Stable.V2.bin_reader_t
+    in*)
+  let%bind input = decode_binprot_without_size () in
+
+  Core.printf "%s\n%!"
+    (Sexp.to_string_hum (Extend_blockchain_input.sexp_of_t input)) ;
 
   let (module W) = Worker_state.get s in
 
-  ( match input with
+  ( match `Ok input with
   | `Eof ->
       eprintf "EOF" ; exit 1
   | `Ok input ->
@@ -492,7 +507,6 @@ let create ~logger ?(enable_internal_tracing = false) ?internal_trace_filename
       let pending_coinbase = input.pending_coinbase in
       W.extend_blockchain chain next_state block ledger_proof prover_state
         pending_coinbase ) ;
-
   let on_failure err =
     [%log error] "Prover process failed with error $err"
       ~metadata:[ ("err", Error_json.error_to_yojson err) ] ;
@@ -577,12 +591,23 @@ let prove_from_input_sexp { connection; logger; _ } sexp =
         ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
       false
 
+let add_prover_sk _path input = input
+
 let prove_from_input_binprot { connection; logger; _ } =
-  let%bind input =
-    Reader.read_bin_prot (Lazy.force Reader.stdin)
-      Extend_blockchain_input.Stable.V2.bin_reader_t
+  (*let%bind input =
+      Reader.read_bin_prot (Lazy.force Reader.stdin)
+        Extend_blockchain_input.Stable.V2.bin_reader_t
+    in*)
+  Core.printf "Reading\n%!" ;
+  let%bind input = decode_binprot_without_size () in
+  let input =
+    match Unix.getenv "PROVER_SK_PATH" with
+    | None ->
+        input
+    | Some path ->
+        add_prover_sk path input
   in
-  match input with
+  match `Ok input with
   | `Eof ->
       eprintf "EOF" ; exit 1
   | `Ok input -> (
