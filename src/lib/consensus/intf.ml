@@ -407,6 +407,8 @@ module type S = sig
 
       type t = Stable.Latest.t [@@deriving to_yojson, sexp]
 
+      val with_producer_private_key : t -> Signature_lib.Private_key.t -> t
+
       val genesis_data : genesis_epoch_ledger:Mina_ledger.Ledger.t Lazy.t -> t
 
       val precomputed_handler :

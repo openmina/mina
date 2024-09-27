@@ -2541,6 +2541,9 @@ module Make_str (A : Wire_types.Concrete) = struct
 
       let genesis_data = Vrf.Precomputed.genesis_stake_proof
 
+      let with_producer_private_key (t : t) producer_private_key =
+        { t with producer_private_key }
+
       let precomputed_handler = Vrf.Precomputed.handler
 
       let handler

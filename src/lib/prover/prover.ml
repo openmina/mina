@@ -376,6 +376,18 @@ let decode_binprot_without_size () =
   @@ Extend_blockchain_input.Stable.V2.bin_reader_t.Bin_prot.Type_class.read
        input_string ~pos_ref
 
+let add_prover_sk sk_file (input : Extend_blockchain_input.t) =
+  let%bind key =
+    Secrets.Keypair.Terminal_stdin.read_exn ~should_prompt_user:false
+      ~which:"block producer keypair" sk_file
+  in
+  let producer_private_key = key.private_key in
+  let prover_state =
+    Consensus.Data.Prover_state.with_producer_private_key input.prover_state
+      producer_private_key
+  in
+  return { input with prover_state }
+
 module type S2 = sig
   val extend_blockchain :
        Blockchain.t
@@ -493,6 +505,19 @@ let create ~logger ?(enable_internal_tracing = false) ?internal_trace_filename
   Core.printf "%s\n%!"
     (Sexp.to_string_hum (Extend_blockchain_input.sexp_of_t input)) ;
 
+  let%bind input =
+    match Unix.getenv "PROVER_SK_PATH" with
+    | None ->
+        eprintf
+          "+++ WARNING: PROVER_SK_PATH is empty, not specifying the prover \
+           private key\n\
+           %!" ;
+        return input
+    | Some path ->
+        eprintf "+++ Adding private key\n%!" ;
+        add_prover_sk path input
+  in
+
   let (module W) = Worker_state.get s in
 
   ( match `Ok input with
@@ -591,8 +616,6 @@ let prove_from_input_sexp { connection; logger; _ } sexp =
         ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
       false
 
-let add_prover_sk _path input = input
-
 let prove_from_input_binprot { connection; logger; _ } =
   (*let%bind input =
       Reader.read_bin_prot (Lazy.force Reader.stdin)
@@ -600,15 +623,16 @@ let prove_from_input_binprot { connection; logger; _ } =
     in*)
   Core.printf "Reading\n%!" ;
   let%bind input = decode_binprot_without_size () in
-  let input =
+  let%bind input =
     match Unix.getenv "PROVER_SK_PATH" with
     | None ->
         eprintf
           "+++ WARNING: PROVER_SK_PATH is empty, not specifying the prover \
            private key\n\
            %!" ;
-        input
+        return input
     | Some path ->
+        eprintf "+++ Adding private key\n%!" ;
         add_prover_sk path input
   in
   match `Ok input with

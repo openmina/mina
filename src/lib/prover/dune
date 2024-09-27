@@ -15,6 +15,7 @@
    sexplib0
    stdio
    ;; local libraries
+   secrets
    with_hash
    coda_genesis_ledger
    mina_metrics
