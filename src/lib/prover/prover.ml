@@ -603,6 +603,10 @@ let prove_from_input_binprot { connection; logger; _ } =
   let input =
     match Unix.getenv "PROVER_SK_PATH" with
     | None ->
+        eprintf
+          "+++ WARNING: PROVER_SK_PATH is empty, not specifying the prover \
+           private key\n\
+           %!" ;
         input
     | Some path ->
         add_prover_sk path input
