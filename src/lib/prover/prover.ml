@@ -498,6 +498,37 @@ let prove_from_input_sexp { connection; logger; _ } sexp =
         ~metadata:[ ("error", Error_json.error_to_yojson e) ] ;
       false
 
+let dump_block_proof_inputs ~logger input suffix =
+  let next_state = input.Extend_blockchain_input.next_state in
+  let prev_hash =
+    Protocol_state.previous_state_hash next_state |> State_hash.to_base58_check
+  in
+  let height =
+    next_state |> Protocol_state.consensus_state
+    |> Consensus.Data.Consensus_state.blockchain_length
+    |> Mina_numbers.Length.to_int
+  in
+  let dump_path =
+    Option.value (Unix.getenv "PROOF_INPUTS_DUMP_PATH") ~default:"/tmp"
+  in
+  let filename =
+    sprintf "%s/ocaml-block-proof-input_%d_%s_%s.binprot" dump_path height
+      prev_hash suffix
+  in
+  try
+    let encoded =
+      Binable.to_string (module Extend_blockchain_input.Stable.Latest) input
+    in
+    Out_channel.write_all filename ~data:encoded ;
+    [%log debug] "Wrote prover input to $filename"
+      ~metadata:[ ("filename", `String filename) ]
+  with exn ->
+    [%log error] "Failed to write prover input to $filename: $error"
+      ~metadata:
+        [ ("filename", `String filename)
+        ; ("error", `String (Exn.to_string exn))
+        ]
+
 let extend_blockchain { connection; logger; _ } chain next_state block
     ledger_proof prover_state pending_coinbase =
   let input =
@@ -515,8 +546,10 @@ let extend_blockchain { connection; logger; _ } chain next_state block
     >>| Or_error.join
   with
   | Ok x ->
+      dump_block_proof_inputs ~logger input "success" ;
       Ok x
   | Error e ->
+      dump_block_proof_inputs ~logger input "failure" ;
       [%log error]
         ~metadata:
           [ ( "input-sexp"
